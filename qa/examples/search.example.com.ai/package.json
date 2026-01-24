@@ -16,7 +16,7 @@
     "wrangler": "^3.99.0"
   },
   "dependencies": {
-    "api.do": "workspace:*",
+    "@dotdo/apis": "^0.1.0",
     "@dotdo/pg-search": "workspace:*"
   }
 }

@@ -8,7 +8,7 @@
  * - /qa endpoint for test discovery
  */
 
-import { API } from 'api.do'
+import { API } from '@dotdo/apis'
 import { DurableObject } from 'cloudflare:workers'
 
 // Types for our task system

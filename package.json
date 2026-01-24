@@ -1,7 +1,7 @@
 {
-  "name": "api.do",
+  "name": "@dotdo/apis",
   "version": "0.1.0",
-  "description": "Opinionated Hono-based API framework for Cloudflare Workers",
+  "description": "Core API framework for building Hono-based APIs on Cloudflare Workers with conventions, middleware, and MCP tools",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -32,17 +32,9 @@
     "hono": "^4.7.0",
     "postgres.do": "^0.1.0"
   },
-  "peerDependencies": {
+  "optionalDependencies": {
     "oauth.do": "*",
     "rpc.do": "*"
-  },
-  "peerDependenciesMeta": {
-    "oauth.do": {
-      "optional": true
-    },
-    "rpc.do": {
-      "optional": true
-    }
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250124.0",
@@ -57,7 +49,10 @@
     "cloudflare",
     "workers",
     "api",
-    "framework"
+    "framework",
+    "dotdo",
+    "mcp",
+    "middleware"
   ],
   "license": "MIT"
 }

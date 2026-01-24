@@ -10,7 +10,7 @@
  * - Custom routes for health and reindexing
  */
 
-import { API } from 'api.do'
+import { API } from '@dotdo/apis'
 import type { Context } from 'hono'
 
 // Article document type for search

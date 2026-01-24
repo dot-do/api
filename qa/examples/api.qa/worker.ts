@@ -5,7 +5,7 @@
  * Provides discovery endpoint for the api.qa testing framework.
  */
 
-import { API } from 'api.do'
+import { API } from '@dotdo/apis'
 
 interface Project {
   name: string
