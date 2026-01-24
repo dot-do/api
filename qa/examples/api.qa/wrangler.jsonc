@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "api-qa-index",
+  "main": "_worker.js",
+  "compatibility_date": "2026-01-24",
+  "account_id": "b6641681fe423910342b9ffa1364c76d",
+  "no_bundle": true,
+  "build": {
+    "command": "cd qa/examples/api.qa && npx tsx build.ts"
+  },
+  "routes": [
+    { "pattern": "api.qa/*", "zone_name": "api.qa" }
+  ],
+  "vars": {
+    "API_NAME": "api.qa"
+  },
+  "analytics_engine_datasets": [
+    {
+      "binding": "ANALYTICS",
+      "dataset": "api-qa"
+    }
+  ]
+}

@@ -17,8 +17,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "test-qa-example-db",
-      "database_id": "placeholder-replace-with-actual-id"
+      "database_name": "test-example-db",
+      "database_id": "5bb31494-fc51-4983-8725-b5ddd79e0a82"
     }
   ],
   "analytics_engine_datasets": [

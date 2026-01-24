@@ -17,8 +17,8 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "search-qa-example-db",
-      "database_id": "placeholder-replace-with-actual-id"
+      "database_name": "search-example-db",
+      "database_id": "d4981a7a-7e5e-4b8e-9732-a697af844d72"
     }
   ],
   // Durable Object for persistent search index (optional - for production use)
