@@ -1,13 +1,12 @@
 {
-  "name": "test-qa-example",
+  "name": "sqlite-example",
   "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "build": "tsx build.ts",
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
-    "db:init": "wrangler d1 execute test-qa-example-db --file=schema.sql"
+    "deploy": "wrangler deploy"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250124.0",

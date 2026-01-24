@@ -1,5 +1,5 @@
 /**
- * test.qa.example.com.ai - Self-testing API example
+ * test.example.com.ai - Self-testing API example
  *
  * Demonstrates the api.qa testing framework with:
  * - CRUD convention with embedded tests
@@ -17,7 +17,7 @@ const store: Record<string, Record<string, unknown>> = {
 }
 
 export default API({
-  name: 'test.qa.example.com.ai',
+  name: 'test.example.com.ai',
   description: 'Self-testing API demonstrating the api.qa framework',
   version: '1.0.0',
 
@@ -428,8 +428,8 @@ export default API({
             expect: {
               status: 200,
               body: {
-                'api.name': 'test.qa.example.com.ai',
-                'data.name': 'test.qa.example.com.ai',
+                'api.name': 'test.example.com.ai',
+                'data.name': 'test.example.com.ai',
               },
             },
           },

@@ -1,0 +1,31 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "postgres-example",
+  "main": "_worker.js",
+  "compatibility_date": "2026-01-24",
+  "account_id": "b6641681fe423910342b9ffa1364c76d",
+  "no_bundle": true,
+  "build": {
+    "command": "cd qa/examples/postgres.example.com.ai && npx tsx build.ts"
+  },
+  "routes": [
+    { "pattern": "postgres.example.com.ai/*", "zone_name": "example.com.ai" }
+  ],
+  "vars": {
+    "API_NAME": "postgres.example.com.ai"
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "NOTES_DO",
+        "class_name": "NotesDO"
+      }
+    ]
+  },
+  "analytics_engine_datasets": [
+    {
+      "binding": "ANALYTICS",
+      "dataset": "postgres-example"
+    }
+  ]
+}

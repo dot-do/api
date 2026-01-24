@@ -1,0 +1,33 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "sqlite-example",
+  "main": "_worker.js",
+  "compatibility_date": "2026-01-24",
+  "account_id": "b6641681fe423910342b9ffa1364c76d",
+  "no_bundle": true,
+  "build": {
+    "command": "cd qa/examples/sqlite.example.com.ai && npx tsx build.ts"
+  },
+  "routes": [
+    { "pattern": "sqlite.example.com.ai/*", "zone_name": "example.com.ai" }
+  ],
+  "vars": {
+    "API_NAME": "sqlite.example.com.ai"
+  },
+  // Durable Objects configuration
+  "durable_objects": {
+    "bindings": [
+      { "name": "TASKS_DO", "class_name": "TasksDO" }
+    ]
+  },
+  // SQLite storage migration for TasksDO
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["TasksDO"] }
+  ],
+  "analytics_engine_datasets": [
+    {
+      "binding": "ANALYTICS",
+      "dataset": "sqlite-example"
+    }
+  ]
+}

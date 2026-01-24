@@ -1,0 +1,38 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "documentdb-example",
+  "main": "_worker.js",
+  "compatibility_date": "2026-01-24",
+  "account_id": "b6641681fe423910342b9ffa1364c76d",
+  "no_bundle": true,
+  "build": {
+    "command": "cd qa/examples/documentdb.example.com.ai && npx tsx build.ts"
+  },
+  "routes": [
+    { "pattern": "documentdb.example.com.ai/*", "zone_name": "example.com.ai" }
+  ],
+  "vars": {
+    "API_NAME": "documentdb.example.com.ai",
+    "DOCUMENTDB_DEFAULT_DB": "default"
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "DOCUMENTDB_DO",
+        "class_name": "DocumentDBDO"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_classes": ["DocumentDBDO"]
+    }
+  ],
+  "analytics_engine_datasets": [
+    {
+      "binding": "ANALYTICS",
+      "dataset": "documentdb-example"
+    }
+  ]
+}

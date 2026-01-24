@@ -1,0 +1,45 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "search-example",
+  "main": "_worker.js",
+  "compatibility_date": "2026-01-24",
+  "account_id": "b6641681fe423910342b9ffa1364c76d",
+  "no_bundle": true,
+  "build": {
+    "command": "cd qa/examples/search.example.com.ai && npx tsx build.ts"
+  },
+  "routes": [
+    { "pattern": "search.example.com.ai/*", "zone_name": "example.com.ai" }
+  ],
+  "vars": {
+    "API_NAME": "search.example.com.ai"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "search-qa-example-db",
+      "database_id": "placeholder-replace-with-actual-id"
+    }
+  ],
+  // Durable Object for persistent search index (optional - for production use)
+  // "durable_objects": {
+  //   "bindings": [
+  //     {
+  //       "name": "SEARCH",
+  //       "class_name": "SearchDO"
+  //     }
+  //   ]
+  // },
+  // "migrations": [
+  //   {
+  //     "tag": "v1",
+  //     "new_classes": ["SearchDO"]
+  //   }
+  // ],
+  "analytics_engine_datasets": [
+    {
+      "binding": "ANALYTICS",
+      "dataset": "search-example"
+    }
+  ]
+}

@@ -1,18 +1,18 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "test-qa-example",
+  "name": "test-example",
   "main": "_worker.js",
   "compatibility_date": "2026-01-24",
   "account_id": "b6641681fe423910342b9ffa1364c76d",
   "no_bundle": true,
   "build": {
-    "command": "cd qa/examples/test.qa.example.com.ai && npx tsx build.ts"
+    "command": "cd qa/examples/test.example.com.ai && npx tsx build.ts"
   },
   "routes": [
-    { "pattern": "test.qa.example.com.ai/*", "zone_name": "example.com.ai" }
+    { "pattern": "test.example.com.ai/*", "zone_name": "example.com.ai" }
   ],
   "vars": {
-    "API_NAME": "test.qa.example.com.ai"
+    "API_NAME": "test.example.com.ai"
   },
   "d1_databases": [
     {
@@ -24,7 +24,7 @@
   "analytics_engine_datasets": [
     {
       "binding": "ANALYTICS",
-      "dataset": "test-qa-example"
+      "dataset": "test-example"
     }
   ]
 }

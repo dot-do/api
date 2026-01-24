@@ -1,0 +1,26 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "neon-example",
+  "main": "_worker.js",
+  "compatibility_date": "2026-01-24",
+  "account_id": "b6641681fe423910342b9ffa1364c76d",
+  "no_bundle": true,
+  "build": {
+    "command": "cd qa/examples/neon.example.com.ai && npx tsx build.ts"
+  },
+  "routes": [
+    { "pattern": "neon.example.com.ai/*", "zone_name": "example.com.ai" }
+  ],
+  "vars": {
+    "API_NAME": "neon.example.com.ai",
+    // postgres.do connection URL
+    // Format: postgres://[user:password@]db.postgres.do/database_name
+    "DATABASE_URL": "postgres://db.postgres.do/postgres-qa-example"
+  },
+  "analytics_engine_datasets": [
+    {
+      "binding": "ANALYTICS",
+      "dataset": "neon-example"
+    }
+  ]
+}
