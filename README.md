@@ -429,7 +429,6 @@ export default API({ /* ... */ })
   "name": "my-api",
   "main": "worker.ts",
   "compatibility_date": "2026-01-24",
-  "compatibility_flags": ["nodejs_compat"],
 
   "observability": { "enabled": true, "head_sampling_rate": 1 },
 
