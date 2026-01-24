@@ -232,4 +232,90 @@ describe('CRUD convention', () => {
       }
     })
   })
+
+  describe('sortable/searchable config SQL injection prevention', () => {
+    function createAppWithConfig(sortable?: string[], searchable?: string[]) {
+      const app = new Hono<ApiEnv>()
+
+      app.use('*', contextMiddleware())
+      app.use('*', responseMiddleware({ name: 'crud-test' }))
+
+      app.route('/items', crudConvention({
+        db: 'DB',
+        table: 'items',
+        sortable,
+        searchable,
+        pageSize: 10,
+        columns: ['id', 'name', 'description', 'created_at']
+      }))
+
+      return app
+    }
+
+    it('rejects sortable columns with SQL injection patterns', async () => {
+      const maliciousSortable = ['name; DROP TABLE items; --', 'valid_col']
+      const app = createAppWithConfig(maliciousSortable, ['name'])
+      const mockDb = createMockDb([])
+      mockDb._bind.first.mockResolvedValue({ total: 0 })
+
+      const res = await app.request('/items', {}, { DB: mockDb })
+      expect(res.status).toBe(400)
+
+      const body = await res.json() as Record<string, unknown>
+      expect((body.error as Record<string, unknown>).code).toBe('INVALID_CONFIG')
+    })
+
+    it('rejects searchable columns with SQL injection patterns', async () => {
+      const maliciousSearchable = ["name' OR '1'='1", 'valid_col']
+      const app = createAppWithConfig(['name'], maliciousSearchable)
+      const mockDb = createMockDb([])
+      mockDb._bind.first.mockResolvedValue({ total: 0 })
+
+      const res = await app.request('/items?q=test', {}, { DB: mockDb })
+      expect(res.status).toBe(400)
+
+      const body = await res.json() as Record<string, unknown>
+      expect((body.error as Record<string, unknown>).code).toBe('INVALID_CONFIG')
+    })
+
+    it('accepts valid alphanumeric sortable columns', async () => {
+      const validSortable = ['name', 'created_at', 'description']
+      const app = createAppWithConfig(validSortable, ['name'])
+      const mockDb = createMockDb([{ id: '1', name: 'Test' }])
+      mockDb._bind.first.mockResolvedValue({ total: 1 })
+
+      const res = await app.request('/items?sort=created_at', {}, { DB: mockDb })
+      expect(res.status).toBe(200)
+    })
+
+    it('accepts valid alphanumeric searchable columns', async () => {
+      const validSearchable = ['name', 'description']
+      const app = createAppWithConfig(['name'], validSearchable)
+      const mockDb = createMockDb([{ id: '1', name: 'Test' }])
+      mockDb._bind.first.mockResolvedValue({ total: 1 })
+
+      const res = await app.request('/items?q=test', {}, { DB: mockDb })
+      expect(res.status).toBe(200)
+    })
+
+    it('rejects sortable columns with quotes', async () => {
+      const maliciousSortable = ['name"injection']
+      const app = createAppWithConfig(maliciousSortable, ['name'])
+      const mockDb = createMockDb([])
+      mockDb._bind.first.mockResolvedValue({ total: 0 })
+
+      const res = await app.request('/items', {}, { DB: mockDb })
+      expect(res.status).toBe(400)
+    })
+
+    it('rejects searchable columns with semicolons', async () => {
+      const maliciousSearchable = ['name;DROP']
+      const app = createAppWithConfig(['name'], maliciousSearchable)
+      const mockDb = createMockDb([])
+      mockDb._bind.first.mockResolvedValue({ total: 0 })
+
+      const res = await app.request('/items?q=test', {}, { DB: mockDb })
+      expect(res.status).toBe(400)
+    })
+  })
 })

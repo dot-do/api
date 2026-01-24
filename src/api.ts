@@ -78,10 +78,11 @@ export function API(config: ApiConfig): Hono<ApiEnv> {
     app.route('/', routes)
 
     // Register database MCP tools with the unified registry
+    // These are route-only tools - actual implementation is in REST routes
     if (mcpTools.length > 0) {
       mcpRegistry.registerAll(mcpTools.map((t) => ({
         ...t,
-        handler: async () => ({ error: 'Use /mcp endpoint' }), // Placeholder, actual handling in database convention
+        routeOnly: true,
       })))
     }
   }
@@ -93,10 +94,11 @@ export function API(config: ApiConfig): Hono<ApiEnv> {
     app.route('/', routes)
 
     // Register function MCP tools with the unified registry
+    // These are route-only tools - actual implementation is in REST routes
     if (mcpTools.length > 0) {
       mcpRegistry.registerAll(mcpTools.map((t) => ({
         ...t,
-        handler: async () => ({ error: 'Use /mcp endpoint' }),
+        routeOnly: true,
       })))
     }
   }

@@ -28,19 +28,19 @@ describe('McpToolRegistry', () => {
     })
 
     it('registers tools from database convention', () => {
-      // Database tools are just name, description, inputSchema (no handler)
+      // Database tools are route-only (no handler, served via REST endpoints)
       registry.register({
         name: 'user.create',
         description: 'Create a new User',
         inputSchema: { type: 'object', properties: { email: { type: 'string' } } },
-        handler: async () => ({ error: 'Use /mcp endpoint' }),
+        routeOnly: true,
       })
 
       registry.register({
         name: 'user.get',
         description: 'Get a User by ID',
         inputSchema: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] },
-        handler: async () => ({ error: 'Use /mcp endpoint' }),
+        routeOnly: true,
       })
 
       const tools = registry.getTools()
@@ -141,6 +141,48 @@ describe('McpToolRegistry', () => {
     it('returns undefined for non-existent tool', () => {
       const tool = registry.getTool('nonexistent')
       expect(tool).toBeUndefined()
+    })
+  })
+
+  describe('route-only tools', () => {
+    it('marks tools without real handlers with routeOnly flag', () => {
+      // Route-only tools are those served via REST routes, not direct MCP handlers
+      registry.register({
+        name: 'user.create',
+        description: 'Create a new User',
+        inputSchema: { type: 'object', properties: { email: { type: 'string' } } },
+        routeOnly: true,
+      })
+
+      const tool = registry.getTool('user.create')
+      expect(tool).toBeDefined()
+      expect(tool?.routeOnly).toBe(true)
+      expect(tool?.handler).toBeUndefined()
+    })
+
+    it('distinguishes route-only tools from tools with handlers', () => {
+      registry.register({
+        name: 'calculate',
+        description: 'Performs calculations',
+        inputSchema: { type: 'object' },
+        handler: async () => 42,
+      })
+
+      registry.register({
+        name: 'user.create',
+        description: 'Create a new User',
+        inputSchema: { type: 'object' },
+        routeOnly: true,
+      })
+
+      const calcTool = registry.getTool('calculate')
+      const userTool = registry.getTool('user.create')
+
+      expect(calcTool?.routeOnly).toBeFalsy()
+      expect(calcTool?.handler).toBeDefined()
+
+      expect(userTool?.routeOnly).toBe(true)
+      expect(userTool?.handler).toBeUndefined()
     })
   })
 })
@@ -360,5 +402,70 @@ describe('Single /mcp endpoint serves all registered tools', () => {
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.result.content[0].text).toBe('Explicit: hello')
+  })
+
+  describe('route-only tools error handling', () => {
+    it('returns informative error when calling route-only tool directly', async () => {
+      const app = API({
+        name: 'route-only-api',
+        mcp: {
+          name: 'server',
+          tools: [],
+        },
+        database: {
+          schema: {
+            User: {
+              email: 'string',
+              name: 'string?',
+            },
+          },
+        },
+      })
+
+      // Try to call a database tool directly via MCP (should return helpful error)
+      const res = await mcpPost(app, jsonRpc('tools/call', {
+        name: 'user.create',
+        arguments: { email: 'test@example.com' },
+      }))
+
+      expect(res.status).toBe(500) // MCP returns 500 for tool errors
+      const body = await res.json()
+      expect(body.error).toBeDefined()
+      expect(body.error.message).toContain('route-only')
+    })
+
+    it('lists route-only tools in tools/list without handler issues', async () => {
+      const app = API({
+        name: 'route-only-list-api',
+        mcp: {
+          name: 'server',
+          tools: [
+            {
+              name: 'explicitTool',
+              description: 'Has a handler',
+              inputSchema: { type: 'object' },
+              handler: async () => 'works',
+            },
+          ],
+        },
+        database: {
+          schema: {
+            Post: {
+              title: 'string',
+            },
+          },
+        },
+      })
+
+      const res = await mcpPost(app, jsonRpc('tools/list'))
+      expect(res.status).toBe(200)
+
+      const body = await res.json()
+      const tools = body.result.tools
+
+      // Both explicit and route-only tools should be listed
+      expect(tools.some((t: { name: string }) => t.name === 'explicitTool')).toBe(true)
+      expect(tools.some((t: { name: string }) => t.name === 'post.create')).toBe(true)
+    })
   })
 })

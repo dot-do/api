@@ -72,7 +72,25 @@ export function proxyConvention(config: ProxyConfig): Hono<ApiEnv> {
     // If upstream returns JSON, wrap in envelope
     const contentType = response.headers.get('content-type') || ''
     if (contentType.includes('application/json')) {
-      const data = await response.json()
+      let data: unknown
+      try {
+        data = await response.json()
+      } catch (parseError) {
+        // Upstream claimed JSON but returned invalid JSON
+        return c.var.respond({
+          error: {
+            code: 'UPSTREAM_INVALID_JSON',
+            message: 'Upstream returned invalid JSON',
+            status: 502,
+            details: {
+              upstream: config.upstream,
+              contentType,
+              parseError: parseError instanceof Error ? parseError.message : String(parseError),
+            },
+          },
+          status: 502,
+        })
+      }
       return c.var.respond({
         data,
         meta: {

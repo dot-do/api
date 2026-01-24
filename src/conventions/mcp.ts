@@ -119,6 +119,14 @@ async function handleMcpMethod(req: JsonRpcRequest, config: McpConfig, c: Contex
       if (!tool) {
         throw new Error(`Unknown tool: ${params.name}`)
       }
+      // Route-only tools are served via REST endpoints, not direct MCP handlers
+      if (tool.routeOnly) {
+        const error = new Error(
+          `Tool "${params.name}" is route-only and cannot be called directly via MCP. ` +
+          `Use the corresponding REST endpoint instead (e.g., POST /${params.name.replace('.', '/')})`
+        )
+        throw error
+      }
       if (!tool.handler) {
         throw new Error(`Tool ${params.name} has no handler`)
       }

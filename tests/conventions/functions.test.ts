@@ -332,6 +332,78 @@ describe('Proxy Wrappers', () => {
       })
     )
   })
+
+  it('blocks path traversal with /../ (via X-Original-Path)', async () => {
+    mockFetch.mockResolvedValue(new Response(JSON.stringify({}), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    }))
+
+    const traversalProxy: ProxyDef = {
+      name: 'secure',
+      upstream: 'https://api.example.com',
+    }
+
+    const { app } = createTestApp({ proxies: [traversalProxy] })
+    // Use X-Original-Path header to simulate raw path before URL normalization
+    // (as would be set by edge server/CDN)
+    const res = await app.request('/secure/data', {
+      headers: {
+        'X-Original-Path': '/secure/../../../etc/passwd',
+      },
+    })
+
+    expect(res.status).toBe(400)
+    const body = await res.json()
+    expect(body.error.code).toBe('INVALID_PATH')
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
+
+  it('blocks encoded path traversal with %2e%2e (via X-Original-Path)', async () => {
+    mockFetch.mockResolvedValue(new Response(JSON.stringify({}), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    }))
+
+    const traversalProxy: ProxyDef = {
+      name: 'secure',
+      upstream: 'https://api.example.com',
+    }
+
+    const { app } = createTestApp({ proxies: [traversalProxy] })
+    // Use X-Original-Path header to simulate URL-encoded traversal
+    const res = await app.request('/secure/data', {
+      headers: {
+        'X-Original-Path': '/secure/%2e%2e/%2e%2e/etc/passwd',
+      },
+    })
+
+    expect(res.status).toBe(400)
+    const body = await res.json()
+    expect(body.error.code).toBe('INVALID_PATH')
+    expect(mockFetch).not.toHaveBeenCalled()
+  })
+
+  it('allows valid proxy paths', async () => {
+    mockFetch.mockResolvedValue(new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    }))
+
+    const validProxy: ProxyDef = {
+      name: 'api',
+      upstream: 'https://api.example.com',
+    }
+
+    const { app } = createTestApp({ proxies: [validProxy] })
+    const res = await app.request('/api/v1/users/123')
+
+    expect(res.status).toBe(200)
+    expect(mockFetch).toHaveBeenCalledWith(
+      'https://api.example.com/v1/users/123',
+      expect.anything()
+    )
+  })
 })
 
 // =============================================================================

@@ -17,6 +17,7 @@ import {
   setCacheValue,
   createFunctionContext,
 } from './utils'
+import { validateProxyPath } from '../../helpers/path'
 
 // =============================================================================
 // Proxy Auth Helpers
@@ -71,6 +72,27 @@ export function createProxyHandler(proxy: ProxyDef, config: FunctionsConfig) {
     const url = new URL(c.req.url)
     const proxyPath = url.pathname.replace(new RegExp(`^${config.basePath || ''}/${proxy.name}`), '')
 
+    // Get original path from header (if set by edge server/CDN before URL normalization)
+    const originalPath = c.req.header('X-Original-Path')
+
+    // Validate path to prevent path traversal attacks
+    const validation = validateProxyPath(proxyPath || '/', {
+      blockTraversal: true,
+      originalPath,
+    })
+
+    if (!validation.valid) {
+      const status = validation.error === 'PATH_NOT_ALLOWED' ? 403 : 400
+      return c.var.respond({
+        error: {
+          code: validation.error,
+          message: validation.message || 'Invalid path',
+          status
+        },
+        status
+      })
+    }
+
     let req: {
       method: string
       path: string
@@ -79,7 +101,7 @@ export function createProxyHandler(proxy: ProxyDef, config: FunctionsConfig) {
       body: unknown
     } = {
       method: c.req.method,
-      path: proxyPath || '/',
+      path: validation.normalized,
       query: Object.fromEntries(url.searchParams),
       headers: {},
       body: undefined,
@@ -165,7 +187,25 @@ export function createProxyHandler(proxy: ProxyDef, config: FunctionsConfig) {
       })
     }
 
-    let data = await response.json()
+    let data: unknown
+    try {
+      data = await response.json()
+    } catch (parseError) {
+      // Upstream claimed JSON but returned invalid JSON
+      const contentType = response.headers.get('content-type') || ''
+      return c.var.respond({
+        error: {
+          code: 'UPSTREAM_INVALID_JSON',
+          message: 'Upstream returned invalid JSON',
+          details: {
+            upstream: proxy.upstream,
+            contentType,
+            parseError: parseError instanceof Error ? parseError.message : String(parseError),
+          },
+        },
+        status: 502,
+      })
+    }
 
     // Transform response
     if (proxy.transformResponse) {

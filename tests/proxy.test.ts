@@ -264,4 +264,41 @@ describe('Proxy convention', () => {
       expect(body.error.code).toBe('PATH_NOT_ALLOWED')
     })
   })
+
+  describe('JSON parsing error handling', () => {
+    it('returns 502 Bad Gateway when upstream returns invalid JSON with application/json content-type', async () => {
+      // Mock upstream returning invalid JSON with application/json content-type
+      const mockResponse = new Response('not valid json {{{', {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+      ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockResponse)
+
+      const app = createProxyApp('https://api.example.com')
+      const res = await app.request('/data')
+
+      expect(res.status).toBe(502)
+      const body = await res.json()
+      expect(body.error.code).toBe('UPSTREAM_INVALID_JSON')
+      expect(body.error.message).toContain('invalid JSON')
+      expect(body.error.details).toBeDefined()
+      expect(body.error.details.contentType).toBe('application/json')
+    })
+
+    it('includes upstream info in 502 error response', async () => {
+      const mockResponse = new Response('{ broken json', {
+        status: 200,
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      })
+      ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockResponse)
+
+      const app = createProxyApp('https://api.example.com')
+      const res = await app.request('/users')
+
+      expect(res.status).toBe(502)
+      const body = await res.json()
+      expect(body.error.code).toBe('UPSTREAM_INVALID_JSON')
+      expect(body.error.details.upstream).toBe('https://api.example.com')
+    })
+  })
 })

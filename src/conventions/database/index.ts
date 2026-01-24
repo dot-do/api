@@ -503,51 +503,6 @@ function generateMcpTools(schema: ParsedSchema, config: DatabaseConfig): McpTool
 }
 
 /**
- * Execute an MCP tool call
- */
-async function executeToolCall(
-  db: DatabaseRpcClient,
-  schema: ParsedSchema,
-  toolName: string,
-  args: Record<string, unknown>,
-  ctx: { userId?: string; requestId?: string }
-): Promise<unknown> {
-  const [modelName, method] = toolName.split('.')
-
-  // Find model by singular name
-  const model = Object.values(schema.models).find((m) => m.singular === modelName)
-  if (!model) {
-    throw new Error(`Model not found: ${modelName}`)
-  }
-
-  switch (method) {
-    case 'create':
-      return db.create(model.name, args, ctx)
-
-    case 'get':
-      return db.get(model.name, args.id as string, {
-        include: args.include as string[] | undefined,
-      })
-
-    case 'list':
-      return db.list(model.name, args as QueryOptions)
-
-    case 'search':
-      return db.search(model.name, args.query as string, args as QueryOptions)
-
-    case 'update':
-      return db.update(model.name, args.id as string, args.data as Record<string, unknown>, ctx)
-
-    case 'delete':
-      await db.delete(model.name, args.id as string, ctx)
-      return { deleted: true, id: args.id }
-
-    default:
-      throw new Error(`Unknown method: ${method}`)
-  }
-}
-
-/**
  * Parse query options from request
  */
 function parseQueryOptions(c: { req: { query: (k: string) => string | undefined } }, defaultLimit: number, maxLimit: number): QueryOptions {

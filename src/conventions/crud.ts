@@ -1,14 +1,63 @@
 import { Hono } from 'hono'
 import type { ApiEnv, CrudConfig } from '../types'
 import { buildPagination } from '../helpers/pagination'
-import { validateColumns } from '../helpers/sql-validation'
+import { validateColumns, isValidColumnName } from '../helpers/sql-validation'
+
+/**
+ * Validates sortable and searchable config arrays against SQL injection
+ * @returns Object with valid status and list of invalid columns if any
+ */
+function validateConfigColumns(
+  sortable?: string[],
+  searchable?: string[]
+): { valid: boolean; invalidColumns: string[] } {
+  const invalidColumns: string[] = []
+
+  if (sortable) {
+    for (const col of sortable) {
+      if (!isValidColumnName(col)) {
+        invalidColumns.push(col)
+      }
+    }
+  }
+
+  if (searchable) {
+    for (const col of searchable) {
+      if (!isValidColumnName(col)) {
+        invalidColumns.push(col)
+      }
+    }
+  }
+
+  return {
+    valid: invalidColumns.length === 0,
+    invalidColumns
+  }
+}
 
 export function crudConvention(config: CrudConfig): Hono<ApiEnv> {
   const app = new Hono<ApiEnv>()
   const { table, primaryKey = 'id', pageSize = 25, maxPageSize = 100 } = config
 
+  // Validate sortable and searchable config at initialization time
+  const configValidation = validateConfigColumns(config.sortable, config.searchable)
+  const configValid = configValidation.valid
+  const invalidConfigColumns = configValidation.invalidColumns
+
   // LIST
   app.get('/', async (c) => {
+    // Early rejection if config contains invalid column names
+    if (!configValid) {
+      return c.var.respond({
+        error: {
+          message: `Invalid sortable/searchable column names in config: ${invalidConfigColumns.join(', ')}`,
+          code: 'INVALID_CONFIG',
+          status: 400
+        },
+        status: 400
+      })
+    }
+
     const db = (c.env as Record<string, unknown>)[config.db] as D1Database
     const url = new URL(c.req.url)
 

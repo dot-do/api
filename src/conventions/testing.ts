@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
-import type { ApiEnv, McpTool } from '../types'
+import type { ApiEnv } from '../types'
+import type { RegistryTool } from '../mcp-registry'
 
 export interface TestCase {
   id?: string
@@ -61,16 +62,12 @@ interface JsonRpcRequest {
   id?: string | number
 }
 
-interface ExtendedMcpTool extends McpTool {
-  outputSchema?: Record<string, unknown>
-  examples?: Example[]
-  tests?: TestCase[]
-}
+// RegistryTool from mcp-registry already has the right shape with optional handler and TestCase[] tests
 
 /**
  * Collect all tests from MCP tools and REST endpoints
  */
-function collectTests(config: TestingConfig, tools?: ExtendedMcpTool[]): Array<{
+function collectTests(config: TestingConfig, tools?: RegistryTool[]): Array<{
   id: string
   name: string
   method?: string
@@ -138,7 +135,7 @@ function collectTests(config: TestingConfig, tools?: ExtendedMcpTool[]): Array<{
 /**
  * Collect examples from MCP tools
  */
-function collectExamples(tools?: ExtendedMcpTool[]): Array<{
+function collectExamples(tools?: RegistryTool[]): Array<{
   tool: string
   name: string
   input?: unknown
@@ -172,7 +169,7 @@ function collectExamples(tools?: ExtendedMcpTool[]): Array<{
 /**
  * Collect schemas from MCP tools
  */
-function collectSchemas(tools?: ExtendedMcpTool[]): Array<{
+function collectSchemas(tools?: RegistryTool[]): Array<{
   tool: string
   inputSchema: Record<string, unknown>
   outputSchema?: Record<string, unknown>
@@ -199,7 +196,7 @@ function collectSchemas(tools?: ExtendedMcpTool[]): Array<{
 /**
  * Testing convention - exposes /qa endpoint for test discovery and execution
  */
-export function testingConvention(config: TestingConfig, tools?: ExtendedMcpTool[]): Hono<ApiEnv> {
+export function testingConvention(config: TestingConfig, tools?: RegistryTool[]): Hono<ApiEnv> {
   const app = new Hono<ApiEnv>()
 
   if (!config.enabled) {
@@ -263,7 +260,7 @@ export function testingConvention(config: TestingConfig, tools?: ExtendedMcpTool
 async function handleTestingMethod(
   req: JsonRpcRequest,
   config: TestingConfig,
-  tools?: ExtendedMcpTool[]
+  tools?: RegistryTool[]
 ): Promise<unknown> {
   switch (req.method) {
     case 'tests/list': {
