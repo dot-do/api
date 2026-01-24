@@ -1,0 +1,21 @@
+{
+  "name": "db4-example",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsx build.ts",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250124.0",
+    "esbuild": "^0.24.2",
+    "tsx": "^4.19.2",
+    "wrangler": "^3.99.0"
+  },
+  "dependencies": {
+    "@dotdo/apis": "^0.1.0",
+    "hono": "^4.6.0"
+  }
+}

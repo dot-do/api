@@ -1,0 +1,26 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ducktail",
+  "main": "worker.ts",
+  "compatibility_date": "2026-01-24",
+  "compatibility_flags": ["nodejs_compat"],
+  "account_id": "b6641681fe423910342b9ffa1364c76d",
+  "routes": [
+    { "pattern": "ducktail.workers.do/*", "zone_name": "workers.do" }
+  ],
+  "vars": {
+    "API_NAME": "ducktail.workers.do"
+  },
+  "analytics_engine_datasets": [
+    {
+      "binding": "ANALYTICS",
+      "dataset": "ducktail-workers"
+    }
+  ],
+  "migrations": [
+    {
+      "tag": "v5-delete-do",
+      "deleted_classes": ["SessionRecordingDO", "BufferCoordinatorDO", "DuckTailBufferDO", "DuckTailDuckLakeDO", "DuckLakeMetadataDO"]
+    }
+  ]
+}

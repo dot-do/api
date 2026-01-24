@@ -94,6 +94,92 @@ const projects: Project[] = [
       health: 'https://neon.example.com.ai/health',
     },
   },
+  // example.com.ai database backends
+  {
+    name: 'db4.example.com.ai',
+    domain: 'db4.example.com.ai',
+    description: 'DB4 key-value store (in-memory demo)',
+    database: 'DB4',
+    status: 'active',
+    endpoints: {
+      api: 'https://db4.example.com.ai',
+      qa: 'https://db4.example.com.ai/qa',
+      health: 'https://db4.example.com.ai/health',
+    },
+  },
+  {
+    name: 'sdb.example.com.ai',
+    domain: 'sdb.example.com.ai',
+    description: 'SDB document/graph database (in-memory demo)',
+    database: 'SDB',
+    status: 'active',
+    endpoints: {
+      api: 'https://sdb.example.com.ai',
+      qa: 'https://sdb.example.com.ai/qa',
+      health: 'https://sdb.example.com.ai/health',
+    },
+  },
+  {
+    name: 'evodb.example.com.ai',
+    domain: 'evodb.example.com.ai',
+    description: 'EvoDB distributed lakehouse (in-memory demo)',
+    database: 'EvoDB',
+    status: 'active',
+    endpoints: {
+      api: 'https://evodb.example.com.ai',
+      qa: 'https://evodb.example.com.ai/qa',
+      health: 'https://evodb.example.com.ai/health',
+    },
+  },
+  {
+    name: 'graphdb.example.com.ai',
+    domain: 'graphdb.example.com.ai',
+    description: 'GraphDB graph database (in-memory demo)',
+    database: 'GraphDB',
+    status: 'active',
+    endpoints: {
+      api: 'https://graphdb.example.com.ai',
+      qa: 'https://graphdb.example.com.ai/qa',
+      health: 'https://graphdb.example.com.ai/health',
+    },
+  },
+  // workers.do analytics backends
+  {
+    name: 'duckdb.workers.do',
+    domain: 'duckdb.workers.do',
+    description: 'DuckDB analytics database (in-memory demo)',
+    database: 'DuckDB',
+    status: 'active',
+    endpoints: {
+      api: 'https://duckdb.workers.do',
+      qa: 'https://duckdb.workers.do/qa',
+      health: 'https://duckdb.workers.do/health',
+    },
+  },
+  {
+    name: 'ducktail.workers.do',
+    domain: 'ducktail.workers.do',
+    description: 'Ducktail log & event tailing service',
+    database: 'In-memory',
+    status: 'active',
+    endpoints: {
+      api: 'https://ducktail.workers.do',
+      qa: 'https://ducktail.workers.do/qa',
+      health: 'https://ducktail.workers.do/health',
+    },
+  },
+  {
+    name: 'ducklytics.workers.do',
+    domain: 'ducklytics.workers.do',
+    description: 'Ducklytics analytics platform',
+    database: 'In-memory',
+    status: 'active',
+    endpoints: {
+      api: 'https://ducklytics.workers.do',
+      qa: 'https://ducklytics.workers.do/qa',
+      health: 'https://ducklytics.workers.do/health',
+    },
+  },
 ]
 
 export default API({

@@ -1,23 +1,20 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "api-qa-index",
-  "main": "_worker.js",
+  "name": "ducklytics-workers",
+  "main": "worker.ts",
   "compatibility_date": "2026-01-24",
+  "compatibility_flags": ["nodejs_compat"],
   "account_id": "b6641681fe423910342b9ffa1364c76d",
-  "no_bundle": true,
-  "build": {
-    "command": "npx tsx build.ts"
-  },
   "routes": [
-    { "pattern": "api.qa/*", "zone_name": "api.qa" }
+    { "pattern": "ducklytics.workers.do/*", "zone_name": "workers.do" }
   ],
   "vars": {
-    "API_NAME": "api.qa"
+    "API_NAME": "ducklytics.workers.do"
   },
   "analytics_engine_datasets": [
     {
       "binding": "ANALYTICS",
-      "dataset": "api-qa"
+      "dataset": "ducklytics-workers"
     }
   ]
 }
