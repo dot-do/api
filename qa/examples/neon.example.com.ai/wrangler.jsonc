@@ -1,7 +1,11 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "neon-example",
-  "main": "worker.ts",
+  "main": "_worker.js",
+  "no_bundle": true,
+  "build": {
+    "command": "npx tsx build.ts"
+  },
   "compatibility_date": "2026-01-24",
   "compatibility_flags": ["nodejs_compat"],
   "account_id": "b6641681fe423910342b9ffa1364c76d",

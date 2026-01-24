@@ -16,7 +16,6 @@
     "wrangler": "^3.99.0"
   },
   "dependencies": {
-    "@dotdo/apis": "^0.1.0",
-    "postgres.do": "^0.1.0"
+    "hono": "^4.7.0"
   }
 }
