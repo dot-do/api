@@ -1,0 +1,36 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "blog-api",
+  "main": "worker.ts",
+  "compatibility_date": "2026-01-24",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Observability
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+
+  // Database Durable Object
+  "durable_objects": {
+    "bindings": [
+      { "name": "DB", "class_name": "DatabaseDO" }
+      // { "name": "ANALYTICS_BUFFER", "class_name": "AnalyticsBufferDO" }
+    ]
+  },
+
+  // DO migrations (use new_sqlite_classes for SQLite-backed DOs)
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["DatabaseDO"] }
+  ]
+
+  // Event queue (optional)
+  // "queues": {
+  //   "producers": [{ "binding": "EVENTS", "queue": "blog-events" }]
+  // },
+
+  // R2 for analytics/lakehouse (optional)
+  // "r2_buckets": [
+  //   { "binding": "ANALYTICS_BUCKET", "bucket_name": "analytics" }
+  // ]
+}

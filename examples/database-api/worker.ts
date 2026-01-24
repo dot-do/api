@@ -93,10 +93,7 @@ export default API({
 // =============================================================================
 
 // The DO class that stores the data
-// Add this to wrangler.toml:
-// [[durable_objects.bindings]]
-// name = "DB"
-// class_name = "DatabaseDO"
+// See wrangler.jsonc for binding configuration
 export { DatabaseDO }
 
 // =============================================================================

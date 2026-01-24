@@ -421,20 +421,33 @@ export { DatabaseDO, AnalyticsBufferDO }
 export default API({ /* ... */ })
 ```
 
-**wrangler.toml:**
+**wrangler.jsonc:**
 
-```toml
-[[durable_objects.bindings]]
-name = "DB"
-class_name = "DatabaseDO"
+```jsonc
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "my-api",
+  "main": "worker.ts",
+  "compatibility_date": "2026-01-24",
+  "compatibility_flags": ["nodejs_compat"],
 
-[[durable_objects.bindings]]
-name = "ANALYTICS_BUFFER"
-class_name = "AnalyticsBufferDO"
+  "observability": { "enabled": true, "head_sampling_rate": 1 },
 
-[[r2_buckets]]
-binding = "ANALYTICS_BUCKET"
-bucket_name = "analytics"
+  "durable_objects": {
+    "bindings": [
+      { "name": "DB", "class_name": "DatabaseDO" },
+      { "name": "ANALYTICS_BUFFER", "class_name": "AnalyticsBufferDO" }
+    ]
+  },
+
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["DatabaseDO", "AnalyticsBufferDO"] }
+  ],
+
+  "r2_buckets": [
+    { "binding": "ANALYTICS_BUCKET", "bucket_name": "analytics" }
+  ]
+}
 ```
 
 ## Event Streaming
