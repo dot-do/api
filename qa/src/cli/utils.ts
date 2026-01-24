@@ -86,7 +86,7 @@ COMMANDS:
 OPTIONS:
   --tags <tags>     Filter tests by tags (comma-separated)
   --type <type>     Filter by protocol type (rest, mcp, rpc)
-  --format <fmt>    Output format (console, json, tap, junit)
+  --format <fmt>    Output format (json, tap, junit, console). Default: json
   --parallel        Run tests in parallel
   --timeout <ms>    Request timeout in milliseconds
   --retries <n>     Number of retries for failed tests

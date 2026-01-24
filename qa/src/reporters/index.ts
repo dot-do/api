@@ -13,7 +13,7 @@ import { createJsonReporter } from './json.js'
 import { createTapReporter } from './tap.js'
 import { createJunitReporter } from './junit.js'
 
-export type ReporterType = 'console' | 'json' | 'tap' | 'junit'
+export type ReporterType = 'json' | 'console' | 'tap' | 'junit'
 
 export interface ReporterOptions {
   verbose?: boolean
@@ -25,17 +25,17 @@ export interface ReporterOptions {
 /**
  * Create a reporter by type
  */
-export function createReporter(type: ReporterType, options: ReporterOptions = {}): Reporter {
+export function createReporter(type: ReporterType = 'json', options: ReporterOptions = {}): Reporter {
   switch (type) {
+    case 'json':
+      return createJsonReporter({ pretty: options.pretty ?? true, stream: options.stream })
     case 'console':
       return createConsoleReporter({ verbose: options.verbose })
-    case 'json':
-      return createJsonReporter({ pretty: options.pretty, stream: options.stream })
     case 'tap':
       return createTapReporter()
     case 'junit':
       return createJunitReporter({ suiteName: options.suiteName })
     default:
-      return createConsoleReporter()
+      return createJsonReporter({ pretty: true })
   }
 }

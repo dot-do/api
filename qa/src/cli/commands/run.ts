@@ -21,7 +21,7 @@ export interface RunOptions {
 }
 
 export async function runCommand(options: RunOptions): Promise<number> {
-  const { url, tags, format = 'console', parallel = false, timeout, retries, baseUrl, verbose } = options
+  const { url, tags, format = 'json', parallel = false, timeout, retries, baseUrl, verbose } = options
 
   if (!validateUrl(url)) {
     console.error(formatError(new Error(`Invalid URL: ${url}`)))
