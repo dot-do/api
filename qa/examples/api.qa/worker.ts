@@ -189,308 +189,6 @@ export default API({
 
   auth: { mode: 'optional' },
 
-  // Custom landing page - status dashboard
-  landing: async (c) => {
-    const accept = c.req.header('accept') || ''
-
-    // If requesting JSON, return JSON response
-    if (accept.includes('application/json') && !accept.includes('text/html')) {
-      const results = await Promise.all(
-        projects.map(async (project) => {
-          if (project.status !== 'active') {
-            return {
-              name: project.name,
-              description: project.description,
-              database: project.database,
-              status: 'pending' as const,
-              healthy: null,
-              latency: null,
-            }
-          }
-          const start = Date.now()
-          try {
-            const response = await fetch(project.endpoints.health)
-            return {
-              name: project.name,
-              description: project.description,
-              database: project.database,
-              status: 'active' as const,
-              healthy: response.ok,
-              latency: Date.now() - start,
-            }
-          } catch {
-            return {
-              name: project.name,
-              description: project.description,
-              database: project.database,
-              status: 'active' as const,
-              healthy: false,
-              latency: Date.now() - start,
-            }
-          }
-        })
-      )
-
-      const activeResults = results.filter((r) => r.status === 'active')
-      const healthy = activeResults.filter((r) => r.healthy).length
-      const total = activeResults.length
-
-      return c.var.respond({
-        data: {
-          overall: healthy === total ? 'healthy' : 'degraded',
-          healthy,
-          total,
-          projects: results,
-          timestamp: new Date().toISOString(),
-        },
-      })
-    }
-
-    // Otherwise return HTML status page
-    const results = await Promise.all(
-      projects.map(async (project) => {
-        if (project.status !== 'active') {
-          return {
-            ...project,
-            healthy: null as boolean | null,
-            latency: null as number | null,
-            checkedAt: new Date().toISOString(),
-          }
-        }
-        const start = Date.now()
-        try {
-          const response = await fetch(project.endpoints.health)
-          return {
-            ...project,
-            healthy: response.ok,
-            latency: Date.now() - start,
-            checkedAt: new Date().toISOString(),
-          }
-        } catch {
-          return {
-            ...project,
-            healthy: false,
-            latency: Date.now() - start,
-            checkedAt: new Date().toISOString(),
-          }
-        }
-      })
-    )
-
-    const activeResults = results.filter((r) => r.status === 'active')
-    const healthyCount = activeResults.filter((r) => r.healthy).length
-    const totalActive = activeResults.length
-    const overallStatus = healthyCount === totalActive ? 'operational' : 'degraded'
-    const timestamp = new Date().toISOString()
-
-    const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>api.qa - Status</title>
-  <style>
-    :root {
-      --bg: #0a0a0a;
-      --card: #111;
-      --border: #222;
-      --text: #e5e5e5;
-      --muted: #888;
-      --pass: #22c55e;
-      --fail: #ef4444;
-      --pending: #f59e0b;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      padding: 2rem;
-    }
-    .container { max-width: 900px; margin: 0 auto; }
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 2rem;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid var(--border);
-    }
-    h1 { font-size: 1.5rem; font-weight: 600; }
-    .overall {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.875rem;
-    }
-    .dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      animation: pulse 2s infinite;
-    }
-    .dot.pass { background: var(--pass); }
-    .dot.fail { background: var(--fail); }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-    .summary {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1.5rem;
-      margin-bottom: 2rem;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
-      text-align: center;
-    }
-    .summary-item h3 { font-size: 2rem; font-weight: 700; }
-    .summary-item p { color: var(--muted); font-size: 0.875rem; }
-    .projects { display: flex; flex-direction: column; gap: 0.5rem; }
-    .project {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1rem 1.25rem;
-      display: grid;
-      grid-template-columns: auto 1fr auto auto;
-      align-items: center;
-      gap: 1rem;
-    }
-    .project:hover { border-color: #333; }
-    .status-indicator {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-    }
-    .status-indicator.pass { background: var(--pass); }
-    .status-indicator.fail { background: var(--fail); }
-    .status-indicator.pending { background: var(--pending); }
-    .project-info h4 {
-      font-size: 0.9375rem;
-      font-weight: 500;
-      margin-bottom: 0.25rem;
-    }
-    .project-info h4 a {
-      color: inherit;
-      text-decoration: none;
-    }
-    .project-info h4 a:hover { text-decoration: underline; }
-    .project-info p {
-      font-size: 0.8125rem;
-      color: var(--muted);
-    }
-    .badge {
-      font-size: 0.75rem;
-      padding: 0.25rem 0.5rem;
-      border-radius: 4px;
-      background: var(--border);
-      color: var(--muted);
-    }
-    .latency {
-      font-size: 0.8125rem;
-      color: var(--muted);
-      min-width: 60px;
-      text-align: right;
-    }
-    footer {
-      margin-top: 2rem;
-      padding-top: 1rem;
-      border-top: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.8125rem;
-      color: var(--muted);
-    }
-    footer a { color: var(--muted); }
-    .section-title {
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--muted);
-      margin: 1.5rem 0 0.75rem;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <header>
-      <h1>api.qa</h1>
-      <div class="overall">
-        <span class="dot ${overallStatus === 'operational' ? 'pass' : 'fail'}"></span>
-        <span>${overallStatus === 'operational' ? 'All Systems Operational' : 'Some Systems Degraded'}</span>
-      </div>
-    </header>
-
-    <div class="summary">
-      <div class="summary-item">
-        <h3>${healthyCount}</h3>
-        <p>Passing</p>
-      </div>
-      <div class="summary-item">
-        <h3>${totalActive - healthyCount}</h3>
-        <p>Failing</p>
-      </div>
-      <div class="summary-item">
-        <h3>${results.filter((r) => r.status === 'pending').length}</h3>
-        <p>Pending</p>
-      </div>
-    </div>
-
-    <div class="section-title">example.com.ai</div>
-    <div class="projects">
-      ${results
-        .filter((r) => r.domain.endsWith('.example.com.ai'))
-        .map(
-          (r) => `
-        <div class="project">
-          <span class="status-indicator ${r.healthy === null ? 'pending' : r.healthy ? 'pass' : 'fail'}"></span>
-          <div class="project-info">
-            <h4><a href="${r.endpoints.api}" target="_blank">${r.name}</a></h4>
-            <p>${r.description}</p>
-          </div>
-          <span class="badge">${r.database}</span>
-          <span class="latency">${r.latency !== null ? r.latency + 'ms' : 'pending'}</span>
-        </div>
-      `
-        )
-        .join('')}
-    </div>
-
-    <div class="section-title">workers.do</div>
-    <div class="projects">
-      ${results
-        .filter((r) => r.domain.endsWith('.workers.do'))
-        .map(
-          (r) => `
-        <div class="project">
-          <span class="status-indicator ${r.healthy === null ? 'pending' : r.healthy ? 'pass' : 'fail'}"></span>
-          <div class="project-info">
-            <h4><a href="${r.endpoints.api}" target="_blank">${r.name}</a></h4>
-            <p>${r.description}</p>
-          </div>
-          <span class="badge">${r.database}</span>
-          <span class="latency">${r.latency !== null ? r.latency + 'ms' : 'pending'}</span>
-        </div>
-      `
-        )
-        .join('')}
-    </div>
-
-    <footer>
-      <span>Last checked: ${new Date(timestamp).toLocaleString()}</span>
-      <a href="/status">JSON API</a>
-    </footer>
-  </div>
-</body>
-</html>`
-
-    return c.html(html)
-  },
-
   mcp: {
     name: 'api.qa-mcp',
     version: '1.0.0',
@@ -873,6 +571,249 @@ export default API({
           timestamp: new Date().toISOString(),
         },
       })
+    })
+
+    // HTML Dashboard
+    app.get('/dash', async (c) => {
+      const results = await Promise.all(
+        projects.map(async (project) => {
+          if (project.status !== 'active') {
+            return {
+              ...project,
+              healthy: null as boolean | null,
+              latency: null as number | null,
+            }
+          }
+          const start = Date.now()
+          try {
+            const response = await fetch(project.endpoints.health)
+            return {
+              ...project,
+              healthy: response.ok,
+              latency: Date.now() - start,
+            }
+          } catch {
+            return {
+              ...project,
+              healthy: false,
+              latency: Date.now() - start,
+            }
+          }
+        })
+      )
+
+      const activeResults = results.filter((r) => r.status === 'active')
+      const healthyCount = activeResults.filter((r) => r.healthy).length
+      const totalActive = activeResults.length
+      const overallStatus = healthyCount === totalActive ? 'operational' : 'degraded'
+      const timestamp = new Date().toISOString()
+
+      const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>api.qa - Status</title>
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --card: #111;
+      --border: #222;
+      --text: #e5e5e5;
+      --muted: #888;
+      --pass: #22c55e;
+      --fail: #ef4444;
+      --pending: #f59e0b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    .container { max-width: 900px; margin: 0 auto; }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    h1 { font-size: 1.5rem; font-weight: 600; }
+    .overall {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+    }
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    .dot.pass { background: var(--pass); }
+    .dot.fail { background: var(--fail); }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .summary {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      text-align: center;
+    }
+    .summary-item h3 { font-size: 2rem; font-weight: 700; }
+    .summary-item p { color: var(--muted); font-size: 0.875rem; }
+    .projects { display: flex; flex-direction: column; gap: 0.5rem; }
+    .project {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      display: grid;
+      grid-template-columns: auto 1fr auto auto;
+      align-items: center;
+      gap: 1rem;
+    }
+    .project:hover { border-color: #333; }
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .status-indicator.pass { background: var(--pass); }
+    .status-indicator.fail { background: var(--fail); }
+    .status-indicator.pending { background: var(--pending); }
+    .project-info h4 {
+      font-size: 0.9375rem;
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+    }
+    .project-info h4 a {
+      color: inherit;
+      text-decoration: none;
+    }
+    .project-info h4 a:hover { text-decoration: underline; }
+    .project-info p {
+      font-size: 0.8125rem;
+      color: var(--muted);
+    }
+    .badge {
+      font-size: 0.75rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      background: var(--border);
+      color: var(--muted);
+    }
+    .latency {
+      font-size: 0.8125rem;
+      color: var(--muted);
+      min-width: 60px;
+      text-align: right;
+    }
+    footer {
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8125rem;
+      color: var(--muted);
+    }
+    footer a { color: var(--muted); }
+    .section-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      margin: 1.5rem 0 0.75rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>api.qa</h1>
+      <div class="overall">
+        <span class="dot ${overallStatus === 'operational' ? 'pass' : 'fail'}"></span>
+        <span>${overallStatus === 'operational' ? 'All Systems Operational' : 'Some Systems Degraded'}</span>
+      </div>
+    </header>
+
+    <div class="summary">
+      <div class="summary-item">
+        <h3>${healthyCount}</h3>
+        <p>Passing</p>
+      </div>
+      <div class="summary-item">
+        <h3>${totalActive - healthyCount}</h3>
+        <p>Failing</p>
+      </div>
+      <div class="summary-item">
+        <h3>${results.filter((r) => r.status === 'pending').length}</h3>
+        <p>Pending</p>
+      </div>
+    </div>
+
+    <div class="section-title">example.com.ai</div>
+    <div class="projects">
+      ${results
+        .filter((r) => r.domain.endsWith('.example.com.ai'))
+        .map(
+          (r) => `
+        <div class="project">
+          <span class="status-indicator ${r.healthy === null ? 'pending' : r.healthy ? 'pass' : 'fail'}"></span>
+          <div class="project-info">
+            <h4><a href="${r.endpoints.api}" target="_blank">${r.name}</a></h4>
+            <p>${r.description}</p>
+          </div>
+          <span class="badge">${r.database}</span>
+          <span class="latency">${r.latency !== null ? r.latency + 'ms' : 'pending'}</span>
+        </div>
+      `
+        )
+        .join('')}
+    </div>
+
+    <div class="section-title">workers.do</div>
+    <div class="projects">
+      ${results
+        .filter((r) => r.domain.endsWith('.workers.do'))
+        .map(
+          (r) => `
+        <div class="project">
+          <span class="status-indicator ${r.healthy === null ? 'pending' : r.healthy ? 'pass' : 'fail'}"></span>
+          <div class="project-info">
+            <h4><a href="${r.endpoints.api}" target="_blank">${r.name}</a></h4>
+            <p>${r.description}</p>
+          </div>
+          <span class="badge">${r.database}</span>
+          <span class="latency">${r.latency !== null ? r.latency + 'ms' : 'pending'}</span>
+        </div>
+      `
+        )
+        .join('')}
+    </div>
+
+    <footer>
+      <span>Last checked: ${new Date(timestamp).toLocaleString()}</span>
+      <a href="/">JSON API</a>
+    </footer>
+  </div>
+</body>
+</html>`
+
+      return c.html(html)
     })
 
     // Documentation
