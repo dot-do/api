@@ -14,7 +14,7 @@
   ],
   "vars": {
     "API_NAME": "neon.example.com.ai",
-    "DATABASE_URL": "postgres://db.postgres.do/neon-example"
+    "DATABASE_URL": "postgres://db.api.qa/neon-example"
   },
   "analytics_engine_datasets": [
     {
