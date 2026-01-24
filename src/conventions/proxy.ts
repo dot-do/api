@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import type { ApiEnv, ProxyConfig } from '../types'
+import { validateProxyPath } from '../helpers/path'
 
 export function proxyConvention(config: ProxyConfig): Hono<ApiEnv> {
   const app = new Hono<ApiEnv>()
@@ -8,10 +9,35 @@ export function proxyConvention(config: ProxyConfig): Hono<ApiEnv> {
     const url = new URL(c.req.url)
     const upstreamUrl = new URL(config.upstream)
 
-    // Rewrite path
+    // Get original path from header (if set by edge server/CDN before URL normalization)
+    const originalPath = c.req.header('X-Original-Path')
+
+    // Validate path to prevent SSRF and path traversal attacks
+    const validation = validateProxyPath(url.pathname, {
+      allowedPaths: config.allowedPaths,
+      blockTraversal: config.blockTraversal,
+      originalPath
+    })
+
+    if (!validation.valid) {
+      const status = validation.error === 'PATH_NOT_ALLOWED' ? 403 : 400
+      return c.var.respond({
+        error: {
+          code: validation.error,
+          message: validation.message || 'Invalid path',
+          status
+        },
+        status
+      })
+    }
+
+    // Use normalized path for upstream request
+    const normalizedPath = validation.normalized
+
+    // Rewrite path (applied after normalization for security)
     const path = config.rewritePath
-      ? config.rewritePath(url.pathname)
-      : url.pathname
+      ? config.rewritePath(normalizedPath)
+      : normalizedPath
 
     upstreamUrl.pathname = path
     upstreamUrl.search = url.search

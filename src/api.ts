@@ -1,12 +1,16 @@
 import { Hono } from 'hono'
 import type { ApiConfig, ApiEnv } from './types'
 import { responseMiddleware } from './response'
-import { contextMiddleware, corsMiddleware, authMiddleware, rateLimitMiddleware } from './middleware'
+import { contextMiddleware, corsMiddleware, authMiddleware, rateLimitMiddleware, createErrorHandler } from './middleware'
 import { crudConvention, proxyConvention, rpcConvention, mcpConvention, analyticsMiddleware, analyticsRoutes, analyticsBufferRoutes, testingConvention, databaseConvention, functionsConvention } from './conventions'
+import { McpToolRegistry } from './mcp-registry'
 
 export function API(config: ApiConfig): Hono<ApiEnv> {
   const app = new Hono<ApiEnv>()
   const basePath = config.basePath || ''
+
+  // Global error handler - catches unhandled errors and returns consistent envelope
+  app.onError(createErrorHandler(config))
 
   // Core middleware stack
   app.use('*', corsMiddleware())
@@ -59,8 +63,47 @@ export function API(config: ApiConfig): Hono<ApiEnv> {
     app.route('/', rpcConvention(config.rpc))
   }
 
+  // Create unified MCP tool registry
+  const mcpRegistry = new McpToolRegistry()
+
+  // Register explicit MCP config tools first
+  if (config.mcp?.tools) {
+    mcpRegistry.registerAll(config.mcp.tools)
+  }
+
+  // Database convention - schema-driven CRUD + MCP + events
+  // Process before MCP convention to register tools
+  if (config.database) {
+    const { routes, mcpTools } = databaseConvention(config.database)
+    app.route('/', routes)
+
+    // Register database MCP tools with the unified registry
+    if (mcpTools.length > 0) {
+      mcpRegistry.registerAll(mcpTools.map((t) => ({
+        ...t,
+        handler: async () => ({ error: 'Use /mcp endpoint' }), // Placeholder, actual handling in database convention
+      })))
+    }
+  }
+
+  // Functions convention - service actions, proxies, packages, mashups, lookups
+  // Process before MCP convention to register tools
+  if (config.functions) {
+    const { routes, mcpTools } = functionsConvention(config.functions)
+    app.route('/', routes)
+
+    // Register function MCP tools with the unified registry
+    if (mcpTools.length > 0) {
+      mcpRegistry.registerAll(mcpTools.map((t) => ({
+        ...t,
+        handler: async () => ({ error: 'Use /mcp endpoint' }),
+      })))
+    }
+  }
+
+  // Mount single unified MCP endpoint with all registered tools
   if (config.mcp) {
-    app.route('/', mcpConvention(config.mcp))
+    app.route('/', mcpConvention({ config: config.mcp, registry: mcpRegistry }))
   }
 
   if (config.analytics) {
@@ -73,35 +116,7 @@ export function API(config: ApiConfig): Hono<ApiEnv> {
   }
 
   if (config.testing) {
-    app.route('/', testingConvention(config.testing, config.mcp?.tools))
-  }
-
-  // Database convention - schema-driven CRUD + MCP + events
-  if (config.database) {
-    const { routes, mcpTools } = databaseConvention(config.database)
-    app.route('/', routes)
-
-    // Merge database MCP tools with explicit MCP tools
-    if (config.mcp && mcpTools.length > 0) {
-      config.mcp.tools = [...(config.mcp.tools || []), ...mcpTools.map((t) => ({
-        ...t,
-        handler: async () => ({ error: 'Use /mcp endpoint' }), // Placeholder, actual handling in database convention
-      }))]
-    }
-  }
-
-  // Functions convention - service actions, proxies, packages, mashups, lookups
-  if (config.functions) {
-    const { routes, mcpTools } = functionsConvention(config.functions)
-    app.route('/', routes)
-
-    // Merge function MCP tools with explicit MCP tools
-    if (config.mcp && mcpTools.length > 0) {
-      config.mcp.tools = [...(config.mcp.tools || []), ...mcpTools.map((t) => ({
-        ...t,
-        handler: async () => ({ error: 'Use /mcp endpoint' }),
-      }))]
-    }
+    app.route('/', testingConvention(config.testing, mcpRegistry.getTools()))
   }
 
   // Custom routes

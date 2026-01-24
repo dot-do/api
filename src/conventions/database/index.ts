@@ -10,11 +10,127 @@
 
 import { Hono } from 'hono'
 import type { ApiEnv } from '../../types'
-import type { DatabaseConfig, ParsedSchema, Document, QueryOptions, DatabaseEvent } from './types'
+import type { DatabaseConfig, ParsedSchema, ParsedModel, Document, QueryOptions, DatabaseEvent } from './types'
 import { parseSchema, generateJsonSchema } from './schema'
 
-export type { DatabaseConfig, SchemaDef, ParsedSchema, ParsedModel, ParsedField, Document, DatabaseEvent, DatabaseDriverType, DatabaseDriver, DatabaseDriverFactory, QueryOptions, QueryResult } from './types'
+export type { DatabaseConfig, SchemaDef, ParsedSchema, ParsedModel, ParsedField, Document, DatabaseEvent, DatabaseDriverType, DatabaseDriver, DatabaseDriverFactory, QueryOptions, QueryResult, EventSinkConfig } from './types'
 export { parseSchema, parseField, parseModel, generateJsonSchema } from './schema'
+export { generateWebhookSignature, generateWebhookSignatureAsync, sendToWebhookSink } from './do'
+
+// =============================================================================
+// Input Validation
+// =============================================================================
+
+/**
+ * Validation error details for a single field
+ */
+export interface ValidationError {
+  field: string
+  message: string
+  expected?: string
+  received?: string
+}
+
+/**
+ * Result of validating input data against a model schema
+ */
+export interface ValidationResult {
+  valid: boolean
+  errors: ValidationError[]
+}
+
+/**
+ * Validate input data against a model's JSON schema
+ *
+ * @param model - The parsed model containing field definitions
+ * @param data - The input data to validate
+ * @param partial - If true, required fields are not enforced (for PATCH)
+ */
+export function validateInput(
+  model: ParsedModel,
+  data: Record<string, unknown>,
+  partial = false
+): ValidationResult {
+  const errors: ValidationError[] = []
+  const jsonSchema = generateJsonSchema(model)
+  const properties = jsonSchema.properties as Record<string, { type?: string; items?: { type: string } }>
+  const required = (jsonSchema.required as string[]) || []
+
+  // Check required fields (only for non-partial validation)
+  if (!partial) {
+    for (const fieldName of required) {
+      if (data[fieldName] === undefined || data[fieldName] === null) {
+        errors.push({
+          field: fieldName,
+          message: `Required field '${fieldName}' is missing`,
+        })
+      }
+    }
+  }
+
+  // Type check all provided fields
+  for (const [fieldName, value] of Object.entries(data)) {
+    // Skip id and internal fields
+    if (fieldName === 'id' || fieldName.startsWith('_')) continue
+
+    const fieldSchema = properties[fieldName]
+    if (!fieldSchema) {
+      // Unknown field - we could either ignore or error
+      // For now, we allow extra fields (schema evolution)
+      continue
+    }
+
+    if (value === null || value === undefined) {
+      // Null/undefined values are okay for optional fields
+      continue
+    }
+
+    const expectedType = fieldSchema.type
+    const actualType = getJsonType(value)
+
+    if (expectedType && actualType !== expectedType) {
+      // Special case: arrays
+      if (expectedType === 'array' && Array.isArray(value)) {
+        // Check array item types if specified
+        const itemType = fieldSchema.items?.type
+        if (itemType) {
+          for (let i = 0; i < value.length; i++) {
+            const itemActualType = getJsonType(value[i])
+            if (itemActualType !== itemType) {
+              errors.push({
+                field: `${fieldName}[${i}]`,
+                message: `Array item at index ${i} has wrong type`,
+                expected: itemType,
+                received: itemActualType,
+              })
+            }
+          }
+        }
+      } else {
+        errors.push({
+          field: fieldName,
+          message: `Field '${fieldName}' has wrong type`,
+          expected: expectedType,
+          received: actualType,
+        })
+      }
+    }
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+  }
+}
+
+/**
+ * Get the JSON Schema type of a value
+ */
+function getJsonType(value: unknown): string {
+  if (value === null) return 'null'
+  if (Array.isArray(value)) return 'array'
+  return typeof value
+}
 
 /**
  * Create database convention routes
@@ -84,8 +200,22 @@ export function databaseConvention(config: DatabaseConfig): {
 
     // CREATE - POST /users
     app.post(modelPath, async (c) => {
-      const db = await getDatabase(c, config)
       const body = await c.req.json()
+
+      // Validate input before database operations
+      const validation = validateInput(model, body, false)
+      if (!validation.valid) {
+        return c.var.respond({
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Input validation failed',
+            details: validation.errors,
+          },
+          status: 400,
+        })
+      }
+
+      const db = await getDatabase(c, config)
       const ctx = getRequestContext(c)
 
       const doc = await db.create(model.name, body, ctx)
@@ -116,16 +246,30 @@ export function databaseConvention(config: DatabaseConfig): {
 
     // UPDATE - PUT /users/:id
     app.put(`${modelPath}/:id`, async (c) => {
-      const db = await getDatabase(c, config)
       const id = c.req.param('id')
       const body = await c.req.json()
+
+      // Validate input before database operations (full validation for PUT)
+      const validation = validateInput(model, body, false)
+      if (!validation.valid) {
+        return c.var.respond({
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Input validation failed',
+            details: validation.errors,
+          },
+          status: 400,
+        })
+      }
+
+      const db = await getDatabase(c, config)
       const ctx = getRequestContext(c)
 
       try {
         const doc = await db.update(model.name, id, body, ctx)
         return c.var.respond({ data: doc })
       } catch (e) {
-        const err = e as Error
+        const err = e instanceof Error ? e : new Error(String(e))
         if (err.message.includes('not found')) {
           return c.var.respond({
             error: { code: 'NOT_FOUND', message: err.message },
@@ -138,16 +282,30 @@ export function databaseConvention(config: DatabaseConfig): {
 
     // PATCH - PATCH /users/:id
     app.patch(`${modelPath}/:id`, async (c) => {
-      const db = await getDatabase(c, config)
       const id = c.req.param('id')
       const body = await c.req.json()
+
+      // Validate input before database operations (partial validation for PATCH)
+      const validation = validateInput(model, body, true)
+      if (!validation.valid) {
+        return c.var.respond({
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Input validation failed',
+            details: validation.errors,
+          },
+          status: 400,
+        })
+      }
+
+      const db = await getDatabase(c, config)
       const ctx = getRequestContext(c)
 
       try {
         const doc = await db.update(model.name, id, body, ctx)
         return c.var.respond({ data: doc })
       } catch (e) {
-        const err = e as Error
+        const err = e instanceof Error ? e : new Error(String(e))
         if (err.message.includes('not found')) {
           return c.var.respond({
             error: { code: 'NOT_FOUND', message: err.message },
@@ -204,64 +362,8 @@ export function databaseConvention(config: DatabaseConfig): {
     }
   }
 
-  // ==========================================================================
-  // MCP Endpoint
-  // ==========================================================================
-
-  if (config.mcp !== false) {
-    const mcpPath = typeof config.mcp === 'object' ? '/mcp' : '/mcp'
-
-    app.post(mcpPath, async (c) => {
-      const body = await c.req.json<{ jsonrpc: string; method: string; params?: unknown; id?: unknown }>()
-
-      if (body.method === 'tools/list') {
-        return c.json({
-          jsonrpc: '2.0',
-          result: { tools: mcpTools },
-          id: body.id,
-        })
-      }
-
-      if (body.method === 'tools/call') {
-        const params = body.params as { name: string; arguments?: Record<string, unknown> }
-        const tool = mcpTools.find((t) => t.name === params.name)
-
-        if (!tool) {
-          return c.json({
-            jsonrpc: '2.0',
-            error: { code: -32601, message: `Tool not found: ${params.name}` },
-            id: body.id,
-          })
-        }
-
-        try {
-          const db = await getDatabase(c, config)
-          const result = await executeToolCall(db, schema, params.name, params.arguments || {}, getRequestContext(c))
-
-          return c.json({
-            jsonrpc: '2.0',
-            result: {
-              content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
-            },
-            id: body.id,
-          })
-        } catch (e) {
-          const err = e as Error
-          return c.json({
-            jsonrpc: '2.0',
-            error: { code: -32603, message: err.message },
-            id: body.id,
-          })
-        }
-      }
-
-      return c.json({
-        jsonrpc: '2.0',
-        error: { code: -32601, message: `Method not found: ${body.method}` },
-        id: body.id,
-      })
-    })
-  }
+  // NOTE: MCP endpoint removed - tools are now served through unified /mcp endpoint
+  // via McpToolRegistry in api.ts
 
   // ==========================================================================
   // Events Endpoint
@@ -679,11 +781,13 @@ function createInMemoryDatabase(): DatabaseRpcClient {
       if (options?.orderBy) {
         const field = typeof options.orderBy === 'string' ? options.orderBy : options.orderBy[0]?.field
         const dir = typeof options.orderBy === 'string' ? 'asc' : options.orderBy[0]?.direction || 'asc'
-        docs.sort((a, b) => {
-          const aVal = String(a[field] || '')
-          const bVal = String(b[field] || '')
-          return dir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal)
-        })
+        if (field) {
+          docs.sort((a, b) => {
+            const aVal = String(a[field] || '')
+            const bVal = String(b[field] || '')
+            return dir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal)
+          })
+        }
       }
 
       const total = docs.length

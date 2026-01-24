@@ -45,6 +45,7 @@ export {
   isLengthMatcher,
   isEnumMatcher,
   isOptionalMatcher,
+  isLiteralMatcher,
   type MatchResult,
   // Partial matching
   matchPartial,

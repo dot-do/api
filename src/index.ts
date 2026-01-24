@@ -1,4 +1,6 @@
 export { API } from './api'
+export { McpToolRegistry, createMcpToolRegistry } from './mcp-registry'
+export type { RegistryTool } from './mcp-registry'
 export type {
   ApiConfig,
   ApiEnv,
@@ -32,7 +34,7 @@ export type {
 } from './types'
 
 export { responseMiddleware } from './response'
-export { contextMiddleware, corsMiddleware, authMiddleware, rateLimitMiddleware } from './middleware'
+export { contextMiddleware, corsMiddleware, authMiddleware, rateLimitMiddleware, createErrorHandler } from './middleware'
 export { crudConvention, proxyConvention, rpcConvention, mcpConvention, analyticsMiddleware, analyticsRoutes, analyticsBufferRoutes, AnalyticsBufferDO, testingConvention, databaseConvention, DatabaseDO, functionsConvention } from './conventions'
 export type { AnalyticsBufferConfig, BufferEvent, TestingConfig, TestCase, RestTestCase, Example } from './conventions'
 export type { FunctionsConfig, FunctionDef, ProxyDef, MashupDef, LookupDef, PipelineDef } from './conventions'

@@ -85,6 +85,16 @@ export interface OptionalMatcher {
   optional: true
 }
 
+/**
+ * LiteralMatcher wraps arbitrary literal values for type-safe matching.
+ * This branded type allows TypeScript to narrow the Matcher union properly,
+ * unlike bare `unknown` which absorbs all other types in a union.
+ */
+export interface LiteralMatcher {
+  __literal: true
+  value: unknown
+}
+
 export type Matcher =
   | TypeMatcher
   | PatternMatcher
@@ -93,11 +103,11 @@ export type Matcher =
   | LengthMatcher
   | EnumMatcher
   | OptionalMatcher
+  | LiteralMatcher
   | (TypeMatcher & PatternMatcher)
   | (TypeMatcher & FormatMatcher)
   | (TypeMatcher & RangeMatcher)
   | (TypeMatcher & LengthMatcher)
-  | unknown // for literal values
 
 export type ExpectValue = Matcher | unknown
 

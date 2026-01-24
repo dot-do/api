@@ -51,7 +51,7 @@ export function parseField(name: string, def: string): ParsedField {
   // Parse default value
   let defaultValue: unknown
   const defaultMatch = remaining.match(/=\s*(.+)$/)
-  if (defaultMatch) {
+  if (defaultMatch?.[1]) {
     const defaultStr = defaultMatch[1].trim()
     // Parse the default value
     if (defaultStr.startsWith('"') && defaultStr.endsWith('"')) {
@@ -109,7 +109,7 @@ export function parseField(name: string, def: string): ParsedField {
 
   // Parse vector
   const vectorMatch = remaining.match(/^vector\[(\d+)\]$/)
-  if (vectorMatch) {
+  if (vectorMatch?.[1]) {
     return {
       name,
       type: 'vector',

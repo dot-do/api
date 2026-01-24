@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import type { ApiEnv, CrudConfig } from '../types'
 import { buildPagination } from '../helpers/pagination'
+import { validateColumns } from '../helpers/sql-validation'
 
 export function crudConvention(config: CrudConfig): Hono<ApiEnv> {
   const app = new Hono<ApiEnv>()
@@ -81,6 +82,19 @@ export function crudConvention(config: CrudConfig): Hono<ApiEnv> {
     const columns = Object.keys(body)
     const values = Object.values(body)
 
+    // Validate column names to prevent SQL injection
+    const validation = validateColumns(columns, config.columns)
+    if (!validation.valid) {
+      return c.var.respond({
+        error: {
+          message: `Invalid column names: ${validation.invalidColumns.join(', ')}`,
+          code: 'INVALID_COLUMN',
+          status: 400
+        },
+        status: 400
+      })
+    }
+
     // Generate ID if not provided
     if (!body[primaryKey]) {
       columns.unshift(primaryKey)
@@ -103,7 +117,22 @@ export function crudConvention(config: CrudConfig): Hono<ApiEnv> {
     const id = c.req.param('id')
     const body = await c.req.json<Record<string, unknown>>()
 
-    const sets = Object.keys(body).map((col) => `${col} = ?`)
+    const columns = Object.keys(body)
+
+    // Validate column names to prevent SQL injection
+    const validation = validateColumns(columns, config.columns)
+    if (!validation.valid) {
+      return c.var.respond({
+        error: {
+          message: `Invalid column names: ${validation.invalidColumns.join(', ')}`,
+          code: 'INVALID_COLUMN',
+          status: 400
+        },
+        status: 400
+      })
+    }
+
+    const sets = columns.map((col) => `${col} = ?`)
     const values = [...Object.values(body), id]
 
     await db.prepare(`UPDATE ${table} SET ${sets.join(', ')} WHERE ${primaryKey} = ?`).bind(...values).run()
@@ -126,7 +155,22 @@ export function crudConvention(config: CrudConfig): Hono<ApiEnv> {
     const id = c.req.param('id')
     const body = await c.req.json<Record<string, unknown>>()
 
-    const sets = Object.keys(body).map((col) => `${col} = ?`)
+    const columns = Object.keys(body)
+
+    // Validate column names to prevent SQL injection
+    const validation = validateColumns(columns, config.columns)
+    if (!validation.valid) {
+      return c.var.respond({
+        error: {
+          message: `Invalid column names: ${validation.invalidColumns.join(', ')}`,
+          code: 'INVALID_COLUMN',
+          status: 400
+        },
+        status: 400
+      })
+    }
+
+    const sets = columns.map((col) => `${col} = ?`)
     const values = [...Object.values(body), id]
 
     await db.prepare(`UPDATE ${table} SET ${sets.join(', ')} WHERE ${primaryKey} = ?`).bind(...values).run()

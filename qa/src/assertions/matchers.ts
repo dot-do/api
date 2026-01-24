@@ -10,6 +10,7 @@ import type {
   LengthMatcher,
   EnumMatcher,
   OptionalMatcher,
+  LiteralMatcher,
   Matcher,
 } from '../types.js'
 
@@ -77,6 +78,15 @@ export function isOptionalMatcher(value: unknown): value is OptionalMatcher {
   )
 }
 
+export function isLiteralMatcher(value: unknown): value is LiteralMatcher {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    '__literal' in value &&
+    (value as LiteralMatcher).__literal === true
+  )
+}
+
 export function isMatcher(value: unknown): value is Matcher {
   return (
     isTypeMatcher(value) ||
@@ -85,7 +95,8 @@ export function isMatcher(value: unknown): value is Matcher {
     isRangeMatcher(value) ||
     isLengthMatcher(value) ||
     isEnumMatcher(value) ||
-    isOptionalMatcher(value)
+    isOptionalMatcher(value) ||
+    isLiteralMatcher(value)
   )
 }
 
@@ -349,6 +360,17 @@ export function match(value: unknown, expected: unknown): MatchResult {
       return { passed: true }
     }
     return match(value, otherMatchers)
+  }
+
+  // Handle literal matcher (branded type for literal values)
+  if (isLiteralMatcher(expected)) {
+    const passed = deepEqual(value, expected.value)
+    return {
+      passed,
+      expected: JSON.stringify(expected.value),
+      actual: JSON.stringify(value),
+      message: passed ? undefined : `Expected ${JSON.stringify(expected.value)} but got ${JSON.stringify(value)}`,
+    }
   }
 
   // Handle type matcher (may be combined with others)

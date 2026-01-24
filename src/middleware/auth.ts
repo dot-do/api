@@ -28,16 +28,18 @@ export function authMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv> {
     // Try Authorization header
     const authHeader = c.req.header('authorization')
     if (authHeader) {
-      const user = await verifyToken(authHeader, config)
-      if (user) {
-        c.set('user', user)
+      const result = await verifyToken(authHeader, config)
+      if (result.user) {
+        c.set('user', result.user)
         await next()
         return
       }
 
+      // If token was provided but couldn't be verified
       if (authConfig.mode === 'required') {
         return c.json({ error: { message: 'Invalid authentication token', code: 'INVALID_TOKEN', status: 401 } }, 401)
       }
+      // For optional auth with an invalid token, do NOT set user - proceed without authentication
     } else if (authConfig.mode === 'required') {
       return c.json({ error: { message: 'Authentication required', code: 'AUTH_REQUIRED', status: 401 } }, 401)
     }
@@ -46,30 +48,54 @@ export function authMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv> {
   }
 }
 
-async function verifyToken(authHeader: string, _config: ApiConfig): Promise<UserInfo | null> {
+interface VerifyResult {
+  user: UserInfo | null
+  verified: boolean
+}
+
+async function verifyToken(authHeader: string, config: ApiConfig): Promise<VerifyResult> {
   const token = authHeader.replace(/^Bearer\s+/i, '')
-  if (!token) return null
+  if (!token) return { user: null, verified: false }
+
+  const authConfig = config.auth || { mode: 'none' }
 
   try {
     // Try dynamic import of oauth.do for token verification
     const oauth: Record<string, unknown> | null = await import('oauth.do').catch(() => null)
     if (oauth && typeof oauth.verify === 'function') {
-      return await (oauth.verify as (token: string) => Promise<UserInfo>)(token)
+      const user = await (oauth.verify as (token: string) => Promise<UserInfo>)(token)
+      return { user, verified: true }
     }
 
-    // Fallback: decode JWT payload without verification (for snippet-trusted scenarios)
-    const parts = token.split('.')
-    if (parts.length === 3) {
-      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')))
-      return {
-        id: payload.sub,
-        email: payload.email,
-        name: payload.name,
+    // SECURITY: Only decode JWT without verification if explicitly enabled via trustUnverified flag.
+    // This is INSECURE and should only be used in controlled environments where tokens have been
+    // verified upstream (e.g., by a CDN snippet or trusted edge layer).
+    //
+    // WARNING: Enabling trustUnverified allows ANY attacker who can craft a JWT-like string to
+    // impersonate any user. Only enable this if you fully understand the security implications.
+    if (authConfig.trustUnverified === true) {
+      console.warn(
+        'SECURITY WARNING: Using trustUnverified fallback to decode JWT without signature verification. ' +
+          'This is INSECURE and should only be used when tokens are verified by an upstream layer.'
+      )
+
+      const parts = token.split('.')
+      const payloadPart = parts[1]
+      if (parts.length === 3 && payloadPart) {
+        const payload = JSON.parse(atob(payloadPart.replace(/-/g, '+').replace(/_/g, '/')))
+        return {
+          user: {
+            id: payload.sub,
+            email: payload.email,
+            name: payload.name,
+          },
+          verified: false,
+        }
       }
     }
   } catch {
     // Token decode failed
   }
 
-  return null
+  return { user: null, verified: false }
 }

@@ -12,6 +12,114 @@ import { DurableObject } from 'cloudflare:workers'
 import type { Document, DatabaseEvent, ParsedSchema, QueryOptions, EventSinkConfig } from './types'
 
 // =============================================================================
+// Webhook Signature Utilities
+// =============================================================================
+
+// Type for Node.js crypto module createHmac function
+interface NodeCryptoModule {
+  createHmac: (algorithm: string, key: string) => {
+    update: (data: string) => {
+      digest: (encoding: string) => string
+    }
+  }
+}
+
+// Cache for Node.js crypto module (loaded dynamically)
+let nodeCrypto: NodeCryptoModule | null = null
+let nodeCryptoChecked = false
+
+/**
+ * Try to load Node.js crypto module for synchronous signature generation
+ */
+async function loadNodeCrypto(): Promise<NodeCryptoModule | null> {
+  if (nodeCryptoChecked) return nodeCrypto
+  nodeCryptoChecked = true
+  try {
+    // Dynamic import for Node.js environments
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    nodeCrypto = await (Function('return import("crypto")')() as Promise<any>)
+  } catch {
+    nodeCrypto = null
+  }
+  return nodeCrypto
+}
+
+/**
+ * Generate HMAC-SHA256 signature for webhook payload
+ * Uses Web Crypto API for Cloudflare Workers compatibility
+ */
+export async function generateWebhookSignatureAsync(body: string, secret: string): Promise<string> {
+  const encoder = new TextEncoder()
+  const keyData = encoder.encode(secret)
+  const bodyData = encoder.encode(body)
+
+  const key = await crypto.subtle.importKey(
+    'raw',
+    keyData,
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  )
+
+  const signature = await crypto.subtle.sign('HMAC', key, bodyData)
+  const hashArray = Array.from(new Uint8Array(signature))
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
+/**
+ * Synchronous signature generation for Node.js environments (testing)
+ * Uses cached Node.js crypto module if available
+ */
+export function generateWebhookSignature(body: string, secret: string): string {
+  // Use cached Node.js crypto module if available
+  if (nodeCrypto) {
+    return nodeCrypto.createHmac('sha256', secret).update(body).digest('hex')
+  }
+  throw new Error('Synchronous signature generation not available. Use generateWebhookSignatureAsync or call loadNodeCrypto() first.')
+}
+
+/**
+ * Send event to webhook sink with optional signature authentication
+ */
+export async function sendToWebhookSink(
+  event: DatabaseEvent,
+  sink: EventSinkConfig
+): Promise<void> {
+  if (!sink.url) return
+
+  const body = JSON.stringify(event)
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  }
+
+  // Add custom headers if configured
+  if (sink.headers) {
+    for (const [key, value] of Object.entries(sink.headers)) {
+      headers[key] = value
+    }
+  }
+
+  // Add signature header if secret is configured
+  if (sink.secret) {
+    // Try to load Node.js crypto for sync signature, fall back to async Web Crypto
+    const cryptoModule = await loadNodeCrypto()
+    let signature: string
+    if (cryptoModule) {
+      signature = generateWebhookSignature(body, sink.secret)
+    } else {
+      signature = await generateWebhookSignatureAsync(body, sink.secret)
+    }
+    headers['X-Webhook-Signature'] = signature
+  }
+
+  await fetch(sink.url, {
+    method: 'POST',
+    headers,
+    body,
+  })
+}
+
+// =============================================================================
 // Types
 // =============================================================================
 
@@ -185,7 +293,7 @@ export class DatabaseDO extends DurableObject<Env> {
           return { error: { message: `Unknown method: ${req.method}`, code: 'METHOD_NOT_FOUND' } }
       }
     } catch (e) {
-      const err = e as Error
+      const err = e instanceof Error ? e : new Error(String(e))
       return { error: { message: err.message } }
     }
   }
@@ -271,13 +379,7 @@ export class DatabaseDO extends DurableObject<Env> {
             break
 
           case 'webhook':
-            if (sink.url) {
-              await fetch(sink.url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(event),
-              })
-            }
+            await sendToWebhookSink(event, sink)
             break
 
           case 'analytics':
@@ -541,7 +643,7 @@ export class DatabaseDO extends DurableObject<Env> {
 
   private handleWebSocket(request: Request): Response {
     const pair = new WebSocketPair()
-    const [client, server] = Object.values(pair)
+    const [client, server] = Object.values(pair) as [WebSocket, WebSocket]
 
     const url = new URL(request.url)
     const model = url.searchParams.get('model') || undefined

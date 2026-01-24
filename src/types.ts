@@ -1,4 +1,12 @@
 import type { Hono, Context } from 'hono'
+import type { TestingConfig as _TestingConfig, RestEndpointTest as _RestEndpointTest, RestTestCase as _RestTestCase } from './conventions/testing'
+import type { EventSinkConfig as _EventSinkConfig } from './conventions/database/types'
+
+// Re-export types from canonical sources
+export type TestingConfig = _TestingConfig
+export type RestEndpointTest = _RestEndpointTest
+export type RestTestCase = _RestTestCase
+export type EventSinkConfig = _EventSinkConfig
 
 // Response envelope types
 export interface ApiMeta {
@@ -76,6 +84,19 @@ export interface RespondOptions<T = unknown> {
 export interface AuthConfig {
   mode: 'required' | 'optional' | 'none'
   trustSnippets?: boolean
+  /**
+   * SECURITY WARNING: When set to true, allows JWT tokens to be decoded without
+   * cryptographic signature verification. This is INSECURE and should only be used
+   * in controlled environments where tokens have already been verified upstream
+   * (e.g., by a CDN snippet or edge layer).
+   *
+   * Enabling this flag means ANY attacker who can craft a JWT-like string can
+   * impersonate any user. Only enable this if you fully understand the security
+   * implications and have other verification mechanisms in place.
+   *
+   * @default false
+   */
+  trustUnverified?: boolean
 }
 
 // Rate limit configuration
@@ -103,6 +124,14 @@ export interface ProxyConfig {
   cacheTtl?: number
   headers?: Record<string, string>
   rewritePath?: (path: string) => string
+  /** Optional list of allowed path prefixes for stricter access control */
+  allowedPaths?: string[]
+  /**
+   * Block requests with path traversal sequences (../).
+   * Checks both the normalized path and X-Original-Path header.
+   * Enable this to prevent SSRF via path traversal attacks.
+   */
+  blockTraversal?: boolean
 }
 
 // RPC configuration
@@ -168,38 +197,6 @@ export interface AnalyticsConfig {
   dataset?: string
 }
 
-// REST endpoint test definition
-export interface RestEndpointTest {
-  path: string
-  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
-  tests?: Array<{
-    id?: string
-    name: string
-    description?: string
-    tags?: string[]
-    request?: {
-      method?: string
-      path?: string
-      body?: unknown
-      headers?: Record<string, string>
-      query?: Record<string, string>
-    }
-    expect: {
-      status: number
-      headers?: Record<string, string>
-      body?: unknown
-      match?: 'exact' | 'partial' | 'schema'
-    }
-  }>
-}
-
-// Testing configuration
-export interface TestingConfig {
-  enabled?: boolean
-  endpoint?: string
-  tags?: string[]
-  endpoints?: RestEndpointTest[]
-}
 
 // Landing page configuration
 export type LandingConfig = false | ((c: Context<ApiEnv>) => Response | Promise<Response>)
@@ -210,14 +207,6 @@ export type FieldDef = string
 // Database schema definition
 export type SchemaDef = Record<string, Record<string, FieldDef>>
 
-// Event sink configuration
-export interface EventSinkConfig {
-  type: 'lakehouse' | 'queue' | 'webhook' | 'analytics'
-  binding?: string
-  url?: string
-  batchSize?: number
-  flushInterval?: number
-}
 
 // Database convention configuration
 export interface DatabaseConfig {

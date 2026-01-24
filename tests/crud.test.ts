@@ -5,13 +5,19 @@ import { responseMiddleware } from '../src/response'
 import { contextMiddleware } from '../src/middleware/context'
 import type { ApiEnv } from '../src/types'
 
-function createTestApp() {
+function createTestApp(columns?: string[]) {
   const app = new Hono<ApiEnv>()
 
   app.use('*', contextMiddleware())
   app.use('*', responseMiddleware({ name: 'crud-test' }))
 
-  app.route('/items', crudConvention({ db: 'DB', table: 'items', searchable: ['name'], pageSize: 10 }))
+  app.route('/items', crudConvention({
+    db: 'DB',
+    table: 'items',
+    searchable: ['name'],
+    pageSize: 10,
+    columns: columns || ['id', 'name', 'description', 'created_at']
+  }))
 
   return app
 }
@@ -109,5 +115,121 @@ describe('CRUD convention', () => {
 
     const body = await res.json() as Record<string, unknown>
     expect(body.data).toEqual(item)
+  })
+
+  describe('SQL injection prevention', () => {
+    it('rejects malicious column names in POST body', async () => {
+      const mockDb = createMockDb([])
+
+      const app = createTestApp()
+      const res = await app.request('/items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Valid Name',
+          'id; DROP TABLE items; --': 'malicious'
+        }),
+      }, { DB: mockDb })
+
+      expect(res.status).toBe(400)
+      const body = await res.json() as Record<string, unknown>
+      expect((body.error as Record<string, unknown>).code).toBe('INVALID_COLUMN')
+    })
+
+    it('rejects column names not in whitelist', async () => {
+      const mockDb = createMockDb([])
+
+      const app = createTestApp(['id', 'name'])  // Only id and name allowed
+      const res = await app.request('/items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Valid Name',
+          unauthorized_column: 'not allowed'
+        }),
+      }, { DB: mockDb })
+
+      expect(res.status).toBe(400)
+      const body = await res.json() as Record<string, unknown>
+      expect((body.error as Record<string, unknown>).code).toBe('INVALID_COLUMN')
+    })
+
+    it('rejects malicious column names in PUT body', async () => {
+      const mockDb = createMockDb([{ id: '123', name: 'Existing' }])
+      mockDb._bind.first.mockResolvedValue({ id: '123', name: 'Updated' })
+
+      const app = createTestApp()
+      const res = await app.request('/items/123', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          'name = "hacked" WHERE 1=1; --': 'injection'
+        }),
+      }, { DB: mockDb })
+
+      expect(res.status).toBe(400)
+      const body = await res.json() as Record<string, unknown>
+      expect((body.error as Record<string, unknown>).code).toBe('INVALID_COLUMN')
+    })
+
+    it('rejects malicious column names in PATCH body', async () => {
+      const mockDb = createMockDb([{ id: '123', name: 'Existing' }])
+      mockDb._bind.first.mockResolvedValue({ id: '123', name: 'Updated' })
+
+      const app = createTestApp()
+      const res = await app.request('/items/123', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          '1=1); DELETE FROM items; --': 'injection'
+        }),
+      }, { DB: mockDb })
+
+      expect(res.status).toBe(400)
+      const body = await res.json() as Record<string, unknown>
+      expect((body.error as Record<string, unknown>).code).toBe('INVALID_COLUMN')
+    })
+
+    it('accepts valid alphanumeric column names with underscores', async () => {
+      const mockDb = createMockDb([])
+      mockDb._bind.first.mockResolvedValue({ id: 'new-id', name: 'Test', created_at: '2024-01-01' })
+
+      const app = createTestApp(['id', 'name', 'created_at'])
+      const res = await app.request('/items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'Test',
+          created_at: '2024-01-01'
+        }),
+      }, { DB: mockDb })
+
+      expect(res.status).toBe(201)
+    })
+
+    it('rejects column names with special SQL characters', async () => {
+      const mockDb = createMockDb([])
+
+      const app = createTestApp()
+      const testCases = [
+        { 'name"': 'quotes' },
+        { "name'": 'single quote' },
+        { 'name--': 'comment' },
+        { 'name;': 'semicolon' },
+        { 'name/*': 'block comment' },
+      ]
+
+      for (const testCase of testCases) {
+        const res = await app.request('/items', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(testCase),
+        }, { DB: mockDb })
+
+        expect(res.status).toBe(400)
+        const body = await res.json() as Record<string, unknown>
+        expect((body.error as Record<string, unknown>).code).toBe('INVALID_COLUMN')
+      }
+    })
   })
 })

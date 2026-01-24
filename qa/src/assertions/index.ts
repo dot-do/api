@@ -19,6 +19,7 @@ export {
   isLengthMatcher,
   isEnumMatcher,
   isOptionalMatcher,
+  isLiteralMatcher,
   type MatchResult,
 } from './matchers.js'
 

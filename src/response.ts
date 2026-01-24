@@ -1,4 +1,5 @@
 import type { MiddlewareHandler } from 'hono'
+import type { ContentfulStatusCode } from 'hono/utils/http-status'
 import type { ApiConfig, ApiEnv, RespondOptions, ResponseEnvelope } from './types'
 
 export function responseMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv> {
@@ -37,7 +38,7 @@ export function responseMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv>
       if (actions) envelope.actions = actions
       if (meta) envelope.meta = meta
 
-      return c.json(envelope, status as never)
+      return c.json(envelope, status as ContentfulStatusCode)
     })
 
     await next()

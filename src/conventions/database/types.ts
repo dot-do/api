@@ -111,6 +111,17 @@ export interface EventSinkConfig {
   url?: string
   batchSize?: number
   flushInterval?: number
+  /**
+   * Secret for webhook signature authentication (webhook sinks only).
+   * When provided, an X-Webhook-Signature header is included with an
+   * HMAC-SHA256 signature of the request body.
+   */
+  secret?: string
+  /**
+   * Custom headers to include in webhook requests (webhook sinks only).
+   * Useful for authentication tokens or custom metadata.
+   */
+  headers?: Record<string, string>
 }
 
 // =============================================================================
@@ -367,3 +378,82 @@ export interface BatchResult {
   document?: Document
   error?: string
 }
+
+// =============================================================================
+// Webhook Signature Verification
+// =============================================================================
+
+/**
+ * Example: Verifying webhook signatures on the receiving end
+ *
+ * When you configure a webhook event sink with a secret, the database
+ * will include an X-Webhook-Signature header containing an HMAC-SHA256
+ * signature of the request body.
+ *
+ * @example Node.js webhook receiver
+ * ```typescript
+ * import { createHmac, timingSafeEqual } from 'crypto'
+ *
+ * function verifyWebhookSignature(
+ *   body: string,
+ *   signature: string,
+ *   secret: string
+ * ): boolean {
+ *   const expected = createHmac('sha256', secret)
+ *     .update(body)
+ *     .digest('hex')
+ *
+ *   // Use constant-time comparison to prevent timing attacks
+ *   if (signature.length !== expected.length) return false
+ *
+ *   return timingSafeEqual(
+ *     Buffer.from(signature),
+ *     Buffer.from(expected)
+ *   )
+ * }
+ *
+ * // In your webhook handler:
+ * app.post('/webhook', (req, res) => {
+ *   const signature = req.headers['x-webhook-signature']
+ *   const rawBody = req.rawBody // Make sure to capture raw body
+ *
+ *   if (!verifyWebhookSignature(rawBody, signature, process.env.WEBHOOK_SECRET)) {
+ *     return res.status(401).json({ error: 'Invalid signature' })
+ *   }
+ *
+ *   const event = JSON.parse(rawBody)
+ *   // Process the verified event...
+ * })
+ * ```
+ *
+ * @example Cloudflare Worker webhook receiver
+ * ```typescript
+ * async function verifyWebhookSignature(
+ *   body: string,
+ *   signature: string,
+ *   secret: string
+ * ): Promise<boolean> {
+ *   const encoder = new TextEncoder()
+ *   const key = await crypto.subtle.importKey(
+ *     'raw',
+ *     encoder.encode(secret),
+ *     { name: 'HMAC', hash: 'SHA-256' },
+ *     false,
+ *     ['sign']
+ *   )
+ *
+ *   const sig = await crypto.subtle.sign('HMAC', key, encoder.encode(body))
+ *   const expected = Array.from(new Uint8Array(sig))
+ *     .map(b => b.toString(16).padStart(2, '0'))
+ *     .join('')
+ *
+ *   // Constant-time comparison
+ *   if (signature.length !== expected.length) return false
+ *   let result = 0
+ *   for (let i = 0; i < signature.length; i++) {
+ *     result |= signature.charCodeAt(i) ^ expected.charCodeAt(i)
+ *   }
+ *   return result === 0
+ * }
+ * ```
+ */

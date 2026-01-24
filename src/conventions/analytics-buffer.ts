@@ -128,7 +128,7 @@ export function analyticsBufferRoutes(config: AnalyticsBufferConfig = {}): Hono<
     const stub = namespace.get(id)
 
     // Forward WebSocket upgrade to DO
-    return stub.fetch(c.req.raw) as unknown as Response
+    return await stub.fetch(c.req.raw)
   })
 
   return app
@@ -338,8 +338,8 @@ export class AnalyticsBufferDO {
         httpMetadata: { contentType: 'application/x-ndjson' },
         customMetadata: {
           events: String(count),
-          firstTimestamp: String(events[0].timestamp),
-          lastTimestamp: String(events[events.length - 1].timestamp),
+          firstTimestamp: String(events[0]?.timestamp),
+          lastTimestamp: String(events[events.length - 1]?.timestamp),
         },
       })
     }
