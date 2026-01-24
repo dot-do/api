@@ -136,7 +136,22 @@ export async function executeMcpTest(
 
       // Assert output
       if (expectation.output !== undefined) {
-        const result = rpcResponse.result
+        // Extract output from MCP content format
+        // MCP tools/call returns: { content: [{ type: "text", text: "JSON string" }] }
+        let result = rpcResponse.result
+
+        // Check if result is in MCP content format
+        if (result && typeof result === 'object' && 'content' in result) {
+          const mcpResult = result as { content?: Array<{ type: string; text?: string }> }
+          if (mcpResult.content && mcpResult.content[0]?.type === 'text' && mcpResult.content[0]?.text) {
+            try {
+              result = JSON.parse(mcpResult.content[0].text)
+            } catch {
+              // If not valid JSON, use the text as-is
+              result = mcpResult.content[0].text
+            }
+          }
+        }
 
         if (typeof expectation.output === 'object' && expectation.output !== null) {
           const keys = Object.keys(expectation.output)

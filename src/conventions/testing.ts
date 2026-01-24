@@ -76,6 +76,7 @@ function collectTests(config: TestingConfig, tools?: ExtendedMcpTool[]): Array<{
   method?: string
   type: 'rpc' | 'mcp' | 'rest'
   input?: unknown
+  request?: { method: string; path: string; body?: unknown; headers?: Record<string, string>; query?: Record<string, string> }
   expect: unknown
   tags?: string[]
 }> {
@@ -85,6 +86,7 @@ function collectTests(config: TestingConfig, tools?: ExtendedMcpTool[]): Array<{
     method?: string
     type: 'rpc' | 'mcp' | 'rest'
     input?: unknown
+    request?: { method: string; path: string; body?: unknown; headers?: Record<string, string>; query?: Record<string, string> }
     expect: unknown
     tags?: string[]
   }> = []
@@ -117,6 +119,11 @@ function collectTests(config: TestingConfig, tools?: ExtendedMcpTool[]): Array<{
             id: test.id || `rest.${endpoint.method}.${endpoint.path}.${test.name.replace(/\s+/g, '-').toLowerCase()}`,
             name: test.name,
             type: 'rest',
+            request: {
+              method: endpoint.method,
+              path: endpoint.path,
+              ...(test.request || {}),
+            },
             expect: test.expect,
             tags: [...(config.tags || []), ...(test.tags || [])],
           })

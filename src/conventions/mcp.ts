@@ -30,9 +30,14 @@ export function mcpConvention(config: McpConfig): Hono<ApiEnv> {
       const result = await handleMcpMethod(body, config, c)
       return c.json({ jsonrpc: '2.0', result, id: body.id })
     } catch (err) {
+      const error = err as Error & { code?: string | number }
       return c.json({
         jsonrpc: '2.0',
-        error: { code: -32603, message: err instanceof Error ? err.message : 'Internal error' },
+        error: {
+          code: -32603,
+          message: error.message || 'Internal error',
+          data: error.code ? { code: error.code } : undefined,
+        },
         id: body.id,
       }, 500)
     }
