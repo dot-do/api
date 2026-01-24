@@ -1,0 +1,69 @@
+import { describe, it, expect } from 'vitest'
+import { API } from '../src/index'
+
+describe('API factory', () => {
+  it('creates a Hono app with root endpoint', async () => {
+    const app = API({ name: 'test-api', description: 'Test', version: '1.0.0' })
+
+    const res = await app.request('/')
+    expect(res.status).toBe(200)
+
+    const body = await res.json()
+    expect(body.api.name).toBe('test-api')
+    expect(body.api.description).toBe('Test')
+    expect(body.api.version).toBe('1.0.0')
+    expect(body.data.name).toBe('test-api')
+  })
+
+  it('sets api.type based on config', async () => {
+    const crudApp = API({ name: 'crud-api', crud: { db: 'DB', table: 'items' } })
+    const res = await crudApp.request('/')
+    const body = await res.json()
+    expect(body.api.type).toBe('crud')
+
+    const proxyApp = API({ name: 'proxy-api', proxy: { upstream: 'https://example.com' } })
+    const res2 = await proxyApp.request('/')
+    const body2 = await res2.json()
+    expect(body2.api.type).toBe('proxy')
+  })
+
+  it('supports custom routes', async () => {
+    const app = API({
+      name: 'custom-api',
+      routes: (a) => {
+        a.get('/health', (c) => c.var.respond({ data: { status: 'ok' } }))
+      },
+    })
+
+    const res = await app.request('/health')
+    expect(res.status).toBe(200)
+
+    const body = await res.json()
+    expect(body.data.status).toBe('ok')
+  })
+
+  it('includes links.self in responses', async () => {
+    const app = API({ name: 'links-api' })
+
+    const res = await app.request('http://localhost/')
+    const body = await res.json()
+    expect(body.links.self).toBe('http://localhost/')
+  })
+
+  it('includes CORS headers', async () => {
+    const app = API({ name: 'cors-api' })
+
+    const res = await app.request('/', {
+      method: 'OPTIONS',
+      headers: { Origin: 'http://example.com' },
+    })
+    expect(res.headers.get('access-control-allow-origin')).toBe('*')
+  })
+
+  it('includes X-Request-Id header', async () => {
+    const app = API({ name: 'request-id-api' })
+
+    const res = await app.request('/')
+    expect(res.headers.get('x-request-id')).toBeTruthy()
+  })
+})

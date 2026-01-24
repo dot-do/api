@@ -1,0 +1,48 @@
+{
+  "name": "api.do",
+  "version": "0.1.0",
+  "description": "Opinionated Hono-based API framework for Cloudflare Workers",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./snippets/*": "./snippets/*"
+  },
+  "files": [
+    "dist",
+    "snippets"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "pnpm build"
+  },
+  "dependencies": {
+    "hono": "^4.7.0"
+  },
+  "peerDependencies": {
+    "oauth.do": "*",
+    "rpc.do": "*"
+  },
+  "peerDependenciesMeta": {
+    "oauth.do": { "optional": true },
+    "rpc.do": { "optional": true }
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250124.0",
+    "tsup": "^8.3.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  },
+  "keywords": ["hono", "cloudflare", "workers", "api", "framework"],
+  "license": "MIT"
+}
