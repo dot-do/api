@@ -86,6 +86,113 @@ export default API({
   auth: {
     mode: 'optional', // Allow anonymous access, but track user if authenticated
   },
+
+  // Embedded tests - discoverable via /qa endpoint
+  testing: {
+    enabled: true,
+    endpoint: '/qa',
+    tags: ['blog-api', 'database'],
+    endpoints: [
+      {
+        path: '/users',
+        method: 'POST',
+        tests: [
+          {
+            name: 'creates user with valid data',
+            tags: ['smoke', 'crud'],
+            request: {
+              body: { email: 'test@example.com', name: 'Test User' },
+            },
+            expect: {
+              status: 201,
+              body: { 'data.name': 'Test User', 'data.email': 'test@example.com' },
+            },
+          },
+          {
+            name: 'rejects user without email',
+            tags: ['validation'],
+            request: {
+              body: { name: 'No Email' },
+            },
+            expect: {
+              status: 400,
+            },
+          },
+        ],
+      },
+      {
+        path: '/users',
+        method: 'GET',
+        tests: [
+          {
+            name: 'lists users with pagination',
+            tags: ['smoke', 'crud'],
+            expect: {
+              status: 200,
+              body: { 'data': { type: 'array' } },
+            },
+          },
+        ],
+      },
+    ],
+  },
+
+  // MCP tools with embedded test cases
+  mcp: {
+    name: 'blog-mcp',
+    tools: [
+      {
+        name: 'user.create',
+        description: 'Create a new user',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            email: { type: 'string', format: 'email' },
+            name: { type: 'string', minLength: 1 },
+          },
+          required: ['email', 'name'],
+        },
+        outputSchema: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            email: { type: 'string' },
+            name: { type: 'string' },
+          },
+        },
+        examples: [
+          {
+            name: 'create alice',
+            input: { email: 'alice@example.com', name: 'Alice' },
+            output: { id: 'usr_123', email: 'alice@example.com', name: 'Alice' },
+          },
+        ],
+        tests: [
+          {
+            name: 'creates user successfully',
+            input: { email: 'bob@example.com', name: 'Bob' },
+            expect: {
+              status: 'success',
+              output: { name: 'Bob', email: 'bob@example.com' },
+              match: 'partial',
+            },
+          },
+          {
+            name: 'rejects invalid email',
+            input: { email: 'invalid', name: 'Test' },
+            expect: {
+              status: 'error',
+              error: { code: 'VALIDATION_ERROR' },
+            },
+          },
+        ],
+        handler: async (input, c) => {
+          // The database convention handles this - placeholder for MCP test metadata
+          return { error: 'Use database convention endpoints' }
+        },
+      },
+    ],
+  },
 })
 
 // =============================================================================

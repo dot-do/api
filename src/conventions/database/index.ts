@@ -13,7 +13,7 @@ import type { ApiEnv } from '../../types'
 import type { DatabaseConfig, ParsedSchema, Document, QueryOptions, DatabaseEvent } from './types'
 import { parseSchema, generateJsonSchema } from './schema'
 
-export type { DatabaseConfig, SchemaDef, ParsedSchema, ParsedModel, ParsedField, Document, DatabaseEvent } from './types'
+export type { DatabaseConfig, SchemaDef, ParsedSchema, ParsedModel, ParsedField, Document, DatabaseEvent, DatabaseDriverType, DatabaseDriver, DatabaseDriverFactory, QueryOptions, QueryResult } from './types'
 export { parseSchema, parseField, parseModel, generateJsonSchema } from './schema'
 
 /**

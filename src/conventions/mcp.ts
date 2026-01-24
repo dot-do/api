@@ -71,6 +71,9 @@ async function handleMcpMethod(req: JsonRpcRequest, config: McpConfig, c: unknow
           name: t.name,
           description: t.description,
           inputSchema: t.inputSchema,
+          ...(t.outputSchema ? { outputSchema: t.outputSchema } : {}),
+          ...(t.examples?.length ? { examples: t.examples } : {}),
+          ...(t.tests?.length ? { tests: t.tests } : {}),
         })),
       }
 

@@ -7,7 +7,20 @@ export { analyticsBufferRoutes, AnalyticsBufferDO } from './analytics-buffer'
 export type { AnalyticsBufferConfig, BufferEvent } from './analytics-buffer'
 export { testingConvention, type TestingConfig, type TestCase, type RestTestCase, type Example } from './testing'
 export { databaseConvention, parseSchema, parseField, parseModel, generateJsonSchema } from './database'
-export type { DatabaseConfig, SchemaDef, ParsedSchema, Document, DatabaseEvent } from './database'
+export type {
+  DatabaseConfig,
+  SchemaDef,
+  ParsedSchema,
+  ParsedModel,
+  ParsedField,
+  Document,
+  DatabaseEvent,
+  DatabaseDriverType,
+  DatabaseDriver,
+  DatabaseDriverFactory,
+  QueryOptions,
+  QueryResult,
+} from './database'
 export { DatabaseDO } from './database/do'
 export { functionsConvention } from './functions'
 export type {

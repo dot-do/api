@@ -127,8 +127,21 @@ export interface DatabaseConfig {
   schema: SchemaDef
 
   /**
+   * Database driver type or custom driver instance
+   *
+   * Built-in drivers:
+   * - 'do-sqlite': Durable Object with SQLite (default)
+   * - 'pglite': PGLite WASM PostgreSQL
+   * - 'postgres': Remote PostgreSQL via postgres.do
+   * - 'documentdb': MongoDB-compatible
+   *
+   * Or provide a custom DatabaseDriver implementation.
+   */
+  driver?: DatabaseDriverType | DatabaseDriver | DatabaseDriverFactory
+
+  /**
    * Durable Object binding name for the database DO
-   * Default: 'DB'
+   * Used when driver is 'do-sqlite' (default)
    */
   binding?: string
 
@@ -234,6 +247,69 @@ export interface QueryResult<T> {
   hasMore: boolean
   cursor?: string
 }
+
+// =============================================================================
+// Database Driver Types
+// =============================================================================
+
+/**
+ * Built-in database driver types
+ *
+ * - 'do-sqlite': Durable Object with in-memory Map + SQLite checkpoint (default)
+ * - 'pglite': PGLite WASM PostgreSQL (requires @electric-sql/pglite)
+ * - 'postgres': Remote PostgreSQL via postgres.do (requires postgres.do)
+ * - 'documentdb': MongoDB-compatible via DocumentDB (requires @dotdo/documentdb)
+ */
+export type DatabaseDriverType = 'do-sqlite' | 'pglite' | 'postgres' | 'documentdb'
+
+/**
+ * Database driver interface - pluggable storage backend
+ *
+ * Implement this interface to create custom database drivers.
+ * All drivers must support the standard CRUD operations.
+ */
+export interface DatabaseDriver {
+  /** Driver name for identification */
+  readonly name: string
+
+  /** Initialize the driver with schema */
+  init(schema: ParsedSchema, env: Record<string, unknown>): Promise<void>
+
+  /** Create a document */
+  create(model: string, data: Record<string, unknown>, ctx?: RequestContext): Promise<Document>
+
+  /** Get a document by ID */
+  get(model: string, id: string, options?: { include?: string[] }): Promise<Document | null>
+
+  /** Update a document */
+  update(model: string, id: string, data: Record<string, unknown>, ctx?: RequestContext): Promise<Document>
+
+  /** Delete a document (soft delete) */
+  delete(model: string, id: string, ctx?: RequestContext): Promise<void>
+
+  /** List documents with pagination */
+  list(model: string, options?: QueryOptions): Promise<QueryResult<Document>>
+
+  /** Full-text search */
+  search(model: string, query: string, options?: QueryOptions): Promise<QueryResult<Document>>
+
+  /** Count documents matching criteria */
+  count(model: string, where?: Record<string, unknown>): Promise<number>
+
+  /** Get events since sequence number */
+  getEvents?(since: number, limit?: number, model?: string): Promise<DatabaseEvent[]>
+
+  /** Close/cleanup driver resources */
+  close?(): Promise<void>
+}
+
+/**
+ * Driver factory function type
+ */
+export type DatabaseDriverFactory = (
+  config: DatabaseConfig,
+  env: Record<string, unknown>
+) => DatabaseDriver | Promise<DatabaseDriver>
 
 // =============================================================================
 // DO RPC Types

@@ -27,13 +27,13 @@
     "prepublishOnly": "pnpm build"
   },
   "dependencies": {
-    "@dotdo/documentdb": "^0.1.0",
-    "@electric-sql/pglite": "^0.3.15",
-    "hono": "^4.7.0",
-    "postgres.do": "^0.1.0"
+    "hono": "^4.7.0"
   },
   "optionalDependencies": {
+    "@dotdo/documentdb": "^0.1.0",
+    "@electric-sql/pglite": "^0.3.15",
     "oauth.do": "^0.2.2",
+    "postgres.do": "^0.1.0",
     "rpc.do": "*"
   },
   "devDependencies": {
