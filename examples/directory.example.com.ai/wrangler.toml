@@ -3,7 +3,7 @@ main = "worker.ts"
 compatibility_date = "2024-12-01"
 
 routes = [
-  { pattern = "directory.example.com.ai", custom_domain = true }
+  { pattern = "directory.example.com.ai/*", zone_name = "example.com.ai" }
 ]
 
 [vars]
