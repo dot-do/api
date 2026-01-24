@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import type { ApiConfig, ApiEnv } from './types'
 import { responseMiddleware } from './response'
 import { contextMiddleware, corsMiddleware, authMiddleware, rateLimitMiddleware } from './middleware'
-import { crudConvention, proxyConvention, rpcConvention, mcpConvention, analyticsMiddleware, analyticsRoutes } from './conventions'
+import { crudConvention, proxyConvention, rpcConvention, mcpConvention, analyticsMiddleware, analyticsRoutes, testingConvention } from './conventions'
 
 export function API(config: ApiConfig): Hono<ApiEnv> {
   const app = new Hono<ApiEnv>()
@@ -59,6 +59,10 @@ export function API(config: ApiConfig): Hono<ApiEnv> {
 
   if (config.analytics) {
     app.route('/', analyticsRoutes(config.analytics))
+  }
+
+  if (config.testing) {
+    app.route('/', testingConvention(config.testing, config.mcp?.tools))
   }
 
   // Custom routes

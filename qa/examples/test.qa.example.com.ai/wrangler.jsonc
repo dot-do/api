@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "test-qa-example",
+  "main": "worker.ts",
+  "compatibility_date": "2024-01-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "routes": [
+    {
+      "pattern": "test.qa.example.com.ai",
+      "zone_name": "example.com.ai"
+    }
+  ]
+}

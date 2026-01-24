@@ -112,11 +112,36 @@ export interface RpcConfig {
   methods?: string[]
 }
 
+// Test case for MCP tools
+export interface McpToolTest {
+  id?: string
+  name: string
+  description?: string
+  tags?: string[]
+  input: unknown
+  expect: {
+    status: 'success' | 'error'
+    output?: unknown
+    error?: { code?: string | number; message?: string }
+    match?: 'exact' | 'partial' | 'schema'
+  }
+}
+
+// Example for MCP tools
+export interface McpToolExample {
+  name: string
+  input?: unknown
+  output?: unknown
+}
+
 // MCP Tool definition
 export interface McpTool {
   name: string
   description: string
   inputSchema: Record<string, unknown>
+  outputSchema?: Record<string, unknown>
+  examples?: McpToolExample[]
+  tests?: McpToolTest[]
   handler: (input: unknown, c: Context) => Promise<unknown>
 }
 
@@ -143,6 +168,39 @@ export interface AnalyticsConfig {
   dataset?: string
 }
 
+// REST endpoint test definition
+export interface RestEndpointTest {
+  path: string
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
+  tests?: Array<{
+    id?: string
+    name: string
+    description?: string
+    tags?: string[]
+    request?: {
+      method?: string
+      path?: string
+      body?: unknown
+      headers?: Record<string, string>
+      query?: Record<string, string>
+    }
+    expect: {
+      status: number
+      headers?: Record<string, string>
+      body?: unknown
+      match?: 'exact' | 'partial' | 'schema'
+    }
+  }>
+}
+
+// Testing configuration
+export interface TestingConfig {
+  enabled?: boolean
+  endpoint?: string
+  tags?: string[]
+  endpoints?: RestEndpointTest[]
+}
+
 // Main API configuration
 export interface ApiConfig {
   name: string
@@ -156,6 +214,7 @@ export interface ApiConfig {
   rpc?: RpcConfig
   mcp?: McpConfig
   analytics?: AnalyticsConfig
+  testing?: TestingConfig
   routes?: (app: Hono<ApiEnv>) => void
 }
 
