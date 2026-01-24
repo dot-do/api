@@ -201,6 +201,9 @@ export interface TestingConfig {
   endpoints?: RestEndpointTest[]
 }
 
+// Landing page configuration
+export type LandingConfig = false | ((c: Context<ApiEnv>) => Response | Promise<Response>)
+
 // Main API configuration
 export interface ApiConfig {
   name: string
@@ -215,6 +218,7 @@ export interface ApiConfig {
   mcp?: McpConfig
   analytics?: AnalyticsConfig
   testing?: TestingConfig
+  landing?: LandingConfig
   routes?: (app: Hono<ApiEnv>) => void
 }
 

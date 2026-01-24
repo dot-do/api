@@ -28,16 +28,22 @@ export function API(config: ApiConfig): Hono<ApiEnv> {
     app.use('*', analyticsMiddleware(config.analytics))
   }
 
-  // Root endpoint - API info
-  app.get('/', (c) => {
-    return c.var.respond({
-      data: {
-        name: config.name,
-        description: config.description,
-        version: config.version,
-      },
-    })
-  })
+  // Root endpoint - API info (unless disabled or custom)
+  if (config.landing !== false) {
+    if (typeof config.landing === 'function') {
+      app.get('/', config.landing)
+    } else {
+      app.get('/', (c) => {
+        return c.var.respond({
+          data: {
+            name: config.name,
+            description: config.description,
+            version: config.version,
+          },
+        })
+      })
+    }
+  }
 
   // Mount conventions
   if (config.crud) {
