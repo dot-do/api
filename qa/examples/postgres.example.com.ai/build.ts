@@ -6,6 +6,6 @@ await build({
   outfile: '_worker.js',
   format: 'esm',
   target: 'es2022',
-  external: ['cloudflare:*', '@electric-sql/pglite', 'oauth.do', 'rpc.do'],
+  external: ['cloudflare:*'],
   conditions: ['worker', 'browser'],
 })

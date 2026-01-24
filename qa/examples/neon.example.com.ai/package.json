@@ -17,6 +17,6 @@
   },
   "dependencies": {
     "api.do": "workspace:*",
-    "postgres.do": "workspace:*"
+    "postgres.do": "^0.1.0"
   }
 }

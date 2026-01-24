@@ -6,6 +6,6 @@ await build({
   outfile: '_worker.js',
   format: 'esm',
   target: 'es2022',
-  external: ['oauth.do', 'rpc.do', 'postgres.do', 'cloudflare:*'],
+  external: ['cloudflare:*'],
   conditions: ['worker', 'browser'],
 })

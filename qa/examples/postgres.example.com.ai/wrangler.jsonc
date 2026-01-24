@@ -11,18 +11,14 @@
   "vars": {
     "API_NAME": "postgres.example.com.ai"
   },
-  "durable_objects": {
-    "bindings": [
-      {
-        "name": "NOTES_DO",
-        "class_name": "NotesDO"
-      }
-    ]
-  },
   "migrations": [
     {
       "tag": "v1",
       "new_classes": ["NotesDO"]
+    },
+    {
+      "tag": "v2",
+      "deleted_classes": ["NotesDO"]
     }
   ],
   "analytics_engine_datasets": [

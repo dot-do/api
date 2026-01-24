@@ -63,7 +63,7 @@ const projects: Project[] = [
     domain: 'postgres.example.com.ai',
     description: 'PGLite WASM PostgreSQL in Durable Object',
     database: 'PGLite (WASM)',
-    status: 'pending',
+    status: 'active',
     endpoints: {
       api: 'https://postgres.example.com.ai',
       qa: 'https://postgres.example.com.ai/qa',
@@ -73,9 +73,9 @@ const projects: Project[] = [
   {
     name: 'documentdb.example.com.ai',
     domain: 'documentdb.example.com.ai',
-    description: 'MongoDB-compatible via DocumentDB DO',
+    description: 'MongoDB-compatible API (in-memory demo)',
     database: 'DocumentDB',
-    status: 'pending',
+    status: 'active',
     endpoints: {
       api: 'https://documentdb.example.com.ai',
       qa: 'https://documentdb.example.com.ai/qa',

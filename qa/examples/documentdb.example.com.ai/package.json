@@ -16,6 +16,6 @@
   },
   "dependencies": {
     "api.do": "workspace:*",
-    "@dotdo/documentdb": "workspace:*"
+    "@dotdo/documentdb": "^0.1.0"
   }
 }
