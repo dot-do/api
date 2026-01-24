@@ -1,7 +1,7 @@
 import { build } from 'esbuild'
 import path from 'path'
 
-// Use local @dotdo/apis from workspace root
+// Use local @dotdo/api from workspace root
 const apiRoot = path.resolve(import.meta.dirname, '../../..')
 
 await build({
@@ -13,6 +13,6 @@ await build({
   external: ['oauth.do', 'rpc.do', 'cloudflare:*'],
   conditions: ['worker', 'browser'],
   alias: {
-    '@dotdo/apis': path.join(apiRoot, 'dist/index.js'),
+    '@dotdo/api': path.join(apiRoot, 'dist/index.js'),
   },
 })

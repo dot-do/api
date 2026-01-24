@@ -59,9 +59,9 @@ importers:
       '@cloudflare/workers-types':
         specifier: ^4.20250124.0
         version: 4.20260124.0
-      '@dotdo/apis':
-        specifier: ^0.1.0
-        version: 0.1.0(@cloudflare/workers-types@4.20260124.0)(@dotdo/pglite@0.1.0)(@dotdo/postgres@0.1.0)
+      '@dotdo/api':
+        specifier: workspace:*
+        version: link:..
       '@types/node':
         specifier: ^22.0.0
         version: 22.19.7
@@ -170,9 +170,6 @@ packages:
   '@cspotcode/source-map-support@0.8.1':
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
     engines: {node: '>=12'}
-
-  '@dotdo/apis@0.1.0':
-    resolution: {integrity: sha512-VFi0LFS9vE5M/3K73m9+78L7jGEIoPX5RjkFjaQ/O0H9Fn03yQQcXAar/qDsPzg/SU8zd2LqVcDRltCTBgWDkQ==}
 
   '@dotdo/documentdb@0.1.0':
     resolution: {integrity: sha512-MdML9TM99RS71Khrrw0y8Vm+SxmgcfCmwmOf5gGaGp/mVAHdSJZgWLVVom9jw5iwCv5dpZjZkZWZ7L/0goBklQ==}
@@ -1789,30 +1786,6 @@ snapshots:
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
     optional: true
-
-  '@dotdo/apis@0.1.0(@cloudflare/workers-types@4.20260124.0)(@dotdo/pglite@0.1.0)(@dotdo/postgres@0.1.0)':
-    dependencies:
-      '@dotdo/documentdb': 0.1.0(@cloudflare/workers-types@4.20260124.0)
-      '@electric-sql/pglite': 0.3.15
-      hono: 4.11.5
-      postgres.do: 0.1.0(@dotdo/pglite@0.1.0)(@dotdo/postgres@0.1.0)(hono@4.11.5)
-    optionalDependencies:
-      oauth.do: 0.2.2(hono@4.11.5)
-      rpc.do: 0.2.0(oauth.do@0.2.2(hono@4.11.5))
-    transitivePeerDependencies:
-      - '@cloudflare/workers-types'
-      - '@dotdo/pglite'
-      - '@dotdo/postgres'
-      - '@radix-ui/themes'
-      - '@tanstack/react-query'
-      - '@workos-inc/authkit-react'
-      - '@workos-inc/widgets'
-      - bufferutil
-      - drizzle-orm
-      - jose
-      - react
-      - react-dom
-      - utf-8-validate
 
   '@dotdo/documentdb@0.1.0(@cloudflare/workers-types@4.20260124.0)':
     dependencies:

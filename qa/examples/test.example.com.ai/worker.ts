@@ -8,7 +8,7 @@
  * - /qa endpoint for test discovery
  */
 
-import { API } from '@dotdo/apis'
+import { API } from '@dotdo/api'
 import type { Context } from 'hono'
 
 // In-memory store for demo (would use D1 in production)

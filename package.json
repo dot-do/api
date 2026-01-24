@@ -1,5 +1,5 @@
 {
-  "name": "@dotdo/apis",
+  "name": "@dotdo/api",
   "version": "0.1.0",
   "description": "Core API framework for building Hono-based APIs on Cloudflare Workers with conventions, middleware, and MCP tools",
   "type": "module",

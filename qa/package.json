@@ -36,7 +36,7 @@
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250124.0",
     "@types/node": "^22.0.0",
-    "@dotdo/apis": "^0.1.0",
+    "@dotdo/api": "workspace:*",
     "hono": "^4.7.0",
     "tsup": "^8.3.0",
     "tsx": "^4.19.0",

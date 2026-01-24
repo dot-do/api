@@ -13,6 +13,6 @@ await build({
   external: ['oauth.do', 'rpc.do', 'cloudflare:*'],
   conditions: ['worker', 'browser'],
   alias: {
-    '@dotdo/apis': resolve(__dirname, '../../../dist/index.js'),
+    '@dotdo/api': resolve(__dirname, '../../../dist/index.js'),
   },
 })

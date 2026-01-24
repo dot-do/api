@@ -15,7 +15,7 @@
     "wrangler": "^3.99.0"
   },
   "dependencies": {
-    "@dotdo/apis": "^0.1.0",
+    "@dotdo/api": "^0.1.0",
     "@electric-sql/pglite": "^0.3.15"
   }
 }
