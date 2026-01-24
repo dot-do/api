@@ -1,4 +1,4 @@
-import { API } from '../../src'
+import { API } from '../../dist'
 
 export default API({
   name: 'api.example.com.ai',

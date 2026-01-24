@@ -1,0 +1,30 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "api-example",
+  "main": "_worker.js",
+  "compatibility_date": "2026-01-24",
+  "account_id": "b6641681fe423910342b9ffa1364c76d",
+  "no_bundle": true,
+  "build": {
+    "command": "cd examples/api.example.com.ai && npx tsx build.ts"
+  },
+  "routes": [
+    { "pattern": "api.example.com.ai/*", "zone_name": "example.com.ai" }
+  ],
+  "vars": {
+    "API_NAME": "api.example.com.ai"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "api-example-db",
+      "database_id": "c4710fb2-7276-4074-8576-6f9aec4ed9a4"
+    }
+  ],
+  "analytics_engine_datasets": [
+    {
+      "binding": "ANALYTICS",
+      "dataset": "api-example"
+    }
+  ]
+}
