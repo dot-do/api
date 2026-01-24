@@ -22,11 +22,11 @@ importers:
         version: 0.1.0(@dotdo/pglite@0.1.0)(@dotdo/postgres@0.1.0)(hono@4.11.5)
     optionalDependencies:
       oauth.do:
-        specifier: '*'
-        version: 0.2.0(hono@4.11.5)
+        specifier: ^0.2.2
+        version: 0.2.2(hono@4.11.5)
       rpc.do:
         specifier: '*'
-        version: 0.2.0(oauth.do@0.2.0(hono@4.11.5))
+        version: 0.2.0(oauth.do@0.2.2(hono@4.11.5))
     devDependencies:
       '@cloudflare/workers-types':
         specifier: ^4.20250124.0
@@ -1243,8 +1243,8 @@ packages:
   node-addon-api@4.3.0:
     resolution: {integrity: sha512-73sE9+3UaLYYFmDsFZnqCInzPyh3MqIwZO9cw58yIqAZhONrrabrYyYe3TuIqtIiOuTXVhsGau8hcrhhwSsDIQ==}
 
-  oauth.do@0.2.0:
-    resolution: {integrity: sha512-Ea+5gMWfR9+yaI0VJcRJwhoIpKjAZABx0BIfwsbidiIE7NqMdIF+QHWj5w+bS1GSEoZqCoVr6QUadBUb5lWcOA==}
+  oauth.do@0.2.2:
+    resolution: {integrity: sha512-X5mOrvvym89UoByqdCZfthZTL6nSFUbQPx4C9WQKPn9nDjYPEDs0Zw+ksh9yqvUw+73trH8crlvU0qrmP5W5pA==}
     engines: {node: '>=18.0.0'}
     hasBin: true
     peerDependencies:
@@ -1797,8 +1797,8 @@ snapshots:
       hono: 4.11.5
       postgres.do: 0.1.0(@dotdo/pglite@0.1.0)(@dotdo/postgres@0.1.0)(hono@4.11.5)
     optionalDependencies:
-      oauth.do: 0.2.0(hono@4.11.5)
-      rpc.do: 0.2.0(oauth.do@0.2.0(hono@4.11.5))
+      oauth.do: 0.2.2(hono@4.11.5)
+      rpc.do: 0.2.0(oauth.do@0.2.2(hono@4.11.5))
     transitivePeerDependencies:
       - '@cloudflare/workers-types'
       - '@dotdo/pglite'
@@ -1819,13 +1819,20 @@ snapshots:
       '@dotdo/pg-geo': 0.1.0(@cloudflare/workers-types@4.20260124.0)
       '@dotdo/postgres': 0.1.0
       '@dotdo/postgres-shared': 0.1.0(hono@4.11.5)
-      ai-evaluate: 2.1.5
+      ai-evaluate: 2.1.5(hono@4.11.5)
       capnweb: 0.4.0
       hono: 4.11.5
     transitivePeerDependencies:
       - '@cloudflare/workers-types'
+      - '@radix-ui/themes'
+      - '@tanstack/react-query'
+      - '@workos-inc/authkit-react'
+      - '@workos-inc/widgets'
       - bufferutil
       - drizzle-orm
+      - jose
+      - react
+      - react-dom
       - utf-8-validate
 
   '@dotdo/pg-geo@0.1.0(@cloudflare/workers-types@4.20260124.0)':
@@ -2605,19 +2612,27 @@ snapshots:
 
   acorn@8.15.0: {}
 
-  ai-evaluate@2.1.5:
+  ai-evaluate@2.1.5(hono@4.11.5):
     dependencies:
-      ai-functions: 2.1.3
+      ai-functions: 2.1.3(hono@4.11.5)
       ai-tests: 2.1.3
       capnweb: 0.2.0
     optionalDependencies:
       esbuild: 0.24.2
       miniflare: 3.20250718.3
     transitivePeerDependencies:
+      - '@radix-ui/themes'
+      - '@tanstack/react-query'
+      - '@workos-inc/authkit-react'
+      - '@workos-inc/widgets'
       - bufferutil
+      - hono
+      - jose
+      - react
+      - react-dom
       - utf-8-validate
 
-  ai-functions@2.1.3:
+  ai-functions@2.1.3(hono@4.11.5):
     dependencies:
       '@ai-sdk/amazon-bedrock': 3.0.73(zod@3.25.76)
       '@org.ai/core': 2.1.3
@@ -2626,6 +2641,17 @@ snapshots:
       language-models: 2.1.3
       yaml: 2.8.2
       zod: 3.25.76
+    optionalDependencies:
+      oauth.do: 0.2.2(hono@4.11.5)
+    transitivePeerDependencies:
+      - '@radix-ui/themes'
+      - '@tanstack/react-query'
+      - '@workos-inc/authkit-react'
+      - '@workos-inc/widgets'
+      - hono
+      - jose
+      - react
+      - react-dom
 
   ai-providers@2.1.3(zod@3.25.76):
     dependencies:
@@ -3019,12 +3045,12 @@ snapshots:
   node-addon-api@4.3.0:
     optional: true
 
-  oauth.do@0.2.0(hono@4.11.5):
+  oauth.do@0.2.2(hono@4.11.5):
     dependencies:
+      keytar: 7.9.0
       open: 10.2.0
     optionalDependencies:
       hono: 4.11.5
-      keytar: 7.9.0
     optional: true
 
   object-assign@4.1.1: {}
@@ -3193,10 +3219,10 @@ snapshots:
       '@rollup/rollup-win32-x64-msvc': 4.56.0
       fsevents: 2.3.3
 
-  rpc.do@0.2.0(oauth.do@0.2.0(hono@4.11.5)):
+  rpc.do@0.2.0(oauth.do@0.2.2(hono@4.11.5)):
     optionalDependencies:
       capnweb: 0.1.0
-      oauth.do: 0.2.0(hono@4.11.5)
+      oauth.do: 0.2.2(hono@4.11.5)
     optional: true
 
   run-applescript@7.1.0:

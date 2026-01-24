@@ -33,7 +33,7 @@
     "postgres.do": "^0.1.0"
   },
   "optionalDependencies": {
-    "oauth.do": "*",
+    "oauth.do": "^0.2.2",
     "rpc.do": "*"
   },
   "devDependencies": {
