@@ -204,6 +204,40 @@ export interface TestingConfig {
 // Landing page configuration
 export type LandingConfig = false | ((c: Context<ApiEnv>) => Response | Promise<Response>)
 
+// Database schema field definition (IceType-inspired)
+export type FieldDef = string
+
+// Database schema definition
+export type SchemaDef = Record<string, Record<string, FieldDef>>
+
+// Event sink configuration
+export interface EventSinkConfig {
+  type: 'lakehouse' | 'queue' | 'webhook' | 'analytics'
+  binding?: string
+  url?: string
+  batchSize?: number
+  flushInterval?: number
+}
+
+// Database convention configuration
+export interface DatabaseConfig {
+  schema: SchemaDef
+  binding?: string
+  namespace?: string | ((c: unknown) => string)
+  events?: EventSinkConfig[]
+  mcp?: boolean | { enabled: boolean; prefix?: string }
+  rpc?: boolean | { enabled: boolean; path?: string }
+  subscriptions?: boolean
+  rest?: {
+    basePath?: string
+    pageSize?: number
+    maxPageSize?: number
+  }
+}
+
+// Functions/Services configuration (imported from convention)
+export type { FunctionsConfig } from './conventions/functions'
+
 // Main API configuration
 export interface ApiConfig {
   name: string
@@ -217,7 +251,10 @@ export interface ApiConfig {
   rpc?: RpcConfig
   mcp?: McpConfig
   analytics?: AnalyticsConfig
+  analyticsBuffer?: import('./conventions/analytics-buffer').AnalyticsBufferConfig
   testing?: TestingConfig
+  database?: DatabaseConfig
+  functions?: import('./conventions/functions').FunctionsConfig
   landing?: LandingConfig
   routes?: (app: Hono<ApiEnv>) => void
 }

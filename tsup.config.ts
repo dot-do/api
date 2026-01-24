@@ -7,5 +7,5 @@ export default defineConfig({
   clean: true,
   sourcemap: true,
   target: 'es2022',
-  external: ['oauth.do', 'rpc.do'],
+  external: ['oauth.do', 'rpc.do', 'cloudflare:workers'],
 })

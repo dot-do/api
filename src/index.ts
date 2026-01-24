@@ -12,6 +12,10 @@ export type {
   McpTool,
   McpResource,
   AnalyticsConfig,
+  DatabaseConfig,
+  SchemaDef,
+  FieldDef,
+  EventSinkConfig,
   ResponseEnvelope,
   RespondOptions,
   Links,
@@ -26,7 +30,10 @@ export type {
 
 export { responseMiddleware } from './response'
 export { contextMiddleware, corsMiddleware, authMiddleware, rateLimitMiddleware } from './middleware'
-export { crudConvention, proxyConvention, rpcConvention, mcpConvention, analyticsMiddleware, analyticsRoutes } from './conventions'
+export { crudConvention, proxyConvention, rpcConvention, mcpConvention, analyticsMiddleware, analyticsRoutes, analyticsBufferRoutes, AnalyticsBufferDO, databaseConvention, DatabaseDO } from './conventions'
+export type { AnalyticsBufferConfig, BufferEvent } from './conventions'
+export { parseSchema, parseField, parseModel, generateJsonSchema } from './conventions/database'
+export type { ParsedSchema, ParsedModel, ParsedField, Document, DatabaseEvent } from './conventions/database'
 export { buildPagination, buildCursorPagination } from './helpers/pagination'
 export { createLinkBuilder } from './helpers/links'
 export { notFound, badRequest, unauthorized, forbidden, rateLimited, internal } from './helpers/errors'

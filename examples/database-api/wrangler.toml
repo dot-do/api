@@ -1,0 +1,24 @@
+# Example: Schema-Driven Database API
+name = "blog-api"
+main = "worker.ts"
+compatibility_date = "2026-01-24"
+
+# Database Durable Object
+[[durable_objects.bindings]]
+name = "DB"
+class_name = "DatabaseDO"
+
+# Lakehouse DO for event storage (optional)
+# [[durable_objects.bindings]]
+# name = "LAKEHOUSE"
+# class_name = "LakehouseDO"
+
+# Event queue (optional)
+# [[queues.producers]]
+# binding = "EVENTS"
+# queue = "blog-events"
+
+# DO migrations
+[[migrations]]
+tag = "v1"
+new_classes = ["DatabaseDO"]

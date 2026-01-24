@@ -2,7 +2,7 @@ import { Hono } from 'hono'
 import type { ApiConfig, ApiEnv } from './types'
 import { responseMiddleware } from './response'
 import { contextMiddleware, corsMiddleware, authMiddleware, rateLimitMiddleware } from './middleware'
-import { crudConvention, proxyConvention, rpcConvention, mcpConvention, analyticsMiddleware, analyticsRoutes, testingConvention } from './conventions'
+import { crudConvention, proxyConvention, rpcConvention, mcpConvention, analyticsMiddleware, analyticsRoutes, analyticsBufferRoutes, testingConvention, databaseConvention, functionsConvention } from './conventions'
 
 export function API(config: ApiConfig): Hono<ApiEnv> {
   const app = new Hono<ApiEnv>()
@@ -67,8 +67,41 @@ export function API(config: ApiConfig): Hono<ApiEnv> {
     app.route('/', analyticsRoutes(config.analytics))
   }
 
+  // Analytics buffer - hibernatable WebSocket DO pattern
+  if (config.analyticsBuffer) {
+    app.route('/', analyticsBufferRoutes(config.analyticsBuffer))
+  }
+
   if (config.testing) {
     app.route('/', testingConvention(config.testing, config.mcp?.tools))
+  }
+
+  // Database convention - schema-driven CRUD + MCP + events
+  if (config.database) {
+    const { routes, mcpTools } = databaseConvention(config.database)
+    app.route('/', routes)
+
+    // Merge database MCP tools with explicit MCP tools
+    if (config.mcp && mcpTools.length > 0) {
+      config.mcp.tools = [...(config.mcp.tools || []), ...mcpTools.map((t) => ({
+        ...t,
+        handler: async () => ({ error: 'Use /mcp endpoint' }), // Placeholder, actual handling in database convention
+      }))]
+    }
+  }
+
+  // Functions convention - service actions, proxies, packages, mashups, lookups
+  if (config.functions) {
+    const { routes, mcpTools } = functionsConvention(config.functions)
+    app.route('/', routes)
+
+    // Merge function MCP tools with explicit MCP tools
+    if (config.mcp && mcpTools.length > 0) {
+      config.mcp.tools = [...(config.mcp.tools || []), ...mcpTools.map((t) => ({
+        ...t,
+        handler: async () => ({ error: 'Use /mcp endpoint' }),
+      }))]
+    }
   }
 
   // Custom routes
