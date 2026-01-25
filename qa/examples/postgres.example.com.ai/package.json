@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@dotdo/pg-protocol": "^0.1.1",
-    "@dotdo/pglite": "^0.1.3",
+    "@dotdo/pglite": "^0.1.4",
     "async-mutex": "^0.5.0",
     "hono": "^4.6.0",
     "itty-router": "^5.0.22"
