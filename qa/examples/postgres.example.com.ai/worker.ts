@@ -23,6 +23,46 @@ import pgliteWasm from './src/pglite-assets/pglite.wasm'
 import pgliteData from './src/pglite-assets/pglite.data'
 
 // =============================================================================
+// Module-Level Instance Tracking (outside DO class)
+// =============================================================================
+// These persist as long as the isolate lives - helps us understand DO lifecycle
+// The module loads once per isolate, so this tracks isolate lifetime
+
+// Note: Date.now() at module evaluation time in Workers returns 0
+// We capture the first request time instead
+let MODULE_LOAD_TIME: number | null = null
+const MODULE_INSTANCE_ID = Math.random().toString(36).slice(2, 10)
+
+function getModuleLoadTime(): number {
+  if (MODULE_LOAD_TIME === null) {
+    MODULE_LOAD_TIME = Date.now()
+  }
+  return MODULE_LOAD_TIME
+}
+
+// Track request count at module level
+let moduleRequestCount = 0
+
+// Hoisted PGlite instance - survives DO class reinstantiation within same isolate
+// This tests if the class is being recreated more often than the isolate
+let hoistedPglite: PGliteLocal | null = null
+let hoistedPglitePromise: Promise<PGliteLocal> | null = null
+
+async function getOrCreatePglite(): Promise<PGliteLocal> {
+  if (hoistedPglite) return hoistedPglite
+  if (hoistedPglitePromise) return hoistedPglitePromise
+
+  hoistedPglitePromise = PGliteLocal.create({
+    wasmModule: pgliteWasm,
+    fsBundle: pgliteData,
+  })
+
+  hoistedPglite = await hoistedPglitePromise
+  hoistedPglitePromise = null
+  return hoistedPglite
+}
+
+// =============================================================================
 // Types
 // =============================================================================
 
@@ -81,11 +121,18 @@ export class Postgres extends DurableObject {
   private sqlStorage: SqlStorage
   private colo: string = 'unknown'
 
+  // Instance-level tracking
+  private readonly instanceCreatedAt = Date.now()
+  private readonly instanceId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`
+  private instanceRequestCount = 0
+  private wasmInitializedAt: number | null = null
+
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env)
     this.sqlStorage = ctx.storage.sql
     // Get colo from ctx.id location hint or fallback
     this.colo = (ctx as unknown as { colo?: string }).colo || 'unknown'
+    moduleRequestCount++
   }
 
   private async init(): Promise<void> {
@@ -110,15 +157,18 @@ export class Postgres extends DurableObject {
         .then((cf: { colo?: string }) => { this.colo = cf.colo || 'unknown' })
         .catch(() => { /* keep default 'unknown' */ })
 
-      // PGLite with static WASM imports
+      // Use hoisted PGLite instance - survives across DO class reinstantiations
+      // This tests if the isolate stays alive longer than the DO class instance
+      const wasmWasAlreadyLoaded = hoistedPglite !== null
       const [pglite] = await Promise.all([
-        PGliteLocal.create({
-          wasmModule: pgliteWasm,
-          fsBundle: pgliteData,
-        }),
+        getOrCreatePglite(),
         coloPromise,
       ])
       this.pglite = pglite
+      this.wasmInitializedAt = Date.now()
+
+      // Log whether we reused the WASM instance
+      console.log(`[Postgres DO] WASM ${wasmWasAlreadyLoaded ? 'REUSED' : 'LOADED'} - module age: ${Date.now() - MODULE_LOAD_TIME}ms, instance age: ${Date.now() - this.instanceCreatedAt}ms`)
 
       await this.pglite.exec(`
         CREATE TABLE IF NOT EXISTS posts (
@@ -295,6 +345,46 @@ export class Postgres extends DurableObject {
     return this.colo
   }
 
+  /** Get instance lifecycle info for debugging cold starts */
+  async getInstanceInfo(): Promise<{
+    module: { id: string; loadedAt: string; ageMs: number; requestCount: number }
+    instance: { id: string; createdAt: string; ageMs: number; requestCount: number }
+    wasm: { initialized: boolean; initializedAt: string | null; ageMs: number | null; reused: boolean; initMs: number | null }
+    doColo: string
+  }> {
+    // Initialize to get accurate WASM timing
+    const wasmInitStart = performance.now()
+    const wasAlreadyInitialized = this.pglite !== null
+    await this.init()
+    const wasmInitMs = wasAlreadyInitialized ? null : Math.round((performance.now() - wasmInitStart) * 100) / 100
+
+    this.instanceRequestCount++
+    const now = Date.now()
+    const moduleLoadTime = getModuleLoadTime()
+    return {
+      module: {
+        id: MODULE_INSTANCE_ID,
+        loadedAt: new Date(moduleLoadTime).toISOString(),
+        ageMs: now - moduleLoadTime,
+        requestCount: moduleRequestCount,
+      },
+      instance: {
+        id: this.instanceId,
+        createdAt: new Date(this.instanceCreatedAt).toISOString(),
+        ageMs: now - this.instanceCreatedAt,
+        requestCount: this.instanceRequestCount,
+      },
+      wasm: {
+        initialized: this.pglite !== null,
+        initializedAt: this.wasmInitializedAt ? new Date(this.wasmInitializedAt).toISOString() : null,
+        ageMs: this.wasmInitializedAt ? now - this.wasmInitializedAt : null,
+        reused: hoistedPglite !== null && this.pglite === hoistedPglite,
+        initMs: wasmInitMs,
+      },
+      doColo: this.colo,
+    }
+  }
+
   // ============================================================================
   // WebSocket Hibernation Support (95% cost savings)
   // ============================================================================
@@ -447,6 +537,7 @@ router.get('/', (req) => {
       'PostgreSQL Version': `${base}/version`,
       'Raw Query': `${base}/query (POST with {"sql": "SELECT ..."})`,
       'WebSocket': `${wsBase}/ws (persistent connection, 95% cheaper)`,
+      'Instance Debug': `${base}/debug (DO lifecycle info)`,
     },
     timing: {
       note: 'All endpoints return detailed timing info via DO RPC',
@@ -564,6 +655,35 @@ router.get('/version', async (req, env: Env) => {
   const totalMs = performance.now() - requestStart
 
   return withTiming(workerColo, result, rpcMs, totalMs)
+})
+
+// Debug endpoint to track DO instance lifecycle
+router.get('/debug', async (req, env: Env) => {
+  const requestStart = performance.now()
+  const workerColo = getColo(req)
+
+  const rpcStart = performance.now()
+  const instanceInfo = await db(env).getInstanceInfo()
+  const rpcMs = performance.now() - rpcStart
+  const totalMs = performance.now() - requestStart
+
+  return Response.json({
+    ...instanceInfo,
+    timing: {
+      workerColo,
+      doColo: instanceInfo.doColo,
+      rpcMs: Math.round(rpcMs * 100) / 100,
+      totalMs: Math.round(totalMs * 100) / 100,
+    },
+    explanation: {
+      moduleAge: 'How long since the isolate/module loaded (survives across DO instances)',
+      instanceAge: 'How long since THIS DO class was instantiated',
+      wasmAge: 'How long since PGLite WASM was initialized',
+      wasmReused: 'Whether the WASM instance was reused from module-level cache',
+      coldStart: 'If module.ageMs ≈ instance.ageMs ≈ wasm.ageMs, this was a cold start',
+      warmStart: 'If module.ageMs >> instance.ageMs, the isolate stayed warm but DO class was recreated',
+    },
+  })
 })
 
 // WebSocket is handled separately - see export default below
