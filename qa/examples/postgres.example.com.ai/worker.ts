@@ -6,6 +6,13 @@
  * Uses DO RPC for direct method calls (not fetch anti-pattern).
  * Includes detailed latency metrics for all operations.
  *
+ * WASM Loading Strategy:
+ * Uses BackgroundPGLiteManager for "eager-but-non-blocking" loading:
+ * - WASM loading starts immediately on DO init (not lazy)
+ * - Non-query endpoints (ping, debug) respond instantly while WASM loads
+ * - Queries wait only for remaining load time (often near-zero)
+ * - Uses ctx.waitUntil() to keep DO alive during background loading
+ *
  * WebSocket Hibernation Support:
  * - Connect to /ws for persistent WebSocket connections
  * - 95% cost savings vs regular DO requests
@@ -43,23 +50,70 @@ function getModuleLoadTime(): number {
 // Track request count at module level
 let moduleRequestCount = 0
 
-// Hoisted PGlite instance - survives DO class reinstantiation within same isolate
-// This tests if the class is being recreated more often than the isolate
+// =============================================================================
+// Module-Level WASM Hoisting (survives DO class reinstantiation)
+// =============================================================================
+// The isolate persists longer than DO class instances. By hoisting the PGLite
+// instance to module scope, we can reuse it across DO class reinstantiations
+// within the same isolate - reducing warm starts from ~1200ms to ~30ms.
+
+/** Hoisted PGLite instance - survives DO class reinstantiation within same isolate */
 let hoistedPglite: PGliteLocal | null = null
+
+/** Promise for in-progress PGLite initialization. Shared for deduplication. */
 let hoistedPglitePromise: Promise<PGliteLocal> | null = null
 
-async function getOrCreatePglite(): Promise<PGliteLocal> {
-  if (hoistedPglite) return hoistedPglite
-  if (hoistedPglitePromise) return hoistedPglitePromise
+/** Timestamp when WASM loading started */
+let wasmLoadStartedAt: number | null = null
+
+/** Timestamp when WASM was loaded */
+let wasmLoadedAt: number | null = null
+
+/**
+ * Check if WASM is currently loading in background.
+ */
+function isWasmLoading(): boolean {
+  return hoistedPglitePromise !== null && hoistedPglite === null
+}
+
+/**
+ * Start WASM loading in background.
+ * Returns immediately - the promise is tracked for later awaiting.
+ */
+function startWasmLoadingInBackground(): void {
+  // Already loaded or loading
+  if (hoistedPglite || hoistedPglitePromise) return
+
+  wasmLoadStartedAt = Date.now()
+  console.log(`[postgres.example.com.ai] Starting WASM load in background - module: ${MODULE_INSTANCE_ID}`)
 
   hoistedPglitePromise = PGliteLocal.create({
     wasmModule: pgliteWasm,
     fsBundle: pgliteData,
+  }).then((pg) => {
+    hoistedPglite = pg
+    wasmLoadedAt = Date.now()
+    const loadDuration = wasmLoadedAt - (wasmLoadStartedAt ?? wasmLoadedAt)
+    console.log(`[postgres.example.com.ai] WASM LOADED - took ${loadDuration}ms, module: ${MODULE_INSTANCE_ID}`)
+    return pg
+  }).catch((err) => {
+    console.error(`[postgres.example.com.ai] WASM load failed:`, err)
+    hoistedPglitePromise = null
+    throw err
   })
+}
 
-  hoistedPglite = await hoistedPglitePromise
-  hoistedPglitePromise = null
-  return hoistedPglite
+/**
+ * Get or await the hoisted PGLite instance.
+ * If loading is in progress, waits for it. If not started, starts loading.
+ */
+async function getOrAwaitHoistedPglite(): Promise<PGliteLocal> {
+  if (hoistedPglite) return hoistedPglite
+  if (hoistedPglitePromise) return hoistedPglitePromise
+
+  // Not started yet - start now (fallback, shouldn't happen if init() called)
+  startWasmLoadingInBackground()
+  return hoistedPglitePromise!
 }
 
 // =============================================================================
@@ -112,7 +166,7 @@ const esc = (s: string | null | undefined): string => {
 }
 
 // =============================================================================
-// Postgres Durable Object with RPC Methods
+// Postgres Durable Object with Background WASM Loading
 // =============================================================================
 
 export class Postgres extends DurableObject {
@@ -126,6 +180,7 @@ export class Postgres extends DurableObject {
   private readonly instanceId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`
   private instanceRequestCount = 0
   private wasmInitializedAt: number | null = null
+  private wasmWaitedMs: number | null = null
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env)
@@ -133,14 +188,32 @@ export class Postgres extends DurableObject {
     // Get colo from ctx.id location hint or fallback
     this.colo = (ctx as unknown as { colo?: string }).colo || 'unknown'
     moduleRequestCount++
+
+    // =========================================================================
+    // EAGER-BUT-NON-BLOCKING: Start WASM loading in background immediately
+    // =========================================================================
+    // This is the key insight: don't wait for WASM, just start loading it.
+    // Use ctx.waitUntil() to keep the DO alive while WASM loads in background.
+    // Non-query endpoints (ping, debug) can respond instantly.
+    // Queries will wait only for remaining load time.
+    startWasmLoadingInBackground()
+
+    // Keep DO alive while WASM loads (critical for hibernation)
+    if (hoistedPglitePromise) {
+      ctx.waitUntil(hoistedPglitePromise.catch(() => {}))
+    }
   }
 
+  /**
+   * Initialize PGLite and set up the database.
+   * Waits for WASM if not yet loaded, but WASM loading already started in constructor.
+   */
   private async init(): Promise<void> {
     if (this.pglite) return
     if (this.initPromise) return this.initPromise
 
     this.initPromise = (async () => {
-      // DO SQLite for persistence
+      // DO SQLite for persistence (independent of WASM)
       this.sqlStorage.exec(`
         CREATE TABLE IF NOT EXISTS __posts (
           id INTEGER PRIMARY KEY,
@@ -157,18 +230,27 @@ export class Postgres extends DurableObject {
         .then((cf: { colo?: string }) => { this.colo = cf.colo || 'unknown' })
         .catch(() => { /* keep default 'unknown' */ })
 
-      // Use hoisted PGLite instance - survives across DO class reinstantiations
-      // This tests if the isolate stays alive longer than the DO class instance
+      // Wait for WASM if not yet loaded (loading started in constructor)
       const wasmWasAlreadyLoaded = hoistedPglite !== null
+      const waitStart = performance.now()
+
       const [pglite] = await Promise.all([
-        getOrCreatePglite(),
+        getOrAwaitHoistedPglite(),
         coloPromise,
       ])
+
+      const waitMs = performance.now() - waitStart
       this.pglite = pglite
       this.wasmInitializedAt = Date.now()
 
-      // Log whether we reused the WASM instance
-      console.log(`[Postgres DO] WASM ${wasmWasAlreadyLoaded ? 'REUSED' : 'LOADED'} - module age: ${Date.now() - MODULE_LOAD_TIME}ms, instance age: ${Date.now() - this.instanceCreatedAt}ms`)
+      // Track wait time if we actually had to wait
+      if (!wasmWasAlreadyLoaded && waitMs > 1) {
+        this.wasmWaitedMs = Math.round(waitMs * 100) / 100
+        console.log(`[Postgres DO] Query waited ${this.wasmWaitedMs}ms for WASM to finish loading`)
+      }
+
+      // Log reuse status
+      console.log(`[Postgres DO] WASM ${wasmWasAlreadyLoaded ? 'REUSED' : 'LOADED'} - module age: ${Date.now() - (MODULE_LOAD_TIME ?? Date.now())}ms, instance age: ${Date.now() - this.instanceCreatedAt}ms`)
 
       await this.pglite.exec(`
         CREATE TABLE IF NOT EXISTS posts (
@@ -345,11 +427,76 @@ export class Postgres extends DurableObject {
     return this.colo
   }
 
-  /** Get instance lifecycle info for debugging cold starts */
+  /**
+   * Health check - responds INSTANTLY without waiting for WASM.
+   * This is the key benefit of background loading.
+   */
+  ping(): {
+    ok: boolean
+    wasmLoaded: boolean
+    wasmLoading: boolean
+    doColo: string
+    moduleId: string
+  } {
+    return {
+      ok: true,
+      wasmLoaded: hoistedPglite !== null,
+      wasmLoading: isWasmLoading(),
+      doColo: this.colo,
+      moduleId: MODULE_INSTANCE_ID,
+    }
+  }
+
+  /**
+   * Get instance lifecycle info for debugging cold starts.
+   * Responds INSTANTLY with current state - doesn't wait for WASM.
+   */
+  getDebugInfo(): {
+    module: { id: string; loadedAt: string; ageMs: number; requestCount: number }
+    instance: { id: string; createdAt: string; ageMs: number; requestCount: number }
+    wasm: {
+      loaded: boolean
+      loading: boolean
+      loadStartedAt: string | null
+      loadedAt: string | null
+      loadDurationMs: number | null
+      timeSinceLoadMs: number | null
+    }
+    doColo: string
+  } {
+    this.instanceRequestCount++
+    const now = Date.now()
+    const moduleLoadTime = getModuleLoadTime()
+    return {
+      module: {
+        id: MODULE_INSTANCE_ID,
+        loadedAt: new Date(moduleLoadTime).toISOString(),
+        ageMs: now - moduleLoadTime,
+        requestCount: moduleRequestCount,
+      },
+      instance: {
+        id: this.instanceId,
+        createdAt: new Date(this.instanceCreatedAt).toISOString(),
+        ageMs: now - this.instanceCreatedAt,
+        requestCount: this.instanceRequestCount,
+      },
+      wasm: {
+        loaded: hoistedPglite !== null,
+        loading: isWasmLoading(),
+        loadStartedAt: wasmLoadStartedAt ? new Date(wasmLoadStartedAt).toISOString() : null,
+        loadedAt: wasmLoadedAt ? new Date(wasmLoadedAt).toISOString() : null,
+        loadDurationMs: wasmLoadStartedAt && wasmLoadedAt ? wasmLoadedAt - wasmLoadStartedAt : null,
+        timeSinceLoadMs: wasmLoadedAt !== null ? now - wasmLoadedAt : null,
+      },
+      doColo: this.colo,
+    }
+  }
+
+  /** Get instance lifecycle info for debugging cold starts (waits for WASM) */
   async getInstanceInfo(): Promise<{
     module: { id: string; loadedAt: string; ageMs: number; requestCount: number }
     instance: { id: string; createdAt: string; ageMs: number; requestCount: number }
-    wasm: { initialized: boolean; initializedAt: string | null; ageMs: number | null; reused: boolean; initMs: number | null }
+    wasm: { initialized: boolean; initializedAt: string | null; ageMs: number | null; reused: boolean; initMs: number | null; waitedMs: number | null }
     doColo: string
   }> {
     // Initialize to get accurate WASM timing
@@ -380,6 +527,7 @@ export class Postgres extends DurableObject {
         ageMs: this.wasmInitializedAt ? now - this.wasmInitializedAt : null,
         reused: hoistedPglite !== null && this.pglite === hoistedPglite,
         initMs: wasmInitMs,
+        waitedMs: this.wasmWaitedMs,
       },
       doColo: this.colo,
     }
@@ -529,6 +677,7 @@ router.get('/', (req) => {
     name: 'postgres.example.com.ai',
     description: 'PostgreSQL at the Edge - PGLite WASM + Durable Objects',
     workerColo,
+    wasmStrategy: 'eager-but-non-blocking (starts loading in constructor, non-query endpoints respond instantly)',
     links: {
       'List Posts': `${base}/posts`,
       'Published Only': `${base}/posts?published=true`,
@@ -537,7 +686,9 @@ router.get('/', (req) => {
       'PostgreSQL Version': `${base}/version`,
       'Raw Query': `${base}/query (POST with {"sql": "SELECT ..."})`,
       'WebSocket': `${wsBase}/ws (persistent connection, 95% cheaper)`,
-      'Instance Debug': `${base}/debug (DO lifecycle info)`,
+      'Health Check': `${base}/ping (instant, no WASM wait)`,
+      'Debug (instant)': `${base}/debug (DO lifecycle info, no WASM wait)`,
+      'Debug (full)': `${base}/debug/full (DO lifecycle info, waits for WASM)`,
     },
     timing: {
       note: 'All endpoints return detailed timing info via DO RPC',
@@ -657,8 +808,56 @@ router.get('/version', async (req, env: Env) => {
   return withTiming(workerColo, result, rpcMs, totalMs)
 })
 
-// Debug endpoint to track DO instance lifecycle
+// Health check - responds INSTANTLY without waiting for WASM
+router.get('/ping', async (req, env: Env) => {
+  const requestStart = performance.now()
+  const workerColo = getColo(req)
+
+  const rpcStart = performance.now()
+  const result = await db(env).ping()
+  const rpcMs = performance.now() - rpcStart
+  const totalMs = performance.now() - requestStart
+
+  return Response.json({
+    ...result,
+    timing: {
+      workerColo,
+      rpcMs: Math.round(rpcMs * 100) / 100,
+      totalMs: Math.round(totalMs * 100) / 100,
+    },
+  })
+})
+
+// Debug endpoint - responds INSTANTLY with current state (doesn't wait for WASM)
 router.get('/debug', async (req, env: Env) => {
+  const requestStart = performance.now()
+  const workerColo = getColo(req)
+
+  const rpcStart = performance.now()
+  const debugInfo = await db(env).getDebugInfo()
+  const rpcMs = performance.now() - rpcStart
+  const totalMs = performance.now() - requestStart
+
+  return Response.json({
+    ...debugInfo,
+    timing: {
+      workerColo,
+      doColo: debugInfo.doColo,
+      rpcMs: Math.round(rpcMs * 100) / 100,
+      totalMs: Math.round(totalMs * 100) / 100,
+    },
+    explanation: {
+      moduleAge: 'How long since the isolate/module loaded (survives across DO instances)',
+      instanceAge: 'How long since THIS DO class was instantiated',
+      wasmLoaded: 'Whether PGLite WASM is fully loaded and ready',
+      wasmLoading: 'Whether WASM is currently loading in background',
+      strategy: 'Eager-but-non-blocking: WASM starts loading in constructor, non-query endpoints respond instantly',
+    },
+  })
+})
+
+// Debug endpoint that waits for WASM (for full timing info)
+router.get('/debug/full', async (req, env: Env) => {
   const requestStart = performance.now()
   const workerColo = getColo(req)
 
@@ -680,13 +879,12 @@ router.get('/debug', async (req, env: Env) => {
       instanceAge: 'How long since THIS DO class was instantiated',
       wasmAge: 'How long since PGLite WASM was initialized',
       wasmReused: 'Whether the WASM instance was reused from module-level cache',
+      wasmWaitedMs: 'Time this init() call waited for WASM (null if already loaded)',
       coldStart: 'If module.ageMs ≈ instance.ageMs ≈ wasm.ageMs, this was a cold start',
       warmStart: 'If module.ageMs >> instance.ageMs, the isolate stayed warm but DO class was recreated',
     },
   })
 })
-
-// WebSocket is handled separately - see export default below
 
 router.post('/query', async (req, env: Env) => {
   const requestStart = performance.now()
