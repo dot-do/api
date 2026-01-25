@@ -214,4 +214,67 @@ describe('E2E: mongo.example.com.ai', () => {
       })
     })
   })
+
+  describe('WebSocket hibernation (95% cost savings)', () => {
+    it('connects via WebSocket and executes RPC calls', async () => {
+      const wsUrl = MONGO_URL.replace(/^https/, 'wss') + '/ws'
+
+      const result = await new Promise<{ connected: boolean; responses: unknown[] }>((resolve, reject) => {
+        const ws = new WebSocket(wsUrl)
+        const responses: unknown[] = []
+
+        const timeout = setTimeout(() => {
+          ws.close()
+          reject(new Error('WebSocket timeout'))
+        }, 10000)
+
+        ws.addEventListener('open', () => {
+          // Test listCollections
+          ws.send(JSON.stringify({ id: 1, path: 'listCollections' }))
+        })
+
+        ws.addEventListener('message', (event) => {
+          const data = JSON.parse(event.data as string)
+          responses.push(data)
+
+          if (data.id === 1) {
+            // After listCollections, test find
+            ws.send(JSON.stringify({ id: 2, path: 'find', args: ['products', {}] }))
+          } else if (data.id === 2) {
+            // After find, test stats
+            ws.send(JSON.stringify({ id: 3, path: 'stats', args: ['products'] }))
+          } else if (data.id === 3) {
+            clearTimeout(timeout)
+            ws.close()
+            resolve({ connected: true, responses })
+          }
+        })
+
+        ws.addEventListener('error', () => {
+          clearTimeout(timeout)
+          reject(new Error('WebSocket error'))
+        })
+      })
+
+      expect(result.connected).toBe(true)
+      expect(result.responses.length).toBe(3)
+
+      // Check first response (listCollections)
+      const collectionsResponse = result.responses[0] as { id: number; result: { data: { collections: string[] }; doColo: string } }
+      expect(collectionsResponse.id).toBe(1)
+      expect(collectionsResponse.result.data.collections).toBeDefined()
+      expect(collectionsResponse.result.data.collections).toContain('products')
+
+      // Check second response (find)
+      const findResponse = result.responses[1] as { id: number; result: { data: { documents: Document[]; count: number }; doColo: string } }
+      expect(findResponse.id).toBe(2)
+      expect(Array.isArray(findResponse.result.data.documents)).toBe(true)
+
+      // Check third response (stats)
+      const statsResponse = result.responses[2] as { id: number; result: { data: { count: number; collection: string }; doColo: string } }
+      expect(statsResponse.id).toBe(3)
+      expect(typeof statsResponse.result.data.count).toBe('number')
+      expect(statsResponse.result.data.collection).toBe('products')
+    })
+  })
 })

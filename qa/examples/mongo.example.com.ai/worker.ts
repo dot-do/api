@@ -5,6 +5,11 @@
  * DO SQLite for document storage with MongoDB-compatible API.
  * Uses DO RPC for direct method calls.
  * Includes detailed latency metrics for all operations.
+ *
+ * WebSocket Hibernation Support:
+ * - Connect to /ws for persistent WebSocket connections
+ * - 95% cost savings vs regular DO requests
+ * - Uses Cloudflare's hibernation API
  */
 
 import { AutoRouter } from 'itty-router'
@@ -16,6 +21,14 @@ import { DurableObject } from 'cloudflare:workers'
 
 interface Env {
   MONGODB: DurableObjectNamespace<MongoDB>
+}
+
+/** WebSocket RPC message format */
+interface WSRpcMessage {
+  id: number | string
+  method?: 'do'
+  path: string
+  args?: unknown[]
 }
 
 interface Document {
@@ -369,6 +382,88 @@ export class MongoDB extends DurableObject {
       doColo: this.colo,
     }
   }
+
+  // ============================================================================
+  // WebSocket Hibernation Support (95% cost savings)
+  // ============================================================================
+
+  /** Handle WebSocket upgrade requests for hibernation */
+  async fetch(request: Request): Promise<Response> {
+    if (request.headers.get('Upgrade') !== 'websocket') {
+      return new Response('Expected WebSocket upgrade', { status: 400 })
+    }
+
+    const pair = new WebSocketPair()
+    const [client, server] = Object.values(pair)
+
+    this.ctx.acceptWebSocket(server)
+    return new Response(null, { status: 101, webSocket: client })
+  }
+
+  /** Handle WebSocket messages (hibernation callback) */
+  async webSocketMessage(ws: WebSocket, message: string | ArrayBuffer): Promise<void> {
+    if (typeof message !== 'string') {
+      ws.send(JSON.stringify({ error: 'Binary messages not supported' }))
+      return
+    }
+
+    let msg: WSRpcMessage
+    try {
+      msg = JSON.parse(message)
+    } catch {
+      ws.send(JSON.stringify({ error: 'Invalid JSON' }))
+      return
+    }
+
+    const { id, path, args = [] } = msg
+
+    try {
+      const result = await this.dispatch(path, args)
+      ws.send(JSON.stringify({ id, result }))
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'RPC error'
+      ws.send(JSON.stringify({ id, error: { message: errorMsg } }))
+    }
+  }
+
+  /** Handle WebSocket close */
+  async webSocketClose(ws: WebSocket, code: number, reason: string, wasClean: boolean): Promise<void> {
+    // Cleanup if needed
+  }
+
+  /** Dispatch RPC call to the appropriate method */
+  private async dispatch(path: string, args: unknown[]): Promise<unknown> {
+    const parts = path.split('.')
+    let target: unknown = this
+    for (let i = 0; i < parts.length - 1; i++) {
+      if (typeof target !== 'object' || target === null) {
+        throw new Error(`Invalid path: ${path}`)
+      }
+      target = (target as Record<string, unknown>)[parts[i]]
+    }
+
+    const methodName = parts[parts.length - 1]
+    if (typeof target !== 'object' || target === null) {
+      throw new Error(`Invalid path: ${path}`)
+    }
+    const method = (target as Record<string, unknown>)[methodName]
+
+    if (typeof method !== 'function') {
+      throw new Error(`Not a function: ${path}`)
+    }
+
+    return method.apply(target, args)
+  }
+
+  /** Broadcast message to all connected WebSocket clients */
+  broadcast(message: unknown, exclude?: WebSocket): void {
+    const data = typeof message === 'string' ? message : JSON.stringify(message)
+    for (const ws of this.ctx.getWebSockets()) {
+      if (ws !== exclude) {
+        try { ws.send(data) } catch { /* ignore closed sockets */ }
+      }
+    }
+  }
 }
 
 // =============================================================================
@@ -403,6 +498,7 @@ const getColo = (req: Request): string => {
 
 router.get('/', (req) => {
   const base = new URL(req.url).origin
+  const wsBase = base.replace(/^http/, 'ws')
   const workerColo = getColo(req)
 
   return {
@@ -414,6 +510,7 @@ router.get('/', (req) => {
       'List Products': `${base}/products`,
       'Product Stats': `${base}/products/stats`,
       'Aggregate Example': `${base}/products/aggregate`,
+      'WebSocket': `${wsBase}/ws (persistent connection, 95% cheaper)`,
     },
     timing: {
       note: 'All endpoints return detailed timing info via DO RPC',
@@ -423,6 +520,15 @@ router.get('/', (req) => {
         queryMs: 'Query execution time (ms)',
         rpcMs: 'Worker to DO RPC call time (ms)',
         totalMs: 'Total request latency (ms)',
+      },
+    },
+    websocket: {
+      url: `${wsBase}/ws`,
+      note: 'WebSocket hibernation provides 95% cost savings for persistent connections',
+      protocol: {
+        request: '{ id: number, path: string, args?: unknown[] }',
+        response: '{ id: number, result: unknown } | { id: number, error: { message: string } }',
+        example: '{ "id": 1, "path": "find", "args": ["products", {}] }',
       },
     },
   }
@@ -563,4 +669,18 @@ router.delete('/:collection/:id', async (req, env: Env) => {
   return withTiming(workerColo, result, rpcMs, totalMs)
 })
 
-export default router
+// Handle WebSocket upgrades BEFORE the router to avoid interference
+export default {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    const url = new URL(request.url)
+
+    // Handle WebSocket upgrade to /ws
+    if (url.pathname === '/ws' && request.headers.get('Upgrade') === 'websocket') {
+      const stub = db(env)
+      return stub.fetch(request)
+    }
+
+    // All other requests go through the router
+    return router.fetch(request, env, ctx)
+  },
+}

@@ -378,4 +378,62 @@ describe('E2E: postgres.example.com.ai', () => {
       expect(body.timing).toBeDefined()
     })
   })
+
+  describe('WebSocket hibernation (95% cost savings)', () => {
+    it('connects via WebSocket and executes RPC calls', async () => {
+      const wsUrl = POSTGRES_URL.replace(/^https/, 'wss') + '/ws'
+
+      // Use a promise to handle the async WebSocket flow
+      const result = await new Promise<{ connected: boolean; responses: unknown[] }>((resolve, reject) => {
+        const ws = new WebSocket(wsUrl)
+        const responses: unknown[] = []
+
+        const timeout = setTimeout(() => {
+          ws.close()
+          reject(new Error('WebSocket timeout'))
+        }, 10000)
+
+        ws.addEventListener('open', () => {
+          // Test getPosts
+          ws.send(JSON.stringify({ id: 1, path: 'getPosts' }))
+        })
+
+        ws.addEventListener('message', (event) => {
+          const data = JSON.parse(event.data as string)
+          responses.push(data)
+
+          if (data.id === 1) {
+            // After getPosts, test getStats
+            ws.send(JSON.stringify({ id: 2, path: 'getStats' }))
+          } else if (data.id === 2) {
+            // Done, close connection
+            clearTimeout(timeout)
+            ws.close()
+            resolve({ connected: true, responses })
+          }
+        })
+
+        ws.addEventListener('error', (err) => {
+          clearTimeout(timeout)
+          reject(new Error('WebSocket error'))
+        })
+      })
+
+      expect(result.connected).toBe(true)
+      expect(result.responses.length).toBe(2)
+
+      // Check first response (getPosts)
+      const postsResponse = result.responses[0] as { id: number; result: { data: { posts: Post[] }; doColo: string } }
+      expect(postsResponse.id).toBe(1)
+      expect(postsResponse.result.data.posts).toBeDefined()
+      expect(Array.isArray(postsResponse.result.data.posts)).toBe(true)
+
+      // Check second response (getStats)
+      const statsResponse = result.responses[1] as { id: number; result: { data: Stats; doColo: string } }
+      expect(statsResponse.id).toBe(2)
+      expect(typeof statsResponse.result.data.total).toBe('number')
+      expect(typeof statsResponse.result.data.published).toBe('number')
+      expect(typeof statsResponse.result.data.drafts).toBe('number')
+    })
+  })
 })
