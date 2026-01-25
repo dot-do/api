@@ -1,0 +1,31 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "wiktionary-example",
+  "main": "worker.ts",
+  "compatibility_date": "2026-01-24",
+  "compatibility_flags": ["nodejs_compat"],
+  "account_id": "b6641681fe423910342b9ffa1364c76d",
+  "routes": [
+    { "pattern": "wiktionary.example.com.ai/*", "zone_name": "example.com.ai" }
+  ],
+  "vars": {
+    "API_NAME": "wiktionary.example.com.ai"
+  },
+  // WASM and data files for PGLite
+  "rules": [
+    { "type": "CompiledWasm", "globs": ["**/*.wasm"], "fallthrough": false },
+    { "type": "Data", "globs": ["**/*.data"], "fallthrough": false }
+  ],
+  // Durable Objects for dictionary persistence
+  "durable_objects": {
+    "bindings": [
+      { "name": "WIKTIONARY", "class_name": "Wiktionary" }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["Wiktionary"]
+    }
+  ]
+}

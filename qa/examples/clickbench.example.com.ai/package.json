@@ -1,0 +1,20 @@
+{
+  "name": "@dotdo/clickbench-worker",
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "wrangler deploy --dry-run --outdir=dist",
+    "deploy": "wrangler deploy",
+    "copy-assets": "cp ../../../postgres/benchmarks/workers/benchmark-worker/src/pglite-assets/* ./src/pglite-assets/"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.2.12",
+    "hono": "^4.6.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241127.0",
+    "typescript": "^5.6.0",
+    "wrangler": "^3.90.0"
+  }
+}

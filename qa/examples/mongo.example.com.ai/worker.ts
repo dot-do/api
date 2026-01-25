@@ -6,6 +6,13 @@
  * Uses DO RPC for direct method calls.
  * Includes detailed latency metrics for all operations.
  *
+ * Initialization Strategy:
+ * Uses "eager-but-non-blocking" initialization:
+ * - Initialization starts immediately on DO constructor (not lazy)
+ * - Non-query endpoints (ping, debug) respond instantly while init runs
+ * - Queries wait only for remaining init time (often near-zero)
+ * - Uses ctx.waitUntil() to keep DO alive during background init
+ *
  * WebSocket Hibernation Support:
  * - Connect to /ws for persistent WebSocket connections
  * - 95% cost savings vs regular DO requests
@@ -35,6 +42,109 @@ function getModuleLoadTime(): number {
 
 // Track request count at module level
 let moduleRequestCount = 0
+
+// =============================================================================
+// Module-Level Initialization Tracking (survives DO class reinstantiation)
+// =============================================================================
+// The isolate persists longer than DO class instances. By tracking init state
+// at module scope, we can understand when the DO is truly cold vs warm.
+
+/** Whether initialization has completed */
+let moduleInitialized = false
+
+/** Promise for in-progress initialization. Shared for deduplication. */
+let moduleInitPromise: Promise<void> | null = null
+
+/** Timestamp when initialization started */
+let initStartedAt: number | null = null
+
+/** Timestamp when initialization completed */
+let initCompletedAt: number | null = null
+
+/** DO colo (persists at module level) */
+let moduleColo: string = 'unknown'
+
+/**
+ * Check if initialization is currently in progress.
+ */
+function isInitializing(): boolean {
+  return moduleInitPromise !== null && !moduleInitialized
+}
+
+/**
+ * Start initialization in background.
+ * Returns immediately - the promise is tracked for later awaiting.
+ */
+function startInitInBackground(sqlStorage: SqlStorage): void {
+  // Already initialized or initializing
+  if (moduleInitialized || moduleInitPromise) return
+
+  initStartedAt = Date.now()
+  console.log(`[mongo.example.com.ai] Starting init in background - module: ${MODULE_INSTANCE_ID}`)
+
+  moduleInitPromise = (async () => {
+    // Fetch DO colo in parallel with table setup
+    const coloPromise = fetch('https://workers.cloudflare.com/cf.json')
+      .then(r => r.json())
+      .then((cf: { colo?: string }) => { moduleColo = cf.colo || 'unknown' })
+      .catch(() => {})
+
+    // Create collections metadata table
+    sqlStorage.exec(`
+      CREATE TABLE IF NOT EXISTS __collections (
+        name TEXT PRIMARY KEY,
+        created_at TEXT DEFAULT (datetime('now'))
+      )
+    `)
+
+    // Create default 'products' collection
+    sqlStorage.exec(`
+      CREATE TABLE IF NOT EXISTS products (
+        _id TEXT PRIMARY KEY,
+        doc TEXT NOT NULL,
+        created_at TEXT DEFAULT (datetime('now')),
+        updated_at TEXT
+      )
+    `)
+    sqlStorage.exec(`
+      INSERT OR IGNORE INTO __collections (name) VALUES ('products')
+    `)
+
+    // Seed with sample data if empty
+    const count = [...sqlStorage.exec('SELECT COUNT(*) as c FROM products')][0].c as number
+    if (count === 0) {
+      const samples = [
+        { _id: 'prod-1', name: 'Widget A', category: 'electronics', price: 29.99, inStock: true },
+        { _id: 'prod-2', name: 'Widget B', category: 'electronics', price: 49.99, inStock: true },
+        { _id: 'prod-3', name: 'T-Shirt', category: 'clothing', price: 19.99, inStock: false },
+      ]
+      for (const doc of samples) {
+        sqlStorage.exec(
+          `INSERT INTO products (_id, doc) VALUES (?, ?)`,
+          doc._id, JSON.stringify(doc)
+        )
+      }
+    }
+
+    await coloPromise
+    moduleInitialized = true
+    initCompletedAt = Date.now()
+    const initDuration = initCompletedAt - (initStartedAt ?? initCompletedAt)
+    console.log(`[mongo.example.com.ai] INIT COMPLETE - took ${initDuration}ms, module: ${MODULE_INSTANCE_ID}`)
+  })().catch((err) => {
+    console.error(`[mongo.example.com.ai] Init failed:`, err)
+    moduleInitPromise = null
+    throw err
+  })
+}
+
+/**
+ * Wait for initialization to complete if in progress.
+ */
+async function waitForInit(): Promise<void> {
+  if (moduleInitialized) return
+  if (moduleInitPromise) await moduleInitPromise
+}
 
 // =============================================================================
 // Types
@@ -72,73 +182,59 @@ interface QueryResult<T = unknown> {
 }
 
 // =============================================================================
-// MongoDB Durable Object with RPC Methods
+// MongoDB Durable Object with Background Initialization
 // =============================================================================
 
 export class MongoDB extends DurableObject {
   private sqlStorage: SqlStorage
-  private colo: string = 'unknown'
-  private initialized = false
 
   // Instance-level tracking
   private readonly instanceCreatedAt = Date.now()
   private readonly instanceId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`
   private instanceRequestCount = 0
+  private initWaitedMs: number | null = null
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env)
     this.sqlStorage = ctx.storage.sql
     moduleRequestCount++
+
+    // =========================================================================
+    // EAGER-BUT-NON-BLOCKING: Start initialization in background immediately
+    // =========================================================================
+    // This is the key insight: don't wait for init, just start it.
+    // Use ctx.waitUntil() to keep the DO alive while init runs in background.
+    // Non-query endpoints (ping, debug) can respond instantly.
+    // Queries will wait only for remaining init time.
+    startInitInBackground(this.sqlStorage)
+
+    // Keep DO alive while init runs (critical for hibernation)
+    if (moduleInitPromise) {
+      ctx.waitUntil(moduleInitPromise.catch(() => {}))
+    }
   }
 
+  /**
+   * Wait for initialization to complete.
+   * Init already started in constructor, so this just waits for remaining time.
+   */
   private async init(): Promise<void> {
-    if (this.initialized) return
+    if (moduleInitialized) return
 
-    // Fetch DO colo in parallel with init
-    const coloPromise = fetch('https://workers.cloudflare.com/cf.json')
-      .then(r => r.json())
-      .then((cf: { colo?: string }) => { this.colo = cf.colo || 'unknown' })
-      .catch(() => {})
+    const waitStart = performance.now()
+    await waitForInit()
+    const waitMs = performance.now() - waitStart
 
-    // Create collections metadata table
-    this.sqlStorage.exec(`
-      CREATE TABLE IF NOT EXISTS __collections (
-        name TEXT PRIMARY KEY,
-        created_at TEXT DEFAULT (datetime('now'))
-      )
-    `)
-
-    // Create default 'products' collection
-    this.sqlStorage.exec(`
-      CREATE TABLE IF NOT EXISTS products (
-        _id TEXT PRIMARY KEY,
-        doc TEXT NOT NULL,
-        created_at TEXT DEFAULT (datetime('now')),
-        updated_at TEXT
-      )
-    `)
-    this.sqlStorage.exec(`
-      INSERT OR IGNORE INTO __collections (name) VALUES ('products')
-    `)
-
-    // Seed with sample data if empty
-    const count = [...this.sqlStorage.exec('SELECT COUNT(*) as c FROM products')][0].c as number
-    if (count === 0) {
-      const samples = [
-        { _id: 'prod-1', name: 'Widget A', category: 'electronics', price: 29.99, inStock: true },
-        { _id: 'prod-2', name: 'Widget B', category: 'electronics', price: 49.99, inStock: true },
-        { _id: 'prod-3', name: 'T-Shirt', category: 'clothing', price: 19.99, inStock: false },
-      ]
-      for (const doc of samples) {
-        this.sqlStorage.exec(
-          `INSERT INTO products (_id, doc) VALUES (?, ?)`,
-          doc._id, JSON.stringify(doc)
-        )
-      }
+    // Track wait time if we actually had to wait
+    if (waitMs > 1) {
+      this.initWaitedMs = Math.round(waitMs * 100) / 100
+      console.log(`[MongoDB DO] Query waited ${this.initWaitedMs}ms for init to complete`)
     }
+  }
 
-    await coloPromise
-    this.initialized = true
+  /** Get current colo (from module-level cache) */
+  private get colo(): string {
+    return moduleColo
   }
 
   private ensureCollection(name: string): void {
@@ -410,14 +506,43 @@ export class MongoDB extends DurableObject {
     }
   }
 
-  /** Get instance lifecycle info for debugging cold starts */
-  async getInstanceInfo(): Promise<{
+  /**
+   * Health check - responds INSTANTLY without waiting for initialization.
+   * This is the key benefit of background loading.
+   */
+  ping(): {
+    ok: boolean
+    initialized: boolean
+    initializing: boolean
+    doColo: string
+    moduleId: string
+  } {
+    return {
+      ok: true,
+      initialized: moduleInitialized,
+      initializing: isInitializing(),
+      doColo: this.colo,
+      moduleId: MODULE_INSTANCE_ID,
+    }
+  }
+
+  /**
+   * Get instance lifecycle info for debugging cold starts.
+   * Responds INSTANTLY with current state - doesn't wait for initialization.
+   */
+  getDebugInfo(): {
     module: { id: string; loadedAt: string; ageMs: number; requestCount: number }
     instance: { id: string; createdAt: string; ageMs: number; requestCount: number }
-    wasm: { initialized: false; note: string }
+    init: {
+      complete: boolean
+      inProgress: boolean
+      startedAt: string | null
+      completedAt: string | null
+      durationMs: number | null
+      timeSinceCompleteMs: number | null
+    }
     doColo: string
-  }> {
-    await this.init()
+  } {
     this.instanceRequestCount++
     const now = Date.now()
     const moduleLoadTime = getModuleLoadTime()
@@ -434,9 +559,59 @@ export class MongoDB extends DurableObject {
         ageMs: now - this.instanceCreatedAt,
         requestCount: this.instanceRequestCount,
       },
-      wasm: {
-        initialized: false,
-        note: 'No WASM - uses DO SQLite directly',
+      init: {
+        complete: moduleInitialized,
+        inProgress: isInitializing(),
+        startedAt: initStartedAt ? new Date(initStartedAt).toISOString() : null,
+        completedAt: initCompletedAt ? new Date(initCompletedAt).toISOString() : null,
+        durationMs: initStartedAt && initCompletedAt ? initCompletedAt - initStartedAt : null,
+        timeSinceCompleteMs: initCompletedAt !== null ? now - initCompletedAt : null,
+      },
+      doColo: this.colo,
+    }
+  }
+
+  /** Get instance lifecycle info for debugging cold starts (waits for init) */
+  async getInstanceInfo(): Promise<{
+    module: { id: string; loadedAt: string; ageMs: number; requestCount: number }
+    instance: { id: string; createdAt: string; ageMs: number; requestCount: number }
+    init: {
+      complete: boolean
+      completedAt: string | null
+      ageMs: number | null
+      reused: boolean
+      waitedMs: number | null
+    }
+    doColo: string
+  }> {
+    // Initialize to get accurate timing
+    const initStart = performance.now()
+    const wasAlreadyInitialized = moduleInitialized
+    await this.init()
+    const initMs = wasAlreadyInitialized ? null : Math.round((performance.now() - initStart) * 100) / 100
+
+    this.instanceRequestCount++
+    const now = Date.now()
+    const moduleLoadTime = getModuleLoadTime()
+    return {
+      module: {
+        id: MODULE_INSTANCE_ID,
+        loadedAt: new Date(moduleLoadTime).toISOString(),
+        ageMs: now - moduleLoadTime,
+        requestCount: moduleRequestCount,
+      },
+      instance: {
+        id: this.instanceId,
+        createdAt: new Date(this.instanceCreatedAt).toISOString(),
+        ageMs: now - this.instanceCreatedAt,
+        requestCount: this.instanceRequestCount,
+      },
+      init: {
+        complete: moduleInitialized,
+        completedAt: initCompletedAt ? new Date(initCompletedAt).toISOString() : null,
+        ageMs: initCompletedAt ? now - initCompletedAt : null,
+        reused: wasAlreadyInitialized,
+        waitedMs: this.initWaitedMs,
       },
       doColo: this.colo,
     }
@@ -564,13 +739,16 @@ router.get('/', (req) => {
     name: 'mongo.example.com.ai',
     description: 'MongoDB at the Edge - DO SQLite with MongoDB-compatible API',
     workerColo,
+    initStrategy: 'eager-but-non-blocking (starts init in constructor, non-query endpoints respond instantly)',
     links: {
       'Collections': `${base}/collections`,
       'List Products': `${base}/products`,
       'Product Stats': `${base}/products/stats`,
       'Aggregate Example': `${base}/products/aggregate`,
       'WebSocket': `${wsBase}/ws (persistent connection, 95% cheaper)`,
-      'Instance Debug': `${base}/debug (DO lifecycle info)`,
+      'Health Check': `${base}/ping (instant, no init wait)`,
+      'Debug (instant)': `${base}/debug (DO lifecycle info, no init wait)`,
+      'Debug (full)': `${base}/debug/full (DO lifecycle info, waits for init)`,
     },
     timing: {
       note: 'All endpoints return detailed timing info via DO RPC',
@@ -606,8 +784,57 @@ router.get('/collections', async (req, env: Env) => {
   return withTiming(workerColo, result, rpcMs, totalMs)
 })
 
-// Debug endpoint to track DO instance lifecycle
+// Health check - responds INSTANTLY without waiting for initialization
+router.get('/ping', async (req, env: Env) => {
+  const requestStart = performance.now()
+  const workerColo = getColo(req)
+
+  const rpcStart = performance.now()
+  const result = await db(env).ping()
+  const rpcMs = performance.now() - rpcStart
+  const totalMs = performance.now() - requestStart
+
+  return Response.json({
+    ...result,
+    timing: {
+      workerColo,
+      rpcMs: Math.round(rpcMs * 100) / 100,
+      totalMs: Math.round(totalMs * 100) / 100,
+    },
+  })
+})
+
+// Debug endpoint - responds INSTANTLY with current state (doesn't wait for init)
 router.get('/debug', async (req, env: Env) => {
+  const requestStart = performance.now()
+  const workerColo = getColo(req)
+
+  const rpcStart = performance.now()
+  const debugInfo = await db(env).getDebugInfo()
+  const rpcMs = performance.now() - rpcStart
+  const totalMs = performance.now() - requestStart
+
+  return Response.json({
+    ...debugInfo,
+    timing: {
+      workerColo,
+      doColo: debugInfo.doColo,
+      rpcMs: Math.round(rpcMs * 100) / 100,
+      totalMs: Math.round(totalMs * 100) / 100,
+    },
+    explanation: {
+      moduleAge: 'How long since the isolate/module loaded (survives across DO instances)',
+      instanceAge: 'How long since THIS DO class was instantiated',
+      initComplete: 'Whether DO initialization has finished',
+      initInProgress: 'Whether initialization is currently running in background',
+      noWasm: 'MongoDB uses DO SQLite directly - no WASM overhead',
+      strategy: 'Eager-but-non-blocking: init starts in constructor, non-query endpoints respond instantly',
+    },
+  })
+})
+
+// Debug endpoint that waits for init (for full timing info)
+router.get('/debug/full', async (req, env: Env) => {
   const requestStart = performance.now()
   const workerColo = getColo(req)
 
@@ -627,8 +854,11 @@ router.get('/debug', async (req, env: Env) => {
     explanation: {
       moduleAge: 'How long since the isolate/module loaded (survives across DO instances)',
       instanceAge: 'How long since THIS DO class was instantiated',
+      initAge: 'How long since initialization completed',
+      initReused: 'Whether initialization was reused from module-level cache',
+      initWaitedMs: 'Time this call waited for init (null if already complete)',
       noWasm: 'MongoDB uses DO SQLite directly - no WASM overhead',
-      coldStart: 'If module.ageMs ≈ instance.ageMs, this was a cold start',
+      coldStart: 'If module.ageMs ≈ instance.ageMs ≈ init.ageMs, this was a cold start',
       warmStart: 'If module.ageMs >> instance.ageMs, the isolate stayed warm but DO class was recreated',
     },
   })

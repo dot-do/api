@@ -1,0 +1,37 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "taxi-example",
+  "main": "worker.ts",
+  "compatibility_date": "2026-01-24",
+  "compatibility_flags": ["nodejs_compat"],
+  "account_id": "b6641681fe423910342b9ffa1364c76d",
+  "routes": [
+    { "pattern": "taxi.example.com.ai/*", "zone_name": "example.com.ai" }
+  ],
+  "vars": {
+    "API_NAME": "taxi.example.com.ai"
+  },
+  // WASM and data files for PGLite
+  "rules": [
+    { "type": "CompiledWasm", "globs": ["**/*.wasm"], "fallthrough": false },
+    { "type": "Data", "globs": ["**/*.data"], "fallthrough": false }
+  ],
+  // Durable Objects for NYC Taxi data persistence
+  "durable_objects": {
+    "bindings": [
+      { "name": "TAXI", "class_name": "TaxiDO" }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["TaxiDO"]
+    }
+  ],
+  "analytics_engine_datasets": [
+    {
+      "binding": "ANALYTICS",
+      "dataset": "taxi-example"
+    }
+  ]
+}

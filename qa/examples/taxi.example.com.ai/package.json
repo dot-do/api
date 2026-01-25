@@ -1,0 +1,25 @@
+{
+  "name": "taxi-example",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsx build.ts",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "copy-assets": "node ../../../postgres/packages/pglite/packages/pglite/bin/copy-assets.js ./src/pglite-assets"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250124.0",
+    "esbuild": "^0.24.2",
+    "tsx": "^4.19.2",
+    "wrangler": "^3.99.0"
+  },
+  "dependencies": {
+    "@dotdo/pg-protocol": "^0.1.1",
+    "@dotdo/pglite": "^0.1.4",
+    "async-mutex": "^0.5.0",
+    "hono": "^4.6.0",
+    "itty-router": "^5.0.22"
+  }
+}

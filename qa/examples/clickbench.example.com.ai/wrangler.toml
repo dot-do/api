@@ -1,0 +1,32 @@
+name = "clickbench-worker"
+main = "src/worker.ts"
+compatibility_date = "2026-01-15"
+account_id = "b6641681fe423910342b9ffa1364c76d"
+
+# Enable workers.dev subdomain for testing/fallback
+workers_dev = true
+
+# Use nodejs_compat for better Node.js API support
+compatibility_flags = ["nodejs_compat"]
+
+# Rules for handling PGLite WASM and binary data files
+[[rules]]
+type = "CompiledWasm"
+globs = ["**/*.wasm"]
+
+[[rules]]
+type = "Data"
+globs = ["**/*.data"]
+
+[[durable_objects.bindings]]
+name = "CLICKBENCH_DO"
+class_name = "ClickBenchDO"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["ClickBenchDO"]
+
+# Route to example.com.ai domain
+[[routes]]
+pattern = "clickbench.example.com.ai/*"
+zone_name = "example.com.ai"
