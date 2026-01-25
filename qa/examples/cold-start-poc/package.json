@@ -1,0 +1,29 @@
+{
+  "name": "cold-start-poc",
+  "version": "1.0.0",
+  "description": "POC to explore reducing PGLite cold start times using service bindings",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "dev:factory": "wrangler dev -c wrangler.factory.toml",
+    "dev:consumer": "wrangler dev -c wrangler.consumer.toml",
+    "dev:warm-proxy": "wrangler dev -c wrangler.warm-proxy.toml",
+    "deploy": "wrangler deploy",
+    "deploy:factory": "wrangler deploy -c wrangler.factory.toml",
+    "deploy:consumer": "wrangler deploy -c wrangler.consumer.toml",
+    "deploy:warm-proxy": "wrangler deploy -c wrangler.warm-proxy.toml",
+    "deploy:all": "npm run deploy:factory && npm run deploy:consumer && npm run deploy:warm-proxy",
+    "benchmark": "node scripts/benchmark.mjs"
+  },
+  "dependencies": {
+    "@dotdo/pg-protocol": "workspace:*",
+    "async-mutex": "^0.5.0",
+    "hono": "^4.6.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240725.0",
+    "typescript": "^5.7.3",
+    "wrangler": "^3.101.0"
+  }
+}

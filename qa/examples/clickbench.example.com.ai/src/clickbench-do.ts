@@ -14,12 +14,70 @@ const MODULE_ID = 'module-' + Math.random().toString(36).slice(2, 11)
 const MODULE_LOADED_AT = Date.now()
 let MODULE_REQUEST_COUNT = 0
 
+// ClickBench dataset URLs - note: there is only ONE dataset (~16GB gzipped, ~100M rows)
+// We use the same URL but limit rows via maxRows parameter
+const CLICKBENCH_FULL_URL = 'https://datasets.clickhouse.com/hits_compatible/hits.tsv.gz'
+// Use the same URL for sample - we just limit rows
+const CLICKBENCH_SAMPLE_URL = 'https://datasets.clickhouse.com/hits_compatible/hits.tsv.gz'
+
+/**
+ * Convert BigInt values to strings for JSON serialization
+ */
+function serializeBigInts(obj: unknown): unknown {
+  if (obj === null || obj === undefined) return obj
+  if (typeof obj === 'bigint') return obj.toString()
+  if (Array.isArray(obj)) return obj.map(serializeBigInts)
+  if (typeof obj === 'object') {
+    const result: Record<string, unknown> = {}
+    for (const [key, value] of Object.entries(obj)) {
+      result[key] = serializeBigInts(value)
+    }
+    return result
+  }
+  return obj
+}
+
+// Column names for the hits table (105 columns)
+const HITS_COLUMNS = [
+  'WatchID', 'JavaEnable', 'Title', 'GoodEvent', 'EventTime', 'EventDate', 'CounterID', 'ClientIP',
+  'RegionID', 'UserID', 'CounterClass', 'OS', 'UserAgent', 'URL', 'Referer', 'IsRefresh',
+  'RefererCategoryID', 'RefererRegionID', 'URLCategoryID', 'URLRegionID', 'ResolutionWidth',
+  'ResolutionHeight', 'ResolutionDepth', 'FlashMajor', 'FlashMinor', 'FlashMinor2', 'NetMajor',
+  'NetMinor', 'UserAgentMajor', 'UserAgentMinor', 'CookieEnable', 'JavascriptEnable', 'IsMobile',
+  'MobilePhone', 'MobilePhoneModel', 'Params', 'IPNetworkID', 'TraficSourceID', 'SearchEngineID',
+  'SearchPhrase', 'AdvEngineID', 'IsArtifical', 'WindowClientWidth', 'WindowClientHeight',
+  'ClientTimeZone', 'ClientEventTime', 'SilverlightVersion1', 'SilverlightVersion2',
+  'SilverlightVersion3', 'SilverlightVersion4', 'PageCharset', 'CodeVersion', 'IsLink',
+  'IsDownload', 'IsNotBounce', 'FUniqID', 'OriginalURL', 'HID', 'IsOldCounter', 'IsEvent',
+  'IsParameter', 'DontCountHits', 'WithHash', 'HitColor', 'LocalEventTime', 'Age', 'Sex', 'Income',
+  'Interests', 'Robotness', 'RemoteIP', 'WindowName', 'OpenerName', 'HistoryLength', 'BrowserLanguage',
+  'BrowserCountry', 'SocialNetwork', 'SocialAction', 'HTTPError', 'SendTiming', 'DNSTiming',
+  'ConnectTiming', 'ResponseStartTiming', 'ResponseEndTiming', 'FetchTiming',
+  'SocialSourceNetworkID', 'SocialSourcePage', 'ParamPrice', 'ParamOrderID', 'ParamCurrency',
+  'ParamCurrencyID', 'OpenstatServiceName', 'OpenstatCampaignID', 'OpenstatAdID',
+  'OpenstatSourceID', 'UTMSource', 'UTMMedium', 'UTMCampaign', 'UTMContent', 'UTMTerm', 'FromTag',
+  'HasGCLID', 'RefererHash', 'URLHash', 'CLID'
+]
+
 export class ClickBenchDO {
   private db: PGLiteWrapper | null = null
   private dbPromise: Promise<PGLiteWrapper> | null = null
   private initialized = false
   private seeding = false
-  private seedProgress = { loaded: 0, total: 0, status: 'idle' as 'idle' | 'loading' | 'complete' | 'error' }
+  private seedProgress = {
+    loaded: 0,
+    total: 0,
+    status: 'idle' as 'idle' | 'loading' | 'complete' | 'error',
+    source: '' as string,
+    bytesDownloaded: 0,
+    bytesDecompressed: 0,
+    batchesInserted: 0,
+    errors: [] as string[],
+    startedAt: null as number | null,
+    elapsedMs: 0,
+    rowsPerSecond: 0
+  }
+  private autoSeedTriggered = false
 
   // Instance lifecycle tracking
   private instanceId: string
@@ -74,6 +132,43 @@ export class ClickBenchDO {
     }
     this.db = await this.dbPromise
     return this.db
+  }
+
+  /**
+   * Check if database is empty and needs auto-seeding
+   */
+  private async needsAutoSeed(): Promise<boolean> {
+    if (this.autoSeedTriggered || this.seeding || this.seedProgress.status === 'complete') {
+      return false
+    }
+
+    const db = await this.ensureDB()
+    const result = await db.query('SELECT COUNT(*) as count FROM hits')
+    const count = parseInt(result.rows[0]?.count || '0')
+    return count === 0
+  }
+
+  /**
+   * Trigger auto-seeding in background
+   */
+  private async triggerAutoSeed(ctx?: ExecutionContext): Promise<void> {
+    if (this.autoSeedTriggered) return
+    this.autoSeedTriggered = true
+
+    const seedTask = this.seedSample(10000).catch((error) => {
+      console.error('Auto-seed failed:', error)
+      this.seedProgress.status = 'error'
+      this.seedProgress.errors.push(error instanceof Error ? error.message : String(error))
+      this.seeding = false
+    })
+
+    // If we have a context, use waitUntil for background execution
+    if (ctx) {
+      ctx.waitUntil(seedTask)
+    } else {
+      // If no context, await directly (though this blocks the request)
+      await seedTask
+    }
   }
 
   /**
@@ -135,7 +230,19 @@ export class ClickBenchDO {
     }
 
     this.seeding = true
-    this.seedProgress = { loaded: 0, total: count, status: 'loading' }
+    this.seedProgress = {
+      loaded: 0,
+      total: count,
+      status: 'loading',
+      source: 'synthetic',
+      bytesDownloaded: 0,
+      bytesDecompressed: 0,
+      batchesInserted: 0,
+      errors: [],
+      startedAt: Date.now(),
+      elapsedMs: 0,
+      rowsPerSecond: 0
+    }
 
     try {
       const batchSize = 100
@@ -222,6 +329,13 @@ export class ClickBenchDO {
    * Get seed status
    */
   async getSeedStatus() {
+    // Update elapsed time if seeding
+    if (this.seeding && this.seedProgress.startedAt) {
+      this.seedProgress.elapsedMs = Date.now() - this.seedProgress.startedAt
+      if (this.seedProgress.elapsedMs > 0 && this.seedProgress.loaded > 0) {
+        this.seedProgress.rowsPerSecond = Math.round(this.seedProgress.loaded / (this.seedProgress.elapsedMs / 1000))
+      }
+    }
     return {
       success: true,
       progress: this.seedProgress,
@@ -230,10 +344,303 @@ export class ClickBenchDO {
   }
 
   /**
+   * Seed from real ClickBench dataset (gzipped TSV)
+   * Streams, decompresses, and batch inserts
+   *
+   * ULTRA Memory-optimized for 128MB Durable Object limit:
+   * - Very small batch sizes (25 rows default)
+   * - Process lines inline without accumulating
+   * - Strict buffer size limits
+   * - Insert frequently to minimize memory
+   */
+  async seedFromClickBench(options: {
+    url?: string
+    maxRows?: number
+    batchSize?: number
+  } = {}) {
+    const db = await this.ensureDB()
+
+    if (this.seeding) {
+      return {
+        success: false,
+        error: 'Seeding already in progress',
+        progress: this.seedProgress,
+      }
+    }
+
+    const url = options.url || CLICKBENCH_SAMPLE_URL
+    // Default 10k rows - tested to be memory-safe in 128MB DO limit
+    const maxRows = options.maxRows || 10_000
+    // Small batch for 128MB limit - each row is ~1KB formatted
+    const batchSize = Math.min(options.batchSize || 50, 50)
+
+    this.seeding = true
+    this.seedProgress = {
+      loaded: 0,
+      total: maxRows,
+      status: 'loading',
+      source: url,
+      bytesDownloaded: 0,
+      bytesDecompressed: 0,
+      batchesInserted: 0,
+      errors: [],
+      startedAt: Date.now(),
+      elapsedMs: 0,
+      rowsPerSecond: 0
+    }
+
+    console.log(`[ClickBench] Starting seed from ${url}, max ${maxRows} rows, batch size ${batchSize}`)
+
+    let rowsInserted = 0
+
+    try {
+      // Fetch the gzipped TSV
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'ClickBench-Worker/1.0'
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`)
+      }
+
+      if (!response.body) {
+        throw new Error('No response body')
+      }
+
+      // Decompress the gzipped stream
+      const decompressedStream = response.body.pipeThrough(new DecompressionStream('gzip'))
+      const reader = decompressedStream.getReader()
+      const decoder = new TextDecoder('utf-8')
+
+      let lineBuffer = ''
+      let currentBatch: string[] = []
+
+      // Process stream chunk by chunk
+      let chunkNum = 0
+      while (rowsInserted < maxRows) {
+        const { done, value } = await reader.read()
+
+        if (done) {
+          console.log('[ClickBench] Stream finished')
+          break
+        }
+
+        chunkNum++
+        this.seedProgress.bytesDownloaded += value.length
+
+        // Decode chunk
+        const chunk = decoder.decode(value, { stream: true })
+        this.seedProgress.bytesDecompressed += chunk.length
+        lineBuffer += chunk
+
+        // Process all complete lines immediately
+        let nlIdx: number
+        while ((nlIdx = lineBuffer.indexOf('\n')) !== -1 && rowsInserted < maxRows) {
+          const line = lineBuffer.substring(0, nlIdx)
+          lineBuffer = lineBuffer.substring(nlIdx + 1)
+
+          if (!line.trim()) continue
+
+          try {
+            const values = this.parseTSVLine(line)
+            if (values.length === HITS_COLUMNS.length) {
+              currentBatch.push(this.formatInsertValues(values))
+
+              // Insert when batch is full
+              if (currentBatch.length >= batchSize) {
+                await this.insertBatch(db, currentBatch)
+                rowsInserted += currentBatch.length
+                this.seedProgress.loaded = rowsInserted
+                this.seedProgress.batchesInserted++
+
+                // Update timing
+                const elapsed = Date.now() - (this.seedProgress.startedAt || Date.now())
+                this.seedProgress.elapsedMs = elapsed
+                if (elapsed > 0) {
+                  this.seedProgress.rowsPerSecond = Math.round(rowsInserted / (elapsed / 1000))
+                }
+
+                // Clear immediately
+                currentBatch = []
+
+                // Log every 5k rows
+                if (rowsInserted % 5000 === 0) {
+                  console.log(`[ClickBench] ${rowsInserted} rows (${this.seedProgress.rowsPerSecond}/sec)`)
+                }
+              }
+            } else if (this.seedProgress.errors.length < 3) {
+              this.seedProgress.errors.push(`${values.length} cols != 105`)
+            }
+          } catch (e) {
+            if (this.seedProgress.errors.length < 5) {
+              this.seedProgress.errors.push(`Parse: ${(e as Error).message?.substring(0, 50)}`)
+            }
+          }
+        }
+
+        // Safety: truncate buffer if too large (shouldn't happen with normal data)
+        if (lineBuffer.length > 500_000) {
+          console.warn('[ClickBench] Buffer overflow, clearing partial line')
+          lineBuffer = ''
+        }
+
+        // Yield every 5 chunks
+        if (chunkNum % 5 === 0) {
+          await new Promise(r => setTimeout(r, 0))
+        }
+      }
+
+      // Cancel the stream early to free memory (we have all rows we need)
+      try {
+        await reader.cancel()
+      } catch {
+        // Ignore cancel errors
+      }
+
+      // Insert remaining
+      if (currentBatch.length > 0) {
+        await this.insertBatch(db, currentBatch)
+        rowsInserted += currentBatch.length
+        this.seedProgress.loaded = rowsInserted
+        this.seedProgress.batchesInserted++
+      }
+
+      reader.releaseLock()
+
+      this.seedProgress.status = 'complete'
+      this.seedProgress.elapsedMs = Date.now() - (this.seedProgress.startedAt || Date.now())
+      if (this.seedProgress.elapsedMs > 0) {
+        this.seedProgress.rowsPerSecond = Math.round(rowsInserted / (this.seedProgress.elapsedMs / 1000))
+      }
+      this.seeding = false
+
+      console.log(`[ClickBench] Complete: ${rowsInserted} rows in ${this.seedProgress.elapsedMs}ms`)
+
+      return {
+        success: true,
+        rowsInserted,
+        progress: this.seedProgress,
+      }
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error)
+      console.error('[ClickBench] Seed error:', errorMsg)
+      this.seedProgress.status = 'error'
+      this.seedProgress.errors.push(errorMsg)
+      this.seeding = false
+
+      return {
+        success: false,
+        error: errorMsg,
+        progress: this.seedProgress,
+      }
+    }
+  }
+
+  /**
+   * Parse a TSV line, handling quoted values and escapes
+   */
+  private parseTSVLine(line: string): string[] {
+    return line.split('\t').map(val => {
+      // Handle ClickBench's escaped characters
+      if (val === '\\N') return '' // NULL
+      // Unescape backslash sequences
+      return val
+        .replace(/\\t/g, '\t')
+        .replace(/\\n/g, '\n')
+        .replace(/\\r/g, '\r')
+        .replace(/\\\\/g, '\\')
+    })
+  }
+
+  /**
+   * Format values for INSERT statement
+   */
+  private formatInsertValues(values: string[]): string {
+    const formatted = values.map((val, idx) => {
+      const colName = HITS_COLUMNS[idx]
+
+      // Handle empty/null values
+      if (val === '' || val === '\\N') {
+        // Use appropriate defaults based on column type
+        if (colName.includes('Time') || colName.includes('Date')) {
+          return "'1970-01-01 00:00:00'"
+        }
+        if (['Title', 'URL', 'Referer', 'SearchPhrase', 'MobilePhoneModel', 'Params',
+             'FlashMinor2', 'UserAgentMinor', 'PageCharset', 'OriginalURL', 'HitColor',
+             'BrowserLanguage', 'BrowserCountry', 'SocialNetwork', 'SocialAction',
+             'SocialSourcePage', 'ParamOrderID', 'ParamCurrency', 'OpenstatServiceName',
+             'OpenstatCampaignID', 'OpenstatAdID', 'OpenstatSourceID', 'UTMSource',
+             'UTMMedium', 'UTMCampaign', 'UTMContent', 'UTMTerm', 'FromTag'].includes(colName)) {
+          return "''"
+        }
+        return '0' // Numeric default
+      }
+
+      // String columns - escape quotes
+      if (['Title', 'URL', 'Referer', 'SearchPhrase', 'MobilePhoneModel', 'Params',
+           'FlashMinor2', 'UserAgentMinor', 'PageCharset', 'OriginalURL', 'HitColor',
+           'BrowserLanguage', 'BrowserCountry', 'SocialNetwork', 'SocialAction',
+           'SocialSourcePage', 'ParamOrderID', 'ParamCurrency', 'OpenstatServiceName',
+           'OpenstatCampaignID', 'OpenstatAdID', 'OpenstatSourceID', 'UTMSource',
+           'UTMMedium', 'UTMCampaign', 'UTMContent', 'UTMTerm', 'FromTag'].includes(colName)) {
+        const escaped = val.replace(/'/g, "''").replace(/\\/g, '\\\\')
+        return `'${escaped}'`
+      }
+
+      // Timestamp columns
+      if (colName.includes('Time') || colName === 'EventDate') {
+        return `'${val}'`
+      }
+
+      // Numeric - validate
+      if (/^-?\d+$/.test(val)) {
+        return val
+      }
+
+      // Default to quoted string
+      const escaped = val.replace(/'/g, "''").replace(/\\/g, '\\\\')
+      return `'${escaped}'`
+    })
+
+    return `(${formatted.join(', ')})`
+  }
+
+  /**
+   * Insert a batch of rows
+   */
+  private async insertBatch(db: PGLiteWrapper, valueStrings: string[]): Promise<void> {
+    const sql = `INSERT INTO hits (${HITS_COLUMNS.join(', ')}) VALUES ${valueStrings.join(', ')}`
+    try {
+      await db.exec(sql)
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : String(error)
+      console.error('[ClickBench] Batch insert error:', errMsg)
+      // Log first part of SQL for debugging
+      console.error('[ClickBench] SQL start:', sql.substring(0, 500))
+      throw error
+    }
+  }
+
+  /**
    * List hits with pagination
    */
-  async listHits(limit: number = 10, offset: number = 0) {
+  async listHits(limit: number = 10, offset: number = 0, ctx?: ExecutionContext) {
     const db = await this.ensureDB()
+
+    // Check if we need to auto-seed
+    if (await this.needsAutoSeed()) {
+      await this.triggerAutoSeed(ctx)
+      return {
+        success: false,
+        seeding: true,
+        message: 'Database is empty. Auto-seeding 10,000 sample rows in background.',
+        hint: 'Check /seed/status for progress. This is a one-time initialization.',
+        statusEndpoint: '/seed/status',
+      }
+    }
+
     const result = await db.query(`SELECT * FROM hits LIMIT $1 OFFSET $2`, [limit, offset])
     return {
       success: true,
@@ -245,22 +652,34 @@ export class ClickBenchDO {
   /**
    * Get basic statistics
    */
-  async getStats() {
+  async getStats(ctx?: ExecutionContext) {
     const db = await this.ensureDB()
 
-    const countResult = await db.query('SELECT COUNT(*) as count FROM hits')
+    // Check if we need to auto-seed
+    if (await this.needsAutoSeed()) {
+      await this.triggerAutoSeed(ctx)
+      return {
+        success: false,
+        seeding: true,
+        message: 'Database is empty. Auto-seeding 10,000 sample rows in background.',
+        hint: 'Check /seed/status for progress. This is a one-time initialization.',
+        statusEndpoint: '/seed/status',
+      }
+    }
+
+    const countResult = await db.query('SELECT COUNT(*)::text as count FROM hits')
     const dateRangeResult = await db.query('SELECT MIN(EventDate) as min_date, MAX(EventDate) as max_date FROM hits')
-    const userCountResult = await db.query('SELECT COUNT(DISTINCT UserID) as distinct_users FROM hits')
+    const userCountResult = await db.query('SELECT COUNT(DISTINCT UserID)::text as distinct_users FROM hits')
 
     return {
       success: true,
       stats: {
-        totalRows: countResult.rows[0]?.count || 0,
+        totalRows: parseInt(String(countResult.rows[0]?.count || '0')),
         dateRange: {
           min: dateRangeResult.rows[0]?.min_date || null,
           max: dateRangeResult.rows[0]?.max_date || null,
         },
-        distinctUsers: userCountResult.rows[0]?.distinct_users || 0,
+        distinctUsers: parseInt(String(userCountResult.rows[0]?.distinct_users || '0')),
       },
     }
   }
@@ -268,8 +687,20 @@ export class ClickBenchDO {
   /**
    * Run a specific ClickBench query
    */
-  async runQuery(queryId: number) {
+  async runQuery(queryId: number, ctx?: ExecutionContext) {
     const db = await this.ensureDB()
+
+    // Check if we need to auto-seed
+    if (await this.needsAutoSeed()) {
+      await this.triggerAutoSeed(ctx)
+      return {
+        success: false,
+        seeding: true,
+        message: 'Database is empty. Auto-seeding 10,000 sample rows in background.',
+        hint: 'Check /seed/status for progress. This is a one-time initialization.',
+        statusEndpoint: '/seed/status',
+      }
+    }
 
     const query = CLICKBENCH_QUERIES.find((q) => q.id === queryId)
     if (!query) {
@@ -294,7 +725,7 @@ export class ClickBenchDO {
           sql: query.query,
         },
         result: {
-          rows: result.rows,
+          rows: serializeBigInts(result.rows),
           rowCount: result.rows.length,
           durationMs: Math.round(durationMs * 100) / 100,
         },
@@ -317,8 +748,20 @@ export class ClickBenchDO {
   /**
    * Run benchmark (all queries or quick subset)
    */
-  async runBenchmark(quick: boolean = false) {
+  async runBenchmark(quick: boolean = false, ctx?: ExecutionContext) {
     const db = await this.ensureDB()
+
+    // Check if we need to auto-seed
+    if (await this.needsAutoSeed()) {
+      await this.triggerAutoSeed(ctx)
+      return {
+        success: false,
+        seeding: true,
+        message: 'Database is empty. Auto-seeding 10,000 sample rows in background.',
+        hint: 'Check /seed/status for progress. This is a one-time initialization.',
+        statusEndpoint: '/seed/status',
+      }
+    }
 
     const queries = quick ? CLICKBENCH_QUERIES.slice(0, 5) : CLICKBENCH_QUERIES
     const results = []
@@ -379,7 +822,7 @@ export class ClickBenchDO {
   /**
    * RPC fetch handler
    */
-  async fetch(request: Request) {
+  async fetch(request: Request, env?: unknown, ctx?: ExecutionContext) {
     MODULE_REQUEST_COUNT++
     this.instanceRequestCount++
 
@@ -403,6 +846,23 @@ export class ClickBenchDO {
       return Response.json(result)
     }
 
+    if (url.pathname === '/seed/clickbench' && request.method === 'POST') {
+      const body = await request.json() as {
+        url?: string
+        maxRows?: number
+        batchSize?: number
+        useFull?: boolean
+      }
+      // Allow choosing full dataset or sample
+      const datasetUrl = body.useFull ? CLICKBENCH_FULL_URL : (body.url || CLICKBENCH_SAMPLE_URL)
+      const result = await this.seedFromClickBench({
+        url: datasetUrl,
+        maxRows: body.maxRows || 100000, // Default 100k for safety
+        batchSize: body.batchSize || 500
+      })
+      return Response.json(result)
+    }
+
     if (url.pathname === '/seed/status') {
       const result = await this.getSeedStatus()
       return Response.json(result)
@@ -411,24 +871,40 @@ export class ClickBenchDO {
     if (url.pathname === '/hits') {
       const limit = parseInt(url.searchParams.get('limit') || '10')
       const offset = parseInt(url.searchParams.get('offset') || '0')
-      const result = await this.listHits(limit, offset)
+      const result = await this.listHits(limit, offset, ctx)
+      // Return 202 if seeding was triggered
+      if ('seeding' in result && result.seeding) {
+        return Response.json(result, { status: 202 })
+      }
       return Response.json(result)
     }
 
     if (url.pathname === '/stats') {
-      const result = await this.getStats()
+      const result = await this.getStats(ctx)
+      // Return 202 if seeding was triggered
+      if ('seeding' in result && result.seeding) {
+        return Response.json(result, { status: 202 })
+      }
       return Response.json(result)
     }
 
     if (url.pathname.startsWith('/query/') && request.method === 'POST') {
       const queryId = parseInt(url.pathname.split('/')[2])
-      const result = await this.runQuery(queryId)
+      const result = await this.runQuery(queryId, ctx)
+      // Return 202 if seeding was triggered
+      if ('seeding' in result && result.seeding) {
+        return Response.json(result, { status: 202 })
+      }
       return Response.json(result)
     }
 
     if (url.pathname === '/benchmark' && request.method === 'POST') {
       const body = await request.json() as { quick?: boolean }
-      const result = await this.runBenchmark(body.quick || false)
+      const result = await this.runBenchmark(body.quick || false, ctx)
+      // Return 202 if seeding was triggered
+      if ('seeding' in result && result.seeding) {
+        return Response.json(result, { status: 202 })
+      }
       return Response.json(result)
     }
 

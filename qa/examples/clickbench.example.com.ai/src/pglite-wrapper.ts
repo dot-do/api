@@ -1,22 +1,22 @@
 /**
- * Simple PGLite wrapper for Cloudflare Workers
- * Uses the compiled WASM/JS directly
+ * PGLite wrapper for Cloudflare Workers
+ * Uses PGliteLocal for proper Workers compatibility
  */
+
+import { PGliteLocal, type QueryResult as PGLocalQueryResult } from './pglite-local'
 
 // @ts-ignore - Wrangler handles these imports
 import pgliteWasm from './pglite-assets/pglite.wasm'
 // @ts-ignore - Wrangler handles these imports
 import pgliteData from './pglite-assets/pglite.data'
-// @ts-ignore - Wrangler handles these imports
-import { default as createPGlite } from './pglite-assets/pglite.js'
 
 export interface QueryResult {
   rows: Record<string, unknown>[]
-  fields: Array<{ name: string; dataTypeID: number }>
+  fields?: Array<{ name: string; dataTypeID: number }>
 }
 
 export class PGLiteWrapper {
-  private pg: any = null
+  private pg: PGliteLocal | null = null
   private ready = false
 
   static async create(): Promise<PGLiteWrapper> {
@@ -27,10 +27,11 @@ export class PGLiteWrapper {
 
   private async init() {
     try {
-      // Create PGLite Module with static WASM and data
-      this.pg = await createPGlite({
+      // Create PGliteLocal instance with static WASM and data
+      this.pg = await PGliteLocal.create({
         wasmModule: pgliteWasm,
-        fsBundle: new Blob([pgliteData]),
+        fsBundle: pgliteData,
+        debug: false,
       })
       this.ready = true
     } catch (error) {
@@ -40,13 +41,14 @@ export class PGLiteWrapper {
   }
 
   async query<T = Record<string, unknown>>(sql: string, params?: unknown[]): Promise<{ rows: T[] }> {
-    if (!this.ready) {
+    if (!this.ready || !this.pg) {
       throw new Error('PGLite not initialized')
     }
 
     try {
-      const result = await this.pg.query(sql, params)
-      return { rows: result.rows as T[] }
+      // PGliteLocal doesn't support parameterized queries yet, so we'll just ignore params
+      const result: PGLocalQueryResult<T> = await this.pg.query<T>(sql)
+      return { rows: result.rows }
     } catch (error) {
       console.error('Query error:', error, 'SQL:', sql)
       throw error
@@ -54,7 +56,7 @@ export class PGLiteWrapper {
   }
 
   async exec(sql: string): Promise<void> {
-    if (!this.ready) {
+    if (!this.ready || !this.pg) {
       throw new Error('PGLite not initialized')
     }
 

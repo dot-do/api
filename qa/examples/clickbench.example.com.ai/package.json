@@ -6,10 +6,12 @@
     "dev": "wrangler dev",
     "build": "wrangler deploy --dry-run --outdir=dist",
     "deploy": "wrangler deploy",
-    "copy-assets": "cp ../../../postgres/benchmarks/workers/benchmark-worker/src/pglite-assets/* ./src/pglite-assets/"
+    "copy-assets": "node ../../../packages/pglite/packages/pglite/bin/copy-assets.js ./src/pglite-assets"
   },
   "dependencies": {
-    "@electric-sql/pglite": "^0.2.12",
+    "@dotdo/pg-protocol": "^0.1.1",
+    "@dotdo/pglite": "^0.1.4",
+    "async-mutex": "^0.5.0",
     "hono": "^4.6.0"
   },
   "devDependencies": {

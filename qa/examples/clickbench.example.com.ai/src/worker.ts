@@ -36,11 +36,13 @@ function createApp() {
    * Root endpoint - API info
    */
   app.get('/', (c) => {
+    const baseUrl = new URL(c.req.url).origin
     return c.json({
       name: 'ClickBench API',
       version: '1.0.0',
       description: 'ClickBench analytics dataset benchmark API using PGLite in Cloudflare Workers',
       wasmStrategy: 'eager-but-non-blocking (starts loading in constructor)',
+      autoSeeding: 'Database auto-seeds with 10K sample rows on first data request (one-time initialization)',
       dataset: {
         name: 'ClickBench',
         description: 'Web analytics data with 105 columns',
@@ -48,43 +50,126 @@ function createApp() {
         queries: 43,
         schema: 'hits table with WatchID, EventTime, EventDate, UserID, URL, etc.',
       },
+      quickStart: [
+        `1. Visit ${baseUrl}/stats to trigger auto-seeding (returns 202 Accepted on first request)`,
+        `2. Check ${baseUrl}/seed/status to monitor seeding progress`,
+        `3. Once seeding completes, visit ${baseUrl}/queries to see available benchmark queries`,
+        `4. Run ${baseUrl}/benchmark/quick (POST) to execute a quick benchmark`,
+      ],
       endpoints: {
-        health: 'GET /ping - Health check',
-        debug: 'GET /debug - DO lifecycle info',
+        health: {
+          description: 'Health check (instant, no WASM wait)',
+          method: 'GET',
+          url: `${baseUrl}/ping`,
+        },
+        debug: {
+          description: 'DO lifecycle info (instant, no WASM wait)',
+          method: 'GET',
+          url: `${baseUrl}/debug`,
+        },
         seed: {
-          sample: 'POST /seed/sample - Seed sample data (body: { count: 10000 })',
-          status: 'GET /seed/status - Get seed progress',
+          sample: {
+            description: 'Seed with synthetic sample data (optional - auto-seeds on first use)',
+            method: 'POST',
+            url: `${baseUrl}/seed/sample`,
+            body: { count: 10000 },
+          },
+          clickbench: {
+            description: 'Seed from REAL ClickBench dataset (gzipped TSV from clickhouse.com)',
+            method: 'POST',
+            url: `${baseUrl}/seed/clickbench`,
+            body: {
+              maxRows: 100000,
+              batchSize: 500,
+              useFull: false,
+            },
+            note: 'Set useFull=true for full 100M row dataset (warning: very large)',
+          },
+          status: {
+            description: 'Get seed progress',
+            method: 'GET',
+            url: `${baseUrl}/seed/status`,
+          },
         },
         data: {
-          hits: 'GET /hits?limit=10&offset=0 - List hits with pagination',
-          stats: 'GET /stats - Get basic statistics',
+          hits: {
+            description: 'List hits with pagination (auto-seeds if empty)',
+            method: 'GET',
+            url: `${baseUrl}/hits?limit=10&offset=0`,
+          },
+          stats: {
+            description: 'Get basic statistics (auto-seeds if empty)',
+            method: 'GET',
+            url: `${baseUrl}/stats`,
+          },
         },
         queries: {
-          single: 'POST /query/:id - Run specific query (0-42)',
-          list: 'GET /queries - List all queries',
-          categories: 'GET /queries/categories - Get queries by category',
+          list: {
+            description: 'List all available benchmark queries',
+            method: 'GET',
+            url: `${baseUrl}/queries`,
+          },
+          categories: {
+            description: 'Get queries organized by category',
+            method: 'GET',
+            url: `${baseUrl}/queries/categories`,
+          },
+          single: {
+            description: 'Run specific query by ID (0-42, auto-seeds if empty)',
+            method: 'POST',
+            url: `${baseUrl}/query/{id}`,
+            example: `${baseUrl}/query/0`,
+          },
         },
         benchmark: {
-          full: 'POST /benchmark - Run all 43 queries',
-          quick: 'POST /benchmark/quick - Run 5 quick queries',
+          full: {
+            description: 'Run all 43 queries (auto-seeds if empty)',
+            method: 'POST',
+            url: `${baseUrl}/benchmark`,
+          },
+          quick: {
+            description: 'Run 5 quick queries (auto-seeds if empty)',
+            method: 'POST',
+            url: `${baseUrl}/benchmark/quick`,
+          },
         },
       },
       examples: [
         {
-          name: 'Seed 10K sample rows',
-          curl: 'curl -X POST https://clickbench.example.com.ai/seed/sample -H "Content-Type: application/json" -d \'{"count": 10000}\'',
+          name: 'Check health',
+          curl: `curl ${baseUrl}/ping`,
+          clickable: `${baseUrl}/ping`,
         },
         {
-          name: 'Get statistics',
-          curl: 'curl https://clickbench.example.com.ai/stats',
+          name: 'Get statistics (triggers auto-seed if needed)',
+          curl: `curl ${baseUrl}/stats`,
+          clickable: `${baseUrl}/stats`,
+        },
+        {
+          name: 'Check seed status',
+          curl: `curl ${baseUrl}/seed/status`,
+          clickable: `${baseUrl}/seed/status`,
+        },
+        {
+          name: 'Seed real ClickBench data (100k rows)',
+          curl: `curl -X POST ${baseUrl}/seed/clickbench -H "Content-Type: application/json" -d '{"maxRows": 100000}'`,
+        },
+        {
+          name: 'Seed real ClickBench data (1M rows)',
+          curl: `curl -X POST ${baseUrl}/seed/clickbench -H "Content-Type: application/json" -d '{"maxRows": 1000000}'`,
+        },
+        {
+          name: 'List all queries',
+          curl: `curl ${baseUrl}/queries`,
+          clickable: `${baseUrl}/queries`,
         },
         {
           name: 'Run query Q0 (count all)',
-          curl: 'curl -X POST https://clickbench.example.com.ai/query/0',
+          curl: `curl -X POST ${baseUrl}/query/0`,
         },
         {
           name: 'Run quick benchmark',
-          curl: 'curl -X POST https://clickbench.example.com.ai/benchmark/quick',
+          curl: `curl -X POST ${baseUrl}/benchmark/quick`,
         },
       ],
       timestamp: new Date().toISOString(),
@@ -110,12 +195,31 @@ function createApp() {
   })
 
   /**
-   * Seed sample data
+   * Seed sample data (synthetic)
    */
   app.post('/seed/sample', async (c) => {
     const stub = getDOStub(c.env)
     const body = await c.req.json()
     const result = await stub.fetch('https://internal/seed/sample', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    return Response.json(await result.json())
+  })
+
+  /**
+   * Seed from real ClickBench dataset
+   */
+  app.post('/seed/clickbench', async (c) => {
+    const stub = getDOStub(c.env)
+    let body = {}
+    try {
+      body = await c.req.json()
+    } catch {
+      // Empty body is fine
+    }
+    const result = await stub.fetch('https://internal/seed/clickbench', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -133,23 +237,37 @@ function createApp() {
   })
 
   /**
-   * List hits
+   * List hits (with auto-seeding)
    */
   app.get('/hits', async (c) => {
     const stub = getDOStub(c.env)
     const limit = c.req.query('limit') || '10'
     const offset = c.req.query('offset') || '0'
     const result = await stub.fetch(`https://internal/hits?limit=${limit}&offset=${offset}`)
-    return Response.json(await result.json())
+    const json = await result.json()
+
+    // Check if we need to auto-seed
+    if (result.status === 202) {
+      return c.json(json, 202)
+    }
+
+    return Response.json(json)
   })
 
   /**
-   * Get statistics
+   * Get statistics (with auto-seeding)
    */
   app.get('/stats', async (c) => {
     const stub = getDOStub(c.env)
     const result = await stub.fetch('https://internal/stats')
-    return Response.json(await result.json())
+    const json = await result.json()
+
+    // Check if we need to auto-seed
+    if (result.status === 202) {
+      return c.json(json, 202)
+    }
+
+    return Response.json(json)
   })
 
   /**
@@ -192,7 +310,7 @@ function createApp() {
   })
 
   /**
-   * Run specific query
+   * Run specific query (with auto-seeding)
    */
   app.post('/query/:id', async (c) => {
     const queryId = parseInt(c.req.param('id'))
@@ -211,11 +329,18 @@ function createApp() {
     const result = await stub.fetch(`https://internal/query/${queryId}`, {
       method: 'POST',
     })
-    return Response.json(await result.json())
+    const json = await result.json()
+
+    // Check if we need to auto-seed
+    if (result.status === 202) {
+      return c.json(json, 202)
+    }
+
+    return Response.json(json)
   })
 
   /**
-   * Run full benchmark
+   * Run full benchmark (with auto-seeding)
    */
   app.post('/benchmark', async (c) => {
     const stub = getDOStub(c.env)
@@ -224,11 +349,18 @@ function createApp() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ quick: false }),
     })
-    return Response.json(await result.json())
+    const json = await result.json()
+
+    // Check if we need to auto-seed
+    if (result.status === 202) {
+      return c.json(json, 202)
+    }
+
+    return Response.json(json)
   })
 
   /**
-   * Run quick benchmark
+   * Run quick benchmark (with auto-seeding)
    */
   app.post('/benchmark/quick', async (c) => {
     const stub = getDOStub(c.env)
@@ -237,7 +369,14 @@ function createApp() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ quick: true }),
     })
-    return Response.json(await result.json())
+    const json = await result.json()
+
+    // Check if we need to auto-seed
+    if (result.status === 202) {
+      return c.json(json, 202)
+    }
+
+    return Response.json(json)
   })
 
   /**

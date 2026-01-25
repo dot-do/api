@@ -1,0 +1,31 @@
+# Factory Worker Configuration
+# This worker maintains a pool of pre-warmed PGLite instances
+
+name = "cold-start-factory"
+main = "src/factory-worker.ts"
+compatibility_date = "2026-01-15"
+account_id = "b6641681fe423910342b9ffa1364c76d"
+
+# Enable workers.dev subdomain
+workers_dev = true
+
+# Node.js compatibility
+compatibility_flags = ["nodejs_compat"]
+
+# Rules for handling PGLite WASM and binary data files
+[[rules]]
+type = "CompiledWasm"
+globs = ["**/*.wasm"]
+
+[[rules]]
+type = "Data"
+globs = ["**/*.data"]
+
+# Factory Durable Object
+[[durable_objects.bindings]]
+name = "FACTORY_DO"
+class_name = "FactoryDO"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["FactoryDO"]

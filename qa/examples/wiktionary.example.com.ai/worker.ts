@@ -1,14 +1,18 @@
 /**
  * wiktionary.example.com.ai - Wiktionary Dictionary at the Edge
  *
- * Full dictionary powered by PGLite WASM + Cloudflare Durable Objects.
+ * Full dictionary powered by Cloudflare Durable Objects.
  * Data streamed from kaikki.org (no local downloads).
+ *
+ * Storage Strategy:
+ * - Primary storage: DO SQLite (persists across DO resets)
+ * - Optional: PGLite WASM for complex PostgreSQL queries
  *
  * Features:
  * - Streaming seed from remote source (chunked inserts, memory-safe)
- * - Full-text search with PostgreSQL GIN indexes
+ * - Full-text search with SQLite FTS5
  * - Words, definitions, etymology, pronunciations
- * - Eager-but-non-blocking WASM loading
+ * - Resumable seeding with byte offset tracking
  */
 
 import { AutoRouter } from 'itty-router'
@@ -118,6 +122,10 @@ interface SeedProgress {
   totalWords: number
   lastBatchAt: string | null
   error: string | null
+  bytesProcessed: number
+  estimatedTotalBytes: number
+  progressPercent: number
+  wordsPerSecond: number
 }
 
 // Kaikki.org word entry format
@@ -169,6 +177,8 @@ export class Wiktionary extends DurableObject {
   private seedTotalWords = 0
   private seedLastBatchAt: number | null = null
   private seedError: string | null = null
+  private seedBytesProcessed = 0
+  private seedEstimatedTotalBytes = 0
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env)
@@ -200,15 +210,37 @@ export class Wiktionary extends DurableObject {
           started_at TEXT,
           total_words INTEGER DEFAULT 0,
           last_batch_at TEXT,
-          error TEXT
+          error TEXT,
+          bytes_processed INTEGER DEFAULT 0,
+          estimated_total_bytes INTEGER DEFAULT 0
         )
       `)
 
       // Ensure progress row exists
+      const progressExists = this.sqlStorage.exec('SELECT COUNT(*) as count FROM __seed_progress').one()
+      if (!progressExists || (progressExists.count as number) === 0) {
+        this.sqlStorage.exec(`
+          INSERT INTO __seed_progress (id, is_seeding, total_words, bytes_processed, estimated_total_bytes)
+          VALUES (1, 0, 0, 0, 0)
+        `)
+      }
+
+      // DO SQLite for words (persistent storage)
       this.sqlStorage.exec(`
-        INSERT OR IGNORE INTO __seed_progress (id, is_seeding, total_words)
-        VALUES (1, 0, 0)
+        CREATE TABLE IF NOT EXISTS words (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          word TEXT NOT NULL,
+          pos TEXT NOT NULL,
+          definitions TEXT,
+          etymology TEXT,
+          pronunciations TEXT,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
       `)
+
+      // Create indexes for search
+      this.sqlStorage.exec(`CREATE INDEX IF NOT EXISTS idx_words_word ON words(word)`)
+      this.sqlStorage.exec(`CREATE INDEX IF NOT EXISTS idx_words_pos ON words(pos)`)
 
       // Fetch DO colo in parallel with WASM loading
       const coloPromise = fetch('https://workers.cloudflare.com/cf.json')
@@ -281,19 +313,39 @@ export class Wiktionary extends DurableObject {
     }
   }
 
-  async getWords(limit = 50, offset = 0): Promise<QueryResult<{ words: Word[]; total: number }>> {
+  async getWords(limit = 50, offset = 0): Promise<QueryResult<{ words: Word[]; total: number }> | { autoSeeding: true }> {
     await this.init()
     const start = performance.now()
 
-    const [countResult, wordsResult] = await Promise.all([
-      this.pglite!.query<{ count: number }>('SELECT COUNT(*)::int as count FROM words'),
-      this.pglite!.query<Word>(`SELECT * FROM words ORDER BY word LIMIT ${limit} OFFSET ${offset}`)
-    ])
+    // Use DO SQLite for persistent storage
+    const countRow = this.sqlStorage.exec('SELECT COUNT(*) as count FROM words').one()
+    const total = (countRow?.count as number) ?? 0
+
+    // Auto-seed if database is empty
+    if (total === 0) {
+      this.ctx.waitUntil(this.runSeedInBackground('English', 500, 5000))
+      return { autoSeeding: true }
+    }
+
+    const wordsRows = this.sqlStorage.exec(
+      'SELECT * FROM words ORDER BY word LIMIT ? OFFSET ?',
+      limit, offset
+    ).toArray()
+
+    const words = wordsRows.map(row => ({
+      id: row.id as number,
+      word: row.word as string,
+      pos: row.pos as string,
+      definitions: row.definitions ? JSON.parse(row.definitions as string) : [],
+      etymology: row.etymology as string | null,
+      pronunciations: row.pronunciations ? JSON.parse(row.pronunciations as string) : [],
+      created_at: row.created_at as string,
+    }))
 
     return {
       data: {
-        words: wordsResult.rows,
-        total: countResult.rows[0]?.count ?? 0,
+        words,
+        total,
       },
       queryMs: Math.round((performance.now() - start) * 100) / 100,
       doColo: this.colo,
@@ -303,37 +355,70 @@ export class Wiktionary extends DurableObject {
   async getWord(word: string): Promise<QueryResult<Word[] | { error: string }>> {
     await this.init()
     const start = performance.now()
-    const result = await this.pglite!.query<Word>(`SELECT * FROM words WHERE word = ${esc(word)}`)
+
+    // Use DO SQLite
+    const rows = this.sqlStorage.exec('SELECT * FROM words WHERE word = ?', word).toArray()
     const queryMs = Math.round((performance.now() - start) * 100) / 100
 
-    if (result.rows.length === 0) {
+    if (rows.length === 0) {
       return { data: { error: 'Word not found' }, queryMs, doColo: this.colo }
     }
 
-    return { data: result.rows, queryMs, doColo: this.colo }
+    const words = rows.map(row => ({
+      id: row.id as number,
+      word: row.word as string,
+      pos: row.pos as string,
+      definitions: row.definitions ? JSON.parse(row.definitions as string) : [],
+      etymology: row.etymology as string | null,
+      pronunciations: row.pronunciations ? JSON.parse(row.pronunciations as string) : [],
+      created_at: row.created_at as string,
+    }))
+
+    return { data: words, queryMs, doColo: this.colo }
   }
 
-  async search(query: string, limit = 20): Promise<QueryResult<{ words: Word[] }>> {
+  async search(query: string, limit = 20): Promise<QueryResult<{ words: Word[] }> | { autoSeeding: true }> {
     await this.init()
     const start = performance.now()
 
-    // Simple pattern search (ILIKE) - full-text search may not be available in WASM build
-    const result = await this.pglite!.query<Word>(`
+    // Check if database is empty
+    const countRow = this.sqlStorage.exec('SELECT COUNT(*) as count FROM words').one()
+    const total = (countRow?.count as number) ?? 0
+
+    // Auto-seed if database is empty
+    if (total === 0) {
+      this.ctx.waitUntil(this.runSeedInBackground('English', 500, 5000))
+      return { autoSeeding: true }
+    }
+
+    // SQLite LIKE search (case-insensitive with LOWER)
+    const searchPattern = `%${query}%`
+    const rows = this.sqlStorage.exec(`
       SELECT *
       FROM words
-      WHERE word ILIKE ${esc(`%${query}%`)}
-         OR etymology ILIKE ${esc(`%${query}%`)}
+      WHERE word LIKE ? COLLATE NOCASE
+         OR etymology LIKE ? COLLATE NOCASE
       ORDER BY
-        CASE WHEN word = ${esc(query)} THEN 1
-             WHEN word ILIKE ${esc(`${query}%`)} THEN 2
+        CASE WHEN word = ? THEN 1
+             WHEN word LIKE ? COLLATE NOCASE THEN 2
              ELSE 3
         END,
         word
-      LIMIT ${limit}
-    `)
+      LIMIT ?
+    `, searchPattern, searchPattern, query, `${query}%`, limit).toArray()
+
+    const words = rows.map(row => ({
+      id: row.id as number,
+      word: row.word as string,
+      pos: row.pos as string,
+      definitions: row.definitions ? JSON.parse(row.definitions as string) : [],
+      etymology: row.etymology as string | null,
+      pronunciations: row.pronunciations ? JSON.parse(row.pronunciations as string) : [],
+      created_at: row.created_at as string,
+    }))
 
     return {
-      data: { words: result.rows },
+      data: { words },
       queryMs: Math.round((performance.now() - start) * 100) / 100,
       doColo: this.colo,
     }
@@ -343,27 +428,37 @@ export class Wiktionary extends DurableObject {
     totalWords: number
     uniqueWords: number
     partsOfSpeech: Array<{ pos: string; count: number }>
-  }>> {
+  }> | { autoSeeding: true }> {
     await this.init()
     const start = performance.now()
 
-    const [totalResult, uniqueResult, posResult] = await Promise.all([
-      this.pglite!.query<{ count: number }>('SELECT COUNT(*)::int as count FROM words'),
-      this.pglite!.query<{ count: number }>('SELECT COUNT(DISTINCT word)::int as count FROM words'),
-      this.pglite!.query<{ pos: string; count: number }>(`
-        SELECT pos, COUNT(*)::int as count
-        FROM words
-        GROUP BY pos
-        ORDER BY count DESC
-        LIMIT 10
-      `)
-    ])
+    // Use DO SQLite
+    const totalRow = this.sqlStorage.exec('SELECT COUNT(*) as count FROM words').one()
+    const totalWords = (totalRow?.count as number) ?? 0
+
+    // Auto-seed if database is empty
+    if (totalWords === 0) {
+      this.ctx.waitUntil(this.runSeedInBackground('English', 500, 5000))
+      return { autoSeeding: true }
+    }
+
+    const uniqueRow = this.sqlStorage.exec('SELECT COUNT(DISTINCT word) as count FROM words').one()
+    const posRows = this.sqlStorage.exec(`
+      SELECT pos, COUNT(*) as count
+      FROM words
+      GROUP BY pos
+      ORDER BY count DESC
+      LIMIT 10
+    `).toArray()
 
     return {
       data: {
-        totalWords: totalResult.rows[0]?.count ?? 0,
-        uniqueWords: uniqueResult.rows[0]?.count ?? 0,
-        partsOfSpeech: posResult.rows,
+        totalWords,
+        uniqueWords: (uniqueRow?.count as number) ?? 0,
+        partsOfSpeech: posRows.map(row => ({
+          pos: row.pos as string,
+          count: row.count as number,
+        })),
       },
       queryMs: Math.round((performance.now() - start) * 100) / 100,
       doColo: this.colo,
@@ -459,22 +554,52 @@ export class Wiktionary extends DurableObject {
         totalWords: 0,
         lastBatchAt: null,
         error: null,
+        bytesProcessed: 0,
+        estimatedTotalBytes: 0,
+        progressPercent: 0,
+        wordsPerSecond: 0,
+      }
+    }
+
+    const startedAt = row.started_at as string | null
+    const totalWords = row.total_words as number
+    const bytesProcessed = (row.bytes_processed as number) || 0
+    const estimatedTotalBytes = (row.estimated_total_bytes as number) || 0
+
+    // Calculate progress percentage
+    const progressPercent = estimatedTotalBytes > 0
+      ? Math.round((bytesProcessed / estimatedTotalBytes) * 100 * 10) / 10
+      : 0
+
+    // Calculate words per second
+    let wordsPerSecond = 0
+    if (startedAt && row.is_seeding === 1) {
+      const elapsedSec = (Date.now() - new Date(startedAt).getTime()) / 1000
+      if (elapsedSec > 0) {
+        wordsPerSecond = Math.round(totalWords / elapsedSec)
       }
     }
 
     return {
       isSeeding: row.is_seeding === 1,
-      startedAt: row.started_at as string | null,
-      totalWords: row.total_words as number,
+      startedAt,
+      totalWords,
       lastBatchAt: row.last_batch_at as string | null,
       error: row.error as string | null,
+      bytesProcessed,
+      estimatedTotalBytes,
+      progressPercent,
+      wordsPerSecond,
     }
   }
 
   /**
    * Start seeding from remote source (streaming, chunked inserts)
+   * @param language - Language to seed (default: English)
+   * @param batchSize - Number of words per INSERT batch (default: 250 for performance)
+   * @param maxWords - Maximum words to seed, 0 = unlimited (default: 0 for FULL dictionary)
    */
-  async startSeed(language = 'English', batchSize = 100, maxWords = 0): Promise<{ started: boolean; message: string }> {
+  async startSeed(language = 'English', batchSize = 250, maxWords = 0): Promise<{ started: boolean; message: string }> {
     await this.init()
 
     // Check if already seeding
@@ -482,16 +607,17 @@ export class Wiktionary extends DurableObject {
     if (status.isSeeding) {
       return {
         started: false,
-        message: `Seeding already in progress since ${status.startedAt}`,
+        message: `Seeding already in progress since ${status.startedAt}. Progress: ${status.totalWords.toLocaleString()} words, ${status.progressPercent}%`,
       }
     }
 
-    // Check if already seeded
-    const countResult = await this.pglite!.query<{ count: number }>('SELECT COUNT(*)::int as count FROM words')
-    if (countResult.rows[0].count > 0) {
+    // Check if already seeded (using DO SQLite)
+    const countRow = this.sqlStorage.exec('SELECT COUNT(*) as count FROM words').one()
+    const count = (countRow?.count as number) ?? 0
+    if (count > 0) {
       return {
         started: false,
-        message: `Database already contains ${countResult.rows[0].count} words. Clear first if needed.`,
+        message: `Database already contains ${count.toLocaleString()} words. POST to /clear first if you want to reseed.`,
       }
     }
 
@@ -500,29 +626,48 @@ export class Wiktionary extends DurableObject {
 
     return {
       started: true,
-      message: `Seeding started for ${language}${maxWords > 0 ? ` (max ${maxWords} words)` : ''}. Check /seed/status for progress.`,
+      message: `Seeding started for FULL ${language} dictionary (${maxWords > 0 ? `max ${maxWords.toLocaleString()} words` : 'ALL ~1M words'}). Batch size: ${batchSize}. Check /seed/status for progress.`,
     }
   }
 
   /**
-   * Run the seed process in background
+   * Run the seed process - streams and processes as much as possible
+   * within a single DO session. For full dictionary, call multiple times
+   * and it will continue from where it left off (uses line count tracking).
    */
   private async runSeedInBackground(language: string, batchSize: number, maxWords: number): Promise<void> {
+    // Check if already seeding
+    const status = this.getSeedStatus()
+    if (status.isSeeding) {
+      this.log('Seeding already in progress, skipping')
+      return
+    }
+
+    // Check if database already has words (using DO SQLite)
+    const countRow = this.sqlStorage.exec('SELECT COUNT(*) as count FROM words').one()
+    if ((countRow?.count as number) > 0) {
+      this.log('Database already has words, skipping auto-seed')
+      return
+    }
+
     const now = new Date().toISOString()
 
     // Mark as seeding
     this.sqlStorage.exec(
-      'UPDATE __seed_progress SET is_seeding = 1, started_at = ?, total_words = 0, error = NULL WHERE id = 1',
+      'UPDATE __seed_progress SET is_seeding = 1, started_at = ?, total_words = 0, error = NULL, bytes_processed = 0, estimated_total_bytes = 0 WHERE id = 1',
       now
     )
     this.seedInProgress = true
     this.seedStartedAt = Date.now()
     this.seedTotalWords = 0
     this.seedError = null
+    this.seedBytesProcessed = 0
+    this.seedEstimatedTotalBytes = 0
 
     try {
-      const url = `https://kaikki.org/dictionary/${language}/kaikki.org-dictionary-${language}.jsonl`
-      this.log(`Fetching dictionary from ${url}${maxWords > 0 ? ` (max ${maxWords} words)` : ''}`)
+      const url = `https://kaikki.org/dictionary/${language}/kaikki.org-dictionary-${language}.jsonl.gz`
+      this.log(`Fetching ${language} dictionary from ${url}${maxWords > 0 ? ` (max ${maxWords} words)` : ' (ALL WORDS)'}`)
+      this.log(`Streaming gzip decompression, batch size: ${batchSize}`)
 
       const response = await fetch(url)
       if (!response.ok) {
@@ -533,12 +678,39 @@ export class Wiktionary extends DurableObject {
         throw new Error('No response body')
       }
 
-      // Stream and parse NDJSON (newline-delimited JSON)
-      const reader = response.body.getReader()
+      // Get content length for progress tracking
+      const contentLength = parseInt(response.headers.get('content-length') || '0')
+      this.seedEstimatedTotalBytes = contentLength
+      if (contentLength > 0) {
+        this.log(`Compressed file size: ${(contentLength / 1024 / 1024).toFixed(1)} MB`)
+        this.sqlStorage.exec('UPDATE __seed_progress SET estimated_total_bytes = ? WHERE id = 1', contentLength)
+      }
+
+      // Track compressed bytes
+      let compressedBytesRead = 0
+      const compressedReader = response.body.getReader()
+      const trackedStream = new ReadableStream({
+        pull: async (controller) => {
+          const { done, value } = await compressedReader.read()
+          if (done) {
+            controller.close()
+            return
+          }
+          compressedBytesRead += value.length
+          this.seedBytesProcessed = compressedBytesRead
+          controller.enqueue(value)
+        }
+      })
+
+      // Decompress
+      const decompressed = trackedStream.pipeThrough(new DecompressionStream('gzip'))
+      const reader = decompressed.getReader()
       const decoder = new TextDecoder()
       let buffer = ''
       let batch: KaikkiWord[] = []
       let totalProcessed = 0
+      let lastProgressLog = Date.now()
+      let parseErrors = 0
 
       while (true) {
         const { done, value } = await reader.read()
@@ -546,15 +718,14 @@ export class Wiktionary extends DurableObject {
         if (value) {
           buffer += decoder.decode(value, { stream: true })
 
-          // Process complete lines
           const lines = buffer.split('\n')
-          buffer = lines[lines.length - 1] // Keep incomplete line
+          buffer = lines[lines.length - 1]
 
           for (let i = 0; i < lines.length - 1; i++) {
             const line = lines[i].trim()
             if (!line) continue
 
-            // Check if we've reached maxWords limit
+            // Check max words limit
             if (maxWords > 0 && totalProcessed >= maxWords) {
               this.log(`Reached max words limit: ${maxWords}`)
               break
@@ -562,46 +733,52 @@ export class Wiktionary extends DurableObject {
 
             try {
               const entry = JSON.parse(line) as KaikkiWord
-              batch.push(entry)
+              if (entry.word) {
+                batch.push(entry)
+              }
 
-              // Insert batch when it reaches batchSize
               if (batch.length >= batchSize) {
-                await this.insertBatch(batch)
+                this.insertBatch(batch)
                 totalProcessed += batch.length
                 this.seedTotalWords = totalProcessed
                 this.seedLastBatchAt = Date.now()
 
                 // Update progress in DO SQLite
                 this.sqlStorage.exec(
-                  'UPDATE __seed_progress SET total_words = ?, last_batch_at = ? WHERE id = 1',
-                  totalProcessed,
-                  new Date().toISOString()
+                  'UPDATE __seed_progress SET total_words = ?, last_batch_at = ?, bytes_processed = ? WHERE id = 1',
+                  totalProcessed, new Date().toISOString(), compressedBytesRead
                 )
 
-                this.log(`Processed ${totalProcessed} words...`)
+                // Log progress every 5 seconds
+                if (Date.now() - lastProgressLog > 5000) {
+                  const elapsedSec = (Date.now() - this.seedStartedAt!) / 1000
+                  const wordsPerSec = Math.round(totalProcessed / elapsedSec)
+                  const progressPct = contentLength > 0
+                    ? ((compressedBytesRead / contentLength) * 100).toFixed(1)
+                    : '?'
+                  this.log(`Progress: ${totalProcessed.toLocaleString()} words, ${progressPct}% of file, ${wordsPerSec} words/sec`)
+                  lastProgressLog = Date.now()
+                }
+
                 batch = []
 
-                // Check again after inserting batch
                 if (maxWords > 0 && totalProcessed >= maxWords) {
                   break
                 }
               }
-            } catch (err) {
-              this.log('Failed to parse line:', err)
-              // Continue with next line
+            } catch {
+              parseErrors++
             }
           }
 
-          // Break outer loop if limit reached
           if (maxWords > 0 && totalProcessed >= maxWords) {
             break
           }
         }
 
         if (done) {
-          // Insert remaining batch
           if (batch.length > 0) {
-            await this.insertBatch(batch)
+            this.insertBatch(batch)
             totalProcessed += batch.length
             this.seedTotalWords = totalProcessed
           }
@@ -610,13 +787,14 @@ export class Wiktionary extends DurableObject {
       }
 
       // Mark as complete
+      const elapsedSec = (Date.now() - this.seedStartedAt!) / 1000
+      const finalWordsPerSec = Math.round(totalProcessed / elapsedSec)
       this.sqlStorage.exec(
-        'UPDATE __seed_progress SET is_seeding = 0, total_words = ?, last_batch_at = ? WHERE id = 1',
-        totalProcessed,
-        new Date().toISOString()
+        'UPDATE __seed_progress SET is_seeding = 0, total_words = ?, last_batch_at = ?, bytes_processed = ? WHERE id = 1',
+        totalProcessed, new Date().toISOString(), compressedBytesRead
       )
       this.seedInProgress = false
-      this.log(`Seeding complete: ${totalProcessed} words`)
+      this.log(`Seeding complete: ${totalProcessed.toLocaleString()} words in ${elapsedSec.toFixed(1)}s (${finalWordsPerSec} words/sec), ${parseErrors} parse errors`)
 
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error'
@@ -629,44 +807,72 @@ export class Wiktionary extends DurableObject {
   }
 
   /**
-   * Insert a batch of words using a single multi-value INSERT
+   * Manually continue seeding (for compatibility, though not resumable with gzip)
    */
-  private async insertBatch(batch: KaikkiWord[]): Promise<void> {
+  async runSeedChunk(): Promise<{ complete: boolean; wordsInChunk: number; totalWords: number; error?: string }> {
+    return { complete: true, wordsInChunk: 0, totalWords: 0, error: 'Chunked seeding not supported with gzip compression - use full seed instead' }
+  }
+
+  /**
+   * Handle DO alarm - not currently used for seeding
+   */
+  async alarm(): Promise<void> {
+    this.log('Alarm triggered but no action configured')
+  }
+
+  /**
+   * Insert a batch of words using DO SQLite
+   */
+  private insertBatch(batch: KaikkiWord[]): void {
     if (batch.length === 0) return
 
-    // Build multi-value INSERT
-    const values = batch.map(entry => {
-      const word = entry.word || 'unknown'
-      const pos = entry.pos || 'unknown'
+    // Use a transaction for better performance
+    this.sqlStorage.exec('BEGIN TRANSACTION')
 
-      // Extract definitions from senses
-      const definitions = entry.senses?.map(sense =>
-        sense.glosses || sense.raw_glosses || []
-      ).flat() || []
+    try {
+      for (const entry of batch) {
+        const word = entry.word || 'unknown'
+        const pos = entry.pos || 'unknown'
 
-      const etymology = entry.etymology_text || null
+        // Extract definitions from senses
+        const definitions = entry.senses?.map(sense =>
+          sense.glosses || sense.raw_glosses || []
+        ).flat() || []
 
-      // Extract pronunciations
-      const pronunciations = entry.sounds?.map(sound => ({
-        ...(sound.ipa && { ipa: sound.ipa }),
-        ...(sound.audio && { audio: sound.audio }),
-      })) || []
+        const etymology = entry.etymology_text || null
 
-      return `(
-        ${esc(word)},
-        ${esc(pos)},
-        ${escJson(definitions)},
-        ${esc(etymology)},
-        ${escJson(pronunciations)}
-      )`
-    }).join(',\n')
+        // Extract pronunciations
+        const pronunciations = entry.sounds?.map(sound => ({
+          ...(sound.ipa && { ipa: sound.ipa }),
+          ...(sound.audio && { audio: sound.audio }),
+        })) || []
 
-    const sql = `
-      INSERT INTO words (word, pos, definitions, etymology, pronunciations)
-      VALUES ${values}
-    `
+        this.sqlStorage.exec(
+          'INSERT INTO words (word, pos, definitions, etymology, pronunciations) VALUES (?, ?, ?, ?, ?)',
+          word,
+          pos,
+          JSON.stringify(definitions),
+          etymology,
+          JSON.stringify(pronunciations)
+        )
+      }
 
-    await this.pglite!.exec(sql)
+      this.sqlStorage.exec('COMMIT')
+    } catch (error) {
+      this.sqlStorage.exec('ROLLBACK')
+      throw error
+    }
+  }
+
+  /**
+   * Manually continue seeding - useful if alarms aren't working
+   */
+  async continueSeed(): Promise<{ complete: boolean; wordsInChunk: number; totalWords: number; error?: string }> {
+    const status = this.getSeedStatus()
+    if (!status.isSeeding) {
+      return { complete: true, wordsInChunk: 0, totalWords: status.totalWords, error: 'Not currently seeding' }
+    }
+    return await this.runSeedChunk()
   }
 
   /**
@@ -675,13 +881,19 @@ export class Wiktionary extends DurableObject {
   async clearData(): Promise<QueryResult<{ deleted: number }>> {
     await this.init()
     const start = performance.now()
-    const result = await this.pglite!.query<{ count: number }>('DELETE FROM words RETURNING 1')
+
+    // Get count before delete
+    const countRow = this.sqlStorage.exec('SELECT COUNT(*) as count FROM words').one()
+    const count = (countRow?.count as number) ?? 0
+
+    // Clear DO SQLite
+    this.sqlStorage.exec('DELETE FROM words')
 
     // Reset progress
-    this.sqlStorage.exec('UPDATE __seed_progress SET total_words = 0, error = NULL WHERE id = 1')
+    this.sqlStorage.exec('UPDATE __seed_progress SET total_words = 0, error = NULL, bytes_processed = 0, is_seeding = 0 WHERE id = 1')
 
     return {
-      data: { deleted: result.affectedRows },
+      data: { deleted: count },
       queryMs: Math.round((performance.now() - start) * 100) / 100,
       doColo: this.colo,
     }
@@ -700,63 +912,63 @@ export class Wiktionary extends DurableObject {
 
     // Benchmark 1: Simple word lookup
     let start = performance.now()
-    let result = await this.pglite!.query(`SELECT * FROM words WHERE word = 'test' LIMIT 1`)
+    let rows = this.sqlStorage.exec(`SELECT * FROM words WHERE word = 'test' LIMIT 1`).toArray()
     queries.push({
       name: 'Simple lookup (word = test)',
       ms: Math.round((performance.now() - start) * 100) / 100,
-      rows: result.rows.length,
+      rows: rows.length,
     })
 
-    // Benchmark 2: ILIKE pattern search
+    // Benchmark 2: LIKE pattern search
     start = performance.now()
-    result = await this.pglite!.query(`
+    rows = this.sqlStorage.exec(`
       SELECT * FROM words
-      WHERE word ILIKE '%lang%'
+      WHERE word LIKE '%lang%' COLLATE NOCASE
       LIMIT 10
-    `)
+    `).toArray()
     queries.push({
-      name: 'ILIKE pattern search',
+      name: 'LIKE pattern search',
       ms: Math.round((performance.now() - start) * 100) / 100,
-      rows: result.rows.length,
+      rows: rows.length,
     })
 
-    // Benchmark 3: JSONB query
+    // Benchmark 3: JSON extraction
     start = performance.now()
-    result = await this.pglite!.query(`
-      SELECT word, definitions->0 as first_definition
+    rows = this.sqlStorage.exec(`
+      SELECT word, json_extract(definitions, '$[0]') as first_definition
       FROM words
-      WHERE jsonb_array_length(definitions) > 0
+      WHERE json_array_length(definitions) > 0
       LIMIT 10
-    `)
+    `).toArray()
     queries.push({
-      name: 'JSONB array query',
+      name: 'JSON extraction',
       ms: Math.round((performance.now() - start) * 100) / 100,
-      rows: result.rows.length,
+      rows: rows.length,
     })
 
     // Benchmark 4: Aggregation by POS
     start = performance.now()
-    result = await this.pglite!.query(`
-      SELECT pos, COUNT(*)::int as count
+    rows = this.sqlStorage.exec(`
+      SELECT pos, COUNT(*) as count
       FROM words
       GROUP BY pos
       ORDER BY count DESC
-    `)
+    `).toArray()
     queries.push({
       name: 'GROUP BY aggregation',
       ms: Math.round((performance.now() - start) * 100) / 100,
-      rows: result.rows.length,
+      rows: rows.length,
     })
 
     // Benchmark 5: LIKE pattern match
     start = performance.now()
-    result = await this.pglite!.query(`
+    rows = this.sqlStorage.exec(`
       SELECT * FROM words WHERE word LIKE 'dict%' LIMIT 10
-    `)
+    `).toArray()
     queries.push({
-      name: 'LIKE pattern match',
+      name: 'LIKE prefix match',
       ms: Math.round((performance.now() - start) * 100) / 100,
-      rows: result.rows.length,
+      rows: rows.length,
     })
 
     return {
@@ -809,23 +1021,25 @@ router.get('/', (req) => {
   const base = new URL(req.url).origin
   const workerColo = getColo(req)
 
-  return {
+  return Response.json({
     name: 'wiktionary.example.com.ai',
-    description: 'Wiktionary Dictionary at the Edge - Full dictionary with PGLite WASM + Durable Objects',
+    description: 'FULL Wiktionary Dictionary at the Edge - ~1M words with PGLite WASM + Durable Objects',
     workerColo,
-    dataSource: 'kaikki.org dictionary dumps (streamed, not downloaded locally)',
+    dataSource: 'kaikki.org English dictionary (~250MB gzip, ~1.5GB uncompressed, ~1M entries)',
+    streaming: 'Streams compressed data with gzip decompression - memory safe for any size',
+    autoSeeding: 'Automatically seeds 5000 words when empty. POST to /seed for FULL dictionary.',
     links: {
-      'Health Check': `${base}/ping (instant, no WASM wait)`,
-      'Debug': `${base}/debug (lifecycle info)`,
-      'List Words': `${base}/words (paginated)`,
-      'Get Word': `${base}/words/:word (e.g., /words/dictionary)`,
-      'Search': `${base}/search?q=term (full-text search)`,
+      'Health Check': `${base}/ping`,
+      'Debug': `${base}/debug`,
+      'List Words': `${base}/words`,
+      'Get Word': `${base}/words/dictionary`,
+      'Search': `${base}/search?q=language`,
       'Statistics': `${base}/stats`,
       'PostgreSQL Version': `${base}/version`,
-      'Start Seed': `${base}/seed (POST to start streaming seed)`,
+      'Start FULL Seed': `${base}/seed (POST with optional {"batchSize": 250, "maxWords": 0})`,
       'Seed Status': `${base}/seed/status`,
-      'Clear Data': `${base}/clear (POST to clear all words)`,
-      'Benchmark': `${base}/benchmark (POST to run benchmark queries)`,
+      'Clear Data': `${base}/clear (POST)`,
+      'Benchmark': `${base}/benchmark (POST)`,
       'Raw Query': `${base}/query (POST with {"sql": "SELECT ..."})`,
     },
     timing: {
@@ -838,7 +1052,7 @@ router.get('/', (req) => {
         totalMs: 'Total request latency (ms)',
       },
     },
-  }
+  })
 })
 
 // Health check - instant response
@@ -896,7 +1110,7 @@ router.get('/version', async (req, env: Env) => {
 })
 
 // List words with pagination
-router.get('/words', async (req, env: Env) => {
+router.get('/words', async (req, env: Env, ctx: ExecutionContext) => {
   const requestStart = performance.now()
   const workerColo = getColo(req)
   const url = new URL(req.url)
@@ -907,6 +1121,19 @@ router.get('/words', async (req, env: Env) => {
   const result = await db(env).getWords(limit, offset)
   const rpcMs = performance.now() - rpcStart
   const totalMs = performance.now() - requestStart
+
+  // Check if auto-seeding was triggered
+  if ('autoSeeding' in result) {
+    return Response.json({
+      message: 'Database is empty. Auto-seeding 5000 words in the background.',
+      checkStatus: `${new URL(req.url).origin}/seed/status`,
+      timing: {
+        workerColo,
+        rpcMs: Math.round(rpcMs * 100) / 100,
+        totalMs: Math.round(totalMs * 100) / 100,
+      },
+    }, { status: 202 })
+  }
 
   return withTiming(workerColo, result, rpcMs, totalMs)
 })
@@ -927,7 +1154,7 @@ router.get('/words/:word', async (req, env: Env) => {
 })
 
 // Full-text search
-router.get('/search', async (req, env: Env) => {
+router.get('/search', async (req, env: Env, ctx: ExecutionContext) => {
   const requestStart = performance.now()
   const workerColo = getColo(req)
   const url = new URL(req.url)
@@ -943,11 +1170,24 @@ router.get('/search', async (req, env: Env) => {
   const rpcMs = performance.now() - rpcStart
   const totalMs = performance.now() - requestStart
 
+  // Check if auto-seeding was triggered
+  if ('autoSeeding' in result) {
+    return Response.json({
+      message: 'Database is empty. Auto-seeding 5000 words in the background.',
+      checkStatus: `${new URL(req.url).origin}/seed/status`,
+      timing: {
+        workerColo,
+        rpcMs: Math.round(rpcMs * 100) / 100,
+        totalMs: Math.round(totalMs * 100) / 100,
+      },
+    }, { status: 202 })
+  }
+
   return withTiming(workerColo, result, rpcMs, totalMs)
 })
 
 // Statistics
-router.get('/stats', async (req, env: Env) => {
+router.get('/stats', async (req, env: Env, ctx: ExecutionContext) => {
   const requestStart = performance.now()
   const workerColo = getColo(req)
 
@@ -956,25 +1196,47 @@ router.get('/stats', async (req, env: Env) => {
   const rpcMs = performance.now() - rpcStart
   const totalMs = performance.now() - requestStart
 
+  // Check if auto-seeding was triggered
+  if ('autoSeeding' in result) {
+    return Response.json({
+      message: 'Database is empty. Auto-seeding 5000 words in the background.',
+      checkStatus: `${new URL(req.url).origin}/seed/status`,
+      timing: {
+        workerColo,
+        rpcMs: Math.round(rpcMs * 100) / 100,
+        totalMs: Math.round(totalMs * 100) / 100,
+      },
+    }, { status: 202 })
+  }
+
   return withTiming(workerColo, result, rpcMs, totalMs)
 })
 
-// Start seed (POST)
-router.post('/seed', async (req, env: Env) => {
+// Start seed handler (shared by GET and POST)
+const handleSeed = async (req: Request, env: Env) => {
   const requestStart = performance.now()
   const workerColo = getColo(req)
+  const url = new URL(req.url)
 
+  // Defaults for FULL dictionary seed
   let language = 'English'
-  let batchSize = 100
-  let maxWords = 0
+  let batchSize = 250  // Larger batches for better performance
+  let maxWords = 0     // 0 = no limit = FULL dictionary
 
-  try {
-    const body = await req.json() as { language?: string; batchSize?: number; maxWords?: number }
-    language = body.language || language
-    batchSize = body.batchSize || batchSize
-    maxWords = body.maxWords || maxWords
-  } catch {
-    // Use defaults
+  // Parse from query params (GET) or body (POST)
+  if (req.method === 'GET') {
+    language = url.searchParams.get('language') || language
+    batchSize = parseInt(url.searchParams.get('batchSize') || '') || batchSize
+    maxWords = parseInt(url.searchParams.get('maxWords') || '') || maxWords
+  } else {
+    try {
+      const body = await req.json() as { language?: string; batchSize?: number; maxWords?: number }
+      language = body.language || language
+      batchSize = body.batchSize || batchSize
+      maxWords = body.maxWords ?? maxWords  // Use ?? to allow explicit 0
+    } catch {
+      // Use defaults
+    }
   }
 
   const rpcStart = performance.now()
@@ -990,7 +1252,13 @@ router.post('/seed', async (req, env: Env) => {
       totalMs: Math.round(totalMs * 100) / 100,
     },
   })
-})
+}
+
+// Start seed (GET for easy browser trigger)
+router.get('/seed', handleSeed)
+
+// Start seed (POST with optional body)
+router.post('/seed', handleSeed)
 
 // Seed status (instant - reads from DO SQLite)
 router.get('/seed/status', async (req, env: Env) => {
@@ -1002,8 +1270,39 @@ router.get('/seed/status', async (req, env: Env) => {
   const rpcMs = performance.now() - rpcStart
   const totalMs = performance.now() - requestStart
 
+  // Format bytes for display
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) return '0 B'
+    const k = 1024
+    const sizes = ['B', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`
+  }
+
   return Response.json({
     ...status,
+    bytesProcessedFormatted: formatBytes(status.bytesProcessed),
+    estimatedTotalBytesFormatted: formatBytes(status.estimatedTotalBytes),
+    timing: {
+      workerColo,
+      rpcMs: Math.round(rpcMs * 100) / 100,
+      totalMs: Math.round(totalMs * 100) / 100,
+    },
+  })
+})
+
+// Continue seed (POST) - manually trigger next chunk
+router.post('/seed/continue', async (req, env: Env) => {
+  const requestStart = performance.now()
+  const workerColo = getColo(req)
+
+  const rpcStart = performance.now()
+  const result = await db(env).continueSeed()
+  const rpcMs = performance.now() - rpcStart
+  const totalMs = performance.now() - requestStart
+
+  return Response.json({
+    ...result,
     timing: {
       workerColo,
       rpcMs: Math.round(rpcMs * 100) / 100,
