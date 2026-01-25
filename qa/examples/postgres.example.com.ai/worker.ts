@@ -11,12 +11,12 @@
 import { Hono } from 'hono'
 import { PGliteLocal } from './src/pglite-local'
 
-// Static imports for WASM and data files
-// These are pre-compiled by Wrangler at build time
+// Static imports for WASM and data files (pre-patched from @dotdo/pglite)
+// Copy using: node <path-to-pglite>/bin/copy-assets.js ./src/pglite-assets
 // @ts-ignore - WASM module import
-import pgliteWasm from './src/pglite-patched/pglite.wasm'
+import pgliteWasm from './src/pglite-assets/pglite.wasm'
 // @ts-ignore - Data file import
-import pgliteData from './src/pglite-patched/pglite.data'
+import pgliteData from './src/pglite-assets/pglite.data'
 
 interface Env {
   API_NAME: string
@@ -52,7 +52,7 @@ export class NotesDO implements DurableObject {
   ) {}
 
   /**
-   * Initialize PGLite and create the notes schema
+   * Initialize PGLite with PostgreSQL database
    */
   private async init(): Promise<void> {
     if (this.initialized && this.db) {
@@ -66,6 +66,7 @@ export class NotesDO implements DurableObject {
     this.initPromise = (async () => {
       console.log('[NotesDO] Initializing PGLite...')
 
+      // Initialize PGLite (in-memory PostgreSQL)
       this.db = await PGliteLocal.create({
         wasmModule: pgliteWasm,
         fsBundle: pgliteData,
@@ -111,6 +112,30 @@ export class NotesDO implements DurableObject {
     })()
 
     return this.initPromise
+  }
+
+  /**
+   * Create a note in PGLite
+   */
+  private async createNoteInternal(data: { id: string; title: string; content?: string | null; tags?: string[]; archived?: boolean }): Promise<Note> {
+    const tags = data.tags || []
+    const tagsArray = tags.length > 0
+      ? `ARRAY[${tags.map(t => `'${t.replace(/'/g, "''")}'`).join(',')}]::text[]`
+      : "'{}'::text[]"
+
+    await this.db!.exec(`
+      INSERT INTO notes (id, title, content, tags, archived)
+      VALUES (
+        '${data.id}',
+        '${(data.title || '').replace(/'/g, "''")}',
+        ${data.content ? `'${data.content.replace(/'/g, "''")}'` : 'NULL'},
+        ${tagsArray},
+        ${data.archived || false}
+      )
+    `)
+
+    const { rows } = await this.db!.query<Note>(`SELECT * FROM notes WHERE id = '${data.id}'`)
+    return rows[0]
   }
 
   /**
@@ -230,23 +255,15 @@ export class NotesDO implements DurableObject {
     }
 
     const id = `note-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
-    const tags = body.tags || []
-    const tagsArray = `ARRAY[${tags.map(t => `'${t.replace(/'/g, "''")}'`).join(',')}]::text[]`
+    const note = await this.createNoteInternal({
+      id,
+      title: body.title,
+      content: body.content,
+      tags: body.tags,
+      archived: false,
+    })
 
-    await this.db!.exec(`
-      INSERT INTO notes (id, title, content, tags, archived)
-      VALUES (
-        '${id}',
-        '${(body.title || '').replace(/'/g, "''")}',
-        ${body.content ? `'${body.content.replace(/'/g, "''")}'` : 'NULL'},
-        ${tags.length > 0 ? tagsArray : "'{}'"},
-        false
-      )
-    `)
-
-    const { rows } = await this.db!.query<Note>(`SELECT * FROM notes WHERE id = '${id}'`)
-
-    return new Response(JSON.stringify(rows[0]), {
+    return new Response(JSON.stringify(note), {
       status: 201,
       headers: { 'Content-Type': 'application/json' },
     })
@@ -382,6 +399,7 @@ function getNotesDO(env: Env): DurableObjectStub {
 }
 
 app.get('/', (c) => {
+  const baseUrl = new URL(c.req.url).origin
   return respond(c, {
     name: 'postgres.example.com.ai',
     description: 'PGLite PostgreSQL example with real PostgreSQL in WebAssembly',
@@ -389,10 +407,30 @@ app.get('/', (c) => {
     features: [
       'Real PostgreSQL via PGLite WASM',
       'Durable Objects for persistence',
-      'JSONB-like arrays',
-      'Full SQL support',
-      'PostgreSQL semantics',
+      'PostgreSQL arrays and full SQL support',
+      'Raw SQL query execution',
     ],
+    links: {
+      'Health Check': `${baseUrl}/health`,
+      'List Notes': `${baseUrl}/notes`,
+      'Database Stats': `${baseUrl}/stats`,
+      'List Notes (limit 5)': `${baseUrl}/notes?limit=5`,
+      'List Archived Notes': `${baseUrl}/notes?archived=true`,
+    },
+    api: {
+      notes: {
+        list: { method: 'GET', url: `${baseUrl}/notes` },
+        create: { method: 'POST', url: `${baseUrl}/notes`, body: { title: 'string', content: 'string', tags: 'string[]' } },
+        get: { method: 'GET', url: `${baseUrl}/notes/:id` },
+        update: { method: 'PATCH', url: `${baseUrl}/notes/:id` },
+        delete: { method: 'DELETE', url: `${baseUrl}/notes/:id` },
+      },
+      query: {
+        method: 'POST',
+        url: `${baseUrl}/query`,
+        body: { sql: 'SELECT version()' },
+      },
+    },
   })
 })
 

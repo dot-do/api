@@ -21,9 +21,9 @@ import type {
   DatabaseError,
 } from '@dotdo/pg-protocol/messages'
 
-// Import the patched Emscripten module factory directly
+// Import the Emscripten module factory from @dotdo/pglite (pre-patched for Workers)
 // @ts-ignore - JS module import
-import PostgresModFactory from './pglite-patched/pglite-workers.js'
+import PostgresModFactory from './pglite-assets/pglite.js'
 
 // =============================================================================
 // TYPES

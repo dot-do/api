@@ -7,8 +7,7 @@
     "build": "tsx build.ts",
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "patch-pglite": "./scripts/patch-pglite.sh",
-    "sync-pglite": "mkdir -p src/pglite-patched && cp ../../../postgres/packages/pglite/packages/pglite/dist/pglite.wasm src/pglite-patched/ && cp ../../../postgres/packages/pglite/packages/pglite/dist/pglite.data src/pglite-patched/ && pnpm patch-pglite"
+    "copy-assets": "node ../../../postgres/packages/pglite/packages/pglite/bin/copy-assets.js ./src/pglite-assets"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250124.0",
