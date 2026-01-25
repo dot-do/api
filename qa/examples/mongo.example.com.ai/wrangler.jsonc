@@ -1,0 +1,32 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "mongo-example",
+  "main": "worker.ts",
+  "compatibility_date": "2026-01-24",
+  "compatibility_flags": ["nodejs_compat"],
+  "account_id": "b6641681fe423910342b9ffa1364c76d",
+  "routes": [
+    { "pattern": "mongo.example.com.ai/*", "zone_name": "example.com.ai" }
+  ],
+  "vars": {
+    "API_NAME": "mongo.example.com.ai"
+  },
+  // Durable Objects for MongoDB persistence
+  "durable_objects": {
+    "bindings": [
+      { "name": "MONGODB", "class_name": "MongoDB" }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["MongoDB"]
+    }
+  ],
+  "analytics_engine_datasets": [
+    {
+      "binding": "ANALYTICS",
+      "dataset": "mongo-example"
+    }
+  ]
+}
