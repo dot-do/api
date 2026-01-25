@@ -1,533 +1,464 @@
 /**
- * postgres.example.com.ai - PGLite PostgreSQL Example
+ * postgres.example.com.ai - PostgreSQL at the Edge
  *
- * Demonstrates real PostgreSQL operations using PGLite WASM
- * running in Cloudflare Workers with Durable Objects for persistence.
- *
- * This example uses @dotdo/pglite with EM_JS trampolines for
- * Cloudflare Workers compatibility (no runtime WASM compilation).
+ * Uses AutoRouter for clean JSON responses.
+ * PGLite WASM with DO SQLite for persistence.
+ * Uses DO RPC for direct method calls (not fetch anti-pattern).
+ * Includes detailed latency metrics for all operations.
  */
 
-import { Hono } from 'hono'
+import { AutoRouter } from 'itty-router'
+import { DurableObject } from 'cloudflare:workers'
 import { PGliteLocal } from './src/pglite-local'
 
-// Static imports for WASM and data files (pre-patched from @dotdo/pglite)
-// Copy using: node <path-to-pglite>/bin/copy-assets.js ./src/pglite-assets
-// @ts-ignore - WASM module import
+// Static WASM imports - Wrangler pre-compiles these
+// @ts-ignore
 import pgliteWasm from './src/pglite-assets/pglite.wasm'
-// @ts-ignore - Data file import
+// @ts-ignore
 import pgliteData from './src/pglite-assets/pglite.data'
 
+// =============================================================================
+// Types
+// =============================================================================
+
 interface Env {
-  API_NAME: string
-  NOTES_DO: DurableObjectNamespace
+  POSTGRES: DurableObjectNamespace<Postgres>
 }
 
-interface Note {
-  id: string
+interface Post {
+  id: number
   title: string
   content: string | null
-  tags: string[]
-  archived: boolean
+  published: boolean
   created_at: string
-  updated_at: string
+}
+
+interface Timing {
+  /** Cloudflare colo where the Worker is running */
+  workerColo: string
+  /** Cloudflare colo where the Durable Object is running */
+  doColo: string
+  /** Time spent executing the PostgreSQL query (ms) */
+  queryMs: number
+  /** Round-trip time from Worker to DO via RPC (ms) */
+  rpcMs: number
+  /** Total request latency (ms) */
+  totalMs: number
+}
+
+interface QueryResult<T = Record<string, unknown>> {
+  data: T
+  queryMs: number
+  doColo: string
+}
+
+// Helper to escape SQL strings
+const esc = (s: string | null | undefined): string => {
+  if (s === null || s === undefined) return 'NULL'
+  return `'${String(s).replace(/'/g, "''")}'`
 }
 
 // =============================================================================
-// DURABLE OBJECT: NotesDO
+// Postgres Durable Object with RPC Methods
 // =============================================================================
 
-/**
- * Durable Object that manages a PGLite PostgreSQL instance
- * Each DO gets its own isolated PostgreSQL database
- */
-export class NotesDO implements DurableObject {
-  private db: PGliteLocal | null = null
+export class Postgres extends DurableObject {
+  private pglite: PGliteLocal | null = null
   private initPromise: Promise<void> | null = null
-  private initialized = false
+  private sqlStorage: SqlStorage
+  private colo: string = 'unknown'
 
-  constructor(
-    private state: DurableObjectState,
-    private env: Env
-  ) {}
+  constructor(ctx: DurableObjectState, env: Env) {
+    super(ctx, env)
+    this.sqlStorage = ctx.storage.sql
+    // Get colo from ctx.id location hint or fallback
+    this.colo = (ctx as unknown as { colo?: string }).colo || 'unknown'
+  }
 
-  /**
-   * Initialize PGLite with PostgreSQL database
-   */
   private async init(): Promise<void> {
-    if (this.initialized && this.db) {
-      return
-    }
-
-    if (this.initPromise) {
-      return this.initPromise
-    }
+    if (this.pglite) return
+    if (this.initPromise) return this.initPromise
 
     this.initPromise = (async () => {
-      console.log('[NotesDO] Initializing PGLite...')
-
-      // Initialize PGLite (in-memory PostgreSQL)
-      this.db = await PGliteLocal.create({
-        wasmModule: pgliteWasm,
-        fsBundle: pgliteData,
-        debug: false,
-      })
-
-      // Create the notes table with PostgreSQL features
-      await this.db.exec(`
-        CREATE TABLE IF NOT EXISTS notes (
-          id TEXT PRIMARY KEY,
+      // DO SQLite for persistence
+      this.sqlStorage.exec(`
+        CREATE TABLE IF NOT EXISTS __posts (
+          id INTEGER PRIMARY KEY,
           title TEXT NOT NULL,
           content TEXT,
-          tags TEXT[] DEFAULT '{}',
-          archived BOOLEAN DEFAULT FALSE,
-          created_at TIMESTAMPTZ DEFAULT NOW(),
-          updated_at TIMESTAMPTZ DEFAULT NOW()
+          published INTEGER DEFAULT 0,
+          created_at TEXT DEFAULT (datetime('now'))
         )
       `)
 
-      // Create indexes for common queries
-      await this.db.exec(`
-        CREATE INDEX IF NOT EXISTS idx_notes_archived ON notes(archived);
-        CREATE INDEX IF NOT EXISTS idx_notes_created_at ON notes(created_at);
+      // PGLite with static WASM imports
+      this.pglite = await PGliteLocal.create({
+        wasmModule: pgliteWasm,
+        fsBundle: pgliteData,
+      })
+
+      await this.pglite.exec(`
+        CREATE TABLE IF NOT EXISTS posts (
+          id SERIAL PRIMARY KEY,
+          title TEXT NOT NULL,
+          content TEXT,
+          published BOOLEAN DEFAULT FALSE,
+          created_at TIMESTAMPTZ DEFAULT NOW()
+        )
       `)
 
-      // Insert a welcome note if the table is empty
-      const { rows } = await this.db.query<{ count: number }>('SELECT COUNT(*)::int as count FROM notes')
-      if (rows[0].count === 0) {
-        await this.db.exec(`
-          INSERT INTO notes (id, title, content, tags, archived)
-          VALUES (
-            'note-welcome',
-            'Welcome to PGLite',
-            'This is a real PostgreSQL database running in WebAssembly!',
-            ARRAY['welcome', 'demo'],
-            false
-          )
+      // Restore from DO SQLite
+      const rows = [...this.sqlStorage.exec('SELECT * FROM __posts ORDER BY id')]
+      for (const row of rows) {
+        const ts = new Date(row.created_at as string).toISOString()
+        await this.pglite.exec(`
+          INSERT INTO posts (id, title, content, published, created_at)
+          VALUES (${row.id}, ${esc(row.title as string)}, ${esc(row.content as string)}, ${row.published === 1}, '${ts}'::timestamptz)
+          ON CONFLICT (id) DO NOTHING
         `)
       }
+      if (rows.length > 0) {
+        const maxId = Math.max(...rows.map(r => r.id as number))
+        await this.pglite.exec(`SELECT setval('posts_id_seq', ${maxId})`)
+      }
 
-      this.initialized = true
-      console.log('[NotesDO] PGLite initialized successfully')
+      // Seed if empty
+      if (rows.length === 0) {
+        await this._createPost('Welcome to PostgreSQL at the Edge', 'PGLite WASM in a Durable Object with persistence!', true)
+        await this._createPost('How It Works', 'DO SQLite persists data, PGLite provides PostgreSQL features.', true)
+        await this._createPost('Draft Post', 'This is unpublished.', false)
+      }
     })()
 
     return this.initPromise
   }
 
-  /**
-   * Create a note in PGLite
-   */
-  private async createNoteInternal(data: { id: string; title: string; content?: string | null; tags?: string[]; archived?: boolean }): Promise<Note> {
-    const tags = data.tags || []
-    const tagsArray = tags.length > 0
-      ? `ARRAY[${tags.map(t => `'${t.replace(/'/g, "''")}'`).join(',')}]::text[]`
-      : "'{}'::text[]"
-
-    await this.db!.exec(`
-      INSERT INTO notes (id, title, content, tags, archived)
-      VALUES (
-        '${data.id}',
-        '${(data.title || '').replace(/'/g, "''")}',
-        ${data.content ? `'${data.content.replace(/'/g, "''")}'` : 'NULL'},
-        ${tagsArray},
-        ${data.archived || false}
-      )
+  private async _createPost(title: string, content: string | null, published: boolean): Promise<Post> {
+    const result = await this.pglite!.query<Post>(`
+      INSERT INTO posts (title, content, published)
+      VALUES (${esc(title)}, ${esc(content)}, ${published})
+      RETURNING *
     `)
-
-    const { rows } = await this.db!.query<Note>(`SELECT * FROM notes WHERE id = '${data.id}'`)
-    return rows[0]
+    const post = result.rows[0]
+    const createdAt = post.created_at instanceof Date ? post.created_at.toISOString() : String(post.created_at)
+    this.sqlStorage.exec(
+      `INSERT OR REPLACE INTO __posts (id, title, content, published, created_at) VALUES (?, ?, ?, ?, ?)`,
+      post.id, post.title, post.content, post.published ? 1 : 0, createdAt
+    )
+    return post
   }
 
-  /**
-   * Handle HTTP requests to the Durable Object
-   */
-  async fetch(request: Request): Promise<Response> {
-    try {
-      await this.init()
+  // ============================================================================
+  // RPC Methods - Called directly from Worker
+  // ============================================================================
 
-      const url = new URL(request.url)
-      const path = url.pathname
-
-      // Route requests
-      if (path === '/query' && request.method === 'POST') {
-        return this.handleQuery(request)
-      }
-
-      if (path === '/notes' && request.method === 'GET') {
-        return this.handleListNotes(url)
-      }
-
-      if (path === '/notes' && request.method === 'POST') {
-        return this.handleCreateNote(request)
-      }
-
-      if (path.startsWith('/notes/') && request.method === 'GET') {
-        const id = path.replace('/notes/', '')
-        return this.handleGetNote(id)
-      }
-
-      if (path.startsWith('/notes/') && request.method === 'PATCH') {
-        const id = path.replace('/notes/', '')
-        return this.handleUpdateNote(id, request)
-      }
-
-      if (path.startsWith('/notes/') && request.method === 'DELETE') {
-        const id = path.replace('/notes/', '')
-        return this.handleDeleteNote(id)
-      }
-
-      if (path === '/stats' && request.method === 'GET') {
-        return this.handleStats()
-      }
-
-      return new Response(JSON.stringify({ error: 'Not found' }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' },
-      })
-    } catch (error) {
-      console.error('[NotesDO] Error:', error)
-      return new Response(JSON.stringify({
-        error: error instanceof Error ? error.message : 'Unknown error',
-      }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      })
+  /** Execute raw SQL query */
+  async query(sql: string): Promise<QueryResult> {
+    await this.init()
+    const start = performance.now()
+    const result = await this.pglite!.query(sql)
+    return {
+      data: { rows: result.rows, rowCount: result.rows.length },
+      queryMs: Math.round((performance.now() - start) * 100) / 100,
+      doColo: this.colo,
     }
   }
 
-  private async handleQuery(request: Request): Promise<Response> {
-    const body = await request.json() as { sql: string }
-    if (!body.sql) {
-      return new Response(JSON.stringify({ error: 'Missing sql' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      })
+  /** Get all posts with optional filter */
+  async getPosts(published?: 'true' | 'false'): Promise<QueryResult<{ posts: Post[] }>> {
+    await this.init()
+    let query = 'SELECT * FROM posts'
+    if (published === 'true') query += ' WHERE published = true'
+    if (published === 'false') query += ' WHERE published = false'
+    query += ' ORDER BY created_at DESC'
+    const start = performance.now()
+    const result = await this.pglite!.query<Post>(query)
+    return {
+      data: { posts: result.rows },
+      queryMs: Math.round((performance.now() - start) * 100) / 100,
+      doColo: this.colo,
     }
-
-    const result = await this.db!.query(body.sql)
-    return new Response(JSON.stringify(result), {
-      headers: { 'Content-Type': 'application/json' },
-    })
   }
 
-  private async handleListNotes(url: URL): Promise<Response> {
-    const limit = parseInt(url.searchParams.get('limit') || '10', 10)
-    const offset = parseInt(url.searchParams.get('offset') || '0', 10)
-    const archived = url.searchParams.get('archived')
-
-    let sql = 'SELECT * FROM notes'
-    const conditions: string[] = []
-
-    if (archived !== null) {
-      conditions.push(`archived = ${archived === 'true'}`)
+  /** Get a single post by ID */
+  async getPost(id: number): Promise<QueryResult<Post | { error: string }>> {
+    await this.init()
+    const start = performance.now()
+    const result = await this.pglite!.query<Post>(`SELECT * FROM posts WHERE id = ${id}`)
+    const queryMs = Math.round((performance.now() - start) * 100) / 100
+    if (result.rows.length === 0) {
+      return { data: { error: 'Not found' }, queryMs, doColo: this.colo }
     }
-
-    if (conditions.length > 0) {
-      sql += ' WHERE ' + conditions.join(' AND ')
-    }
-
-    sql += ' ORDER BY created_at DESC'
-    sql += ` LIMIT ${limit} OFFSET ${offset}`
-
-    const { rows } = await this.db!.query<Note>(sql)
-
-    // Get total count
-    let countSql = 'SELECT COUNT(*)::int as total FROM notes'
-    if (conditions.length > 0) {
-      countSql += ' WHERE ' + conditions.join(' AND ')
-    }
-    const countResult = await this.db!.query<{ total: number }>(countSql)
-    const total = countResult.rows[0].total
-
-    return new Response(JSON.stringify({ notes: rows, total, limit, offset }), {
-      headers: { 'Content-Type': 'application/json' },
-    })
+    return { data: result.rows[0], queryMs, doColo: this.colo }
   }
 
-  private async handleCreateNote(request: Request): Promise<Response> {
-    const body = await request.json() as { title?: string; content?: string; tags?: string[] }
-
-    if (!body.title) {
-      return new Response(JSON.stringify({ error: 'Title is required' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      })
+  /** Create a new post */
+  async createPost(title: string, content: string | null, published: boolean): Promise<QueryResult<Post | { error: string }>> {
+    await this.init()
+    if (!title) {
+      return { data: { error: 'Title required' }, queryMs: 0, doColo: this.colo }
     }
-
-    const id = `note-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
-    const note = await this.createNoteInternal({
-      id,
-      title: body.title,
-      content: body.content,
-      tags: body.tags,
-      archived: false,
-    })
-
-    return new Response(JSON.stringify(note), {
-      status: 201,
-      headers: { 'Content-Type': 'application/json' },
-    })
+    const start = performance.now()
+    const post = await this._createPost(title, content, published)
+    return {
+      data: post,
+      queryMs: Math.round((performance.now() - start) * 100) / 100,
+      doColo: this.colo,
+    }
   }
 
-  private async handleGetNote(id: string): Promise<Response> {
-    const { rows } = await this.db!.query<Note>(`SELECT * FROM notes WHERE id = '${id.replace(/'/g, "''")}'`)
-
-    if (rows.length === 0) {
-      return new Response(JSON.stringify({ error: 'Note not found' }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' },
-      })
+  /** Update a post */
+  async updatePost(id: number, updates: Partial<Post>): Promise<QueryResult<Post | { error: string }>> {
+    await this.init()
+    const sets: string[] = []
+    if (updates.title !== undefined) sets.push(`title = ${esc(updates.title)}`)
+    if (updates.content !== undefined) sets.push(`content = ${esc(updates.content)}`)
+    if (updates.published !== undefined) sets.push(`published = ${updates.published}`)
+    if (sets.length === 0) {
+      return { data: { error: 'No updates' }, queryMs: 0, doColo: this.colo }
     }
-
-    return new Response(JSON.stringify(rows[0]), {
-      headers: { 'Content-Type': 'application/json' },
-    })
+    const start = performance.now()
+    const result = await this.pglite!.query<Post>(`UPDATE posts SET ${sets.join(', ')} WHERE id = ${id} RETURNING *`)
+    const queryMs = Math.round((performance.now() - start) * 100) / 100
+    if (result.rows.length === 0) {
+      return { data: { error: 'Not found' }, queryMs, doColo: this.colo }
+    }
+    const post = result.rows[0]
+    this.sqlStorage.exec(`UPDATE __posts SET title = ?, content = ?, published = ? WHERE id = ?`, post.title, post.content, post.published ? 1 : 0, post.id)
+    return { data: post, queryMs, doColo: this.colo }
   }
 
-  private async handleUpdateNote(id: string, request: Request): Promise<Response> {
-    const safeId = id.replace(/'/g, "''")
-
-    // Check if note exists
-    const { rows: existing } = await this.db!.query<Note>(`SELECT * FROM notes WHERE id = '${safeId}'`)
-    if (existing.length === 0) {
-      return new Response(JSON.stringify({ error: 'Note not found' }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' },
-      })
+  /** Delete a post */
+  async deletePost(id: number): Promise<QueryResult<{ deleted: boolean; post: Post } | { error: string }>> {
+    await this.init()
+    const start = performance.now()
+    const result = await this.pglite!.query<Post>(`DELETE FROM posts WHERE id = ${id} RETURNING *`)
+    const queryMs = Math.round((performance.now() - start) * 100) / 100
+    if (result.rows.length === 0) {
+      return { data: { error: 'Not found' }, queryMs, doColo: this.colo }
     }
-
-    const body = await request.json() as Partial<{ title: string; content: string; tags: string[]; archived: boolean }>
-
-    const updates: string[] = []
-    if (body.title !== undefined) {
-      updates.push(`title = '${body.title.replace(/'/g, "''")}'`)
-    }
-    if (body.content !== undefined) {
-      updates.push(`content = ${body.content === null ? 'NULL' : `'${body.content.replace(/'/g, "''")}'`}`)
-    }
-    if (body.tags !== undefined) {
-      const tagsArray = `ARRAY[${body.tags.map(t => `'${t.replace(/'/g, "''")}'`).join(',')}]::text[]`
-      updates.push(`tags = ${body.tags.length > 0 ? tagsArray : "'{}'"}`)
-    }
-    if (body.archived !== undefined) {
-      updates.push(`archived = ${body.archived}`)
-    }
-    updates.push('updated_at = NOW()')
-
-    await this.db!.exec(`UPDATE notes SET ${updates.join(', ')} WHERE id = '${safeId}'`)
-
-    const { rows } = await this.db!.query<Note>(`SELECT * FROM notes WHERE id = '${safeId}'`)
-
-    return new Response(JSON.stringify(rows[0]), {
-      headers: { 'Content-Type': 'application/json' },
-    })
+    this.sqlStorage.exec('DELETE FROM __posts WHERE id = ?', id)
+    return { data: { deleted: true, post: result.rows[0] }, queryMs, doColo: this.colo }
   }
 
-  private async handleDeleteNote(id: string): Promise<Response> {
-    const safeId = id.replace(/'/g, "''")
-
-    const { rows: existing } = await this.db!.query<Note>(`SELECT * FROM notes WHERE id = '${safeId}'`)
-    if (existing.length === 0) {
-      return new Response(JSON.stringify({ error: 'Note not found' }), {
-        status: 404,
-        headers: { 'Content-Type': 'application/json' },
-      })
-    }
-
-    await this.db!.exec(`DELETE FROM notes WHERE id = '${safeId}'`)
-
-    return new Response(JSON.stringify({ deleted: true, id }), {
-      headers: { 'Content-Type': 'application/json' },
-    })
-  }
-
-  private async handleStats(): Promise<Response> {
-    const { rows: countRows } = await this.db!.query<{ total: number; archived: number }>(`
-      SELECT
-        COUNT(*)::int as total,
-        COUNT(*) FILTER (WHERE archived)::int as archived
-      FROM notes
+  /** Get statistics */
+  async getStats(): Promise<QueryResult<{ total: number; published: number; drafts: number }>> {
+    await this.init()
+    const start = performance.now()
+    const result = await this.pglite!.query<{ total: number; published: number; drafts: number }>(`
+      SELECT COUNT(*)::int as total, COUNT(*) FILTER (WHERE published)::int as published, COUNT(*) FILTER (WHERE NOT published)::int as drafts FROM posts
     `)
-
-    const { rows: tagRows } = await this.db!.query<{ tag: string; count: number }>(`
-      SELECT unnest(tags) as tag, COUNT(*)::int as count
-      FROM notes
-      GROUP BY tag
-      ORDER BY count DESC
-    `)
-
-    const tagCounts: Record<string, number> = {}
-    for (const row of tagRows) {
-      tagCounts[row.tag] = row.count
+    return {
+      data: result.rows[0],
+      queryMs: Math.round((performance.now() - start) * 100) / 100,
+      doColo: this.colo,
     }
+  }
 
-    return new Response(JSON.stringify({
-      totalNotes: countRows[0].total,
-      activeNotes: countRows[0].total - countRows[0].archived,
-      archivedNotes: countRows[0].archived,
-      tagCounts,
-      database: 'PGLite (real PostgreSQL)',
-      timestamp: new Date().toISOString(),
-    }), {
-      headers: { 'Content-Type': 'application/json' },
-    })
+  /** Get PostgreSQL version */
+  async getVersion(): Promise<QueryResult<{ version: string }>> {
+    await this.init()
+    const start = performance.now()
+    const result = await this.pglite!.query<{ version: string }>('SELECT version()')
+    return {
+      data: result.rows[0],
+      queryMs: Math.round((performance.now() - start) * 100) / 100,
+      doColo: this.colo,
+    }
+  }
+
+  /** Get DO colo for diagnostics */
+  getColo(): string {
+    return this.colo
   }
 }
 
 // =============================================================================
-// WORKER: HTTP ROUTING
+// Router with RPC Calls
 // =============================================================================
 
-const app = new Hono<{ Bindings: Env }>()
+const router = AutoRouter()
 
-function respond(c: { env: Env; req: { url: string }; json: (data: unknown, status?: number) => Response }, data: unknown, status = 200) {
-  return c.json({
-    api: {
-      name: c.env.API_NAME || 'postgres.example.com.ai',
-      url: new URL(c.req.url).origin,
-    },
-    data,
-  }, status)
+const db = (env: Env) => env.POSTGRES.get(env.POSTGRES.idFromName('default'))
+
+/** Wrap RPC result with full timing */
+const withTiming = <T>(
+  workerColo: string,
+  result: QueryResult<T>,
+  rpcMs: number,
+  totalMs: number,
+  status = 200
+): Response => {
+  const timing: Timing = {
+    workerColo,
+    doColo: result.doColo,
+    queryMs: result.queryMs,
+    rpcMs: Math.round(rpcMs * 100) / 100,
+    totalMs: Math.round(totalMs * 100) / 100,
+  }
+  const body = {
+    ...result.data as object,
+    timing,
+  }
+  return Response.json(body, { status })
 }
 
-/**
- * Get the NotesDO stub for requests
- */
-function getNotesDO(env: Env): DurableObjectStub {
-  const id = env.NOTES_DO.idFromName('notes')
-  return env.NOTES_DO.get(id)
+/** Get worker colo from request */
+const getColo = (req: Request): string => {
+  const cf = (req as unknown as { cf?: { colo?: string } }).cf
+  return cf?.colo || 'unknown'
 }
 
-app.get('/', (c) => {
-  const baseUrl = new URL(c.req.url).origin
-  return respond(c, {
+router.get('/', (req) => {
+  const base = new URL(req.url).origin
+  const workerColo = getColo(req)
+
+  return {
     name: 'postgres.example.com.ai',
-    description: 'PGLite PostgreSQL example with real PostgreSQL in WebAssembly',
-    version: '2.0.0',
-    features: [
-      'Real PostgreSQL via PGLite WASM',
-      'Durable Objects for persistence',
-      'PostgreSQL arrays and full SQL support',
-      'Raw SQL query execution',
-    ],
+    description: 'PostgreSQL at the Edge - PGLite WASM + Durable Objects',
+    workerColo,
     links: {
-      'Health Check': `${baseUrl}/health`,
-      'List Notes': `${baseUrl}/notes`,
-      'Database Stats': `${baseUrl}/stats`,
-      'List Notes (limit 5)': `${baseUrl}/notes?limit=5`,
-      'List Archived Notes': `${baseUrl}/notes?archived=true`,
+      'List Posts': `${base}/posts`,
+      'Published Only': `${base}/posts?published=true`,
+      'Drafts Only': `${base}/posts?published=false`,
+      'Statistics': `${base}/stats`,
+      'PostgreSQL Version': `${base}/version`,
+      'Raw Query': `${base}/query (POST with {"sql": "SELECT ..."})`
     },
-    api: {
-      notes: {
-        list: { method: 'GET', url: `${baseUrl}/notes` },
-        create: { method: 'POST', url: `${baseUrl}/notes`, body: { title: 'string', content: 'string', tags: 'string[]' } },
-        get: { method: 'GET', url: `${baseUrl}/notes/:id` },
-        update: { method: 'PATCH', url: `${baseUrl}/notes/:id` },
-        delete: { method: 'DELETE', url: `${baseUrl}/notes/:id` },
-      },
-      query: {
-        method: 'POST',
-        url: `${baseUrl}/query`,
-        body: { sql: 'SELECT version()' },
+    timing: {
+      note: 'All endpoints return detailed timing info via DO RPC',
+      fields: {
+        workerColo: 'Cloudflare datacenter running the Worker',
+        doColo: 'Cloudflare datacenter running the Durable Object',
+        queryMs: 'PostgreSQL query execution time (ms)',
+        rpcMs: 'Worker to DO RPC call time (ms)',
+        totalMs: 'Total request latency (ms)',
       },
     },
-  })
-})
-
-app.get('/health', async (c) => {
-  try {
-    const stub = getNotesDO(c.env)
-    const response = await stub.fetch(new Request('http://internal/stats'))
-    const stats = await response.json() as { totalNotes: number }
-
-    return respond(c, {
-      status: 'ok',
-      database: 'PGLite (real PostgreSQL)',
-      totalNotes: stats.totalNotes,
-      timestamp: new Date().toISOString(),
-    })
-  } catch (error) {
-    return respond(c, {
-      status: 'error',
-      database: 'PGLite (initializing)',
-      error: error instanceof Error ? error.message : 'Unknown error',
-      timestamp: new Date().toISOString(),
-    }, 503)
   }
 })
 
-app.get('/notes', async (c) => {
-  const stub = getNotesDO(c.env)
-  const url = new URL(c.req.url)
-  const response = await stub.fetch(new Request(`http://internal/notes${url.search}`))
-  const data = await response.json()
-  return respond(c, data)
+router.get('/posts', async (req, env: Env) => {
+  const requestStart = performance.now()
+  const workerColo = getColo(req)
+  const url = new URL(req.url)
+  const published = url.searchParams.get('published') as 'true' | 'false' | null
+
+  const rpcStart = performance.now()
+  const result = await db(env).getPosts(published || undefined)
+  const rpcMs = performance.now() - rpcStart
+  const totalMs = performance.now() - requestStart
+
+  return withTiming(workerColo, result, rpcMs, totalMs)
 })
 
-app.post('/notes', async (c) => {
-  const stub = getNotesDO(c.env)
-  const body = await c.req.text()
-  const response = await stub.fetch(new Request('http://internal/notes', {
-    method: 'POST',
-    body,
-    headers: { 'Content-Type': 'application/json' },
-  }))
-  const data = await response.json()
-  return respond(c, data, response.status)
+router.post('/posts', async (req, env: Env) => {
+  const requestStart = performance.now()
+  const workerColo = getColo(req)
+  const { title, content, published } = await req.json() as { title: string; content?: string; published?: boolean }
+
+  const rpcStart = performance.now()
+  const result = await db(env).createPost(title, content || null, published || false)
+  const rpcMs = performance.now() - rpcStart
+  const totalMs = performance.now() - requestStart
+
+  const hasError = 'error' in result.data
+  return withTiming(workerColo, result, rpcMs, totalMs, hasError ? 400 : 201)
 })
 
-app.get('/notes/:id', async (c) => {
-  const stub = getNotesDO(c.env)
-  const id = c.req.param('id')
-  const response = await stub.fetch(new Request(`http://internal/notes/${id}`))
-  const data = await response.json()
-  return respond(c, data, response.status)
+router.get('/posts/:id', async (req, env: Env) => {
+  const requestStart = performance.now()
+  const workerColo = getColo(req)
+  const id = parseInt(req.params.id)
+
+  const rpcStart = performance.now()
+  const result = await db(env).getPost(id)
+  const rpcMs = performance.now() - rpcStart
+  const totalMs = performance.now() - requestStart
+
+  const hasError = 'error' in result.data
+  return withTiming(workerColo, result, rpcMs, totalMs, hasError ? 404 : 200)
 })
 
-app.patch('/notes/:id', async (c) => {
-  const stub = getNotesDO(c.env)
-  const id = c.req.param('id')
-  const body = await c.req.text()
-  const response = await stub.fetch(new Request(`http://internal/notes/${id}`, {
-    method: 'PATCH',
-    body,
-    headers: { 'Content-Type': 'application/json' },
-  }))
-  const data = await response.json()
-  return respond(c, data, response.status)
+router.patch('/posts/:id', async (req, env: Env) => {
+  const requestStart = performance.now()
+  const workerColo = getColo(req)
+  const id = parseInt(req.params.id)
+  const updates = await req.json() as Partial<Post>
+
+  const rpcStart = performance.now()
+  const result = await db(env).updatePost(id, updates)
+  const rpcMs = performance.now() - rpcStart
+  const totalMs = performance.now() - requestStart
+
+  const data = result.data as { error?: string }
+  const status = data.error === 'No updates' ? 400 : data.error === 'Not found' ? 404 : 200
+  return withTiming(workerColo, result, rpcMs, totalMs, status)
 })
 
-app.delete('/notes/:id', async (c) => {
-  const stub = getNotesDO(c.env)
-  const id = c.req.param('id')
-  const response = await stub.fetch(new Request(`http://internal/notes/${id}`, {
-    method: 'DELETE',
-  }))
-  const data = await response.json()
-  return respond(c, data, response.status)
+router.delete('/posts/:id', async (req, env: Env) => {
+  const requestStart = performance.now()
+  const workerColo = getColo(req)
+  const id = parseInt(req.params.id)
+
+  const rpcStart = performance.now()
+  const result = await db(env).deletePost(id)
+  const rpcMs = performance.now() - rpcStart
+  const totalMs = performance.now() - requestStart
+
+  const hasError = 'error' in result.data
+  return withTiming(workerColo, result, rpcMs, totalMs, hasError ? 404 : 200)
 })
 
-app.get('/stats', async (c) => {
-  const stub = getNotesDO(c.env)
-  const response = await stub.fetch(new Request('http://internal/stats'))
-  const data = await response.json()
-  return respond(c, data)
+router.get('/stats', async (req, env: Env) => {
+  const requestStart = performance.now()
+  const workerColo = getColo(req)
+
+  const rpcStart = performance.now()
+  const result = await db(env).getStats()
+  const rpcMs = performance.now() - rpcStart
+  const totalMs = performance.now() - requestStart
+
+  return withTiming(workerColo, result, rpcMs, totalMs)
 })
 
-/**
- * Advanced: Raw SQL query endpoint
- * POST /query with { "sql": "SELECT ..." }
- */
-app.post('/query', async (c) => {
-  const stub = getNotesDO(c.env)
-  const body = await c.req.text()
-  const response = await stub.fetch(new Request('http://internal/query', {
-    method: 'POST',
-    body,
-    headers: { 'Content-Type': 'application/json' },
-  }))
-  const data = await response.json()
-  return respond(c, data, response.status)
+router.get('/version', async (req, env: Env) => {
+  const requestStart = performance.now()
+  const workerColo = getColo(req)
+
+  const rpcStart = performance.now()
+  const result = await db(env).getVersion()
+  const rpcMs = performance.now() - rpcStart
+  const totalMs = performance.now() - requestStart
+
+  return withTiming(workerColo, result, rpcMs, totalMs)
 })
 
-export default app
+router.post('/query', async (req, env: Env) => {
+  const requestStart = performance.now()
+  const workerColo = getColo(req)
+  const { sql } = await req.json() as { sql: string }
+
+  try {
+    const rpcStart = performance.now()
+    const result = await db(env).query(sql)
+    const rpcMs = performance.now() - rpcStart
+    const totalMs = performance.now() - requestStart
+
+    return withTiming(workerColo, result, rpcMs, totalMs)
+  } catch (error) {
+    const totalMs = performance.now() - requestStart
+    return Response.json({
+      error: error instanceof Error ? error.message : 'Unknown error',
+      timing: {
+        workerColo,
+        doColo: 'unknown',
+        queryMs: 0,
+        rpcMs: 0,
+        totalMs: Math.round(totalMs * 100) / 100,
+      },
+    }, { status: 500 })
+  }
+})
+
+export default router

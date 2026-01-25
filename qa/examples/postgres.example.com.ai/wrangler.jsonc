@@ -11,7 +11,7 @@
   "vars": {
     "API_NAME": "postgres.example.com.ai"
   },
-  // Rules for handling PGLite WASM and binary data files
+  // WASM and data files for PGLite
   "rules": [
     { "type": "CompiledWasm", "globs": ["**/*.wasm"], "fallthrough": false },
     { "type": "Data", "globs": ["**/*.data"], "fallthrough": false }
@@ -19,7 +19,7 @@
   // Durable Objects for PostgreSQL persistence
   "durable_objects": {
     "bindings": [
-      { "name": "NOTES_DO", "class_name": "NotesDO" }
+      { "name": "POSTGRES", "class_name": "Postgres" }
     ]
   },
   "migrations": [
@@ -34,6 +34,11 @@
     {
       "tag": "v3",
       "new_classes": ["NotesDO"]
+    },
+    {
+      "tag": "v4",
+      "deleted_classes": ["NotesDO"],
+      "new_sqlite_classes": ["Postgres"]
     }
   ],
   "analytics_engine_datasets": [
