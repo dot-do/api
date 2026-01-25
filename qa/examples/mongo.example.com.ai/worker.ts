@@ -16,6 +16,27 @@ import { AutoRouter } from 'itty-router'
 import { DurableObject } from 'cloudflare:workers'
 
 // =============================================================================
+// Module-Level Instance Tracking (outside DO class)
+// =============================================================================
+// These persist as long as the isolate lives - helps us understand DO lifecycle
+// The module loads once per isolate, so this tracks isolate lifetime
+
+// Note: Date.now() at module evaluation time in Workers returns 0
+// We capture the first request time instead
+let MODULE_LOAD_TIME: number | null = null
+const MODULE_INSTANCE_ID = Math.random().toString(36).slice(2, 10)
+
+function getModuleLoadTime(): number {
+  if (MODULE_LOAD_TIME === null) {
+    MODULE_LOAD_TIME = Date.now()
+  }
+  return MODULE_LOAD_TIME
+}
+
+// Track request count at module level
+let moduleRequestCount = 0
+
+// =============================================================================
 // Types
 // =============================================================================
 
@@ -59,9 +80,15 @@ export class MongoDB extends DurableObject {
   private colo: string = 'unknown'
   private initialized = false
 
+  // Instance-level tracking
+  private readonly instanceCreatedAt = Date.now()
+  private readonly instanceId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`
+  private instanceRequestCount = 0
+
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env)
     this.sqlStorage = ctx.storage.sql
+    moduleRequestCount++
   }
 
   private async init(): Promise<void> {
@@ -383,6 +410,38 @@ export class MongoDB extends DurableObject {
     }
   }
 
+  /** Get instance lifecycle info for debugging cold starts */
+  async getInstanceInfo(): Promise<{
+    module: { id: string; loadedAt: string; ageMs: number; requestCount: number }
+    instance: { id: string; createdAt: string; ageMs: number; requestCount: number }
+    wasm: { initialized: false; note: string }
+    doColo: string
+  }> {
+    await this.init()
+    this.instanceRequestCount++
+    const now = Date.now()
+    const moduleLoadTime = getModuleLoadTime()
+    return {
+      module: {
+        id: MODULE_INSTANCE_ID,
+        loadedAt: new Date(moduleLoadTime).toISOString(),
+        ageMs: now - moduleLoadTime,
+        requestCount: moduleRequestCount,
+      },
+      instance: {
+        id: this.instanceId,
+        createdAt: new Date(this.instanceCreatedAt).toISOString(),
+        ageMs: now - this.instanceCreatedAt,
+        requestCount: this.instanceRequestCount,
+      },
+      wasm: {
+        initialized: false,
+        note: 'No WASM - uses DO SQLite directly',
+      },
+      doColo: this.colo,
+    }
+  }
+
   // ============================================================================
   // WebSocket Hibernation Support (95% cost savings)
   // ============================================================================
@@ -511,6 +570,7 @@ router.get('/', (req) => {
       'Product Stats': `${base}/products/stats`,
       'Aggregate Example': `${base}/products/aggregate`,
       'WebSocket': `${wsBase}/ws (persistent connection, 95% cheaper)`,
+      'Instance Debug': `${base}/debug (DO lifecycle info)`,
     },
     timing: {
       note: 'All endpoints return detailed timing info via DO RPC',
@@ -544,6 +604,34 @@ router.get('/collections', async (req, env: Env) => {
   const totalMs = performance.now() - requestStart
 
   return withTiming(workerColo, result, rpcMs, totalMs)
+})
+
+// Debug endpoint to track DO instance lifecycle
+router.get('/debug', async (req, env: Env) => {
+  const requestStart = performance.now()
+  const workerColo = getColo(req)
+
+  const rpcStart = performance.now()
+  const instanceInfo = await db(env).getInstanceInfo()
+  const rpcMs = performance.now() - rpcStart
+  const totalMs = performance.now() - requestStart
+
+  return Response.json({
+    ...instanceInfo,
+    timing: {
+      workerColo,
+      doColo: instanceInfo.doColo,
+      rpcMs: Math.round(rpcMs * 100) / 100,
+      totalMs: Math.round(totalMs * 100) / 100,
+    },
+    explanation: {
+      moduleAge: 'How long since the isolate/module loaded (survives across DO instances)',
+      instanceAge: 'How long since THIS DO class was instantiated',
+      noWasm: 'MongoDB uses DO SQLite directly - no WASM overhead',
+      coldStart: 'If module.ageMs ≈ instance.ageMs, this was a cold start',
+      warmStart: 'If module.ageMs >> instance.ageMs, the isolate stayed warm but DO class was recreated',
+    },
+  })
 })
 
 router.get('/:collection', async (req, env: Env) => {
