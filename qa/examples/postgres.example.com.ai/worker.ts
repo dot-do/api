@@ -91,11 +91,21 @@ export class Postgres extends DurableObject {
         )
       `)
 
+      // Fetch DO colo in parallel with WASM loading
+      const coloPromise = fetch('https://workers.cloudflare.com/cf.json')
+        .then(r => r.json())
+        .then((cf: { colo?: string }) => { this.colo = cf.colo || 'unknown' })
+        .catch(() => { /* keep default 'unknown' */ })
+
       // PGLite with static WASM imports
-      this.pglite = await PGliteLocal.create({
-        wasmModule: pgliteWasm,
-        fsBundle: pgliteData,
-      })
+      const [pglite] = await Promise.all([
+        PGliteLocal.create({
+          wasmModule: pgliteWasm,
+          fsBundle: pgliteData,
+        }),
+        coloPromise,
+      ])
+      this.pglite = pglite
 
       await this.pglite.exec(`
         CREATE TABLE IF NOT EXISTS posts (
