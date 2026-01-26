@@ -232,6 +232,155 @@ describe('Rate Limit Middleware', () => {
   })
 
   // ============================================================================
+  // Standard rate limit headers (RFC 6585 and common conventions)
+  // ============================================================================
+  describe('Rate limit headers', () => {
+    it('should include X-RateLimit-Limit header with the configured limit', async () => {
+      const mockRateLimiter = createMockRateLimiter()
+
+      const app = API({
+        name: 'rate-limited-api',
+        rateLimit: { binding: 'RATE_LIMITER', limit: 100 },
+        routes: (a) => {
+          a.get('/endpoint', (c) => c.var.respond({ data: { message: 'success' } }))
+        },
+      })
+
+      const res = await app.request('/endpoint', {}, { RATE_LIMITER: mockRateLimiter })
+
+      expect(res.status).toBe(200)
+      expect(res.headers.get('X-RateLimit-Limit')).toBe('100')
+    })
+
+    it('should include X-RateLimit-Remaining header with remaining requests', async () => {
+      const mockRateLimiter = createMockRateLimiter({
+        customHandler: async () => ({ success: true, remaining: 42 }),
+      })
+
+      const app = API({
+        name: 'rate-limited-api',
+        rateLimit: { binding: 'RATE_LIMITER', limit: 100 },
+        routes: (a) => {
+          a.get('/endpoint', (c) => c.var.respond({ data: { message: 'success' } }))
+        },
+      })
+
+      const res = await app.request('/endpoint', {}, { RATE_LIMITER: mockRateLimiter })
+
+      expect(res.status).toBe(200)
+      expect(res.headers.get('X-RateLimit-Remaining')).toBe('42')
+    })
+
+    it('should include X-RateLimit-Reset header with Unix timestamp', async () => {
+      const resetTime = Math.floor(Date.now() / 1000) + 60 // 60 seconds from now
+      const mockRateLimiter = createMockRateLimiter({
+        customHandler: async () => ({ success: true, remaining: 50, reset: resetTime }),
+      })
+
+      const app = API({
+        name: 'rate-limited-api',
+        rateLimit: { binding: 'RATE_LIMITER', limit: 100 },
+        routes: (a) => {
+          a.get('/endpoint', (c) => c.var.respond({ data: { message: 'success' } }))
+        },
+      })
+
+      const res = await app.request('/endpoint', {}, { RATE_LIMITER: mockRateLimiter })
+
+      expect(res.status).toBe(200)
+      expect(res.headers.get('X-RateLimit-Reset')).toBe(String(resetTime))
+    })
+
+    it('should include Retry-After header on 429 responses', async () => {
+      const resetTime = Math.floor(Date.now() / 1000) + 30 // 30 seconds from now
+      const mockRateLimiter = createMockRateLimiter({
+        customHandler: async () => ({ success: false, remaining: 0, reset: resetTime }),
+      })
+
+      const app = API({
+        name: 'rate-limited-api',
+        rateLimit: { binding: 'RATE_LIMITER', limit: 100 },
+        routes: (a) => {
+          a.get('/endpoint', (c) => c.var.respond({ data: { message: 'success' } }))
+        },
+      })
+
+      const res = await app.request('/endpoint', {}, { RATE_LIMITER: mockRateLimiter })
+
+      expect(res.status).toBe(429)
+      // Retry-After should be in seconds (difference between reset time and now)
+      const retryAfter = parseInt(res.headers.get('Retry-After') || '0', 10)
+      expect(retryAfter).toBeGreaterThan(0)
+      expect(retryAfter).toBeLessThanOrEqual(30)
+    })
+
+    it('should include all rate limit headers on successful responses', async () => {
+      const resetTime = Math.floor(Date.now() / 1000) + 60
+      const mockRateLimiter = createMockRateLimiter({
+        customHandler: async () => ({ success: true, remaining: 99, reset: resetTime }),
+      })
+
+      const app = API({
+        name: 'rate-limited-api',
+        rateLimit: { binding: 'RATE_LIMITER', limit: 100 },
+        routes: (a) => {
+          a.get('/endpoint', (c) => c.var.respond({ data: { message: 'success' } }))
+        },
+      })
+
+      const res = await app.request('/endpoint', {}, { RATE_LIMITER: mockRateLimiter })
+
+      expect(res.status).toBe(200)
+      expect(res.headers.get('X-RateLimit-Limit')).toBe('100')
+      expect(res.headers.get('X-RateLimit-Remaining')).toBe('99')
+      expect(res.headers.get('X-RateLimit-Reset')).toBe(String(resetTime))
+      // Retry-After should NOT be present on successful responses
+      expect(res.headers.get('Retry-After')).toBeNull()
+    })
+
+    it('should include all rate limit headers on 429 responses', async () => {
+      const resetTime = Math.floor(Date.now() / 1000) + 60
+      const mockRateLimiter = createMockRateLimiter({
+        customHandler: async () => ({ success: false, remaining: 0, reset: resetTime }),
+      })
+
+      const app = API({
+        name: 'rate-limited-api',
+        rateLimit: { binding: 'RATE_LIMITER', limit: 100 },
+        routes: (a) => {
+          a.get('/endpoint', (c) => c.var.respond({ data: { message: 'success' } }))
+        },
+      })
+
+      const res = await app.request('/endpoint', {}, { RATE_LIMITER: mockRateLimiter })
+
+      expect(res.status).toBe(429)
+      expect(res.headers.get('X-RateLimit-Limit')).toBe('100')
+      expect(res.headers.get('X-RateLimit-Remaining')).toBe('0')
+      expect(res.headers.get('X-RateLimit-Reset')).toBe(String(resetTime))
+      expect(res.headers.get('Retry-After')).toBeDefined()
+    })
+
+    it('should use default limit when not configured', async () => {
+      const mockRateLimiter = createMockRateLimiter()
+
+      const app = API({
+        name: 'rate-limited-api',
+        rateLimit: { binding: 'RATE_LIMITER' }, // No limit specified
+        routes: (a) => {
+          a.get('/endpoint', (c) => c.var.respond({ data: { message: 'success' } }))
+        },
+      })
+
+      const res = await app.request('/endpoint', {}, { RATE_LIMITER: mockRateLimiter })
+
+      expect(res.status).toBe(200)
+      // Should have a default limit header
+      expect(res.headers.get('X-RateLimit-Limit')).toBeDefined()
+    })
+  })
+
+  // ============================================================================
   // Edge cases
   // ============================================================================
   describe('Edge cases', () => {

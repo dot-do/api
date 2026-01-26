@@ -5,9 +5,54 @@ import {
   unauthorized,
   forbidden,
   rateLimited,
-  internal
+  internal,
+  ErrorCode,
+  type ErrorCodeType
 } from '../../src/helpers/errors'
-import { API } from '../../src/index'
+import { API, ErrorCode as ExportedErrorCode } from '../../src/index'
+
+describe('ErrorCode enum', () => {
+  it('exports ErrorCode object with expected values', () => {
+    expect(ErrorCode).toBeDefined()
+    expect(ErrorCode.VALIDATION_ERROR).toBe('VALIDATION_ERROR')
+    expect(ErrorCode.NOT_FOUND).toBe('NOT_FOUND')
+    expect(ErrorCode.UNAUTHORIZED).toBe('UNAUTHORIZED')
+    expect(ErrorCode.FORBIDDEN).toBe('FORBIDDEN')
+    expect(ErrorCode.RATE_LIMITED).toBe('RATE_LIMITED')
+    expect(ErrorCode.INTERNAL_ERROR).toBe('INTERNAL_ERROR')
+    expect(ErrorCode.BAD_REQUEST).toBe('BAD_REQUEST')
+    expect(ErrorCode.METHOD_NOT_ALLOWED).toBe('METHOD_NOT_ALLOWED')
+  })
+
+  it('is exported from src/index.ts', () => {
+    expect(ExportedErrorCode).toBeDefined()
+    expect(ExportedErrorCode).toBe(ErrorCode)
+  })
+
+  it('ErrorCodeType type works with all error code values', () => {
+    // Type test: these should compile without errors
+    const codes: ErrorCodeType[] = [
+      ErrorCode.VALIDATION_ERROR,
+      ErrorCode.NOT_FOUND,
+      ErrorCode.UNAUTHORIZED,
+      ErrorCode.FORBIDDEN,
+      ErrorCode.RATE_LIMITED,
+      ErrorCode.INTERNAL_ERROR,
+      ErrorCode.BAD_REQUEST,
+      ErrorCode.METHOD_NOT_ALLOWED,
+    ]
+    expect(codes).toHaveLength(8)
+  })
+
+  it('error helper functions use ErrorCode values', () => {
+    expect(notFound().code).toBe(ErrorCode.NOT_FOUND)
+    expect(badRequest('test').code).toBe(ErrorCode.BAD_REQUEST)
+    expect(unauthorized().code).toBe(ErrorCode.UNAUTHORIZED)
+    expect(forbidden().code).toBe(ErrorCode.FORBIDDEN)
+    expect(rateLimited().code).toBe(ErrorCode.RATE_LIMITED)
+    expect(internal().code).toBe(ErrorCode.INTERNAL_ERROR)
+  })
+})
 
 describe('Error helpers', () => {
   describe('notFound', () => {

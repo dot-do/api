@@ -1,10 +1,23 @@
 /**
- * SQL column validation helpers to prevent SQL injection attacks
+ * SQL validation helpers to prevent SQL injection attacks
  */
 
 // Valid SQL column name pattern: alphanumeric characters and underscores only
 // Must start with a letter or underscore
 const VALID_COLUMN_PATTERN = /^[a-zA-Z_][a-zA-Z0-9_]*$/
+
+// Valid SQL table name pattern: alphanumeric characters and underscores only
+// Must start with a letter (not underscore, unlike columns)
+const VALID_TABLE_NAME_PATTERN = /^[a-zA-Z][a-zA-Z0-9_]*$/
+
+/**
+ * Validates that a table/model name is safe for use in SQL queries
+ * @param name - The table name to validate
+ * @returns true if the table name is valid, false otherwise
+ */
+export function validateTableName(name: string): boolean {
+  return VALID_TABLE_NAME_PATTERN.test(name)
+}
 
 /**
  * Validates that a column name is safe for use in SQL queries

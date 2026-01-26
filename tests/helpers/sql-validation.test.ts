@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest'
 import {
   isValidColumnName,
   isAllowedColumn,
-  validateColumns
+  validateColumns,
+  validateTableName
 } from '../../src/helpers/sql-validation'
 
 describe('SQL validation helpers', () => {
@@ -398,6 +399,135 @@ describe('SQL validation helpers', () => {
         const safeColumns = ['id', 'name', 'email']
         expect(isAllowedColumn('SELECT', safeColumns)).toBe(false)
         expect(isAllowedColumn('DROP', safeColumns)).toBe(false)
+      })
+    })
+  })
+
+  describe('validateTableName', () => {
+    describe('valid table names', () => {
+      it('accepts simple lowercase names', () => {
+        expect(validateTableName('users')).toBe(true)
+      })
+
+      it('accepts names with underscores', () => {
+        expect(validateTableName('user_profiles')).toBe(true)
+        expect(validateTableName('order_items')).toBe(true)
+      })
+
+      it('accepts PascalCase names', () => {
+        expect(validateTableName('UserAccounts')).toBe(true)
+        expect(validateTableName('OrderDetails')).toBe(true)
+      })
+
+      it('accepts camelCase names', () => {
+        expect(validateTableName('userAccounts')).toBe(true)
+        expect(validateTableName('orderItems')).toBe(true)
+      })
+
+      it('accepts names with numbers after first character', () => {
+        expect(validateTableName('users2')).toBe(true)
+        expect(validateTableName('data_v2')).toBe(true)
+        expect(validateTableName('Table1')).toBe(true)
+      })
+
+      it('accepts single letter names', () => {
+        expect(validateTableName('a')).toBe(true)
+        expect(validateTableName('T')).toBe(true)
+      })
+    })
+
+    describe('invalid table names - SQL injection patterns', () => {
+      it('rejects names with semicolons (SQL injection)', () => {
+        expect(validateTableName('users; DROP TABLE users--')).toBe(false)
+        expect(validateTableName('users;DROP')).toBe(false)
+      })
+
+      it('rejects names with single quotes', () => {
+        expect(validateTableName("users' OR '1'='1")).toBe(false)
+        expect(validateTableName("table'name")).toBe(false)
+      })
+
+      it('rejects names with double quotes', () => {
+        expect(validateTableName('users"')).toBe(false)
+        expect(validateTableName('"users')).toBe(false)
+      })
+
+      it('rejects names with SQL comment markers', () => {
+        expect(validateTableName('users--')).toBe(false)
+        expect(validateTableName('--users')).toBe(false)
+        expect(validateTableName('users/*comment*/')).toBe(false)
+      })
+    })
+
+    describe('invalid table names - format violations', () => {
+      it('rejects names with spaces', () => {
+        expect(validateTableName('user table')).toBe(false)
+        expect(validateTableName(' users')).toBe(false)
+        expect(validateTableName('users ')).toBe(false)
+      })
+
+      it('rejects names starting with numbers', () => {
+        expect(validateTableName('1users')).toBe(false)
+        expect(validateTableName('123')).toBe(false)
+      })
+
+      it('rejects names starting with underscore (differs from column names)', () => {
+        expect(validateTableName('_users')).toBe(false)
+        expect(validateTableName('_private_table')).toBe(false)
+      })
+
+      it('rejects names with special characters', () => {
+        expect(validateTableName('users!')).toBe(false)
+        expect(validateTableName('users@domain')).toBe(false)
+        expect(validateTableName('users#1')).toBe(false)
+        expect(validateTableName('users$')).toBe(false)
+        expect(validateTableName('users%')).toBe(false)
+        expect(validateTableName('users^')).toBe(false)
+        expect(validateTableName('users&')).toBe(false)
+        expect(validateTableName('users=')).toBe(false)
+        expect(validateTableName('users+')).toBe(false)
+        expect(validateTableName('users()')).toBe(false)
+      })
+
+      it('rejects empty string', () => {
+        expect(validateTableName('')).toBe(false)
+      })
+    })
+
+    describe('SQL injection attack patterns', () => {
+      const sqlInjectionPayloads = [
+        "users; DROP TABLE users--",
+        "users' OR '1'='1",
+        "table'; DELETE FROM users WHERE '1'='1",
+        "table UNION SELECT * FROM users",
+        "table/*comment*/",
+        "'; WAITFOR DELAY '0:0:10'--",
+        "table\n; DROP TABLE users",
+        "table`",
+        "table|ls",
+      ]
+
+      it('rejects all common SQL injection payloads', () => {
+        for (const payload of sqlInjectionPayloads) {
+          expect(validateTableName(payload)).toBe(false)
+        }
+      })
+    })
+
+    describe('unicode and special cases', () => {
+      it('rejects unicode characters', () => {
+        expect(validateTableName('t\u00e1ble')).toBe(false) // a with accent
+        expect(validateTableName('\u4e2d\u6587')).toBe(false) // Chinese
+      })
+
+      it('rejects zero-width characters', () => {
+        expect(validateTableName('users\u200b')).toBe(false) // zero-width space
+      })
+
+      it('rejects newlines and tabs', () => {
+        expect(validateTableName('users\n')).toBe(false)
+        expect(validateTableName('users\t')).toBe(false)
+        expect(validateTableName('users\r\n')).toBe(false)
       })
     })
   })

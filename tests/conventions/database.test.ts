@@ -608,6 +608,69 @@ describe('parseSchema()', () => {
     expect(schema.models).toEqual({})
   })
 
+  describe('table name validation (SQL injection prevention)', () => {
+    it('throws error for model name with SQL injection pattern', () => {
+      expect(() => parseSchema({
+        'users; DROP TABLE users--': { name: 'string!' },
+      })).toThrow('Invalid model name')
+    })
+
+    it('throws error for model name with single quotes', () => {
+      expect(() => parseSchema({
+        "users' OR '1'='1": { name: 'string!' },
+      })).toThrow('Invalid model name')
+    })
+
+    it('throws error for model name with spaces', () => {
+      expect(() => parseSchema({
+        'user table': { name: 'string!' },
+      })).toThrow('Invalid model name')
+    })
+
+    it('throws error for model name starting with number', () => {
+      expect(() => parseSchema({
+        '123users': { name: 'string!' },
+      })).toThrow('Invalid model name')
+    })
+
+    it('throws error for model name starting with underscore', () => {
+      expect(() => parseSchema({
+        '_private_table': { name: 'string!' },
+      })).toThrow('Invalid model name')
+    })
+
+    it('throws error for model name with special characters', () => {
+      expect(() => parseSchema({
+        'users!': { name: 'string!' },
+      })).toThrow('Invalid model name')
+    })
+
+    it('accepts valid PascalCase model names', () => {
+      expect(() => parseSchema({
+        UserAccount: { name: 'string!' },
+      })).not.toThrow()
+    })
+
+    it('accepts valid snake_case model names', () => {
+      expect(() => parseSchema({
+        user_profiles: { name: 'string!' },
+      })).not.toThrow()
+    })
+
+    it('accepts valid camelCase model names', () => {
+      expect(() => parseSchema({
+        userAccount: { name: 'string!' },
+      })).not.toThrow()
+    })
+
+    it('accepts model names with numbers after first character', () => {
+      expect(() => parseSchema({
+        User2: { name: 'string!' },
+        dataV2: { name: 'string!' },
+      })).not.toThrow()
+    })
+  })
+
   it('parses single model schema', () => {
     const schema = parseSchema({
       User: {

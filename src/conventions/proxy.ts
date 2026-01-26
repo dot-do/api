@@ -59,10 +59,32 @@ export function proxyConvention(config: ProxyConfig): Hono<ApiEnv> {
       headers.set('X-User-Email', c.var.user.email || '')
     }
 
+    // Prepare request body
+    let requestBody: string | undefined
+    if (!['GET', 'HEAD'].includes(c.req.method)) {
+      const reqContentType = c.req.header('content-type') || ''
+      if (reqContentType.includes('application/json')) {
+        // Validate JSON body for JSON content-type requests
+        let body
+        try {
+          body = await c.req.json()
+        } catch {
+          return c.var.respond({
+            error: { message: 'Invalid JSON body', code: 'BAD_REQUEST', status: 400 },
+            status: 400,
+          })
+        }
+        requestBody = JSON.stringify(body)
+      } else {
+        // Non-JSON body, pass through as text
+        requestBody = await c.req.text()
+      }
+    }
+
     const upstreamReq = new Request(upstreamUrl.toString(), {
       method: c.req.method,
       headers,
-      body: ['GET', 'HEAD'].includes(c.req.method) ? undefined : c.req.raw.body,
+      body: requestBody,
     })
 
     const response = await fetch(upstreamReq, {

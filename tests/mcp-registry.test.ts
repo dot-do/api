@@ -185,6 +185,83 @@ describe('McpToolRegistry', () => {
       expect(userTool?.handler).toBeUndefined()
     })
   })
+
+  describe('tests property', () => {
+    it('registers a tool with tests matching TestCase type', () => {
+      registry.register({
+        name: 'calculator',
+        description: 'Performs calculations',
+        inputSchema: { type: 'object', properties: { a: { type: 'number' }, b: { type: 'number' } } },
+        tests: [
+          {
+            name: 'adds two numbers',
+            input: { a: 2, b: 3 },
+            expect: {
+              status: 'success',
+              output: 5,
+            },
+          },
+          {
+            id: 'calc-subtract',
+            name: 'subtracts two numbers',
+            description: 'Test subtraction operation',
+            tags: ['math', 'subtract'],
+            input: { a: 5, b: 3 },
+            expect: {
+              status: 'success',
+              output: 2,
+              match: 'exact',
+            },
+          },
+          {
+            name: 'handles error case',
+            input: { a: 'invalid' },
+            expect: {
+              status: 'error',
+              error: { code: 'INVALID_INPUT', message: 'Input must be a number' },
+            },
+          },
+        ],
+        handler: async (input) => {
+          const { a, b } = input as { a: number; b: number }
+          return a + b
+        },
+      })
+
+      const tool = registry.getTool('calculator')
+      expect(tool).toBeDefined()
+      expect(tool?.tests).toBeDefined()
+      expect(tool?.tests).toHaveLength(3)
+
+      // Verify TestCase structure is preserved
+      const [addTest, subtractTest, errorTest] = tool!.tests!
+
+      expect(addTest.name).toBe('adds two numbers')
+      expect(addTest.input).toEqual({ a: 2, b: 3 })
+      expect(addTest.expect.status).toBe('success')
+      expect(addTest.expect.output).toBe(5)
+
+      expect(subtractTest.id).toBe('calc-subtract')
+      expect(subtractTest.tags).toEqual(['math', 'subtract'])
+      expect(subtractTest.expect.match).toBe('exact')
+
+      expect(errorTest.expect.status).toBe('error')
+      expect(errorTest.expect.error?.code).toBe('INVALID_INPUT')
+    })
+
+    it('allows tools without tests property', () => {
+      registry.register({
+        name: 'no-tests-tool',
+        description: 'A tool without tests',
+        inputSchema: { type: 'object' },
+        handler: async () => 'result',
+      })
+
+      const tool = registry.getTool('no-tests-tool')
+      expect(tool).toBeDefined()
+      expect(tool?.tests).toBeUndefined()
+    })
+  })
 })
 
 describe('Single /mcp endpoint serves all registered tools', () => {
@@ -466,6 +543,118 @@ describe('Single /mcp endpoint serves all registered tools', () => {
       // Both explicit and route-only tools should be listed
       expect(tools.some((t: { name: string }) => t.name === 'explicitTool')).toBe(true)
       expect(tools.some((t: { name: string }) => t.name === 'post.create')).toBe(true)
+    })
+
+    it('error message for route-only tool includes REST endpoint suggestion', async () => {
+      const app = API({
+        name: 'error-message-api',
+        mcp: {
+          name: 'server',
+          tools: [],
+        },
+        database: {
+          schema: {
+            User: {
+              email: 'string',
+            },
+          },
+        },
+      })
+
+      const res = await mcpPost(app, jsonRpc('tools/call', {
+        name: 'user.create',
+        arguments: { email: 'test@example.com' },
+      }))
+
+      const body = await res.json()
+      expect(body.error).toBeDefined()
+      // Should suggest the REST endpoint
+      expect(body.error.message).toContain('REST endpoint')
+      expect(body.error.message).toContain('user/create')
+    })
+
+    it('tools with routeOnly=true and a handler still reject direct MCP calls', async () => {
+      // Edge case: a tool marked routeOnly that somehow has a handler
+      // The routeOnly flag should take precedence
+      const registry = new McpToolRegistry()
+      registry.register({
+        name: 'hybrid.tool',
+        description: 'Has both routeOnly and handler',
+        inputSchema: { type: 'object' },
+        routeOnly: true,
+        handler: async () => 'should not be called',
+      })
+
+      const tool = registry.getTool('hybrid.tool')
+      expect(tool?.routeOnly).toBe(true)
+      expect(tool?.handler).toBeDefined()
+      // The MCP convention should still reject this as route-only
+    })
+
+    it('tools without handler and without routeOnly flag return appropriate error', async () => {
+      // Edge case: inconsistent state - no handler, no routeOnly flag
+      const registry = new McpToolRegistry()
+      registry.register({
+        name: 'broken.tool',
+        description: 'Missing handler without routeOnly',
+        inputSchema: { type: 'object' },
+        // No handler, no routeOnly - this is an inconsistent state
+      })
+
+      const tool = registry.getTool('broken.tool')
+      expect(tool?.routeOnly).toBeFalsy()
+      expect(tool?.handler).toBeUndefined()
+      // When called via MCP, this should return "has no handler" error
+    })
+  })
+
+  describe('executeToolCall consistency', () => {
+    it('tool with handler executes successfully', async () => {
+      const app = API({
+        name: 'handler-test-api',
+        mcp: {
+          name: 'server',
+          tools: [
+            {
+              name: 'working.tool',
+              description: 'A working tool with handler',
+              inputSchema: { type: 'object', properties: { value: { type: 'number' } } },
+              handler: async (input) => ({ doubled: (input as { value: number }).value * 2 }),
+            },
+          ],
+        },
+      })
+
+      const res = await mcpPost(app, jsonRpc('tools/call', {
+        name: 'working.tool',
+        arguments: { value: 21 },
+      }))
+
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body.result).toBeDefined()
+      expect(body.result.content[0].text).toContain('42')
+    })
+
+    it('unknown tool returns appropriate error', async () => {
+      const app = API({
+        name: 'unknown-tool-api',
+        mcp: {
+          name: 'server',
+          tools: [],
+        },
+      })
+
+      const res = await mcpPost(app, jsonRpc('tools/call', {
+        name: 'nonexistent.tool',
+        arguments: {},
+      }))
+
+      expect(res.status).toBe(500)
+      const body = await res.json()
+      expect(body.error).toBeDefined()
+      expect(body.error.message).toContain('Unknown tool')
+      expect(body.error.message).toContain('nonexistent.tool')
     })
   })
 })

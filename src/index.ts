@@ -42,4 +42,4 @@ export { parseSchema, parseField, parseModel, generateJsonSchema } from './conve
 export type { ParsedSchema, ParsedModel, ParsedField, Document, DatabaseEvent, DatabaseDriverType, DatabaseDriver, DatabaseDriverFactory, QueryOptions, QueryResult } from './conventions/database'
 export { buildPagination, buildCursorPagination } from './helpers/pagination'
 export { createLinkBuilder } from './helpers/links'
-export { notFound, badRequest, unauthorized, forbidden, rateLimited, internal } from './helpers/errors'
+export { notFound, badRequest, unauthorized, forbidden, rateLimited, internal, ErrorCode, type ErrorCodeType } from './helpers/errors'

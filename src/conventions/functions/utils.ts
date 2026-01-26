@@ -102,10 +102,15 @@ export function createFunctionContext(
 // Deep Merge Utility
 // =============================================================================
 
+/** Keys that could be used for prototype pollution attacks */
+const DANGEROUS_KEYS = ['__proto__', 'constructor', 'prototype']
+
 export function deepMerge(target: Record<string, unknown>, ...sources: unknown[]): Record<string, unknown> {
   for (const source of sources) {
     if (source && typeof source === 'object') {
       for (const [key, value] of Object.entries(source as Record<string, unknown>)) {
+        // Skip dangerous keys to prevent prototype pollution
+        if (DANGEROUS_KEYS.includes(key)) continue
         if (value && typeof value === 'object' && !Array.isArray(value)) {
           target[key] = deepMerge((target[key] || {}) as Record<string, unknown>, value)
         } else {

@@ -265,7 +265,63 @@ describe('Proxy convention', () => {
     })
   })
 
-  describe('JSON parsing error handling', () => {
+  describe('Request JSON body validation', () => {
+    it('returns 400 Bad Request for malformed JSON body', async () => {
+      const mockResponse = new Response(JSON.stringify({ result: 'ok' }), {
+        headers: { 'Content-Type': 'application/json' },
+      })
+      ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockResponse)
+
+      const app = createProxyApp('https://api.example.com')
+      const res = await app.request('/data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: 'not valid json {{{',
+      })
+
+      expect(res.status).toBe(400)
+      const body = await res.json()
+      expect(body.error.code).toBe('BAD_REQUEST')
+      expect(body.error.message).toContain('Invalid JSON body')
+    })
+
+    it('proxies valid JSON body successfully', async () => {
+      const mockResponse = new Response(JSON.stringify({ received: true }), {
+        headers: { 'Content-Type': 'application/json' },
+      })
+      ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockResponse)
+
+      const app = createProxyApp('https://api.example.com')
+      const res = await app.request('/data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: 'hello' }),
+      })
+
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body.data).toEqual({ received: true })
+    })
+
+    it('allows non-JSON content-type bodies without validation', async () => {
+      const mockResponse = new Response('plain response', {
+        headers: { 'Content-Type': 'text/plain' },
+      })
+      ;(globalThis.fetch as ReturnType<typeof vi.fn>).mockResolvedValue(mockResponse)
+
+      const app = createProxyApp('https://api.example.com')
+      const res = await app.request('/data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: 'not json, but thats ok',
+      })
+
+      expect(res.status).toBe(200)
+      expect(await res.text()).toBe('plain response')
+    })
+  })
+
+  describe('Upstream JSON parsing error handling', () => {
     it('returns 502 Bad Gateway when upstream returns invalid JSON with application/json content-type', async () => {
       // Mock upstream returning invalid JSON with application/json content-type
       const mockResponse = new Response('not valid json {{{', {

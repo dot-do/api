@@ -8,6 +8,15 @@ export interface MockRateLimiter {
 }
 
 /**
+ * Rate limit result matching Cloudflare's Rate Limiting API response
+ */
+export interface RateLimitResult {
+  success: boolean
+  remaining?: number
+  reset?: number
+}
+
+/**
  * Options for creating a mock rate limiter
  */
 export interface MockRateLimiterOptions {
@@ -23,7 +32,7 @@ export interface MockRateLimiterOptions {
   /**
    * Custom limit handler for complex scenarios
    */
-  customHandler?: (options: { key: string }) => Promise<{ success: boolean }>
+  customHandler?: (options: { key: string }) => Promise<RateLimitResult>
 }
 
 /**

@@ -5,6 +5,7 @@
  */
 
 import type { SchemaDef, ParsedSchema, ParsedModel, ParsedField } from './types'
+import { validateTableName } from '../../helpers/sql-validation'
 
 /**
  * Pluralize a word (simple rules)
@@ -201,6 +202,12 @@ export function parseSchema(schema: SchemaDef): ParsedSchema {
   const models: Record<string, ParsedModel> = {}
 
   for (const [modelName, modelDef] of Object.entries(schema)) {
+    // Validate table/model name to prevent SQL injection
+    if (!validateTableName(modelName)) {
+      throw new Error(
+        `Invalid model name "${modelName}": must start with a letter and contain only alphanumeric characters and underscores`
+      )
+    }
     models[modelName] = parseModel(modelName, modelDef)
   }
 

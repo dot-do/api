@@ -23,6 +23,16 @@ export function rpcConvention(config: RpcConfig): Hono<ApiEnv> {
   app.post('/rpc/:method{.+}', async (c) => {
     const method = c.req.param('method')
 
+    // Validate method path to prevent prototype pollution attacks
+    const DANGEROUS_SEGMENTS = ['__proto__', 'constructor', 'prototype']
+    const parts = method.split('.')
+    if (parts.some((part) => DANGEROUS_SEGMENTS.includes(part))) {
+      return c.var.respond({
+        error: { message: `Invalid method path: ${method}`, code: 'INVALID_METHOD', status: 400 },
+        status: 400,
+      })
+    }
+
     if (config.methods && !config.methods.includes(method)) {
       return c.var.respond({
         error: { message: `Unknown RPC method: ${method}`, code: 'METHOD_NOT_FOUND', status: 404 },

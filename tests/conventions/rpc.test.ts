@@ -5,6 +5,14 @@ import { responseMiddleware } from '../../src/response'
 import { contextMiddleware } from '../../src/middleware/context'
 import type { ApiEnv, RpcConfig } from '../../src/types'
 
+// Mock rpc.do to prevent actual HTTP calls during tests
+vi.mock('rpc.do', () => ({
+  // Return a module without a 'call' function so it falls through to the error case
+  default: {},
+  $: () => { throw new Error('rpc.do mock - no real calls') },
+  RPC: () => { throw new Error('rpc.do mock - no real calls') },
+}))
+
 /**
  * Creates a mock RPC binding for tests.
  * Simulates a service binding with callable methods.
@@ -349,6 +357,109 @@ describe('RPC convention', () => {
       expect(res.status).toBe(200)
       const body = await res.json() as Record<string, unknown>
       expect(body.data).toBe('result')
+    })
+  })
+
+  describe('Prototype access prevention', () => {
+    it('rejects __proto__ method path with 400', async () => {
+      const mockBinding = createMockRpcBinding({})
+
+      const config: RpcConfig = {
+        binding: 'RPC_SERVICE',
+        // No whitelist to ensure validation happens before whitelist check
+      }
+      const { app } = createTestApp(config)
+      const env = { RPC_SERVICE: mockBinding }
+
+      const res = await app.request('/rpc/__proto__.polluted', {
+        method: 'POST',
+      }, env)
+
+      expect(res.status).toBe(400)
+      const body = await res.json() as Record<string, unknown>
+      expect(body.error).toBeDefined()
+      expect((body.error as Record<string, unknown>).code).toBe('INVALID_METHOD')
+      expect((body.error as Record<string, unknown>).message).toContain('__proto__')
+    })
+
+    it('rejects constructor method path with 400', async () => {
+      const mockBinding = createMockRpcBinding({})
+
+      const config: RpcConfig = {
+        binding: 'RPC_SERVICE',
+      }
+      const { app } = createTestApp(config)
+      const env = { RPC_SERVICE: mockBinding }
+
+      const res = await app.request('/rpc/constructor.prototype', {
+        method: 'POST',
+      }, env)
+
+      expect(res.status).toBe(400)
+      const body = await res.json() as Record<string, unknown>
+      expect(body.error).toBeDefined()
+      expect((body.error as Record<string, unknown>).code).toBe('INVALID_METHOD')
+      expect((body.error as Record<string, unknown>).message).toContain('constructor')
+    })
+
+    it('rejects prototype method path with 400', async () => {
+      const mockBinding = createMockRpcBinding({})
+
+      const config: RpcConfig = {
+        binding: 'RPC_SERVICE',
+      }
+      const { app } = createTestApp(config)
+      const env = { RPC_SERVICE: mockBinding }
+
+      const res = await app.request('/rpc/prototype.method', {
+        method: 'POST',
+      }, env)
+
+      expect(res.status).toBe(400)
+      const body = await res.json() as Record<string, unknown>
+      expect(body.error).toBeDefined()
+      expect((body.error as Record<string, unknown>).code).toBe('INVALID_METHOD')
+      expect((body.error as Record<string, unknown>).message).toContain('prototype')
+    })
+
+    it('rejects dangerous segments in nested paths', async () => {
+      const mockBinding = createMockRpcBinding({})
+
+      const config: RpcConfig = {
+        binding: 'RPC_SERVICE',
+      }
+      const { app } = createTestApp(config)
+      const env = { RPC_SERVICE: mockBinding }
+
+      const res = await app.request('/rpc/users.__proto__.isAdmin', {
+        method: 'POST',
+      }, env)
+
+      expect(res.status).toBe(400)
+      const body = await res.json() as Record<string, unknown>
+      expect(body.error).toBeDefined()
+      expect((body.error as Record<string, unknown>).code).toBe('INVALID_METHOD')
+    })
+
+    it('allows valid method paths that are not dangerous', async () => {
+      const mockBinding = createMockRpcBinding({
+        validMethod: vi.fn().mockResolvedValue('success'),
+      })
+
+      const config: RpcConfig = {
+        binding: 'RPC_SERVICE',
+        methods: ['validMethod'],
+      }
+      const { app } = createTestApp(config)
+      const env = { RPC_SERVICE: mockBinding }
+
+      const res = await app.request('/rpc/validMethod', {
+        method: 'POST',
+      }, env)
+
+      expect(res.status).toBe(200)
+      const body = await res.json() as Record<string, unknown>
+      expect(body.data).toBe('success')
     })
   })
 
