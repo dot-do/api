@@ -1,0 +1,12 @@
+name = "compute-worker-poc-id-benchmark"
+main = "src/id-latency-benchmark.ts"
+compatibility_date = "2024-12-01"
+account_id = "b6641681fe423910342b9ffa1364c76d"
+
+[[durable_objects.bindings]]
+name = "TEST_DO"
+class_name = "TestDO"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["TestDO"]

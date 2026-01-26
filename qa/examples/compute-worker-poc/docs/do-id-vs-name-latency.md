@@ -63,6 +63,55 @@ await stub.fetch(request)  // Network latency to DO location
 - **Name preserved** - Named IDs remember their source name
 - **No location encoding** - The ID does NOT encode colo/geographic info
 
+## Production Benchmark Results (January 2026)
+
+We deployed a benchmark worker to measure actual latencies in production:
+
+### ID Generation Benchmark (100 iterations each)
+
+| Operation | Min | Avg | Max | P95 | P99 |
+|-----------|-----|-----|-----|-----|-----|
+| `idFromName()` existing | 0ms | 0ms | 0ms | 0ms | 0ms |
+| `idFromName()` new random | 0ms | 0ms | 0ms | 0ms | 0ms |
+| `idFromString()` | 0ms | 0ms | 0ms | 0ms | 0ms |
+| `newUniqueId()` | 0ms | 0ms | 0ms | 0ms | 0ms |
+
+**All ID operations are sub-millisecond (0ms in production measurements).**
+
+### ID Generation vs Access Benchmark (5 tests, new DO each time)
+
+| Test | idFromName | stub.get | First Access | Subsequent |
+|------|------------|----------|--------------|------------|
+| 1 | 0ms | 0ms | 168ms | 4ms |
+| 2 | 0ms | 0ms | 189ms | 4ms |
+| 3 | 0ms | 0ms | 223ms | 5ms |
+| 4 | 0ms | 0ms | 193ms | 4ms |
+| 5 | 0ms | 0ms | 195ms | 5ms |
+
+**Average first access: ~194ms, Subsequent: ~4ms**
+
+### Cache Duration Test (Same DO, Multiple Requests)
+
+| Request | Delay | Access Time | Notes |
+|---------|-------|-------------|-------|
+| 1 | first | 223ms | Global coordination |
+| 2 | 1s | 122ms | May hit different isolate |
+| 3 | 5s | 17ms | Routing cached/warm |
+| 4 | 15s | 26ms | Still cached |
+| 5 | 30s | 13ms | Still cached |
+
+**Routing stays cached for 30s+ but varies by Worker isolate.**
+
+### Parallel New DO Access (10 DOs simultaneously)
+
+| Operation | Total | Per DO |
+|-----------|-------|--------|
+| ID generation (all 10) | 0ms | 0ms |
+| Stub creation (all 10) | 0ms | 0ms |
+| Parallel first access | 402ms | 40ms |
+
+**Parallel access amortizes the coordination cost.**
+
 ## First Access Coordination
 
 ### The "Round-the-World Check"
@@ -71,7 +120,7 @@ When you access a DO for the **first time ever** via a named ID:
 
 1. Cloudflare must ensure no other Worker worldwide is simultaneously creating the same DO
 2. This requires global coordination
-3. Can add **up to a few hundred milliseconds** of latency on first access
+3. Can add **~170-220ms** of latency on first access (measured in production)
 4. After first access, the DO location is cached globally
 
 ### When This Matters
@@ -147,6 +196,82 @@ If you know where your users are, use location hints:
 const id = env.MY_DO.idFromName("tenant-123")
 const stub = env.MY_DO.get(id, { locationHint: "enam" })  // Eastern North America
 ```
+
+## Optimization: SWR + Replicated Index Per Colo
+
+For applications where even ~100-200ms first-access latency is too high, consider a multi-tier caching strategy with a replicated index DO per colo.
+
+### Architecture
+
+```
+Request → L1 Cache (local) → L2 Colo Index DO → L3 Global Coordination
+              |                    |                    |
+           ~1-5ms              ~5-20ms             ~100-200ms
+              |                    |                    |
+         SWR: 30s TTL         Always local       Only on miss
+```
+
+### Implementation Strategy
+
+```typescript
+async function getOrCreateTenantDO(tenantId: string, env: Env): Promise<DurableObjectStub> {
+  // L1: Check Cloudflare Cache (SWR pattern)
+  const cacheKey = `do-routing:${tenantId}`
+  const cache = caches.default
+  const cachedResponse = await cache.match(new Request(`https://internal/${cacheKey}`))
+
+  if (cachedResponse) {
+    const { idString, stale } = await cachedResponse.json()
+    const stub = env.TENANT_DO.get(env.TENANT_DO.idFromString(idString))
+
+    // SWR: Return immediately, revalidate in background if stale
+    if (stale) {
+      // Background refresh - don't await
+      revalidateInBackground(tenantId, env, cache, cacheKey)
+    }
+    return stub
+  }
+
+  // L2: Check colo-local index DO (always fast - same colo)
+  const coloIndexId = env.INDEX_DO.idFromName(`index-${getColo()}`)
+  const coloIndex = env.INDEX_DO.get(coloIndexId, { locationHint: getColo() })
+  const indexResult = await coloIndex.lookup(tenantId)
+
+  if (indexResult) {
+    // Cache the result with SWR headers
+    await cacheWithSWR(cache, cacheKey, indexResult.idString)
+    return env.TENANT_DO.get(env.TENANT_DO.idFromString(indexResult.idString))
+  }
+
+  // L3: Global coordination (only for brand-new tenants)
+  const id = env.TENANT_DO.idFromName(tenantId)
+  const stub = env.TENANT_DO.get(id)
+
+  // Update colo index for next time
+  await coloIndex.register(tenantId, id.toString())
+
+  // Cache the result
+  await cacheWithSWR(cache, cacheKey, id.toString())
+
+  return stub
+}
+```
+
+### Benefits
+
+| Tier | Latency | Hit Rate | Cost |
+|------|---------|----------|------|
+| L1 (Cache API) | ~1-5ms | ~70-90% | FREE |
+| L2 (Colo Index DO) | ~5-20ms | ~95%+ | ~$5/month |
+| L3 (Global) | ~100-200ms | 100% | Per-request |
+
+### SWR Cache Strategy
+
+- **Fresh TTL**: 30 seconds (return immediately, no revalidation)
+- **Stale TTL**: 5 minutes (return immediately, revalidate in background)
+- **Max TTL**: 1 hour (force fresh lookup)
+
+This ensures users always get an instant response (from cache), while the system stays fresh via background revalidation.
 
 Available hints: `wnam`, `enam`, `sam`, `weur`, `eeur`, `apac`, `oc`, `afr`, `me`
 
