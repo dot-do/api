@@ -253,6 +253,196 @@ Maximize free tier by offloading to snippets:
 | MCP | | ✓ mcp convention |
 | CRUD | | ✓ database convention |
 
+---
+
+## PostgreSQL Query Optimization Snippets
+
+These snippets adapt proven patterns from DuckDB (94% cost savings) for postgres.do query batching and connection pooling.
+
+### pg-query-buffer.ts
+
+**Query batching for cost optimization** - Buffers queries per tenant and flushes in batches.
+
+```typescript
+// Configuration (via environment or defaults)
+workerEndpoint: 'https://postgres.do/query/batch'
+batchSize: 10           // Queries per batch
+flushIntervalMs: 100    // Flush every 100ms (OLTP latency)
+maxPendingPerTenant: 50 // Force flush threshold
+```
+
+**Architecture:**
+```
+Client -> Snippet (FREE) -> HTTP batch -> Worker -> Tenant DO
+   |                           |
+   +-- 10 queries/request      +-- 90% reduction
+```
+
+**Features:**
+- Per-tenant query buffering
+- Automatic batch flushing on size/time thresholds
+- Promise-based query tracking (request-response, not fire-and-forget)
+- Retry on failure with buffer preservation
+
+**Endpoints:**
+- `POST /pg/query` - Execute single query
+- `POST /pg/batch` - Execute multiple queries
+- `GET /pg/stats` - Buffer statistics
+- `POST /pg/flush` - Force flush
+
+### pg-ws-pool.ts
+
+**WebSocket connection pool** - Maintains persistent connections to tenant DOs.
+
+```typescript
+// Configuration
+wsEndpointTemplate: 'wss://postgres.do/tenant/{tenantId}/ws'
+maxConnections: 50       // LRU eviction beyond this
+idleTimeoutMs: 300000    // 5 minute idle close
+pingIntervalMs: 30000    // Keep-alive interval
+```
+
+**Architecture:**
+```
+Client -> Snippet (FREE) -> WS Pool -> Tenant DOs
+   |                          |           |
+   +-- Module-scope state     |           +-- Hibernatable (95% off)
+                              +-- LRU eviction
+```
+
+**Features:**
+- Module-scope WebSocket connections persist across requests
+- LRU eviction of cold tenant connections
+- Automatic reconnection with exponential backoff
+- Keep-alive pings to prevent idle disconnect
+- Eliminates cold starts for hot tenants
+
+**Endpoints:**
+- `POST /ws-pool/send` - Send message through pool
+- `POST /ws-pool/connect` - Pre-establish connection
+- `GET /ws-pool/stats` - Connection pool statistics
+- `POST /ws-pool/maintenance` - Close idle, send pings
+
+### pg-session.ts
+
+**Session-aware connection pooling** - Tracks client sessions with transaction support.
+
+```typescript
+// Configuration
+workerEndpoint: 'https://postgres.do/session/query'
+sessionTimeoutMs: 1800000  // 30 minute session timeout
+batchSize: 5               // Queries per batch (lower for sessions)
+flushIntervalMs: 50        // Lower latency for transactions
+maxSessions: 1000          // LRU eviction
+```
+
+**Architecture:**
+```
+Client -> Snippet (FREE) -> Session -> Worker -> Tenant DO
+   |          |                |
+   |          +-- Transaction tracking
+   +-- Session affinity
+```
+
+**Features:**
+- Session tracking per client
+- Transaction state detection (BEGIN/COMMIT/ROLLBACK)
+- Immediate flush during transactions (correctness)
+- Batching for non-transaction queries
+- Automatic session cleanup
+
+**Endpoints:**
+- `POST /session/query` - Execute query in session
+- `POST /session/transaction` - Transaction control (begin/commit/rollback)
+- `DELETE /session/end` - End session
+- `GET /session/stats` - Session statistics
+
+---
+
+## Cost Analysis: postgres.do Snippets
+
+### Proven Pattern (from DuckDB)
+
+The DuckDB analytics-buffer snippet achieved **94% cost savings** with:
+- Module-scope state (FREE)
+- Batch size of 50 events
+- 5-second flush interval
+- Hibernatable WebSocket to DO
+
+### postgres.do Adaptations
+
+| Metric | DuckDB Analytics | postgres.do OLTP |
+|--------|------------------|------------------|
+| Batch size | 50 events | 10 queries |
+| Flush interval | 5000ms | 100ms |
+| Pattern | Fire-and-forget | Request-response |
+| Latency target | Seconds OK | <100ms required |
+
+### Expected Cost Savings
+
+```
+WITHOUT SNIPPETS (per 1M queries):
+- 1M Worker requests @ $0.50/M = $0.50
+- 1M DO requests @ $0.15/M = $0.15
+- Cold starts overhead ~20% = $0.13
+- Total: ~$0.78/M queries
+
+WITH SNIPPETS (per 1M queries):
+- Snippet execution: FREE
+- 100K Worker requests (10x batching) @ $0.50/M = $0.05
+- DO hibernation (95% discount) @ $0.15/M * 0.05 = $0.0075
+- No cold starts (persistent connections)
+- Total: ~$0.06/M queries
+
+SAVINGS: 92% ($0.72/M queries saved)
+```
+
+### Keep-Warm Strategy
+
+Persistent WebSocket connections serve dual purpose:
+
+1. **Reduce latency** - No connection establishment overhead
+2. **Keep DOs warm** - Traffic on WS prevents hibernation eviction
+3. **Eliminate cold starts** - Hot tenants always ready
+
+For sparse traffic periods, consider an alarm-based backup:
+```typescript
+// In tenant DO
+async alarm() {
+  // Periodic wake to prevent eviction
+  this.state.storage.setAlarm(Date.now() + 60000)
+}
+```
+
+---
+
+## Deployment
+
+Deploy postgres.do snippets:
+
+```bash
+# Compile and deploy all pg-* snippets
+npx tsx snippets/pg-deploy.ts
+```
+
+Test endpoints:
+
+```bash
+# Query buffer stats
+curl https://postgres.do/pg/stats
+
+# Execute batched query
+curl -X POST https://postgres.do/pg/query \
+  -H "Content-Type: application/json" \
+  -d '{"tenantId":"test","sql":"SELECT 1+1 as result"}'
+
+# WebSocket pool stats
+curl https://postgres.do/ws-pool/stats
+
+# Session stats
+curl https://postgres.do/session/stats
+```
+
 ## License
 
 MIT

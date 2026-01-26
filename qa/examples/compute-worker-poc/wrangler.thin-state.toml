@@ -1,0 +1,44 @@
+# Thin State DO Worker Configuration
+#
+# This is the "pure state coordinator" architecture:
+# - NO WASM bundled (no wasm rules)
+# - Tiny bundle size (<100KB vs ~13MB for traditional)
+# - ALWAYS delegates compute to Compute Worker
+# - Fast cold starts (no WASM to instantiate)
+#
+# Use case: When cold start latency is critical and you're OK
+# with consistent ~30ms RPC overhead on every query.
+
+name = "compute-worker-poc-thin-state"
+main = "src/thin-state-do.ts"
+compatibility_date = "2026-01-15"
+account_id = "b6641681fe423910342b9ffa1364c76d"
+
+# Enable workers.dev subdomain
+workers_dev = true
+
+# Node.js compatibility
+compatibility_flags = ["nodejs_compat"]
+
+# NO wasm rules! This is intentional - no WASM to bundle
+# [[rules]]
+# type = "CompiledWasm"
+# globs = ["**/*.wasm"]
+#
+# [[rules]]
+# type = "Data"
+# globs = ["**/*.data"]
+
+# Service binding to Compute Worker
+[[services]]
+binding = "COMPUTE_WORKER"
+service = "compute-worker-poc-compute"
+
+# Thin State Durable Object - NO WASM, instant cold start!
+[[durable_objects.bindings]]
+name = "THIN_STATE_DO"
+class_name = "ThinStateDO"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ThinStateDO"]

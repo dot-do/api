@@ -1,0 +1,37 @@
+# Hybrid DO Worker Configuration
+# Routes cold requests to compute worker, warm requests execute directly
+# Best of both worlds: fast cold starts + no warm overhead
+
+name = "compute-worker-poc-hybrid"
+main = "src/hybrid-do.ts"
+compatibility_date = "2026-01-15"
+account_id = "b6641681fe423910342b9ffa1364c76d"
+
+# Enable workers.dev subdomain
+workers_dev = true
+
+# Node.js compatibility
+compatibility_flags = ["nodejs_compat"]
+
+# Rules for handling PGLite WASM and binary data files
+[[rules]]
+type = "CompiledWasm"
+globs = ["**/*.wasm"]
+
+[[rules]]
+type = "Data"
+globs = ["**/*.data"]
+
+# Service binding to Compute Worker
+[[services]]
+binding = "COMPUTE_WORKER"
+service = "compute-worker-poc-compute"
+
+# Hybrid Durable Object
+[[durable_objects.bindings]]
+name = "HYBRID_DO"
+class_name = "HybridDO"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["HybridDO"]

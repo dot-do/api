@@ -1,0 +1,28 @@
+# State DO Worker Configuration
+# Lightweight DO with NO WASM - uses DO SQLite for persistence
+# Delegates compute to Compute Worker via service binding
+
+name = "compute-worker-poc-state-v2"
+main = "src/state-do.ts"
+compatibility_date = "2026-01-15"
+account_id = "b6641681fe423910342b9ffa1364c76d"
+
+# Enable workers.dev subdomain
+workers_dev = true
+
+# Node.js compatibility
+compatibility_flags = ["nodejs_compat"]
+
+# Service binding to Compute Worker
+[[services]]
+binding = "COMPUTE_WORKER"
+service = "compute-worker-poc-compute"
+
+# State Durable Object - NO WASM, instant cold start!
+[[durable_objects.bindings]]
+name = "STATE_DO"
+class_name = "StateDOv2"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["StateDOv2"]

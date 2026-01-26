@@ -1,0 +1,44 @@
+# Router Worker Configuration
+# Routes requests to State DO or Traditional DO for benchmark comparison
+
+name = "compute-worker-poc-router"
+main = "src/router-worker.ts"
+compatibility_date = "2026-01-15"
+account_id = "b6641681fe423910342b9ffa1364c76d"
+
+# Enable workers.dev subdomain
+workers_dev = true
+
+# Node.js compatibility
+compatibility_flags = ["nodejs_compat"]
+
+# Service binding to Compute Worker
+[[services]]
+binding = "COMPUTE_WORKER"
+service = "compute-worker-poc-compute"
+
+# Durable Object bindings
+[[durable_objects.bindings]]
+name = "STATE_DO"
+class_name = "StateDOv2"
+script_name = "compute-worker-poc-state-v2"
+
+[[durable_objects.bindings]]
+name = "TRADITIONAL_DO"
+class_name = "TraditionalDO"
+script_name = "compute-worker-poc-traditional"
+
+[[durable_objects.bindings]]
+name = "HYBRID_DO"
+class_name = "HybridDO"
+script_name = "compute-worker-poc-hybrid"
+
+[[durable_objects.bindings]]
+name = "THIN_STATE_DO"
+class_name = "ThinStateDO"
+script_name = "compute-worker-poc-thin-state"
+
+[[durable_objects.bindings]]
+name = "LAZY_WASM_DO"
+class_name = "LazyWasmDO"
+script_name = "compute-worker-poc-lazy-wasm"

@@ -1,0 +1,44 @@
+{
+  "name": "compute-worker-poc",
+  "version": "1.0.0",
+  "description": "POC: Stateful DO + Stateless Compute Worker architecture for PGLite",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev:router": "wrangler dev -c wrangler.router.toml",
+    "dev:compute": "wrangler dev -c wrangler.compute.toml",
+    "dev:state": "wrangler dev -c wrangler.state.toml",
+    "dev:traditional": "wrangler dev -c wrangler.traditional.toml",
+    "dev:hybrid": "wrangler dev -c wrangler.hybrid.toml",
+    "dev:lazy-wasm": "wrangler dev -c wrangler.lazy-wasm.toml",
+    "dev:thin-state": "wrangler dev -c wrangler.thin-state.toml",
+    "deploy:compute": "wrangler deploy -c wrangler.compute.toml",
+    "deploy:state": "wrangler deploy -c wrangler.state.toml",
+    "deploy:traditional": "wrangler deploy -c wrangler.traditional.toml",
+    "deploy:hybrid": "wrangler deploy -c wrangler.hybrid.toml",
+    "deploy:lazy-wasm": "wrangler deploy -c wrangler.lazy-wasm.toml",
+    "deploy:thin-state": "wrangler deploy -c wrangler.thin-state.toml",
+    "deploy:router": "wrangler deploy -c wrangler.router.toml",
+    "deploy:all": "npm run deploy:compute && npm run deploy:state && npm run deploy:traditional && npm run deploy:hybrid && npm run deploy:lazy-wasm && npm run deploy:thin-state && npm run deploy:router",
+    "upload-wasm-r2": "node scripts/upload-wasm-to-r2.mjs",
+    "benchmark": "node scripts/benchmark.mjs",
+    "benchmark:lazy-wasm": "node scripts/lazy-wasm-benchmark.mjs",
+    "benchmark:lazy-wasm:local": "node scripts/lazy-wasm-benchmark.mjs --local",
+    "benchmark:multi-tenant": "node scripts/multi-tenant-benchmark.mjs",
+    "benchmark:burst": "node scripts/multi-tenant-benchmark.mjs --burst",
+    "benchmark:sustained": "node scripts/multi-tenant-benchmark.mjs --sustained",
+    "benchmark:sparse": "node scripts/multi-tenant-benchmark.mjs --sparse",
+    "benchmark:warm": "node scripts/multi-tenant-benchmark.mjs --warm",
+    "benchmark:cross-tenant": "node scripts/multi-tenant-benchmark.mjs --cross-tenant"
+  },
+  "dependencies": {
+    "@dotdo/pg-protocol": "workspace:*",
+    "async-mutex": "^0.5.0",
+    "hono": "^4.6.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240725.0",
+    "typescript": "^5.7.3",
+    "wrangler": "^3.101.0"
+  }
+}

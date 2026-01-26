@@ -1,0 +1,37 @@
+# Lazy WASM DO Worker Configuration
+# WASM is fetched on-demand from R2/Cache, NOT bundled statically
+# This enables fast cold starts while still providing local execution once warmed
+
+name = "compute-worker-poc-lazy-wasm"
+main = "src/lazy-wasm-do.ts"
+compatibility_date = "2026-01-15"
+account_id = "b6641681fe423910342b9ffa1364c76d"
+
+# Enable workers.dev subdomain
+workers_dev = true
+
+# Node.js compatibility
+compatibility_flags = ["nodejs_compat"]
+
+# IMPORTANT: NO WASM rules here - we don't bundle WASM statically!
+# The JS module (pglite.js) is still needed for Emscripten runtime
+# But pglite.wasm and pglite.data are fetched from R2 at runtime
+
+# Service binding to Compute Worker (for delegation during warmup)
+[[services]]
+binding = "COMPUTE_WORKER"
+service = "compute-worker-poc-compute"
+
+# R2 bucket binding for WASM storage
+[[r2_buckets]]
+binding = "WASM_BUCKET"
+bucket_name = "pglite-wasm"
+
+# Lazy WASM Durable Object
+[[durable_objects.bindings]]
+name = "LAZY_WASM_DO"
+class_name = "LazyWasmDO"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["LazyWasmDO"]

@@ -1,0 +1,22 @@
+# Compute Worker Configuration
+# Stateless worker holding PGLite WASM for SQL execution
+
+name = "compute-worker-poc-compute"
+main = "src/compute-worker.ts"
+compatibility_date = "2026-01-15"
+account_id = "b6641681fe423910342b9ffa1364c76d"
+
+# Enable workers.dev subdomain
+workers_dev = true
+
+# Node.js compatibility
+compatibility_flags = ["nodejs_compat"]
+
+# Rules for handling PGLite WASM and binary data files
+[[rules]]
+type = "CompiledWasm"
+globs = ["**/*.wasm"]
+
+[[rules]]
+type = "Data"
+globs = ["**/*.data"]
