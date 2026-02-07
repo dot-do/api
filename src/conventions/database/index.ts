@@ -11,12 +11,14 @@
 import { Hono } from 'hono'
 import Sqids from 'sqids'
 import type { ApiEnv } from '../../types'
-import type { DatabaseConfig, ParsedSchema, ParsedModel, Document, QueryOptions, DatabaseEvent, TypeRegistry, ReverseTypeRegistry, DecodedSqid } from './types'
+import type { DatabaseConfig, ParsedSchema, ParsedModel, Document, QueryOptions, DatabaseEvent, TypeRegistry, ReverseTypeRegistry, DecodedSqid, RequestContext } from './types'
 import { parseSchema, generateJsonSchema } from './schema'
+import { matchesWhere, coerceValue } from './match'
 
-export type { DatabaseConfig, SchemaDef, ParsedSchema, ParsedModel, ParsedField, Document, DatabaseEvent, DatabaseDriverType, DatabaseDriver, DatabaseDriverFactory, QueryOptions, QueryResult, EventSinkConfig, TypeRegistry, ReverseTypeRegistry, DecodedSqid } from './types'
+export type { DatabaseConfig, SchemaDef, ModelDef, FieldDef, ParsedSchema, ParsedModel, ParsedField, Document, DatabaseEvent, DatabaseDriverType, DatabaseDriver, DatabaseDriverFactory, QueryOptions, QueryResult, EventSinkConfig, TypeRegistry, ReverseTypeRegistry, DecodedSqid, DatabaseRpc, BatchOperation, BatchResult, RequestContext } from './types'
 export { parseSchema, parseField, parseModel, generateJsonSchema } from './schema'
 export { generateWebhookSignature, generateWebhookSignatureAsync, sendToWebhookSink } from './do'
+export { matchesWhere, coerceValue } from './match'
 
 // =============================================================================
 // Input Validation
@@ -226,7 +228,20 @@ export function databaseConvention(config: DatabaseConfig): {
 
     // CREATE - POST /users
     app.post(modelPath, async (c) => {
-      const body = await c.req.json()
+      let body: Record<string, unknown>
+      try {
+        body = await c.req.json()
+      } catch {
+        return c.var.respond({
+          error: { code: 'INVALID_JSON', message: 'Request body must be valid JSON', status: 400 },
+          status: 400,
+        })
+      }
+
+      // Strip meta fields from user input (allow id for create so users can set custom IDs)
+      for (const key of Object.keys(body)) {
+        if (key.startsWith('_')) delete body[key]
+      }
 
       // Validate input before database operations
       const validation = validateInput(model, body, false)
@@ -244,7 +259,10 @@ export function databaseConvention(config: DatabaseConfig): {
       // Generate ID if not provided and format is configured
       if (!body.id && idFormat !== 'auto') {
         const typeNum = registry.forward[model.name]
-        body.id = generateId(model.singular, idFormat, typeNum, sqidsInstance, staticNamespace)
+        const namespace = typeof config.sqidNamespace === 'function' ? config.sqidNamespace(c) : staticNamespace
+        const seed = typeof config.sqidSeed === 'function' ? config.sqidSeed(c) : staticSeed
+        const reqSqids = seed !== staticSeed ? createSqids(seed, config.sqidMinLength) : sqidsInstance
+        body.id = generateId(model.singular, idFormat, typeNum, reqSqids, namespace)
       }
 
       const db = await getDatabase(c, config, inMemoryCache)
@@ -279,7 +297,20 @@ export function databaseConvention(config: DatabaseConfig): {
     // UPDATE - PUT /users/:id
     app.put(`${modelPath}/:id`, async (c) => {
       const id = c.req.param('id')
-      const body = await c.req.json()
+      let body: Record<string, unknown>
+      try {
+        body = await c.req.json()
+      } catch {
+        return c.var.respond({
+          error: { code: 'INVALID_JSON', message: 'Request body must be valid JSON', status: 400 },
+          status: 400,
+        })
+      }
+
+      // Strip meta fields from user input
+      for (const key of Object.keys(body)) {
+        if (key.startsWith('_') || key === 'id') delete body[key]
+      }
 
       // Validate input before database operations (full validation for PUT)
       const validation = validateInput(model, body, false)
@@ -315,7 +346,20 @@ export function databaseConvention(config: DatabaseConfig): {
     // PATCH - PATCH /users/:id
     app.patch(`${modelPath}/:id`, async (c) => {
       const id = c.req.param('id')
-      const body = await c.req.json()
+      let body: Record<string, unknown>
+      try {
+        body = await c.req.json()
+      } catch {
+        return c.var.respond({
+          error: { code: 'INVALID_JSON', message: 'Request body must be valid JSON', status: 400 },
+          status: 400,
+        })
+      }
+
+      // Strip meta fields from user input
+      for (const key of Object.keys(body)) {
+        if (key.startsWith('_') || key === 'id') delete body[key]
+      }
 
       // Validate input before database operations (partial validation for PATCH)
       const validation = validateInput(model, body, true)
@@ -495,7 +539,21 @@ export function databaseConvention(config: DatabaseConfig): {
       })
     }
 
-    const body = await c.req.json()
+    let body: Record<string, unknown>
+    try {
+      body = await c.req.json()
+    } catch {
+      return c.var.respond({
+        error: { code: 'INVALID_JSON', message: 'Request body must be valid JSON', status: 400 },
+        status: 400,
+      })
+    }
+
+    // Strip meta fields from user input
+    for (const key of Object.keys(body)) {
+      if (key.startsWith('_') || key === 'id') delete body[key]
+    }
+
     const validation = validateInput(model, body, false)
     if (!validation.valid) {
       return c.var.respond({
@@ -793,19 +851,11 @@ function parseFilterValue(value: string, op?: string): unknown {
   return coerceValue(value)
 }
 
-function coerceValue(value: string): unknown {
-  if (value === 'true') return true
-  if (value === 'false') return false
-  if (value === 'null') return null
-  const num = Number(value)
-  if (!isNaN(num) && value !== '') return num
-  return value
-}
 
 /**
  * Get request context for audit trail
  */
-function getRequestContext(c: { var: { requestId: string; user?: { id?: string } } }): { userId?: string; requestId?: string } {
+function getRequestContext(c: { var: { requestId: string; user?: { id?: string } } }): RequestContext {
   return {
     userId: c.var.user?.id,
     requestId: c.var.requestId,
@@ -1009,10 +1059,10 @@ function generateUlid(): string {
 // =============================================================================
 
 interface DatabaseRpcClient {
-  create(model: string, data: Record<string, unknown>, ctx?: { userId?: string; requestId?: string }): Promise<Document>
+  create(model: string, data: Record<string, unknown>, ctx?: RequestContext): Promise<Document>
   get(model: string, id: string, options?: { include?: string[] }): Promise<Document | null>
-  update(model: string, id: string, data: Record<string, unknown>, ctx?: { userId?: string; requestId?: string }): Promise<Document>
-  delete(model: string, id: string, ctx?: { userId?: string; requestId?: string }): Promise<void>
+  update(model: string, id: string, data: Record<string, unknown>, ctx?: RequestContext): Promise<Document>
+  delete(model: string, id: string, ctx?: RequestContext): Promise<void>
   list(model: string, options?: QueryOptions): Promise<{ data: Document[]; total: number; limit: number; offset: number; hasMore: boolean }>
   search(model: string, query: string, options?: QueryOptions): Promise<{ data: Document[]; total: number; limit: number; offset: number; hasMore: boolean }>
   count(model: string, where?: Record<string, unknown>): Promise<number>
@@ -1055,7 +1105,8 @@ async function getDatabase(c: { env: Record<string, unknown>; var: { requestId: 
       })
       const result = await response.json() as { result?: Document; error?: { message: string } }
       if (result.error) throw new Error(result.error.message)
-      return result.result!
+      if (!result.result) throw new Error('Unexpected empty response from DO for create')
+      return result.result
     },
 
     async get(model, id, options) {
@@ -1077,7 +1128,8 @@ async function getDatabase(c: { env: Record<string, unknown>; var: { requestId: 
       })
       const result = await response.json() as { result?: Document; error?: { message: string } }
       if (result.error) throw new Error(result.error.message)
-      return result.result!
+      if (!result.result) throw new Error('Unexpected empty response from DO for update')
+      return result.result
     },
 
     async delete(model, id, ctx) {
@@ -1098,7 +1150,8 @@ async function getDatabase(c: { env: Record<string, unknown>; var: { requestId: 
       })
       const result = await response.json() as { result?: { data: Document[]; total: number; limit: number; offset: number; hasMore: boolean }; error?: { message: string } }
       if (result.error) throw new Error(result.error.message)
-      return result.result!
+      if (!result.result) throw new Error('Unexpected empty response from DO for list')
+      return result.result
     },
 
     async search(model, query, options) {
@@ -1109,7 +1162,8 @@ async function getDatabase(c: { env: Record<string, unknown>; var: { requestId: 
       })
       const result = await response.json() as { result?: { data: Document[]; total: number; limit: number; offset: number; hasMore: boolean }; error?: { message: string } }
       if (result.error) throw new Error(result.error.message)
-      return result.result!
+      if (!result.result) throw new Error('Unexpected empty response from DO for search')
+      return result.result
     },
 
     async count(model, where) {
@@ -1283,83 +1337,3 @@ function createInMemoryDatabase(): DatabaseRpcClient {
   }
 }
 
-/**
- * Match a document against a where clause with MongoDB-style operators
- */
-function matchesWhere(doc: Record<string, unknown>, where: Record<string, unknown>): boolean {
-  for (const [key, condition] of Object.entries(where)) {
-    // Logical operators
-    if (key === '$or') {
-      const clauses = condition as Record<string, unknown>[]
-      if (!clauses.some((clause) => matchesWhere(doc, clause))) return false
-      continue
-    }
-    if (key === '$and') {
-      const clauses = condition as Record<string, unknown>[]
-      if (!clauses.every((clause) => matchesWhere(doc, clause))) return false
-      continue
-    }
-    if (key === '$not') {
-      if (matchesWhere(doc, condition as Record<string, unknown>)) return false
-      continue
-    }
-    if (key === '$nor') {
-      const clauses = condition as Record<string, unknown>[]
-      if (clauses.some((clause) => matchesWhere(doc, clause))) return false
-      continue
-    }
-
-    const docVal = doc[key]
-
-    // Operator object: { $gt: 5, $lt: 10 }
-    if (condition !== null && typeof condition === 'object' && !Array.isArray(condition)) {
-      const ops = condition as Record<string, unknown>
-      for (const [op, opVal] of Object.entries(ops)) {
-        switch (op) {
-          case '$eq':
-            if (docVal !== opVal) return false
-            break
-          case '$ne':
-            if (docVal === opVal) return false
-            break
-          case '$gt':
-            if (typeof docVal !== 'number' || typeof opVal !== 'number' || docVal <= opVal) return false
-            break
-          case '$gte':
-            if (typeof docVal !== 'number' || typeof opVal !== 'number' || docVal < opVal) return false
-            break
-          case '$lt':
-            if (typeof docVal !== 'number' || typeof opVal !== 'number' || docVal >= opVal) return false
-            break
-          case '$lte':
-            if (typeof docVal !== 'number' || typeof opVal !== 'number' || docVal > opVal) return false
-            break
-          case '$in':
-            if (!Array.isArray(opVal) || !opVal.includes(docVal)) return false
-            break
-          case '$nin':
-            if (Array.isArray(opVal) && opVal.includes(docVal)) return false
-            break
-          case '$exists':
-            if (opVal ? docVal === undefined : docVal !== undefined) return false
-            break
-          case '$regex': {
-            const pattern = String(opVal)
-            if (pattern.length > 200) return false
-            try {
-              const re = new RegExp(pattern)
-              if (typeof docVal !== 'string' || !re.test(docVal)) return false
-            } catch {
-              return false
-            }
-            break
-          }
-        }
-      }
-    } else {
-      // Simple equality
-      if (docVal !== condition) return false
-    }
-  }
-  return true
-}

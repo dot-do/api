@@ -8,6 +8,7 @@ export type RestEndpointTest = _RestEndpointTest
 export type RestTestCase = _RestTestCase
 export type EventSinkConfig = _EventSinkConfig
 export type DatabaseConfig = _DatabaseConfig
+export type { FieldDef, SchemaDef, ModelDef } from './conventions/database/types'
 
 // Response envelope types
 export interface ApiMeta {
@@ -202,11 +203,7 @@ export interface AnalyticsConfig {
 // Landing page configuration
 export type LandingConfig = false | ((c: Context<ApiEnv>) => Response | Promise<Response>)
 
-// Database schema field definition (IceType-inspired)
-export type FieldDef = string
-
-// Database schema definition
-export type SchemaDef = Record<string, Record<string, FieldDef>>
+// Database schema types are re-exported from ./conventions/database/types at the top of this file
 
 // Functions/Services configuration (imported from convention)
 export type { FunctionsConfig } from './conventions/functions'

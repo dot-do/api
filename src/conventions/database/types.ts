@@ -111,26 +111,36 @@ export interface DatabaseEvent {
 }
 
 /**
- * Event sink configuration for streaming events
+ * Shared fields across all event sink types
  */
-export interface EventSinkConfig {
-  type: 'lakehouse' | 'queue' | 'webhook' | 'analytics'
-  binding?: string
-  url?: string
+interface EventSinkBase {
   batchSize?: number
   flushInterval?: number
-  /**
-   * Secret for webhook signature authentication (webhook sinks only).
-   * When provided, an X-Webhook-Signature header is included with an
-   * HMAC-SHA256 signature of the request body.
-   */
-  secret?: string
-  /**
-   * Custom headers to include in webhook requests (webhook sinks only).
-   * Useful for authentication tokens or custom metadata.
-   */
-  headers?: Record<string, string>
 }
+
+/**
+ * Event sink configuration for streaming events (discriminated union)
+ */
+export type EventSinkConfig =
+  | (EventSinkBase & {
+      type: 'webhook'
+      /** Webhook endpoint URL */
+      url: string
+      /**
+       * Secret for webhook signature authentication.
+       * When provided, an X-Webhook-Signature header is included with an
+       * HMAC-SHA256 signature of the request body.
+       */
+      secret?: string
+      /**
+       * Custom headers to include in webhook requests.
+       * Useful for authentication tokens or custom metadata.
+       */
+      headers?: Record<string, string>
+    })
+  | (EventSinkBase & { type: 'lakehouse'; binding: string })
+  | (EventSinkBase & { type: 'queue'; binding: string })
+  | (EventSinkBase & { type: 'analytics'; binding: string })
 
 // =============================================================================
 // Database Configuration

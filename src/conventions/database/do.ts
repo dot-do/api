@@ -9,7 +9,8 @@
  */
 
 import { DurableObject } from 'cloudflare:workers'
-import type { Document, DatabaseEvent, ParsedSchema, QueryOptions, EventSinkConfig } from './types'
+import type { Document, DatabaseEvent, ParsedSchema, QueryOptions, EventSinkConfig, RequestContext } from './types'
+import { matchesWhere } from './match'
 
 // =============================================================================
 // Webhook Signature Utilities
@@ -83,10 +84,8 @@ export function generateWebhookSignature(body: string, secret: string): string {
  */
 export async function sendToWebhookSink(
   event: DatabaseEvent,
-  sink: EventSinkConfig
+  sink: Extract<EventSinkConfig, { type: 'webhook' }>
 ): Promise<void> {
-  if (!sink.url) return
-
   const body = JSON.stringify(event)
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -268,16 +267,16 @@ export class DatabaseDO extends DurableObject<Env> {
           return { result: await this.setSchema(req.params.schema as ParsedSchema) }
 
         case 'create':
-          return { result: await this.create(req.params.model as string, req.params.data as Record<string, unknown>, req.params.ctx as { userId?: string; requestId?: string } | undefined) }
+          return { result: await this.create(req.params.model as string, req.params.data as Record<string, unknown>, req.params.ctx as RequestContext | undefined) }
 
         case 'get':
           return { result: await this.get(req.params.model as string, req.params.id as string, req.params.options as { include?: string[] } | undefined) }
 
         case 'update':
-          return { result: await this.update(req.params.model as string, req.params.id as string, req.params.data as Record<string, unknown>, req.params.ctx as { userId?: string; requestId?: string } | undefined) }
+          return { result: await this.update(req.params.model as string, req.params.id as string, req.params.data as Record<string, unknown>, req.params.ctx as RequestContext | undefined) }
 
         case 'delete':
-          await this.delete(req.params.model as string, req.params.id as string, req.params.ctx as { userId?: string; requestId?: string } | undefined)
+          await this.delete(req.params.model as string, req.params.id as string, req.params.ctx as RequestContext | undefined)
           return { result: { deleted: true } }
 
         case 'list':
@@ -395,7 +394,7 @@ export class DatabaseDO extends DurableObject<Env> {
     }
   }
 
-  async create(model: string, data: Record<string, unknown>, ctx?: { userId?: string; requestId?: string }): Promise<Document> {
+  async create(model: string, data: Record<string, unknown>, ctx?: RequestContext): Promise<Document> {
     const collection = this.getCollection(model)
     const id = (data.id as string) || this.generateId()
     const now = new Date().toISOString()
@@ -479,7 +478,7 @@ export class DatabaseDO extends DurableObject<Env> {
     return doc
   }
 
-  async update(model: string, id: string, data: Record<string, unknown>, ctx?: { userId?: string; requestId?: string }): Promise<Document> {
+  async update(model: string, id: string, data: Record<string, unknown>, ctx?: RequestContext): Promise<Document> {
     const collection = this.getCollection(model)
     const existing = collection.get(id)
 
@@ -517,7 +516,7 @@ export class DatabaseDO extends DurableObject<Env> {
     return doc
   }
 
-  async delete(model: string, id: string, ctx?: { userId?: string; requestId?: string }): Promise<void> {
+  async delete(model: string, id: string, ctx?: RequestContext): Promise<void> {
     const collection = this.getCollection(model)
     const existing = collection.get(id)
 
@@ -549,14 +548,9 @@ export class DatabaseDO extends DurableObject<Env> {
     const collection = this.getCollection(model)
     let docs = Array.from(collection.values()).filter((d) => !d._deletedAt)
 
-    // Apply where filter
+    // Apply where filter (full MongoDB-style operator support)
     if (options?.where) {
-      docs = docs.filter((doc) => {
-        for (const [key, value] of Object.entries(options.where!)) {
-          if (doc[key] !== value) return false
-        }
-        return true
-      })
+      docs = docs.filter((doc) => matchesWhere(doc, options.where!))
     }
 
     // Apply orderBy
@@ -633,14 +627,9 @@ export class DatabaseDO extends DurableObject<Env> {
     const collection = this.getCollection(model)
     let docs = Array.from(collection.values()).filter((d) => !d._deletedAt)
 
-    // Apply where filter
+    // Apply where filter (full MongoDB-style operator support)
     if (where) {
-      docs = docs.filter((doc) => {
-        for (const [key, value] of Object.entries(where)) {
-          if (doc[key] !== value) return false
-        }
-        return true
-      })
+      docs = docs.filter((doc) => matchesWhere(doc, where))
     }
 
     return docs.length

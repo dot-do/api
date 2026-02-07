@@ -6,7 +6,7 @@ export { analyticsMiddleware, analyticsRoutes } from './analytics'
 export { analyticsBufferRoutes, AnalyticsBufferDO } from './analytics-buffer'
 export type { AnalyticsBufferConfig, BufferEvent } from './analytics-buffer'
 export { testingConvention, type TestingConfig, type TestCase, type RestTestCase, type Example } from './testing'
-export { databaseConvention, parseSchema, parseField, parseModel, generateJsonSchema } from './database'
+export { databaseConvention, parseSchema, parseField, parseModel, generateJsonSchema, buildTypeRegistry, createSqids, shuffleAlphabet, decodeSqid } from './database'
 export type {
   DatabaseConfig,
   SchemaDef,
@@ -20,6 +20,14 @@ export type {
   DatabaseDriverFactory,
   QueryOptions,
   QueryResult,
+  EventSinkConfig,
+  TypeRegistry,
+  ReverseTypeRegistry,
+  DecodedSqid,
+  DatabaseRpc,
+  BatchOperation,
+  BatchResult,
+  RequestContext,
 } from './database'
 export { DatabaseDO } from './database/do'
 export { functionsConvention } from './functions'
