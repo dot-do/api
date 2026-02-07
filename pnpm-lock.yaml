@@ -11,6 +11,9 @@ importers:
       hono:
         specifier: ^4.7.0
         version: 4.11.5
+      sqids:
+        specifier: ^0.3.0
+        version: 0.3.0
     optionalDependencies:
       '@dotdo/documentdb':
         specifier: ^0.1.0
@@ -1453,6 +1456,9 @@ packages:
 
   splaytree-ts@1.0.2:
     resolution: {integrity: sha512-0kGecIZNIReCSiznK3uheYB8sbstLjCZLiwcQwbmLhgHJj2gz6OnSPkVzJQCMnmEz1BQ4gPK59ylhBoEWOhGNA==}
+
+  sqids@0.3.0:
+    resolution: {integrity: sha512-lOQK1ucVg+W6n3FhRwwSeUijxe93b51Bfz5PMRMihVf1iVkl82ePQG7V5vwrhzB11v0NtsR25PSZRGiSomJaJw==}
 
   stackback@0.0.2:
     resolution: {integrity: sha512-1XMJE5fQo1jGH6Y/7ebnwPOBEkIEnT4QF32d5R1+VXdXveM0IBMJt8zfaxX1P3QhVwrYe+576+jkANtSS2mBbw==}
@@ -3331,6 +3337,8 @@ snapshots:
 
   splaytree-ts@1.0.2:
     optional: true
+
+  sqids@0.3.0: {}
 
   stackback@0.0.2: {}
 

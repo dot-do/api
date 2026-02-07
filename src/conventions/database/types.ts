@@ -237,6 +237,64 @@ export interface DatabaseConfig {
    * - 'auto': timestamp_random (default)
    */
   idFormat?: 'sqid' | 'cuid' | 'ulid' | 'uuid' | 'auto'
+
+  /**
+   * Seed for per-org sqid alphabet shuffling.
+   * Use the GitHub org/user numeric ID for deterministic per-org encoding.
+   * Can be a number or a function that extracts from context.
+   * When not provided, uses a default alphabet (same encoding for all tenants).
+   */
+  sqidSeed?: number | ((c: unknown) => number)
+
+  /**
+   * Minimum length for sqid segments.
+   * Default: 8
+   */
+  sqidMinLength?: number
+
+  /**
+   * Explicit type registry mapping model names to stable numeric IDs.
+   * When not provided, auto-generated from schema in insertion order.
+   * Use this for stable IDs across schema changes.
+   */
+  typeRegistry?: TypeRegistry
+}
+
+// =============================================================================
+// Type Registry
+// =============================================================================
+
+/**
+ * Bidirectional map: model name ↔ stable numeric ID.
+ * Used by sqid encoding to embed type information in the ID segment.
+ *
+ * Example:
+ * ```typescript
+ * const registry: TypeRegistry = {
+ *   Noun: 1, Verb: 2, Action: 3, Event: 4,
+ *   Organization: 5, Contact: 6, Lead: 7, Deal: 8,
+ * }
+ * ```
+ */
+export type TypeRegistry = Record<string, number>
+
+/**
+ * Reverse type registry: numeric ID → model name
+ */
+export type ReverseTypeRegistry = Record<number, string>
+
+/**
+ * Decoded sqid components
+ */
+export interface DecodedSqid {
+  /** Model name (e.g., 'Contact') */
+  type: string
+  /** Numeric type ID from the registry */
+  typeNum: number
+  /** Timestamp (milliseconds since epoch) */
+  timestamp: number
+  /** Random component for uniqueness */
+  random: number
 }
 
 // =============================================================================

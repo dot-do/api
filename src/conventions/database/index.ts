@@ -9,11 +9,12 @@
  */
 
 import { Hono } from 'hono'
+import Sqids from 'sqids'
 import type { ApiEnv } from '../../types'
-import type { DatabaseConfig, ParsedSchema, ParsedModel, Document, QueryOptions, DatabaseEvent } from './types'
+import type { DatabaseConfig, ParsedSchema, ParsedModel, Document, QueryOptions, DatabaseEvent, TypeRegistry, ReverseTypeRegistry, DecodedSqid } from './types'
 import { parseSchema, generateJsonSchema } from './schema'
 
-export type { DatabaseConfig, SchemaDef, ParsedSchema, ParsedModel, ParsedField, Document, DatabaseEvent, DatabaseDriverType, DatabaseDriver, DatabaseDriverFactory, QueryOptions, QueryResult, EventSinkConfig } from './types'
+export type { DatabaseConfig, SchemaDef, ParsedSchema, ParsedModel, ParsedField, Document, DatabaseEvent, DatabaseDriverType, DatabaseDriver, DatabaseDriverFactory, QueryOptions, QueryResult, EventSinkConfig, TypeRegistry, ReverseTypeRegistry, DecodedSqid } from './types'
 export { parseSchema, parseField, parseModel, generateJsonSchema } from './schema'
 export { generateWebhookSignature, generateWebhookSignatureAsync, sendToWebhookSink } from './do'
 
@@ -139,6 +140,8 @@ export function databaseConvention(config: DatabaseConfig): {
   routes: Hono<ApiEnv>
   schema: ParsedSchema
   mcpTools: McpToolDef[]
+  typeRegistry: { forward: TypeRegistry; reverse: ReverseTypeRegistry }
+  sqids?: Sqids
 } {
   const app = new Hono<ApiEnv>()
   const schema = parseSchema(config.schema)
@@ -148,6 +151,13 @@ export function databaseConvention(config: DatabaseConfig): {
   const metaPrefix = config.metaPrefix || '_'
   const idFormat = config.idFormat || 'auto'
   const useMetaFormat = metaPrefix !== '_'
+
+  // Build type registry (model name ↔ numeric ID)
+  const registry = buildTypeRegistry(schema, config.typeRegistry)
+
+  // Create sqids instance (seed can be static or per-request for per-org)
+  const staticSeed = typeof config.sqidSeed === 'number' ? config.sqidSeed : undefined
+  const sqidsInstance = idFormat === 'sqid' ? createSqids(staticSeed, config.sqidMinLength) : undefined
 
   // Generate MCP tools
   const mcpTools = generateMcpTools(schema, config)
@@ -229,7 +239,8 @@ export function databaseConvention(config: DatabaseConfig): {
 
       // Generate ID if not provided and format is configured
       if (!body.id && idFormat !== 'auto') {
-        body.id = generateId(model.singular, idFormat)
+        const typeNum = registry.forward[model.name]
+        body.id = generateId(model.singular, idFormat, typeNum, sqidsInstance)
       }
 
       const db = await getDatabase(c, config)
@@ -437,7 +448,7 @@ export function databaseConvention(config: DatabaseConfig): {
   // GET /:id — resolve any entity by self-describing ID
   app.get(`${basePath}/:id{[a-zA-Z]+_[a-zA-Z0-9]+}`, async (c) => {
     const id = c.req.param('id')
-    const prefix = id.split('_')[0] as string as string
+    const prefix = id.split('_')[0] as string
     const model = prefixToModel[prefix]
     if (!model) {
       return c.var.respond({
@@ -577,7 +588,7 @@ export function databaseConvention(config: DatabaseConfig): {
     })
   })
 
-  return { routes: app, schema, mcpTools }
+  return { routes: app, schema, mcpTools, typeRegistry: registry, sqids: sqidsInstance }
 }
 
 // =============================================================================
@@ -813,14 +824,124 @@ function formatDocument(doc: Document, modelName: string, prefix: string): Recor
   return result
 }
 
+// =============================================================================
+// Type Registry — bidirectional model name ↔ stable numeric ID
+// =============================================================================
+
+const DEFAULT_SQID_ALPHABET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+
+/**
+ * Build a type registry from a parsed schema.
+ * Each model gets a stable numeric ID based on insertion order (1-indexed).
+ * Provide an explicit registry in config for stability across schema changes.
+ */
+export function buildTypeRegistry(schema: ParsedSchema, explicit?: TypeRegistry): { forward: TypeRegistry; reverse: ReverseTypeRegistry } {
+  const forward: TypeRegistry = {}
+  const reverse: ReverseTypeRegistry = {}
+
+  if (explicit) {
+    for (const [name, num] of Object.entries(explicit)) {
+      forward[name] = num
+      reverse[num] = name
+    }
+    // Fill in any models not in the explicit registry
+    let nextId = Math.max(0, ...Object.values(explicit)) + 1
+    for (const name of Object.keys(schema.models)) {
+      if (forward[name] === undefined) {
+        forward[name] = nextId
+        reverse[nextId] = name
+        nextId++
+      }
+    }
+  } else {
+    // Auto-generate from schema insertion order (1-indexed)
+    let id = 1
+    for (const name of Object.keys(schema.models)) {
+      forward[name] = id
+      reverse[id] = name
+      id++
+    }
+  }
+
+  return { forward, reverse }
+}
+
+/**
+ * Deterministic alphabet shuffle using a numeric seed (Fisher-Yates + LCG PRNG).
+ * Use the GitHub org/user numeric ID as seed for per-org unique encoding.
+ */
+export function shuffleAlphabet(alphabet: string, seed: number): string {
+  const arr = alphabet.split('')
+  let s = seed >>> 0 // ensure unsigned 32-bit
+  for (let i = arr.length - 1; i > 0; i--) {
+    // Linear congruential generator (Numerical Recipes constants)
+    s = (Math.imul(s, 1664525) + 1013904223) >>> 0
+    const j = s % (i + 1)
+    const tmp = arr[i]!
+    arr[i] = arr[j]!
+    arr[j] = tmp
+  }
+  return arr.join('')
+}
+
+/**
+ * Create a Sqids instance, optionally seeded per-org for unique encoding.
+ */
+export function createSqids(seed?: number, minLength = 8): Sqids {
+  const alphabet = seed !== undefined ? shuffleAlphabet(DEFAULT_SQID_ALPHABET, seed) : DEFAULT_SQID_ALPHABET
+  return new Sqids({ alphabet, minLength })
+}
+
+/**
+ * Generate an ID using real sqids encoding.
+ * Encodes [typeNumber, timestamp, random] into the sqid segment.
+ * Full ID: `{singular}_{sqidSegment}` (e.g., `contact_V1StGXR8`)
+ */
+function generateSqidId(modelSingular: string, typeNum: number, sqids: Sqids): string {
+  const timestamp = Date.now()
+  // Random component: crypto-random 32-bit integer for uniqueness
+  const randomBytes = new Uint32Array(1)
+  crypto.getRandomValues(randomBytes)
+  const random = randomBytes[0]!
+  const segment = sqids.encode([typeNum, timestamp, random])
+  return `${modelSingular}_${segment}`
+}
+
+/**
+ * Decode a sqid ID back to its components.
+ * Returns the type name, type number, timestamp, and random component.
+ */
+export function decodeSqid(id: string, sqids: Sqids, reverse: ReverseTypeRegistry): DecodedSqid | null {
+  const underscoreIdx = id.indexOf('_')
+  if (underscoreIdx === -1) return null
+
+  const segment = id.slice(underscoreIdx + 1)
+  const numbers = sqids.decode(segment)
+  if (numbers.length < 3) return null
+
+  const typeNum = numbers[0]!
+  const type = reverse[typeNum]
+  if (!type) return null
+
+  return {
+    type,
+    typeNum,
+    timestamp: numbers[1]!,
+    random: numbers[2]!,
+  }
+}
+
 /**
  * Generate an ID based on the configured format
  */
-function generateId(modelSingular: string, format: string): string {
+function generateId(modelSingular: string, format: string, typeNum?: number, sqids?: Sqids): string {
   switch (format) {
     case 'sqid':
-      // Use type prefix + random base36 string (simple sqid-like)
-      return `${modelSingular}_${generateSqidSegment()}`
+      if (sqids && typeNum !== undefined) {
+        return generateSqidId(modelSingular, typeNum, sqids)
+      }
+      // Fallback if sqids not configured (shouldn't happen)
+      return `${modelSingular}_${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`
     case 'cuid':
       return `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`
     case 'ulid':
@@ -830,13 +951,6 @@ function generateId(modelSingular: string, format: string): string {
     default:
       return `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
   }
-}
-
-function generateSqidSegment(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-  const arr = new Uint8Array(8)
-  crypto.getRandomValues(arr)
-  return Array.from(arr, (b) => chars[b % chars.length]!).join('')
 }
 
 function generateUlid(): string {

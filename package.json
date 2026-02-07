@@ -27,7 +27,8 @@
     "prepublishOnly": "pnpm build"
   },
   "dependencies": {
-    "hono": "^4.7.0"
+    "hono": "^4.7.0",
+    "sqids": "^0.3.0"
   },
   "optionalDependencies": {
     "@dotdo/documentdb": "^0.1.0",
