@@ -145,6 +145,9 @@ export function databaseConvention(config: DatabaseConfig): {
   const basePath = config.rest?.basePath || ''
   const pageSize = config.rest?.pageSize || 20
   const maxPageSize = config.rest?.maxPageSize || 100
+  const metaPrefix = config.metaPrefix || '_'
+  const idFormat = config.idFormat || 'auto'
+  const useMetaFormat = metaPrefix !== '_'
 
   // Generate MCP tools
   const mcpTools = generateMcpTools(schema, config)
@@ -156,6 +159,15 @@ export function databaseConvention(config: DatabaseConfig): {
   for (const model of Object.values(schema.models)) {
     const modelPath = `${basePath}/${model.plural}`
 
+    // COUNT - GET /users/$count
+    app.get(`${modelPath}/$count`, async (c) => {
+      const db = await getDatabase(c, config)
+      const options = parseQueryOptions(c, pageSize, maxPageSize)
+      const count = await db.count(model.name, options.where)
+
+      return c.json({ data: count })
+    })
+
     // LIST - GET /users
     app.get(modelPath, async (c) => {
       const db = await getDatabase(c, config)
@@ -164,7 +176,7 @@ export function databaseConvention(config: DatabaseConfig): {
       const result = await db.list(model.name, options)
 
       return c.var.respond({
-        data: result.data,
+        data: useMetaFormat ? result.data.map((d) => formatDocument(d, model.name, metaPrefix)) : result.data,
         meta: {
           total: result.total,
           limit: result.limit,
@@ -215,13 +227,18 @@ export function databaseConvention(config: DatabaseConfig): {
         })
       }
 
+      // Generate ID if not provided and format is configured
+      if (!body.id && idFormat !== 'auto') {
+        body.id = generateId(model.singular, idFormat)
+      }
+
       const db = await getDatabase(c, config)
       const ctx = getRequestContext(c)
 
       const doc = await db.create(model.name, body, ctx)
 
       return c.var.respond({
-        data: doc,
+        data: useMetaFormat ? formatDocument(doc, model.name, metaPrefix) : doc,
         status: 201,
       })
     })
@@ -241,7 +258,7 @@ export function databaseConvention(config: DatabaseConfig): {
         })
       }
 
-      return c.var.respond({ data: doc })
+      return c.var.respond({ data: useMetaFormat ? formatDocument(doc, model.name, metaPrefix) : doc })
     })
 
     // UPDATE - PUT /users/:id
@@ -267,7 +284,7 @@ export function databaseConvention(config: DatabaseConfig): {
 
       try {
         const doc = await db.update(model.name, id, body, ctx)
-        return c.var.respond({ data: doc })
+        return c.var.respond({ data: useMetaFormat ? formatDocument(doc, model.name, metaPrefix) : doc })
       } catch (e) {
         const err = e instanceof Error ? e : new Error(String(e))
         if (err.message.includes('not found')) {
@@ -303,7 +320,7 @@ export function databaseConvention(config: DatabaseConfig): {
 
       try {
         const doc = await db.update(model.name, id, body, ctx)
-        return c.var.respond({ data: doc })
+        return c.var.respond({ data: useMetaFormat ? formatDocument(doc, model.name, metaPrefix) : doc })
       } catch (e) {
         const err = e instanceof Error ? e : new Error(String(e))
         if (err.message.includes('not found')) {
@@ -329,15 +346,17 @@ export function databaseConvention(config: DatabaseConfig): {
       })
     })
 
-    // RELATIONS - GET /users/:id/posts
+    // RELATIONS - GET /users/:id/posts (to-many), GET /posts/:id/author (to-one)
     for (const field of Object.values(model.fields)) {
-      if (field.relation?.type === 'inverse' || (field.relation?.type === 'forward' && field.relation.many)) {
+      if (!field.relation) continue
+
+      // To-many relations: inverse or forward arrays
+      if (field.relation.type === 'inverse' || (field.relation.type === 'forward' && field.relation.many)) {
         app.get(`${modelPath}/:id/${field.name}`, async (c) => {
           const db = await getDatabase(c, config)
           const id = c.req.param('id')
           const options = parseQueryOptions(c, pageSize, maxPageSize)
 
-          // Get the parent document with the relation
           const doc = await db.get(model.name, id, { include: [field.name] })
 
           if (!doc) {
@@ -350,7 +369,9 @@ export function databaseConvention(config: DatabaseConfig): {
           const relatedData = doc[field.name] as Document[] || []
 
           return c.var.respond({
-            data: relatedData.slice(options.offset || 0, (options.offset || 0) + (options.limit || pageSize)),
+            data: useMetaFormat
+              ? relatedData.slice(options.offset || 0, (options.offset || 0) + (options.limit || pageSize)).map((d) => formatDocument(d, field.relation!.target, metaPrefix))
+              : relatedData.slice(options.offset || 0, (options.offset || 0) + (options.limit || pageSize)),
             meta: {
               total: relatedData.length,
               limit: options.limit || pageSize,
@@ -359,11 +380,174 @@ export function databaseConvention(config: DatabaseConfig): {
           })
         })
       }
+
+      // To-one relations: forward singular (returns entity, not array)
+      if (field.relation.type === 'forward' && !field.relation.many) {
+        app.get(`${modelPath}/:id/${field.name}`, async (c) => {
+          const db = await getDatabase(c, config)
+          const id = c.req.param('id')
+
+          const doc = await db.get(model.name, id)
+
+          if (!doc) {
+            return c.var.respond({
+              error: { code: 'NOT_FOUND', message: `${model.name} not found` },
+              status: 404,
+            })
+          }
+
+          const targetId = doc[field.name] as string
+          if (!targetId) {
+            return c.var.respond({
+              error: { code: 'NOT_FOUND', message: `${field.name} not set on ${model.name}` },
+              status: 404,
+            })
+          }
+
+          const targetDoc = await db.get(field.relation!.target, targetId)
+          if (!targetDoc) {
+            return c.var.respond({
+              error: { code: 'NOT_FOUND', message: `Related ${field.relation!.target} not found` },
+              status: 404,
+            })
+          }
+
+          return c.var.respond({
+            data: useMetaFormat ? formatDocument(targetDoc, field.relation!.target, metaPrefix) : targetDoc,
+          })
+        })
+      }
     }
   }
 
   // NOTE: MCP endpoint removed - tools are now served through unified /mcp endpoint
   // via McpToolRegistry in api.ts
+
+  // ==========================================================================
+  // Global /:id Routes — self-describing entity access
+  // Infers type from ID prefix (e.g., contact_V1StG → Contact)
+  // ==========================================================================
+
+  // Build prefix → model lookup from schema
+  const prefixToModel: Record<string, ParsedModel> = {}
+  for (const model of Object.values(schema.models)) {
+    prefixToModel[model.singular] = model
+  }
+
+  // GET /:id — resolve any entity by self-describing ID
+  app.get(`${basePath}/:id{[a-zA-Z]+_[a-zA-Z0-9]+}`, async (c) => {
+    const id = c.req.param('id')
+    const prefix = id.split('_')[0] as string as string
+    const model = prefixToModel[prefix]
+    if (!model) {
+      return c.var.respond({
+        error: { code: 'NOT_FOUND', message: `Unknown entity type prefix: ${prefix}` },
+        status: 404,
+      })
+    }
+
+    const db = await getDatabase(c, config)
+    const include = c.req.query('include')?.split(',')
+    const doc = await db.get(model.name, id, { include })
+
+    if (!doc) {
+      return c.var.respond({
+        error: { code: 'NOT_FOUND', message: `${model.name} not found` },
+        status: 404,
+      })
+    }
+
+    return c.var.respond({ data: useMetaFormat ? formatDocument(doc, model.name, metaPrefix) : doc })
+  })
+
+  // PUT /:id — update any entity by self-describing ID
+  app.put(`${basePath}/:id{[a-zA-Z]+_[a-zA-Z0-9]+}`, async (c) => {
+    const id = c.req.param('id')
+    const prefix = id.split('_')[0] as string
+    const model = prefixToModel[prefix]
+    if (!model) {
+      return c.var.respond({
+        error: { code: 'NOT_FOUND', message: `Unknown entity type prefix: ${prefix}` },
+        status: 404,
+      })
+    }
+
+    const body = await c.req.json()
+    const validation = validateInput(model, body, false)
+    if (!validation.valid) {
+      return c.var.respond({
+        error: { code: 'VALIDATION_ERROR', message: 'Input validation failed', details: validation.errors },
+        status: 400,
+      })
+    }
+
+    const db = await getDatabase(c, config)
+    const ctx = getRequestContext(c)
+
+    try {
+      const doc = await db.update(model.name, id, body, ctx)
+      return c.var.respond({ data: useMetaFormat ? formatDocument(doc, model.name, metaPrefix) : doc })
+    } catch (e) {
+      const err = e instanceof Error ? e : new Error(String(e))
+      if (err.message.includes('not found')) {
+        return c.var.respond({ error: { code: 'NOT_FOUND', message: err.message }, status: 404 })
+      }
+      throw e
+    }
+  })
+
+  // DELETE /:id — delete any entity by self-describing ID
+  app.delete(`${basePath}/:id{[a-zA-Z]+_[a-zA-Z0-9]+}`, async (c) => {
+    const id = c.req.param('id')
+    const prefix = id.split('_')[0] as string
+    const model = prefixToModel[prefix]
+    if (!model) {
+      return c.var.respond({
+        error: { code: 'NOT_FOUND', message: `Unknown entity type prefix: ${prefix}` },
+        status: 404,
+      })
+    }
+
+    const db = await getDatabase(c, config)
+    const ctx = getRequestContext(c)
+    await db.delete(model.name, id, ctx)
+
+    return c.var.respond({ data: { deleted: true, id } })
+  })
+
+  // POST /:id/:verb — verb execution on any entity
+  app.post(`${basePath}/:id{[a-zA-Z]+_[a-zA-Z0-9]+}/:verb`, async (c) => {
+    const id = c.req.param('id')
+    const verb = c.req.param('verb')
+    const prefix = id.split('_')[0] as string
+    const model = prefixToModel[prefix]
+    if (!model) {
+      return c.var.respond({
+        error: { code: 'NOT_FOUND', message: `Unknown entity type prefix: ${prefix}` },
+        status: 404,
+      })
+    }
+
+    const db = await getDatabase(c, config)
+    const doc = await db.get(model.name, id)
+    if (!doc) {
+      return c.var.respond({
+        error: { code: 'NOT_FOUND', message: `${model.name} not found` },
+        status: 404,
+      })
+    }
+
+    // For now, verb execution updates the document with the verb payload
+    // Future: integrate with digital-objects verb conjugation system
+    const body = await c.req.json().catch(() => ({}))
+    const ctx = getRequestContext(c)
+    const updated = await db.update(model.name, id, { ...body, _lastVerb: verb }, ctx)
+
+    return c.var.respond({
+      data: useMetaFormat ? formatDocument(updated, model.name, metaPrefix) : updated,
+      meta: { verb },
+    })
+  })
 
   // ==========================================================================
   // Events Endpoint
@@ -504,17 +688,57 @@ function generateMcpTools(schema: ParsedSchema, config: DatabaseConfig): McpTool
 
 /**
  * Parse query options from request
+ *
+ * Supports MongoDB-style filter operators via query params:
+ *   ?stage=Lead              → { stage: 'Lead' }
+ *   ?stage[$in]=Lead,Qual    → { stage: { $in: ['Lead', 'Qual'] } }
+ *   ?value[$gt]=50000        → { value: { $gt: 50000 } }
+ *   ?$sort=-value            → orderBy: [{ field: 'value', direction: 'desc' }]
+ *   ?$limit=10&$offset=20    → { limit: 10, offset: 20 }
  */
-function parseQueryOptions(c: { req: { query: (k: string) => string | undefined } }, defaultLimit: number, maxLimit: number): QueryOptions {
-  const limit = Math.min(parseInt(c.req.query('limit') || String(defaultLimit), 10), maxLimit)
-  const offset = parseInt(c.req.query('offset') || '0', 10)
-  const orderBy = c.req.query('orderBy') || c.req.query('sort')
+function parseQueryOptions(c: { req: { query: (k: string) => string | undefined; url: string } }, defaultLimit: number, maxLimit: number): QueryOptions {
+  const limitParam = c.req.query('$limit') || c.req.query('limit')
+  const offsetParam = c.req.query('$offset') || c.req.query('offset')
+  const limit = Math.min(parseInt(limitParam || String(defaultLimit), 10), maxLimit)
+  const offset = parseInt(offsetParam || '0', 10)
+  const sortParam = c.req.query('$sort') || c.req.query('orderBy') || c.req.query('sort')
   const include = c.req.query('include')?.split(',')
   const select = c.req.query('select')?.split(',')
 
-  // Parse where from query params (simple key=value)
+  // Parse orderBy from $sort param: '-value' = desc, 'value' = asc
+  let orderBy: string | { field: string; direction: 'asc' | 'desc' }[] | undefined
+  if (sortParam) {
+    const sortFields = sortParam.split(',').map((s) => {
+      const trimmed = s.trim()
+      if (trimmed.startsWith('-')) {
+        return { field: trimmed.slice(1), direction: 'desc' as const }
+      }
+      return { field: trimmed, direction: 'asc' as const }
+    })
+    orderBy = sortFields
+  }
+
+  // Parse where from query params with operator support
   const where: Record<string, unknown> = {}
-  // Could be extended to support more complex filtering
+  const url = new URL(c.req.url, 'http://localhost')
+  const reservedParams = new Set(['$limit', '$offset', '$sort', 'limit', 'offset', 'orderBy', 'sort', 'include', 'select', 'cursor', 'q'])
+
+  for (const [rawKey, rawValue] of url.searchParams.entries()) {
+    if (reservedParams.has(rawKey)) continue
+
+    // Check for operator syntax: field[$op]=value
+    const opMatch = rawKey.match(/^([^[]+)\[(\$\w+)\]$/)
+    if (opMatch) {
+      const field = opMatch[1]!
+      const op = opMatch[2]!
+      const parsed = parseFilterValue(rawValue, op)
+      if (!where[field]) where[field] = {}
+      ;(where[field] as Record<string, unknown>)[op] = parsed
+    } else {
+      // Simple key=value equality
+      where[rawKey] = parseFilterValue(rawValue)
+    }
+  }
 
   return {
     where: Object.keys(where).length > 0 ? where : undefined,
@@ -527,6 +751,26 @@ function parseQueryOptions(c: { req: { query: (k: string) => string | undefined 
 }
 
 /**
+ * Parse a filter value, coercing types where appropriate
+ */
+function parseFilterValue(value: string, op?: string): unknown {
+  // $in and $nin expect comma-separated lists
+  if (op === '$in' || op === '$nin') {
+    return value.split(',').map((v) => coerceValue(v.trim()))
+  }
+  return coerceValue(value)
+}
+
+function coerceValue(value: string): unknown {
+  if (value === 'true') return true
+  if (value === 'false') return false
+  if (value === 'null') return null
+  const num = Number(value)
+  if (!isNaN(num) && value !== '') return num
+  return value
+}
+
+/**
  * Get request context for audit trail
  */
 function getRequestContext(c: { var: { requestId: string; user?: { id?: string } } }): { userId?: string; requestId?: string } {
@@ -534,6 +778,83 @@ function getRequestContext(c: { var: { requestId: string; user?: { id?: string }
     userId: c.var.user?.id,
     requestId: c.var.requestId,
   }
+}
+
+/**
+ * Format a document with the configured meta field prefix
+ */
+function formatDocument(doc: Document, modelName: string, prefix: string): Record<string, unknown> {
+  const result: Record<string, unknown> = {}
+
+  for (const [key, value] of Object.entries(doc)) {
+    if (key === 'id') {
+      result[`${prefix}id`] = value
+    } else if (key === '_version') {
+      result[`${prefix}version`] = value
+    } else if (key === '_createdAt') {
+      result[`${prefix}createdAt`] = value
+    } else if (key === '_createdBy') {
+      result[`${prefix}createdBy`] = value
+    } else if (key === '_updatedAt') {
+      result[`${prefix}updatedAt`] = value
+    } else if (key === '_updatedBy') {
+      result[`${prefix}updatedBy`] = value
+    } else if (key === '_deletedAt') {
+      result[`${prefix}deletedAt`] = value
+    } else if (key === '_deletedBy') {
+      result[`${prefix}deletedBy`] = value
+    } else if (!key.startsWith('_')) {
+      result[key] = value
+    }
+  }
+
+  result[`${prefix}type`] = modelName
+
+  return result
+}
+
+/**
+ * Generate an ID based on the configured format
+ */
+function generateId(modelSingular: string, format: string): string {
+  switch (format) {
+    case 'sqid':
+      // Use type prefix + random base36 string (simple sqid-like)
+      return `${modelSingular}_${generateSqidSegment()}`
+    case 'cuid':
+      return `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`
+    case 'ulid':
+      return generateUlid()
+    case 'uuid':
+      return crypto.randomUUID()
+    default:
+      return `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+  }
+}
+
+function generateSqidSegment(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  const arr = new Uint8Array(8)
+  crypto.getRandomValues(arr)
+  return Array.from(arr, (b) => chars[b % chars.length]!).join('')
+}
+
+function generateUlid(): string {
+  const ENCODING = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
+  const time = Date.now()
+  let timeStr = ''
+  let t = time
+  for (let i = 0; i < 10; i++) {
+    timeStr = ENCODING[t % 32] + timeStr
+    t = Math.floor(t / 32)
+  }
+  const arr = new Uint8Array(10)
+  crypto.getRandomValues(arr)
+  let randStr = ''
+  for (let i = 0; i < 10; i++) {
+    randStr += ENCODING[arr[i]! % 32]
+  }
+  return timeStr + randStr
 }
 
 // =============================================================================
@@ -547,6 +868,7 @@ interface DatabaseRpcClient {
   delete(model: string, id: string, ctx?: { userId?: string; requestId?: string }): Promise<void>
   list(model: string, options?: QueryOptions): Promise<{ data: Document[]; total: number; limit: number; offset: number; hasMore: boolean }>
   search(model: string, query: string, options?: QueryOptions): Promise<{ data: Document[]; total: number; limit: number; offset: number; hasMore: boolean }>
+  count(model: string, where?: Record<string, unknown>): Promise<number>
   getEvents?(options: { model?: string; since?: number; limit?: number }): Promise<DatabaseEvent[]>
 }
 
@@ -637,6 +959,17 @@ async function getDatabase(c: { env: Record<string, unknown>; var: { requestId: 
       if (result.error) throw new Error(result.error.message)
       return result.result!
     },
+
+    async count(model, where) {
+      const response = await stub.fetch('http://do/rpc', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ method: 'count', params: { model, where } }),
+      })
+      const result = await response.json() as { result?: number; error?: { message: string } }
+      if (result.error) throw new Error(result.error.message)
+      return result.result ?? 0
+    },
   }
 }
 
@@ -722,25 +1055,25 @@ function createInMemoryDatabase(): DatabaseRpcClient {
       const collection = getCollection(model)
       let docs = Array.from(collection.values()).filter((d) => !d._deletedAt)
 
-      // Apply where filter
+      // Apply where filter with operator support
       if (options?.where) {
-        docs = docs.filter((doc) => {
-          for (const [key, value] of Object.entries(options.where!)) {
-            if (doc[key] !== value) return false
-          }
-          return true
-        })
+        docs = docs.filter((doc) => matchesWhere(doc, options.where!))
       }
 
       // Apply orderBy
       if (options?.orderBy) {
-        const field = typeof options.orderBy === 'string' ? options.orderBy : options.orderBy[0]?.field
-        const dir = typeof options.orderBy === 'string' ? 'asc' : options.orderBy[0]?.direction || 'asc'
-        if (field) {
+        const sortFields = typeof options.orderBy === 'string'
+          ? [{ field: options.orderBy, direction: 'asc' as const }]
+          : Array.isArray(options.orderBy) ? options.orderBy : [options.orderBy]
+        const first = sortFields[0]
+        if (first?.field) {
           docs.sort((a, b) => {
-            const aVal = String(a[field] || '')
-            const bVal = String(b[field] || '')
-            return dir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal)
+            const aVal = a[first.field]
+            const bVal = b[first.field]
+            const cmp = typeof aVal === 'number' && typeof bVal === 'number'
+              ? aVal - bVal
+              : String(aVal || '').localeCompare(String(bVal || ''))
+            return first.direction === 'desc' ? -cmp : cmp
           })
         }
       }
@@ -764,7 +1097,6 @@ function createInMemoryDatabase(): DatabaseRpcClient {
       const q = query.toLowerCase()
       let docs = Array.from(collection.values()).filter((d) => !d._deletedAt)
 
-      // Simple text search across all string fields
       docs = docs.filter((doc) => {
         for (const value of Object.values(doc)) {
           if (typeof value === 'string' && value.toLowerCase().includes(q)) {
@@ -787,5 +1119,68 @@ function createInMemoryDatabase(): DatabaseRpcClient {
         hasMore: offset + docs.length < total,
       }
     },
+
+    async count(model, where) {
+      const collection = getCollection(model)
+      let docs = Array.from(collection.values()).filter((d) => !d._deletedAt)
+      if (where) {
+        docs = docs.filter((doc) => matchesWhere(doc, where))
+      }
+      return docs.length
+    },
   }
+}
+
+/**
+ * Match a document against a where clause with MongoDB-style operators
+ */
+function matchesWhere(doc: Record<string, unknown>, where: Record<string, unknown>): boolean {
+  for (const [key, condition] of Object.entries(where)) {
+    const docVal = doc[key]
+
+    // Operator object: { $gt: 5, $lt: 10 }
+    if (condition !== null && typeof condition === 'object' && !Array.isArray(condition)) {
+      const ops = condition as Record<string, unknown>
+      for (const [op, opVal] of Object.entries(ops)) {
+        switch (op) {
+          case '$eq':
+            if (docVal !== opVal) return false
+            break
+          case '$ne':
+            if (docVal === opVal) return false
+            break
+          case '$gt':
+            if (typeof docVal !== 'number' || typeof opVal !== 'number' || docVal <= opVal) return false
+            break
+          case '$gte':
+            if (typeof docVal !== 'number' || typeof opVal !== 'number' || docVal < opVal) return false
+            break
+          case '$lt':
+            if (typeof docVal !== 'number' || typeof opVal !== 'number' || docVal >= opVal) return false
+            break
+          case '$lte':
+            if (typeof docVal !== 'number' || typeof opVal !== 'number' || docVal > opVal) return false
+            break
+          case '$in':
+            if (!Array.isArray(opVal) || !opVal.includes(docVal)) return false
+            break
+          case '$nin':
+            if (Array.isArray(opVal) && opVal.includes(docVal)) return false
+            break
+          case '$exists':
+            if (opVal ? docVal === undefined : docVal !== undefined) return false
+            break
+          case '$regex': {
+            const re = new RegExp(String(opVal))
+            if (typeof docVal !== 'string' || !re.test(docVal)) return false
+            break
+          }
+        }
+      }
+    } else {
+      // Simple equality
+      if (docVal !== condition) return false
+    }
+  }
+  return true
 }

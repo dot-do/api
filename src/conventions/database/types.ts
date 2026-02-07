@@ -53,10 +53,16 @@ export interface ParsedField {
   unique: boolean
   indexed: boolean
   default?: unknown
+  enum?: string[]
+  precision?: number
+  scale?: number
+  format?: string
+  array?: boolean
   relation?: {
     type: 'forward' | 'inverse'
     target: string
     many: boolean
+    inverseField?: string
   }
   vector?: {
     dimensions: number
@@ -72,6 +78,8 @@ export interface ParsedModel {
   plural: string
   fields: Record<string, ParsedField>
   primaryKey: string
+  idStrategy?: string
+  nameField?: string
 }
 
 /**
@@ -213,6 +221,22 @@ export interface DatabaseConfig {
      */
     maxPageSize?: number
   }
+
+  /**
+   * Prefix for meta fields ($id, $type, $version, etc.)
+   * Default: '_' for backward compatibility
+   */
+  metaPrefix?: '$' | '_'
+
+  /**
+   * ID generation format
+   * - 'sqid': {type_prefix}_{sqid} (e.g., contact_V1StG)
+   * - 'cuid': compact unique ID
+   * - 'ulid': time-sortable unique ID
+   * - 'uuid': UUID v4
+   * - 'auto': timestamp_random (default)
+   */
+  idFormat?: 'sqid' | 'cuid' | 'ulid' | 'uuid' | 'auto'
 }
 
 // =============================================================================

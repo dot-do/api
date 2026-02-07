@@ -222,6 +222,8 @@ export interface DatabaseConfig {
     pageSize?: number
     maxPageSize?: number
   }
+  metaPrefix?: '$' | '_'
+  idFormat?: 'sqid' | 'cuid' | 'ulid' | 'uuid' | 'auto'
 }
 
 // Functions/Services configuration (imported from convention)
