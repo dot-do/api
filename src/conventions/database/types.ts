@@ -239,10 +239,19 @@ export interface DatabaseConfig {
   idFormat?: 'sqid' | 'cuid' | 'ulid' | 'uuid' | 'auto'
 
   /**
-   * Seed for per-org sqid alphabet shuffling.
-   * Use the GitHub org/user numeric ID for deterministic per-org encoding.
+   * Namespace encoded INTO the sqid (e.g., GitHub org/user numeric ID).
+   * This number becomes part of the sqid payload: [typeNum, namespace, timestamp, random].
+   * Decode any sqid to know which org created it.
    * Can be a number or a function that extracts from context.
-   * When not provided, uses a default alphabet (same encoding for all tenants).
+   */
+  sqidNamespace?: number | ((c: unknown) => number)
+
+  /**
+   * Seed for per-org sqid alphabet shuffling (cosmetic).
+   * Different seeds produce different-looking IDs for the same numbers.
+   * Can be combined with sqidNamespace for double isolation:
+   *   namespace = org ID in the payload, seed = org ID shuffles the alphabet.
+   * When not provided, uses a default alphabet.
    */
   sqidSeed?: number | ((c: unknown) => number)
 
@@ -291,6 +300,8 @@ export interface DecodedSqid {
   type: string
   /** Numeric type ID from the registry */
   typeNum: number
+  /** Namespace (e.g., GitHub org numeric ID), if encoded */
+  namespace?: number
   /** Timestamp (milliseconds since epoch) */
   timestamp: number
   /** Random component for uniqueness */

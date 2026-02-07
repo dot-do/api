@@ -155,8 +155,9 @@ export function databaseConvention(config: DatabaseConfig): {
   // Build type registry (model name ↔ numeric ID)
   const registry = buildTypeRegistry(schema, config.typeRegistry)
 
-  // Create sqids instance (seed can be static or per-request for per-org)
+  // Create sqids instance
   const staticSeed = typeof config.sqidSeed === 'number' ? config.sqidSeed : undefined
+  const staticNamespace = typeof config.sqidNamespace === 'number' ? config.sqidNamespace : undefined
   const sqidsInstance = idFormat === 'sqid' ? createSqids(staticSeed, config.sqidMinLength) : undefined
 
   // Generate MCP tools
@@ -240,7 +241,7 @@ export function databaseConvention(config: DatabaseConfig): {
       // Generate ID if not provided and format is configured
       if (!body.id && idFormat !== 'auto') {
         const typeNum = registry.forward[model.name]
-        body.id = generateId(model.singular, idFormat, typeNum, sqidsInstance)
+        body.id = generateId(model.singular, idFormat, typeNum, sqidsInstance, staticNamespace)
       }
 
       const db = await getDatabase(c, config)
@@ -894,22 +895,28 @@ export function createSqids(seed?: number, minLength = 8): Sqids {
 
 /**
  * Generate an ID using real sqids encoding.
- * Encodes [typeNumber, timestamp, random] into the sqid segment.
+ *
+ * Without namespace: encodes [typeNum, timestamp, random]
+ * With namespace:    encodes [typeNum, namespace, timestamp, random]
+ *
  * Full ID: `{singular}_{sqidSegment}` (e.g., `contact_V1StGXR8`)
  */
-function generateSqidId(modelSingular: string, typeNum: number, sqids: Sqids): string {
+function generateSqidId(modelSingular: string, typeNum: number, sqids: Sqids, namespace?: number): string {
   const timestamp = Date.now()
-  // Random component: crypto-random 32-bit integer for uniqueness
   const randomBytes = new Uint32Array(1)
   crypto.getRandomValues(randomBytes)
   const random = randomBytes[0]!
-  const segment = sqids.encode([typeNum, timestamp, random])
+  const numbers = namespace !== undefined ? [typeNum, namespace, timestamp, random] : [typeNum, timestamp, random]
+  const segment = sqids.encode(numbers)
   return `${modelSingular}_${segment}`
 }
 
 /**
  * Decode a sqid ID back to its components.
- * Returns the type name, type number, timestamp, and random component.
+ *
+ * Handles both formats:
+ * - 3 numbers: [typeNum, timestamp, random] (no namespace)
+ * - 4 numbers: [typeNum, namespace, timestamp, random]
  */
 export function decodeSqid(id: string, sqids: Sqids, reverse: ReverseTypeRegistry): DecodedSqid | null {
   const underscoreIdx = id.indexOf('_')
@@ -917,28 +924,34 @@ export function decodeSqid(id: string, sqids: Sqids, reverse: ReverseTypeRegistr
 
   const segment = id.slice(underscoreIdx + 1)
   const numbers = sqids.decode(segment)
-  if (numbers.length < 3) return null
 
-  const typeNum = numbers[0]!
-  const type = reverse[typeNum]
-  if (!type) return null
-
-  return {
-    type,
-    typeNum,
-    timestamp: numbers[1]!,
-    random: numbers[2]!,
+  if (numbers.length === 4) {
+    // [typeNum, namespace, timestamp, random]
+    const typeNum = numbers[0]!
+    const type = reverse[typeNum]
+    if (!type) return null
+    return { type, typeNum, namespace: numbers[1]!, timestamp: numbers[2]!, random: numbers[3]! }
   }
+
+  if (numbers.length === 3) {
+    // [typeNum, timestamp, random]
+    const typeNum = numbers[0]!
+    const type = reverse[typeNum]
+    if (!type) return null
+    return { type, typeNum, timestamp: numbers[1]!, random: numbers[2]! }
+  }
+
+  return null
 }
 
 /**
  * Generate an ID based on the configured format
  */
-function generateId(modelSingular: string, format: string, typeNum?: number, sqids?: Sqids): string {
+function generateId(modelSingular: string, format: string, typeNum?: number, sqids?: Sqids, namespace?: number): string {
   switch (format) {
     case 'sqid':
       if (sqids && typeNum !== undefined) {
-        return generateSqidId(modelSingular, typeNum, sqids)
+        return generateSqidId(modelSingular, typeNum, sqids, namespace)
       }
       // Fallback if sqids not configured (shouldn't happen)
       return `${modelSingular}_${Date.now().toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`
