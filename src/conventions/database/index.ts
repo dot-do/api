@@ -152,6 +152,9 @@ export function databaseConvention(config: DatabaseConfig): {
   const idFormat = config.idFormat || 'auto'
   const useMetaFormat = metaPrefix !== '_'
 
+  // In-memory DB cache (scoped to this convention instance for test isolation)
+  const inMemoryCache = new Map<string, DatabaseRpcClient>()
+
   // Build type registry (model name ↔ numeric ID)
   const registry = buildTypeRegistry(schema, config.typeRegistry)
 
@@ -172,16 +175,16 @@ export function databaseConvention(config: DatabaseConfig): {
 
     // COUNT - GET /users/$count
     app.get(`${modelPath}/$count`, async (c) => {
-      const db = await getDatabase(c, config)
+      const db = await getDatabase(c, config, inMemoryCache)
       const options = parseQueryOptions(c, pageSize, maxPageSize)
       const count = await db.count(model.name, options.where)
 
-      return c.json({ data: count })
+      return c.var.respond({ data: count })
     })
 
     // LIST - GET /users
     app.get(modelPath, async (c) => {
-      const db = await getDatabase(c, config)
+      const db = await getDatabase(c, config, inMemoryCache)
       const options = parseQueryOptions(c, pageSize, maxPageSize)
 
       const result = await db.list(model.name, options)
@@ -204,7 +207,7 @@ export function databaseConvention(config: DatabaseConfig): {
 
     // SEARCH - GET /users/search?q=...
     app.get(`${modelPath}/search`, async (c) => {
-      const db = await getDatabase(c, config)
+      const db = await getDatabase(c, config, inMemoryCache)
       const query = c.req.query('q') || ''
       const options = parseQueryOptions(c, pageSize, maxPageSize)
 
@@ -244,7 +247,7 @@ export function databaseConvention(config: DatabaseConfig): {
         body.id = generateId(model.singular, idFormat, typeNum, sqidsInstance, staticNamespace)
       }
 
-      const db = await getDatabase(c, config)
+      const db = await getDatabase(c, config, inMemoryCache)
       const ctx = getRequestContext(c)
 
       const doc = await db.create(model.name, body, ctx)
@@ -257,7 +260,7 @@ export function databaseConvention(config: DatabaseConfig): {
 
     // GET - GET /users/:id
     app.get(`${modelPath}/:id`, async (c) => {
-      const db = await getDatabase(c, config)
+      const db = await getDatabase(c, config, inMemoryCache)
       const id = c.req.param('id')
       const include = c.req.query('include')?.split(',')
 
@@ -291,7 +294,7 @@ export function databaseConvention(config: DatabaseConfig): {
         })
       }
 
-      const db = await getDatabase(c, config)
+      const db = await getDatabase(c, config, inMemoryCache)
       const ctx = getRequestContext(c)
 
       try {
@@ -327,7 +330,7 @@ export function databaseConvention(config: DatabaseConfig): {
         })
       }
 
-      const db = await getDatabase(c, config)
+      const db = await getDatabase(c, config, inMemoryCache)
       const ctx = getRequestContext(c)
 
       try {
@@ -347,9 +350,17 @@ export function databaseConvention(config: DatabaseConfig): {
 
     // DELETE - DELETE /users/:id
     app.delete(`${modelPath}/:id`, async (c) => {
-      const db = await getDatabase(c, config)
+      const db = await getDatabase(c, config, inMemoryCache)
       const id = c.req.param('id')
       const ctx = getRequestContext(c)
+
+      const existing = await db.get(model.name, id)
+      if (!existing) {
+        return c.var.respond({
+          error: { code: 'NOT_FOUND', message: `${model.name} not found` },
+          status: 404,
+        })
+      }
 
       await db.delete(model.name, id, ctx)
 
@@ -365,7 +376,7 @@ export function databaseConvention(config: DatabaseConfig): {
       // To-many relations: inverse or forward arrays
       if (field.relation.type === 'inverse' || (field.relation.type === 'forward' && field.relation.many)) {
         app.get(`${modelPath}/:id/${field.name}`, async (c) => {
-          const db = await getDatabase(c, config)
+          const db = await getDatabase(c, config, inMemoryCache)
           const id = c.req.param('id')
           const options = parseQueryOptions(c, pageSize, maxPageSize)
 
@@ -396,7 +407,7 @@ export function databaseConvention(config: DatabaseConfig): {
       // To-one relations: forward singular (returns entity, not array)
       if (field.relation.type === 'forward' && !field.relation.many) {
         app.get(`${modelPath}/:id/${field.name}`, async (c) => {
-          const db = await getDatabase(c, config)
+          const db = await getDatabase(c, config, inMemoryCache)
           const id = c.req.param('id')
 
           const doc = await db.get(model.name, id)
@@ -458,7 +469,7 @@ export function databaseConvention(config: DatabaseConfig): {
       })
     }
 
-    const db = await getDatabase(c, config)
+    const db = await getDatabase(c, config, inMemoryCache)
     const include = c.req.query('include')?.split(',')
     const doc = await db.get(model.name, id, { include })
 
@@ -493,7 +504,7 @@ export function databaseConvention(config: DatabaseConfig): {
       })
     }
 
-    const db = await getDatabase(c, config)
+    const db = await getDatabase(c, config, inMemoryCache)
     const ctx = getRequestContext(c)
 
     try {
@@ -520,8 +531,17 @@ export function databaseConvention(config: DatabaseConfig): {
       })
     }
 
-    const db = await getDatabase(c, config)
+    const db = await getDatabase(c, config, inMemoryCache)
     const ctx = getRequestContext(c)
+
+    const existing = await db.get(model.name, id)
+    if (!existing) {
+      return c.var.respond({
+        error: { code: 'NOT_FOUND', message: `${model.name} not found` },
+        status: 404,
+      })
+    }
+
     await db.delete(model.name, id, ctx)
 
     return c.var.respond({ data: { deleted: true, id } })
@@ -540,7 +560,7 @@ export function databaseConvention(config: DatabaseConfig): {
       })
     }
 
-    const db = await getDatabase(c, config)
+    const db = await getDatabase(c, config, inMemoryCache)
     const doc = await db.get(model.name, id)
     if (!doc) {
       return c.var.respond({
@@ -553,7 +573,7 @@ export function databaseConvention(config: DatabaseConfig): {
     // Future: integrate with digital-objects verb conjugation system
     const body = await c.req.json().catch(() => ({}))
     const ctx = getRequestContext(c)
-    const updated = await db.update(model.name, id, { ...body, _lastVerb: verb }, ctx)
+    const updated = await db.update(model.name, id, { ...body, lastVerb: verb }, ctx)
 
     return c.var.respond({
       data: useMetaFormat ? formatDocument(updated, model.name, metaPrefix) : updated,
@@ -566,7 +586,7 @@ export function databaseConvention(config: DatabaseConfig): {
   // ==========================================================================
 
   app.get('/events', async (c) => {
-    const db = await getDatabase(c, config)
+    const db = await getDatabase(c, config, inMemoryCache)
     const model = c.req.query('model')
     const since = c.req.query('since')
 
@@ -1003,7 +1023,7 @@ interface DatabaseRpcClient {
  * Get database client from context
  * This connects to the DO that stores the actual data
  */
-async function getDatabase(c: { env: Record<string, unknown>; var: { requestId: string } }, config: DatabaseConfig): Promise<DatabaseRpcClient> {
+async function getDatabase(c: { env: Record<string, unknown>; var: { requestId: string } }, config: DatabaseConfig, inMemoryCache: Map<string, DatabaseRpcClient>): Promise<DatabaseRpcClient> {
   const binding = config.binding || 'DB'
   const namespace = typeof config.namespace === 'function'
     ? config.namespace(c)
@@ -1012,8 +1032,13 @@ async function getDatabase(c: { env: Record<string, unknown>; var: { requestId: 
   const doNamespace = c.env[binding] as DurableObjectNamespace | undefined
 
   if (!doNamespace) {
-    // Fallback to in-memory for development
-    return createInMemoryDatabase()
+    // Fallback to in-memory for development/testing — cached per convention instance + namespace
+    let db = inMemoryCache.get(namespace)
+    if (!db) {
+      db = createInMemoryDatabase()
+      inMemoryCache.set(namespace, db)
+    }
+    return db
   }
 
   // Get or create the DO for this namespace
@@ -1263,6 +1288,27 @@ function createInMemoryDatabase(): DatabaseRpcClient {
  */
 function matchesWhere(doc: Record<string, unknown>, where: Record<string, unknown>): boolean {
   for (const [key, condition] of Object.entries(where)) {
+    // Logical operators
+    if (key === '$or') {
+      const clauses = condition as Record<string, unknown>[]
+      if (!clauses.some((clause) => matchesWhere(doc, clause))) return false
+      continue
+    }
+    if (key === '$and') {
+      const clauses = condition as Record<string, unknown>[]
+      if (!clauses.every((clause) => matchesWhere(doc, clause))) return false
+      continue
+    }
+    if (key === '$not') {
+      if (matchesWhere(doc, condition as Record<string, unknown>)) return false
+      continue
+    }
+    if (key === '$nor') {
+      const clauses = condition as Record<string, unknown>[]
+      if (clauses.some((clause) => matchesWhere(doc, clause))) return false
+      continue
+    }
+
     const docVal = doc[key]
 
     // Operator object: { $gt: 5, $lt: 10 }
@@ -1298,8 +1344,14 @@ function matchesWhere(doc: Record<string, unknown>, where: Record<string, unknow
             if (opVal ? docVal === undefined : docVal !== undefined) return false
             break
           case '$regex': {
-            const re = new RegExp(String(opVal))
-            if (typeof docVal !== 'string' || !re.test(docVal)) return false
+            const pattern = String(opVal)
+            if (pattern.length > 200) return false
+            try {
+              const re = new RegExp(pattern)
+              if (typeof docVal !== 'string' || !re.test(docVal)) return false
+            } catch {
+              return false
+            }
             break
           }
         }

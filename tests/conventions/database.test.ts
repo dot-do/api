@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import { Hono } from 'hono'
-import { databaseConvention, parseSchema, parseField, parseModel, generateJsonSchema } from '../../src/conventions/database'
+import { databaseConvention, parseSchema, parseField, parseModel, generateJsonSchema, buildTypeRegistry, createSqids, decodeSqid, shuffleAlphabet } from '../../src/conventions/database'
 import { responseMiddleware } from '../../src/response'
 import { contextMiddleware } from '../../src/middleware/context'
 import type { ApiEnv } from '../../src/types'
+import type { TypeRegistry, ReverseTypeRegistry } from '../../src/conventions/database'
 
 function createTestApp(schema: Record<string, Record<string, string>>) {
   const app = new Hono<ApiEnv>()
@@ -15,6 +16,18 @@ function createTestApp(schema: Record<string, Record<string, string>>) {
   app.route('', routes)
 
   return app
+}
+
+function createTestAppWithConfig(config: Parameters<typeof databaseConvention>[0]) {
+  const app = new Hono<ApiEnv>()
+
+  app.use('*', contextMiddleware())
+  app.use('*', responseMiddleware({ name: 'database-test' }))
+
+  const result = databaseConvention(config)
+  app.route('', result.routes)
+
+  return { app, ...result }
 }
 
 // Helper to make requests with an empty env (triggers in-memory DB)
@@ -998,14 +1011,34 @@ describe('REST endpoints with in-memory fallback', () => {
   it('delete returns success structure', async () => {
     const app = createTestApp(schema)
 
-    const deleteRes = await req(app, '/tasks/any-id', {
+    // Create a task first
+    const createRes = await req(app, '/tasks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'del-test', title: 'To Delete', status: 'open' }),
+    })
+    expect(createRes.status).toBe(201)
+
+    const deleteRes = await req(app, '/tasks/del-test', {
       method: 'DELETE',
     })
 
     expect(deleteRes.status).toBe(200)
     const deleteBody = await deleteRes.json() as { data: { deleted: boolean; id: string } }
     expect(deleteBody.data.deleted).toBe(true)
-    expect(deleteBody.data.id).toBe('any-id')
+    expect(deleteBody.data.id).toBe('del-test')
+  })
+
+  it('delete returns 404 for non-existent document', async () => {
+    const app = createTestApp(schema)
+
+    const deleteRes = await req(app, '/tasks/nonexistent', {
+      method: 'DELETE',
+    })
+
+    expect(deleteRes.status).toBe(404)
+    const body = await deleteRes.json() as { error: { code: string } }
+    expect(body.error.code).toBe('NOT_FOUND')
   })
 
   it('respects custom limit parameter', async () => {
@@ -1064,5 +1097,1430 @@ describe('REST endpoints with in-memory fallback', () => {
     expect(patchRes.status).toBe(400)
     const body = await patchRes.json() as { error: { code: string } }
     expect(body.error.code).toBe('VALIDATION_ERROR')
+  })
+})
+
+// =============================================================================
+// 1. Extended Schema Parser Tests
+// =============================================================================
+
+describe('Extended Schema Parser', () => {
+  describe('enum(a,b,c) syntax', () => {
+    it('parses enum() with values', () => {
+      const field = parseField('status', 'enum(active,inactive,archived)')
+      expect(field.type).toBe('string')
+      expect(field.enum).toEqual(['active', 'inactive', 'archived'])
+      expect(field.required).toBe(false)
+    })
+
+    it('parses enum() with default value', () => {
+      const field = parseField('status', 'enum(active,inactive,archived) = "active"')
+      expect(field.type).toBe('string')
+      expect(field.enum).toEqual(['active', 'inactive', 'archived'])
+      expect(field.default).toBe('active')
+    })
+
+    it('parses required enum()', () => {
+      const field = parseField('role', 'enum(admin,user,guest)!')
+      expect(field.type).toBe('string')
+      expect(field.enum).toEqual(['admin', 'user', 'guest'])
+      expect(field.required).toBe(true)
+    })
+  })
+
+  describe('pipe-separated enums', () => {
+    it('parses pipe-separated enum: Lead | Qualified | Customer', () => {
+      const field = parseField('stage', 'Lead | Qualified | Customer')
+      expect(field.type).toBe('string')
+      expect(field.enum).toEqual(['Lead', 'Qualified', 'Customer'])
+    })
+
+    it('parses pipe-separated enum with default', () => {
+      const field = parseField('stage', 'Lead | Qualified | Customer = "Lead"')
+      expect(field.type).toBe('string')
+      expect(field.enum).toEqual(['Lead', 'Qualified', 'Customer'])
+      expect(field.default).toBe('Lead')
+    })
+
+    it('parses pipe-separated enum with many values', () => {
+      const field = parseField('stage', 'Lead | Qualified | Customer | Churned | Partner')
+      expect(field.enum).toEqual(['Lead', 'Qualified', 'Customer', 'Churned', 'Partner'])
+    })
+  })
+
+  describe('decimal(n,m)', () => {
+    it('parses decimal(15,2) to number with precision/scale', () => {
+      const field = parseField('amount', 'decimal(15,2)')
+      expect(field.type).toBe('number')
+      expect(field.precision).toBe(15)
+      expect(field.scale).toBe(2)
+    })
+
+    it('parses required decimal', () => {
+      const field = parseField('price', 'decimal(10,4)!')
+      expect(field.type).toBe('number')
+      expect(field.precision).toBe(10)
+      expect(field.scale).toBe(4)
+      expect(field.required).toBe(true)
+    })
+
+    it('parses decimal with default', () => {
+      const field = parseField('rate', 'decimal(5,2) = 0.00')
+      expect(field.type).toBe('number')
+      expect(field.precision).toBe(5)
+      expect(field.scale).toBe(2)
+      expect(field.default).toBe(0)
+    })
+  })
+
+  describe('format types', () => {
+    it('parses url to string with format url', () => {
+      const field = parseField('website', 'url')
+      expect(field.type).toBe('string')
+      expect(field.format).toBe('url')
+    })
+
+    it('parses email to string with format email', () => {
+      const field = parseField('email', 'email')
+      expect(field.type).toBe('string')
+      expect(field.format).toBe('email')
+    })
+
+    it('parses markdown to string with format markdown', () => {
+      const field = parseField('body', 'markdown')
+      expect(field.type).toBe('string')
+      expect(field.format).toBe('markdown')
+    })
+
+    it('parses slug to string with format slug', () => {
+      const field = parseField('handle', 'slug')
+      expect(field.type).toBe('string')
+      expect(field.format).toBe('slug')
+    })
+
+    it('parses required url', () => {
+      const field = parseField('homepage', 'url!')
+      expect(field.type).toBe('string')
+      expect(field.format).toBe('url')
+      expect(field.required).toBe(true)
+    })
+  })
+
+  describe('inline modifiers', () => {
+    it('parses ## as unique + indexed', () => {
+      const field = parseField('code', 'string!##')
+      expect(field.unique).toBe(true)
+      expect(field.indexed).toBe(true)
+      expect(field.required).toBe(true)
+    })
+
+    it('parses # as indexed', () => {
+      const field = parseField('slug', 'string!#')
+      expect(field.indexed).toBe(true)
+      expect(field.unique).toBe(false)
+      expect(field.required).toBe(true)
+    })
+
+    it('parses ## on optional field', () => {
+      const field = parseField('sku', 'string##')
+      expect(field.unique).toBe(true)
+      expect(field.indexed).toBe(true)
+      expect(field.required).toBe(false)
+    })
+  })
+
+  describe('backrefs with inverseField', () => {
+    it('parses -> Organization.contacts with inverseField', () => {
+      const field = parseField('org', '-> Organization.contacts')
+      expect(field.type).toBe('relation')
+      expect(field.relation?.type).toBe('forward')
+      expect(field.relation?.target).toBe('Organization')
+      expect(field.relation?.inverseField).toBe('contacts')
+      expect(field.relation?.many).toBe(false)
+    })
+
+    it('parses <- Deal.contact[] with inverseField', () => {
+      const field = parseField('deals', '<- Deal.contact[]')
+      expect(field.type).toBe('relation')
+      expect(field.relation?.type).toBe('inverse')
+      expect(field.relation?.target).toBe('Deal')
+      expect(field.relation?.inverseField).toBe('contact')
+      expect(field.relation?.many).toBe(true)
+    })
+
+    it('parses forward relation with many and inverseField', () => {
+      const field = parseField('tags', '-> Tag.items[]')
+      expect(field.relation?.type).toBe('forward')
+      expect(field.relation?.target).toBe('Tag')
+      expect(field.relation?.inverseField).toBe('items')
+      expect(field.relation?.many).toBe(true)
+    })
+  })
+
+  describe('$id / $name metadata', () => {
+    it('extracts $id as idStrategy on model', () => {
+      const model = parseModel('Contact', {
+        $id: 'sqid',
+        name: 'string!',
+        email: 'email',
+      })
+      expect(model.idStrategy).toBe('sqid')
+      // $id should not appear as a field
+      expect(model.fields.$id).toBeUndefined()
+    })
+
+    it('extracts $name as nameField on model', () => {
+      const model = parseModel('Contact', {
+        $name: 'fullName',
+        fullName: 'string!',
+        email: 'email',
+      })
+      expect(model.nameField).toBe('fullName')
+      expect(model.fields.$name).toBeUndefined()
+    })
+
+    it('handles model with both $id and $name', () => {
+      const model = parseModel('Organization', {
+        $id: 'cuid',
+        $name: 'title',
+        title: 'string!',
+      })
+      expect(model.idStrategy).toBe('cuid')
+      expect(model.nameField).toBe('title')
+    })
+
+    it('model without $id has no idStrategy', () => {
+      const model = parseModel('Simple', {
+        name: 'string!',
+      })
+      expect(model.idStrategy).toBeUndefined()
+    })
+  })
+
+  describe('array types', () => {
+    it('parses string[] as array type', () => {
+      const field = parseField('tags', 'string[]')
+      expect(field.type).toBe('string')
+      expect(field.array).toBe(true)
+    })
+
+    it('parses number[] as array type', () => {
+      const field = parseField('scores', 'number[]')
+      expect(field.type).toBe('number')
+      expect(field.array).toBe(true)
+    })
+
+    it('parses boolean[] as array type', () => {
+      const field = parseField('flags', 'boolean[]')
+      expect(field.type).toBe('boolean')
+      expect(field.array).toBe(true)
+    })
+
+    it('generates JSON Schema for array fields', () => {
+      const model = parseModel('Config', {
+        tags: 'string[]',
+        scores: 'number[]',
+      })
+      const jsonSchema = generateJsonSchema(model)
+      const props = jsonSchema.properties as Record<string, { type?: string; items?: { type: string } }>
+      expect(props.tags?.type).toBe('array')
+      expect(props.tags?.items?.type).toBe('string')
+      expect(props.scores?.type).toBe('array')
+      expect(props.scores?.items?.type).toBe('number')
+    })
+  })
+})
+
+// =============================================================================
+// 2. matchesWhere Filter Engine Tests
+// =============================================================================
+
+describe('matchesWhere filter engine', () => {
+  // Test the filter engine through the in-memory database via the REST API
+  // since matchesWhere is not exported directly
+
+  const schema = {
+    Product: {
+      name: 'string!',
+      price: 'number!',
+      category: 'string',
+      active: 'boolean = true',
+      stock: 'number = 0',
+    },
+  }
+
+  async function seedProducts(app: Hono<ApiEnv>) {
+    const products = [
+      { id: 'p1', name: 'Widget', price: 10, category: 'tools', active: true, stock: 100 },
+      { id: 'p2', name: 'Gadget', price: 25, category: 'electronics', active: true, stock: 50 },
+      { id: 'p3', name: 'Doohickey', price: 50, category: 'tools', active: false, stock: 0 },
+      { id: 'p4', name: 'Thingamajig', price: 100, category: 'electronics', active: true, stock: 200 },
+      { id: 'p5', name: 'Whatchamacallit', price: 5, category: 'misc', active: false, stock: 10 },
+    ]
+    for (const p of products) {
+      await req(app, '/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(p),
+      })
+    }
+  }
+
+  it('$eq matches exact value via query param', async () => {
+    const app = createTestApp(schema)
+    await seedProducts(app)
+
+    const res = await req(app, '/products?category=tools')
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: { id: string; category: string }[] }
+    expect(body.data.every((d) => d.category === 'tools')).toBe(true)
+    expect(body.data.length).toBe(2)
+  })
+
+  it('$gt filters greater than via operator syntax', async () => {
+    const app = createTestApp(schema)
+    await seedProducts(app)
+
+    const res = await req(app, '/products?price[$gt]=25')
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: { id: string; price: number }[] }
+    expect(body.data.every((d) => d.price > 25)).toBe(true)
+    expect(body.data.length).toBe(2) // Doohickey (50) and Thingamajig (100)
+  })
+
+  it('$gte filters greater than or equal', async () => {
+    const app = createTestApp(schema)
+    await seedProducts(app)
+
+    const res = await req(app, '/products?price[$gte]=25')
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: { id: string; price: number }[] }
+    expect(body.data.every((d) => d.price >= 25)).toBe(true)
+    expect(body.data.length).toBe(3) // Gadget (25), Doohickey (50), Thingamajig (100)
+  })
+
+  it('$lt filters less than', async () => {
+    const app = createTestApp(schema)
+    await seedProducts(app)
+
+    const res = await req(app, '/products?price[$lt]=25')
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: { id: string; price: number }[] }
+    expect(body.data.every((d) => d.price < 25)).toBe(true)
+    expect(body.data.length).toBe(2) // Widget (10) and Whatchamacallit (5)
+  })
+
+  it('$lte filters less than or equal', async () => {
+    const app = createTestApp(schema)
+    await seedProducts(app)
+
+    const res = await req(app, '/products?price[$lte]=10')
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: { id: string; price: number }[] }
+    expect(body.data.every((d) => d.price <= 10)).toBe(true)
+    expect(body.data.length).toBe(2) // Widget (10) and Whatchamacallit (5)
+  })
+
+  it('$in matches values in array', async () => {
+    const app = createTestApp(schema)
+    await seedProducts(app)
+
+    const res = await req(app, '/products?category[$in]=tools,misc')
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: { id: string; category: string }[] }
+    expect(body.data.every((d) => ['tools', 'misc'].includes(d.category))).toBe(true)
+    expect(body.data.length).toBe(3) // Widget, Doohickey, Whatchamacallit
+  })
+
+  it('$nin rejects values in array', async () => {
+    const app = createTestApp(schema)
+    await seedProducts(app)
+
+    const res = await req(app, '/products?category[$nin]=tools,misc')
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: { id: string; category: string }[] }
+    expect(body.data.every((d) => !['tools', 'misc'].includes(d.category))).toBe(true)
+    expect(body.data.length).toBe(2) // Gadget and Thingamajig
+  })
+
+  it('$ne rejects matching value', async () => {
+    const app = createTestApp(schema)
+    await seedProducts(app)
+
+    const res = await req(app, '/products?category[$ne]=tools')
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: { id: string; category: string }[] }
+    expect(body.data.every((d) => d.category !== 'tools')).toBe(true)
+    expect(body.data.length).toBe(3) // Gadget, Thingamajig, Whatchamacallit
+  })
+
+  it('$exists checks field presence (true)', async () => {
+    const app = createTestApp(schema)
+    await seedProducts(app)
+
+    // All products have 'category' set, so $exists=true should return all
+    const res = await req(app, '/products?category[$exists]=true')
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: { id: string }[] }
+    expect(body.data.length).toBe(5)
+  })
+
+  it('$regex matches pattern', async () => {
+    const app = createTestApp(schema)
+    await seedProducts(app)
+
+    const res = await req(app, '/products?name[$regex]=^W')
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: { id: string; name: string }[] }
+    expect(body.data.every((d) => d.name.startsWith('W'))).toBe(true)
+    expect(body.data.length).toBe(2) // Widget, Whatchamacallit
+  })
+
+  it('returns all items when no filter is specified', async () => {
+    const app = createTestApp(schema)
+    await seedProducts(app)
+
+    const res = await req(app, '/products')
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: { id: string }[]; meta: { total: number } }
+    expect(body.data.length).toBe(5)
+    expect(body.meta.total).toBe(5)
+  })
+
+  it('handles multiple filters combined (AND semantics)', async () => {
+    const app = createTestApp(schema)
+    await seedProducts(app)
+
+    const res = await req(app, '/products?category=tools&price[$gt]=20')
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: { id: string; category: string; price: number }[] }
+    expect(body.data.length).toBe(1) // Doohickey (tools, price=50)
+    expect(body.data[0]!.category).toBe('tools')
+    expect(body.data[0]!.price).toBe(50)
+  })
+
+  it('returns empty array when no items match filter', async () => {
+    const app = createTestApp(schema)
+    await seedProducts(app)
+
+    const res = await req(app, '/products?price[$gt]=1000')
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: unknown[]; meta: { total: number } }
+    expect(body.data.length).toBe(0)
+    expect(body.meta.total).toBe(0)
+  })
+})
+
+// =============================================================================
+// 3. $count Endpoint Tests
+// =============================================================================
+
+describe('$count endpoint', () => {
+  const schema = {
+    Item: {
+      name: 'string!',
+      category: 'string',
+      value: 'number = 0',
+    },
+  }
+
+  it('returns count of all entities', async () => {
+    const app = createTestApp(schema)
+
+    // Seed some items
+    for (let i = 0; i < 5; i++) {
+      await req(app, '/items', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: `item-${i}`, name: `Item ${i}`, category: i % 2 === 0 ? 'A' : 'B' }),
+      })
+    }
+
+    const res = await req(app, '/items/$count')
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: number }
+    expect(body.data).toBe(5)
+  })
+
+  it('returns count with filter', async () => {
+    const app = createTestApp(schema)
+
+    // Seed items in different categories
+    await req(app, '/items', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'a1', name: 'A1', category: 'alpha' }),
+    })
+    await req(app, '/items', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'a2', name: 'A2', category: 'alpha' }),
+    })
+    await req(app, '/items', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'b1', name: 'B1', category: 'beta' }),
+    })
+
+    const res = await req(app, '/items/$count?category=alpha')
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: number }
+    expect(body.data).toBe(2)
+  })
+
+  it('returns 0 for empty collection', async () => {
+    const app = createTestApp(schema)
+
+    const res = await req(app, '/items/$count')
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: number }
+    expect(body.data).toBe(0)
+  })
+})
+
+// =============================================================================
+// 4. Global /:id Routes Tests
+// =============================================================================
+
+describe('Global /:id routes', () => {
+  const schema = {
+    Contact: {
+      name: 'string!',
+      email: 'email',
+    },
+    Deal: {
+      title: 'string!',
+      value: 'number',
+    },
+  }
+
+  it('GET /:id resolves entity by prefix', async () => {
+    const app = createTestApp(schema)
+
+    // Create a contact via the typed endpoint
+    await req(app, '/contacts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'contact_abc123', name: 'Alice', email: 'alice@test.com' }),
+    })
+
+    // Fetch via global /:id route
+    const res = await req(app, '/contact_abc123')
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: { id: string; name: string } }
+    expect(body.data.id).toBe('contact_abc123')
+    expect(body.data.name).toBe('Alice')
+  })
+
+  it('GET /:id returns 404 for unknown prefix', async () => {
+    const app = createTestApp(schema)
+
+    const res = await req(app, '/unknown_abc123')
+    expect(res.status).toBe(404)
+    const body = await res.json() as { error: { code: string; message: string } }
+    expect(body.error.code).toBe('NOT_FOUND')
+    expect(body.error.message).toContain('Unknown entity type prefix')
+  })
+
+  it('GET /:id returns 404 for nonexistent entity', async () => {
+    const app = createTestApp(schema)
+
+    const res = await req(app, '/contact_doesnotexist')
+    expect(res.status).toBe(404)
+    const body = await res.json() as { error: { code: string } }
+    expect(body.error.code).toBe('NOT_FOUND')
+  })
+
+  it('PUT /:id updates entity by prefix', async () => {
+    const app = createTestApp(schema)
+
+    // Create a deal
+    await req(app, '/deals', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'deal_xyz789', title: 'Big Deal', value: 50000 }),
+    })
+
+    // Update via global /:id route
+    const res = await req(app, '/deal_xyz789', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: 'Bigger Deal', value: 75000 }),
+    })
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: { id: string; title: string; value: number } }
+    expect(body.data.title).toBe('Bigger Deal')
+    expect(body.data.value).toBe(75000)
+  })
+
+  it('DELETE /:id deletes entity by prefix', async () => {
+    const app = createTestApp(schema)
+
+    // Create then delete
+    await req(app, '/contacts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'contact_del1', name: 'ToDelete' }),
+    })
+
+    const res = await req(app, '/contact_del1', { method: 'DELETE' })
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: { deleted: boolean; id: string } }
+    expect(body.data.deleted).toBe(true)
+    expect(body.data.id).toBe('contact_del1')
+  })
+
+  it('DELETE /:id returns 404 for nonexistent entity', async () => {
+    const app = createTestApp(schema)
+
+    const res = await req(app, '/contact_nonexist', { method: 'DELETE' })
+    expect(res.status).toBe(404)
+    const body = await res.json() as { error: { code: string } }
+    expect(body.error.code).toBe('NOT_FOUND')
+  })
+
+  it('PUT /:id returns 404 for unknown prefix', async () => {
+    const app = createTestApp(schema)
+
+    const res = await req(app, '/bogus_abc123', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'test' }),
+    })
+    expect(res.status).toBe(404)
+  })
+})
+
+// =============================================================================
+// 5. Verb Execution Tests
+// =============================================================================
+
+describe('Verb execution', () => {
+  const schema = {
+    Contact: {
+      name: 'string!',
+      stage: 'Lead | Qualified | Customer',
+    },
+  }
+
+  it('POST /:id/:verb stores verb on entity', async () => {
+    const app = createTestApp(schema)
+
+    // Create a contact
+    await req(app, '/contacts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'contact_v1', name: 'Alice', stage: 'Lead' }),
+    })
+
+    // Execute a verb
+    const res = await req(app, '/contact_v1/qualify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stage: 'Qualified' }),
+    })
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: { id: string; lastVerb: string; stage: string }; meta: { verb: string } }
+    expect(body.data.lastVerb).toBe('qualify')
+    expect(body.data.stage).toBe('Qualified')
+    expect(body.meta.verb).toBe('qualify')
+  })
+
+  it('POST /:id/:verb returns 404 for nonexistent entity', async () => {
+    const app = createTestApp(schema)
+
+    const res = await req(app, '/contact_nonexist/qualify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    })
+    expect(res.status).toBe(404)
+    const body = await res.json() as { error: { code: string } }
+    expect(body.error.code).toBe('NOT_FOUND')
+  })
+
+  it('POST /:id/:verb works with empty body', async () => {
+    const app = createTestApp(schema)
+
+    await req(app, '/contacts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'contact_v2', name: 'Bob', stage: 'Lead' }),
+    })
+
+    // Execute verb with no body at all
+    const res = await req(app, '/contact_v2/archive', {
+      method: 'POST',
+    })
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: { lastVerb: string }; meta: { verb: string } }
+    expect(body.data.lastVerb).toBe('archive')
+    expect(body.meta.verb).toBe('archive')
+  })
+})
+
+// =============================================================================
+// 6. formatDocument with metaPrefix Tests
+// =============================================================================
+
+describe('formatDocument with metaPrefix', () => {
+  it('transforms _ prefix to $ prefix when metaPrefix is $', async () => {
+    const { app } = createTestAppWithConfig({
+      schema: {
+        Contact: {
+          name: 'string!',
+          email: 'email',
+        },
+      },
+      metaPrefix: '$',
+    })
+
+    const createRes = await req(app, '/contacts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'contact_fmt1', name: 'Alice', email: 'alice@test.com' }),
+    })
+
+    expect(createRes.status).toBe(201)
+    const body = await createRes.json() as { data: Record<string, unknown> }
+    const data = body.data
+
+    // Meta fields should use $ prefix
+    expect(data.$id).toBe('contact_fmt1')
+    expect(data.$version).toBe(1)
+    expect(data.$createdAt).toBeDefined()
+    expect(data.$type).toBe('Contact')
+
+    // User data fields should be preserved without prefix
+    expect(data.name).toBe('Alice')
+    expect(data.email).toBe('alice@test.com')
+
+    // Old _ prefix fields should NOT be present
+    expect(data.id).toBeUndefined()
+    expect(data._version).toBeUndefined()
+    expect(data._createdAt).toBeUndefined()
+  })
+
+  it('adds $type field', async () => {
+    const { app } = createTestAppWithConfig({
+      schema: {
+        Deal: {
+          title: 'string!',
+          value: 'number',
+        },
+      },
+      metaPrefix: '$',
+    })
+
+    const createRes = await req(app, '/deals', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'deal_fmt1', title: 'Big Deal', value: 100000 }),
+    })
+    expect(createRes.status).toBe(201)
+    const body = await createRes.json() as { data: Record<string, unknown> }
+    expect(body.data.$type).toBe('Deal')
+  })
+
+  it('preserves user data fields', async () => {
+    const { app } = createTestAppWithConfig({
+      schema: {
+        Product: {
+          name: 'string!',
+          price: 'number!',
+          description: 'text',
+        },
+      },
+      metaPrefix: '$',
+    })
+
+    const createRes = await req(app, '/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: 'product_fmt1',
+        name: 'Widget',
+        price: 29.99,
+        description: 'A fine widget',
+      }),
+    })
+    expect(createRes.status).toBe(201)
+    const body = await createRes.json() as { data: Record<string, unknown> }
+    expect(body.data.name).toBe('Widget')
+    expect(body.data.price).toBe(29.99)
+    expect(body.data.description).toBe('A fine widget')
+  })
+
+  it('uses _ prefix by default (no transformation)', async () => {
+    const app = createTestApp({
+      Contact: {
+        name: 'string!',
+      },
+    })
+
+    const createRes = await req(app, '/contacts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'c1', name: 'Alice' }),
+    })
+    expect(createRes.status).toBe(201)
+    const body = await createRes.json() as { data: Record<string, unknown> }
+    // Default _ prefix means fields come back with _ prefix (no transformation)
+    expect(body.data.id).toBe('c1')
+    expect(body.data._version).toBe(1)
+    expect(body.data._createdAt).toBeDefined()
+  })
+
+  it('list endpoint also uses $ prefix format', async () => {
+    const { app } = createTestAppWithConfig({
+      schema: {
+        Note: {
+          content: 'string!',
+        },
+      },
+      metaPrefix: '$',
+    })
+
+    await req(app, '/notes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'note_1', content: 'Hello' }),
+    })
+
+    const listRes = await req(app, '/notes')
+    expect(listRes.status).toBe(200)
+    const body = await listRes.json() as { data: Record<string, unknown>[] }
+    expect(body.data.length).toBe(1)
+    expect(body.data[0]!.$id).toBe('note_1')
+    expect(body.data[0]!.$type).toBe('Note')
+    expect(body.data[0]!.content).toBe('Hello')
+  })
+})
+
+// =============================================================================
+// 7. Type Registry Tests
+// =============================================================================
+
+describe('buildTypeRegistry', () => {
+  it('auto-generates from schema in insertion order', () => {
+    const schema = parseSchema({
+      Contact: { name: 'string!' },
+      Deal: { title: 'string!' },
+      Company: { name: 'string!' },
+    })
+
+    const registry = buildTypeRegistry(schema)
+    expect(registry.forward.Contact).toBe(1)
+    expect(registry.forward.Deal).toBe(2)
+    expect(registry.forward.Company).toBe(3)
+  })
+
+  it('creates correct reverse mapping', () => {
+    const schema = parseSchema({
+      Contact: { name: 'string!' },
+      Deal: { title: 'string!' },
+    })
+
+    const registry = buildTypeRegistry(schema)
+    expect(registry.reverse[1]).toBe('Contact')
+    expect(registry.reverse[2]).toBe('Deal')
+  })
+
+  it('uses explicit registry when provided', () => {
+    const schema = parseSchema({
+      Contact: { name: 'string!' },
+      Deal: { title: 'string!' },
+    })
+
+    const explicit: TypeRegistry = { Contact: 10, Deal: 20 }
+    const registry = buildTypeRegistry(schema, explicit)
+
+    expect(registry.forward.Contact).toBe(10)
+    expect(registry.forward.Deal).toBe(20)
+    expect(registry.reverse[10]).toBe('Contact')
+    expect(registry.reverse[20]).toBe('Deal')
+  })
+
+  it('fills gaps for models not in explicit registry', () => {
+    const schema = parseSchema({
+      Contact: { name: 'string!' },
+      Deal: { title: 'string!' },
+      Company: { name: 'string!' },
+    })
+
+    // Only Contact and Deal are explicitly mapped
+    const explicit: TypeRegistry = { Contact: 5, Deal: 10 }
+    const registry = buildTypeRegistry(schema, explicit)
+
+    expect(registry.forward.Contact).toBe(5)
+    expect(registry.forward.Deal).toBe(10)
+    // Company should be assigned next available ID after the max explicit (10)
+    expect(registry.forward.Company).toBe(11)
+    expect(registry.reverse[11]).toBe('Company')
+  })
+
+  it('handles empty schema', () => {
+    const schema = parseSchema({})
+    const registry = buildTypeRegistry(schema)
+    expect(Object.keys(registry.forward)).toHaveLength(0)
+    expect(Object.keys(registry.reverse)).toHaveLength(0)
+  })
+
+  it('handles empty explicit registry', () => {
+    const schema = parseSchema({
+      Contact: { name: 'string!' },
+    })
+
+    const registry = buildTypeRegistry(schema, {})
+    // With empty explicit, next ID starts at 1 (max of empty + 1)
+    expect(registry.forward.Contact).toBe(1)
+    expect(registry.reverse[1]).toBe('Contact')
+  })
+})
+
+// =============================================================================
+// 8. Sqid ID Generation Tests
+// =============================================================================
+
+describe('sqid ID generation', () => {
+  it('generates IDs with minimum length', () => {
+    const sqids = createSqids()
+
+    // Encode with typical arguments
+    const encoded = sqids.encode([1, Date.now(), 12345])
+    expect(encoded.length).toBeGreaterThanOrEqual(8) // default minLength = 8
+  })
+
+  it('generates decodable sqids', () => {
+    const schema = parseSchema({
+      Contact: { name: 'string!' },
+      Deal: { title: 'string!' },
+    })
+    const registry = buildTypeRegistry(schema)
+    const sqids = createSqids()
+
+    const typeNum = registry.forward.Contact! // 1
+    const timestamp = Date.now()
+    const random = 42
+
+    const encoded = sqids.encode([typeNum, timestamp, random])
+    const decoded = sqids.decode(encoded)
+
+    expect(decoded).toEqual([typeNum, timestamp, random])
+  })
+
+  it('decodeSqid parses 3-number format (no namespace)', () => {
+    const schema = parseSchema({
+      Contact: { name: 'string!' },
+    })
+    const registry = buildTypeRegistry(schema)
+    const sqids = createSqids()
+
+    const typeNum = 1
+    const timestamp = Date.now()
+    const random = 99999
+
+    const segment = sqids.encode([typeNum, timestamp, random])
+    const fullId = `contact_${segment}`
+
+    const decoded = decodeSqid(fullId, sqids, registry.reverse)
+    expect(decoded).not.toBeNull()
+    expect(decoded!.type).toBe('Contact')
+    expect(decoded!.typeNum).toBe(1)
+    expect(decoded!.timestamp).toBe(timestamp)
+    expect(decoded!.random).toBe(random)
+    expect(decoded!.namespace).toBeUndefined()
+  })
+
+  it('decodeSqid parses 4-number format (with namespace)', () => {
+    const schema = parseSchema({
+      Contact: { name: 'string!' },
+    })
+    const registry = buildTypeRegistry(schema)
+    const sqids = createSqids()
+
+    const typeNum = 1
+    const namespace = 12345 // e.g., GitHub org ID
+    const timestamp = Date.now()
+    const random = 77777
+
+    const segment = sqids.encode([typeNum, namespace, timestamp, random])
+    const fullId = `contact_${segment}`
+
+    const decoded = decodeSqid(fullId, sqids, registry.reverse)
+    expect(decoded).not.toBeNull()
+    expect(decoded!.type).toBe('Contact')
+    expect(decoded!.typeNum).toBe(1)
+    expect(decoded!.namespace).toBe(namespace)
+    expect(decoded!.timestamp).toBe(timestamp)
+    expect(decoded!.random).toBe(random)
+  })
+
+  it('decodeSqid returns null for invalid ID format (no underscore)', () => {
+    const sqids = createSqids()
+    const reverse: ReverseTypeRegistry = { 1: 'Contact' }
+
+    expect(decodeSqid('nounderscore', sqids, reverse)).toBeNull()
+  })
+
+  it('decodeSqid returns null for unknown type number', () => {
+    const sqids = createSqids()
+    const reverse: ReverseTypeRegistry = { 1: 'Contact' }
+
+    // Encode with type number 99 which is not in the registry
+    const segment = sqids.encode([99, Date.now(), 1234])
+    const fullId = `unknown_${segment}`
+
+    expect(decodeSqid(fullId, sqids, reverse)).toBeNull()
+  })
+
+  it('generates unique IDs', () => {
+    const sqids = createSqids()
+    const ids = new Set<string>()
+    const typeNum = 1
+
+    for (let i = 0; i < 100; i++) {
+      const timestamp = Date.now()
+      const randomBytes = new Uint32Array(1)
+      crypto.getRandomValues(randomBytes)
+      const random = randomBytes[0]!
+      const segment = sqids.encode([typeNum, timestamp, random])
+      ids.add(segment)
+    }
+
+    // All 100 IDs should be unique
+    expect(ids.size).toBe(100)
+  })
+
+  it('respects sqidSeed for alphabet shuffling', () => {
+    const sqids1 = createSqids(12345)
+    const sqids2 = createSqids(67890)
+
+    // Same numbers, different seeds should produce different encodings
+    const numbers = [1, Date.now(), 42]
+    const encoded1 = sqids1.encode(numbers)
+    const encoded2 = sqids2.encode(numbers)
+
+    expect(encoded1).not.toBe(encoded2)
+
+    // But each should decode correctly with its own instance
+    expect(sqids1.decode(encoded1)).toEqual(numbers)
+    expect(sqids2.decode(encoded2)).toEqual(numbers)
+  })
+
+  it('respects sqidMinLength', () => {
+    const sqidsShort = createSqids(undefined, 4)
+    const sqidsLong = createSqids(undefined, 16)
+
+    const numbers = [1, 100, 200]
+    const shortEncoded = sqidsShort.encode(numbers)
+    const longEncoded = sqidsLong.encode(numbers)
+
+    expect(shortEncoded.length).toBeGreaterThanOrEqual(4)
+    expect(longEncoded.length).toBeGreaterThanOrEqual(16)
+  })
+
+  it('shuffleAlphabet is deterministic for same seed', () => {
+    const alphabet = 'abcdefghijklmnopqrstuvwxyz'
+    const result1 = shuffleAlphabet(alphabet, 42)
+    const result2 = shuffleAlphabet(alphabet, 42)
+    expect(result1).toBe(result2)
+  })
+
+  it('shuffleAlphabet produces different results for different seeds', () => {
+    const alphabet = 'abcdefghijklmnopqrstuvwxyz'
+    const result1 = shuffleAlphabet(alphabet, 1)
+    const result2 = shuffleAlphabet(alphabet, 2)
+    expect(result1).not.toBe(result2)
+  })
+
+  it('shuffleAlphabet preserves all characters', () => {
+    const alphabet = 'abcdefghijklmnopqrstuvwxyz'
+    const shuffled = shuffleAlphabet(alphabet, 42)
+    expect(shuffled.length).toBe(alphabet.length)
+    // Every character in the original should be in the shuffled result
+    for (const char of alphabet) {
+      expect(shuffled).toContain(char)
+    }
+  })
+
+  it('sqid generation through REST API creates prefixed IDs', async () => {
+    const { app } = createTestAppWithConfig({
+      schema: { Contact: { name: 'string!' } },
+      idFormat: 'sqid',
+    })
+
+    const res = await req(app, '/contacts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Alice' }),
+    })
+
+    expect(res.status).toBe(201)
+    const body = await res.json() as { data: { id: string } }
+    // ID should start with the singular model name followed by underscore
+    expect(body.data.id).toMatch(/^contact_/)
+    // The sqid segment should have minimum length of 8
+    const segment = body.data.id.split('_')[1]!
+    expect(segment.length).toBeGreaterThanOrEqual(8)
+  })
+
+  it('sqid generation with namespace encodes 4 numbers', () => {
+    const schema = parseSchema({ Contact: { name: 'string!' } })
+    const registry = buildTypeRegistry(schema)
+    const sqids = createSqids()
+
+    // Simulate what generateSqidId does with a namespace
+    const typeNum = registry.forward.Contact!
+    const namespace = 54321
+    const timestamp = Date.now()
+    const random = 11111
+    const segment = sqids.encode([typeNum, namespace, timestamp, random])
+    const fullId = `contact_${segment}`
+
+    const decoded = decodeSqid(fullId, sqids, registry.reverse)
+    expect(decoded).not.toBeNull()
+    expect(decoded!.namespace).toBe(54321)
+    expect(decoded!.type).toBe('Contact')
+  })
+})
+
+// =============================================================================
+// 9. Sorting via $sort / orderBy Tests
+// =============================================================================
+
+describe('Sorting via $sort param', () => {
+  const schema = {
+    Task: {
+      title: 'string!',
+      priority: 'number = 0',
+      status: 'string',
+    },
+  }
+
+  it('sorts ascending by default', async () => {
+    const app = createTestApp(schema)
+
+    await req(app, '/tasks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 't1', title: 'C Task', priority: 3 }),
+    })
+    await req(app, '/tasks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 't2', title: 'A Task', priority: 1 }),
+    })
+    await req(app, '/tasks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 't3', title: 'B Task', priority: 2 }),
+    })
+
+    const res = await req(app, '/tasks?$sort=priority')
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: { priority: number }[] }
+    expect(body.data[0]!.priority).toBe(1)
+    expect(body.data[1]!.priority).toBe(2)
+    expect(body.data[2]!.priority).toBe(3)
+  })
+
+  it('sorts descending with - prefix', async () => {
+    const app = createTestApp(schema)
+
+    await req(app, '/tasks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 't1', title: 'Low', priority: 1 }),
+    })
+    await req(app, '/tasks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 't2', title: 'High', priority: 3 }),
+    })
+    await req(app, '/tasks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 't3', title: 'Mid', priority: 2 }),
+    })
+
+    const res = await req(app, '/tasks?$sort=-priority')
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: { priority: number }[] }
+    expect(body.data[0]!.priority).toBe(3)
+    expect(body.data[1]!.priority).toBe(2)
+    expect(body.data[2]!.priority).toBe(1)
+  })
+})
+
+// =============================================================================
+// 10. Search Endpoint Tests
+// =============================================================================
+
+describe('Search endpoint', () => {
+  const schema = {
+    Article: {
+      title: 'string!',
+      body: 'text',
+      author: 'string',
+    },
+  }
+
+  it('finds documents matching search query', async () => {
+    const app = createTestApp(schema)
+
+    await req(app, '/articles', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'a1', title: 'Introduction to TypeScript', body: 'TypeScript is great', author: 'Alice' }),
+    })
+    await req(app, '/articles', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'a2', title: 'Python Basics', body: 'Python is versatile', author: 'Bob' }),
+    })
+    await req(app, '/articles', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'a3', title: 'Advanced TypeScript', body: 'Generics and more', author: 'Alice' }),
+    })
+
+    const res = await req(app, '/articles/search?q=typescript')
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: { id: string; title: string }[]; meta: { query: string; total: number } }
+    expect(body.meta.query).toBe('typescript')
+    expect(body.data.length).toBe(2) // Both TypeScript articles
+    expect(body.data.every((d) => d.title.toLowerCase().includes('typescript'))).toBe(true)
+  })
+
+  it('search is case-insensitive', async () => {
+    const app = createTestApp(schema)
+
+    await req(app, '/articles', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'a1', title: 'HELLO WORLD', body: 'test' }),
+    })
+
+    const res = await req(app, '/articles/search?q=hello')
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: { id: string }[] }
+    expect(body.data.length).toBe(1)
+  })
+
+  it('returns empty results for no matches', async () => {
+    const app = createTestApp(schema)
+
+    await req(app, '/articles', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'a1', title: 'Hello', body: 'world' }),
+    })
+
+    const res = await req(app, '/articles/search?q=nonexistent')
+    expect(res.status).toBe(200)
+    const body = await res.json() as { data: unknown[]; meta: { total: number } }
+    expect(body.data.length).toBe(0)
+    expect(body.meta.total).toBe(0)
+  })
+})
+
+// =============================================================================
+// 11. JSON Schema Generation for New Field Types
+// =============================================================================
+
+describe('generateJsonSchema for extended types', () => {
+  it('includes enum values in JSON Schema', () => {
+    const model = parseModel('Contact', {
+      stage: 'Lead | Qualified | Customer',
+    })
+    const jsonSchema = generateJsonSchema(model)
+    const props = jsonSchema.properties as Record<string, { type?: string; enum?: string[] }>
+    expect(props.stage?.type).toBe('string')
+    expect(props.stage?.enum).toEqual(['Lead', 'Qualified', 'Customer'])
+  })
+
+  it('includes format in JSON Schema for url fields', () => {
+    const model = parseModel('Site', {
+      homepage: 'url!',
+    })
+    const jsonSchema = generateJsonSchema(model)
+    const props = jsonSchema.properties as Record<string, { type?: string; format?: string }>
+    expect(props.homepage?.type).toBe('string')
+    expect(props.homepage?.format).toBe('url')
+  })
+
+  it('includes format in JSON Schema for email fields', () => {
+    const model = parseModel('User', {
+      email: 'email!',
+    })
+    const jsonSchema = generateJsonSchema(model)
+    const props = jsonSchema.properties as Record<string, { type?: string; format?: string }>
+    expect(props.email?.type).toBe('string')
+    expect(props.email?.format).toBe('email')
+  })
+
+  it('wraps array types correctly', () => {
+    const model = parseModel('Config', {
+      tags: 'string[]',
+      scores: 'number[]',
+    })
+    const jsonSchema = generateJsonSchema(model)
+    const props = jsonSchema.properties as Record<string, { type?: string; items?: { type: string } }>
+    expect(props.tags?.type).toBe('array')
+    expect(props.tags?.items?.type).toBe('string')
+    expect(props.scores?.type).toBe('array')
+    expect(props.scores?.items?.type).toBe('number')
+  })
+
+  it('generates number type for decimal fields', () => {
+    const model = parseModel('Invoice', {
+      amount: 'decimal(15,2)!',
+    })
+    const jsonSchema = generateJsonSchema(model)
+    const props = jsonSchema.properties as Record<string, { type?: string }>
+    expect(props.amount?.type).toBe('number')
+  })
+
+  it('includes enum from enum() syntax in JSON Schema', () => {
+    const model = parseModel('Order', {
+      status: 'enum(pending,processing,shipped,delivered)',
+    })
+    const jsonSchema = generateJsonSchema(model)
+    const props = jsonSchema.properties as Record<string, { type?: string; enum?: string[] }>
+    expect(props.status?.enum).toEqual(['pending', 'processing', 'shipped', 'delivered'])
+  })
+})
+
+// =============================================================================
+// 12. CRUD Lifecycle (Create-Read-Update-Delete) Integration Tests
+// =============================================================================
+
+describe('CRUD lifecycle integration', () => {
+  const schema = {
+    Customer: {
+      name: 'string!',
+      email: 'email!',
+      tier: 'Free | Pro | Enterprise = "Free"',
+      mrr: 'number = 0',
+    },
+  }
+
+  it('full create-read-update-delete cycle', async () => {
+    const app = createTestApp(schema)
+
+    // CREATE
+    const createRes = await req(app, '/customers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'cust_1', name: 'Acme Inc', email: 'billing@acme.co', tier: 'Free', mrr: 0 }),
+    })
+    expect(createRes.status).toBe(201)
+    const created = (await createRes.json() as { data: Record<string, unknown> }).data
+    expect(created._version).toBe(1)
+
+    // READ
+    const getRes = await req(app, '/customers/cust_1')
+    expect(getRes.status).toBe(200)
+    const fetched = (await getRes.json() as { data: Record<string, unknown> }).data
+    expect(fetched.name).toBe('Acme Inc')
+    expect(fetched.email).toBe('billing@acme.co')
+
+    // UPDATE (PUT)
+    const putRes = await req(app, '/customers/cust_1', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Acme Corp', email: 'billing@acme.co', tier: 'Pro', mrr: 99 }),
+    })
+    expect(putRes.status).toBe(200)
+    const updated = (await putRes.json() as { data: Record<string, unknown> }).data
+    expect(updated._version).toBe(2)
+    expect(updated.name).toBe('Acme Corp')
+    expect(updated.tier).toBe('Pro')
+    expect(updated.mrr).toBe(99)
+
+    // PATCH
+    const patchRes = await req(app, '/customers/cust_1', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mrr: 199 }),
+    })
+    expect(patchRes.status).toBe(200)
+    const patched = (await patchRes.json() as { data: Record<string, unknown> }).data
+    expect(patched._version).toBe(3)
+    expect(patched.mrr).toBe(199)
+    expect(patched.name).toBe('Acme Corp') // Unchanged fields preserved
+
+    // DELETE
+    const deleteRes = await req(app, '/customers/cust_1', { method: 'DELETE' })
+    expect(deleteRes.status).toBe(200)
+    const deleted = (await deleteRes.json() as { data: { deleted: boolean; id: string } }).data
+    expect(deleted.deleted).toBe(true)
+  })
+})
+
+// =============================================================================
+// 13. Convention Output Structure Tests
+// =============================================================================
+
+describe('databaseConvention output structure', () => {
+  it('returns routes, schema, mcpTools, and typeRegistry', () => {
+    const config = {
+      schema: {
+        Contact: { name: 'string!' },
+        Deal: { title: 'string!' },
+      },
+    }
+    const result = databaseConvention(config)
+
+    expect(result.routes).toBeDefined()
+    expect(result.schema).toBeDefined()
+    expect(result.schema.models.Contact).toBeDefined()
+    expect(result.schema.models.Deal).toBeDefined()
+    expect(result.mcpTools).toBeDefined()
+    expect(Array.isArray(result.mcpTools)).toBe(true)
+    expect(result.typeRegistry).toBeDefined()
+    expect(result.typeRegistry.forward).toBeDefined()
+    expect(result.typeRegistry.reverse).toBeDefined()
+  })
+
+  it('generates MCP tools for each model (create, get, list, search, update, delete)', () => {
+    const result = databaseConvention({
+      schema: { Contact: { name: 'string!' } },
+    })
+
+    const toolNames = result.mcpTools.map((t) => t.name)
+    expect(toolNames).toContain('contact.create')
+    expect(toolNames).toContain('contact.get')
+    expect(toolNames).toContain('contact.list')
+    expect(toolNames).toContain('contact.search')
+    expect(toolNames).toContain('contact.update')
+    expect(toolNames).toContain('contact.delete')
+  })
+
+  it('uses MCP prefix when configured', () => {
+    const result = databaseConvention({
+      schema: { Contact: { name: 'string!' } },
+      mcp: { enabled: true, prefix: 'crm.' },
+    })
+
+    const toolNames = result.mcpTools.map((t) => t.name)
+    expect(toolNames).toContain('crm.contact.create')
+    expect(toolNames).toContain('crm.contact.get')
+  })
+
+  it('returns sqids instance when idFormat is sqid', () => {
+    const result = databaseConvention({
+      schema: { Contact: { name: 'string!' } },
+      idFormat: 'sqid',
+    })
+    expect(result.sqids).toBeDefined()
+  })
+
+  it('does not return sqids instance when idFormat is not sqid', () => {
+    const result = databaseConvention({
+      schema: { Contact: { name: 'string!' } },
+    })
+    expect(result.sqids).toBeUndefined()
   })
 })

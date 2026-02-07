@@ -1,12 +1,13 @@
 import type { Hono, Context } from 'hono'
 import type { TestingConfig as _TestingConfig, RestEndpointTest as _RestEndpointTest, RestTestCase as _RestTestCase } from './conventions/testing'
-import type { EventSinkConfig as _EventSinkConfig } from './conventions/database/types'
+import type { EventSinkConfig as _EventSinkConfig, DatabaseConfig as _DatabaseConfig } from './conventions/database/types'
 
 // Re-export types from canonical sources
 export type TestingConfig = _TestingConfig
 export type RestEndpointTest = _RestEndpointTest
 export type RestTestCase = _RestTestCase
 export type EventSinkConfig = _EventSinkConfig
+export type DatabaseConfig = _DatabaseConfig
 
 // Response envelope types
 export interface ApiMeta {
@@ -206,25 +207,6 @@ export type FieldDef = string
 
 // Database schema definition
 export type SchemaDef = Record<string, Record<string, FieldDef>>
-
-
-// Database convention configuration
-export interface DatabaseConfig {
-  schema: SchemaDef
-  binding?: string
-  namespace?: string | ((c: unknown) => string)
-  events?: EventSinkConfig[]
-  mcp?: boolean | { enabled: boolean; prefix?: string }
-  rpc?: boolean | { enabled: boolean; path?: string }
-  subscriptions?: boolean
-  rest?: {
-    basePath?: string
-    pageSize?: number
-    maxPageSize?: number
-  }
-  metaPrefix?: '$' | '_'
-  idFormat?: 'sqid' | 'cuid' | 'ulid' | 'uuid' | 'auto'
-}
 
 // Functions/Services configuration (imported from convention)
 export type { FunctionsConfig } from './conventions/functions'

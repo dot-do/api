@@ -286,6 +286,9 @@ export class DatabaseDO extends DurableObject<Env> {
         case 'search':
           return { result: await this.search(req.params.model as string, req.params.query as string, req.params.options as QueryOptions | undefined) }
 
+        case 'count':
+          return { result: await this.count(req.params.model as string, req.params.where as Record<string, unknown> | undefined) }
+
         case 'configureEvents':
           return { result: await this.configureEvents(req.params.sinks as EventSinkConfig[]) }
 
@@ -624,6 +627,23 @@ export class DatabaseDO extends DurableObject<Env> {
       offset,
       hasMore: offset + docs.length < total,
     }
+  }
+
+  async count(model: string, where?: Record<string, unknown>): Promise<number> {
+    const collection = this.getCollection(model)
+    let docs = Array.from(collection.values()).filter((d) => !d._deletedAt)
+
+    // Apply where filter
+    if (where) {
+      docs = docs.filter((doc) => {
+        for (const [key, value] of Object.entries(where)) {
+          if (doc[key] !== value) return false
+        }
+        return true
+      })
+    }
+
+    return docs.length
   }
 
   // ===========================================================================

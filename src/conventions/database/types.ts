@@ -401,7 +401,7 @@ export interface DatabaseDriver {
   count(model: string, where?: Record<string, unknown>): Promise<number>
 
   /** Get events since sequence number */
-  getEvents?(since: number, limit?: number, model?: string): Promise<DatabaseEvent[]>
+  getEvents?(options: { since?: number; limit?: number; model?: string }): Promise<DatabaseEvent[]>
 
   /** Close/cleanup driver resources */
   close?(): Promise<void>
