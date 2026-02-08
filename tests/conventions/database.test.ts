@@ -969,11 +969,11 @@ describe('REST endpoints with in-memory fallback', () => {
     })
 
     expect(createRes.status).toBe(201)
-    const createBody = await createRes.json() as { data: { id: string; title: string; _version: number; _createdAt: string } }
-    expect(createBody.data.id).toBe('task-1')
+    const createBody = await createRes.json() as { data: Record<string, unknown> }
+    expect(createBody.data.$id).toBe('task-1')
     expect(createBody.data.title).toBe('Test Task')
-    expect(createBody.data._version).toBe(1)
-    expect(createBody.data._createdAt).toBeDefined()
+    expect(createBody.data.$version).toBe(1)
+    expect(createBody.data.$createdAt).toBeDefined()
   })
 
   it('returns list structure with pagination metadata', async () => {
@@ -1607,8 +1607,8 @@ describe('Global /:id routes', () => {
     // Fetch via global /:id route
     const res = await req(app, '/contact_abc123')
     expect(res.status).toBe(200)
-    const body = await res.json() as { data: { id: string; name: string } }
-    expect(body.data.id).toBe('contact_abc123')
+    const body = await res.json() as { data: Record<string, unknown> }
+    expect(body.data.$id).toBe('contact_abc123')
     expect(body.data.name).toBe('Alice')
   })
 
@@ -1851,7 +1851,7 @@ describe('formatDocument with metaPrefix', () => {
     expect(body.data.description).toBe('A fine widget')
   })
 
-  it('uses _ prefix by default (no transformation)', async () => {
+  it('uses $ prefix by default', async () => {
     const app = createTestApp({
       Contact: {
         name: 'string!',
@@ -1865,7 +1865,35 @@ describe('formatDocument with metaPrefix', () => {
     })
     expect(createRes.status).toBe(201)
     const body = await createRes.json() as { data: Record<string, unknown> }
-    // Default _ prefix means fields come back with _ prefix (no transformation)
+    // Default $ prefix means fields come back with $ prefix
+    expect(body.data.$id).toBe('c1')
+    expect(body.data.$version).toBe(1)
+    expect(body.data.$createdAt).toBeDefined()
+    expect(body.data.$type).toBe('Contact')
+    // Old _ prefix fields and bare id should NOT be present
+    expect(body.data.id).toBeUndefined()
+    expect(body.data._version).toBeUndefined()
+    expect(body.data._createdAt).toBeUndefined()
+  })
+
+  it('uses _ prefix when explicitly configured', async () => {
+    const { app } = createTestAppWithConfig({
+      schema: {
+        Contact: {
+          name: 'string!',
+        },
+      },
+      metaPrefix: '_',
+    })
+
+    const createRes = await req(app, '/contacts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'c1', name: 'Alice' }),
+    })
+    expect(createRes.status).toBe(201)
+    const body = await createRes.json() as { data: Record<string, unknown> }
+    // Explicit _ prefix means fields come back with _ prefix (no transformation)
     expect(body.data.id).toBe('c1')
     expect(body.data._version).toBe(1)
     expect(body.data._createdAt).toBeDefined()
@@ -2157,11 +2185,11 @@ describe('sqid ID generation', () => {
     })
 
     expect(res.status).toBe(201)
-    const body = await res.json() as { data: { id: string } }
+    const body = await res.json() as { data: Record<string, unknown> }
     // ID should start with the singular model name followed by underscore
-    expect(body.data.id).toMatch(/^contact_/)
+    expect(body.data.$id).toMatch(/^contact_/)
     // The sqid segment should have minimum length of 8
-    const segment = body.data.id.split('_')[1]!
+    const segment = (body.data.$id as string).split('_')[1]!
     expect(segment.length).toBeGreaterThanOrEqual(8)
   })
 
@@ -2417,7 +2445,7 @@ describe('CRUD lifecycle integration', () => {
     })
     expect(createRes.status).toBe(201)
     const created = (await createRes.json() as { data: Record<string, unknown> }).data
-    expect(created._version).toBe(1)
+    expect(created.$version).toBe(1)
 
     // READ
     const getRes = await req(app, '/customers/cust_1')
@@ -2434,7 +2462,7 @@ describe('CRUD lifecycle integration', () => {
     })
     expect(putRes.status).toBe(200)
     const updated = (await putRes.json() as { data: Record<string, unknown> }).data
-    expect(updated._version).toBe(2)
+    expect(updated.$version).toBe(2)
     expect(updated.name).toBe('Acme Corp')
     expect(updated.tier).toBe('Pro')
     expect(updated.mrr).toBe(99)
@@ -2447,7 +2475,7 @@ describe('CRUD lifecycle integration', () => {
     })
     expect(patchRes.status).toBe(200)
     const patched = (await patchRes.json() as { data: Record<string, unknown> }).data
-    expect(patched._version).toBe(3)
+    expect(patched.$version).toBe(3)
     expect(patched.mrr).toBe(199)
     expect(patched.name).toBe('Acme Corp') // Unchanged fields preserved
 
@@ -2635,8 +2663,8 @@ describe('Relation traversal endpoints', () => {
     // Traverse the to-one forward relation
     const res = await req(app, '/posts/post_rel1/author')
     expect(res.status).toBe(200)
-    const body = (await res.json()) as { data: { id: string; name: string } }
-    expect(body.data.id).toBe('user_rel1')
+    const body = (await res.json()) as { data: Record<string, unknown> }
+    expect(body.data.$id).toBe('user_rel1')
     expect(body.data.name).toBe('Alice')
   })
 
@@ -2818,9 +2846,9 @@ describe('Soft delete visibility', () => {
     // Search for "Searchable" should only find the non-deleted one
     const searchRes = await req(app, '/notes/search?q=Searchable')
     expect(searchRes.status).toBe(200)
-    const body = (await searchRes.json()) as { data: { id: string }[]; meta: { total: number } }
+    const body = (await searchRes.json()) as { data: Record<string, unknown>[]; meta: { total: number } }
     expect(body.data.length).toBe(1)
-    expect(body.data[0]!.id).toBe('note_srch1')
+    expect(body.data[0]!.$id).toBe('note_srch1')
   })
 })
 
@@ -2847,14 +2875,32 @@ describe('System field protection', () => {
     })
 
     expect(res.status).toBe(201)
-    const body = (await res.json()) as { data: { id: string; _version: number; _deletedAt?: string } }
-    // _version should be 1 (set by system), not 999
-    expect(body.data._version).toBe(1)
-    // _deletedAt should not be set
-    expect(body.data._deletedAt).toBeUndefined()
+    const body = (await res.json()) as { data: Record<string, unknown> }
+    // $version should be 1 (set by system), not 999
+    expect(body.data.$version).toBe(1)
+    // $deletedAt should not be set
+    expect(body.data.$deletedAt).toBeUndefined()
   })
 
-  it('update preserves system fields (_version increments, _createdAt preserved)', async () => {
+  it('strips $ prefixed fields from create input', async () => {
+    const app = createTestApp(schema)
+
+    // Attempt to inject $deletedAt and $version via create
+    const res = await req(app, '/tasks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'task_prot1b', title: 'Protected', $deletedAt: '2025-01-01T00:00:00Z', $version: 999 }),
+    })
+
+    expect(res.status).toBe(201)
+    const body = (await res.json()) as { data: Record<string, unknown> }
+    // $version should be 1 (set by system), not 999
+    expect(body.data.$version).toBe(1)
+    // $deletedAt should not be set
+    expect(body.data.$deletedAt).toBeUndefined()
+  })
+
+  it('update preserves system fields ($version increments, $createdAt preserved)', async () => {
     const app = createTestApp(schema)
 
     // Create
@@ -2864,8 +2910,8 @@ describe('System field protection', () => {
       body: JSON.stringify({ id: 'task_prot2', title: 'Original' }),
     })
     expect(createRes.status).toBe(201)
-    const created = (await createRes.json()) as { data: { _version: number; _createdAt: string } }
-    const originalCreatedAt = created.data._createdAt
+    const created = (await createRes.json()) as { data: Record<string, unknown> }
+    const originalCreatedAt = created.data.$createdAt
 
     // Update via PUT - try to set _version and _createdAt
     const putRes = await req(app, '/tasks/task_prot2', {
@@ -2874,11 +2920,11 @@ describe('System field protection', () => {
       body: JSON.stringify({ title: 'Updated', _version: 999, _createdAt: '1999-01-01T00:00:00Z' }),
     })
     expect(putRes.status).toBe(200)
-    const updated = (await putRes.json()) as { data: { _version: number; _createdAt: string } }
-    // _version should be 2 (auto-incremented), not 999
-    expect(updated.data._version).toBe(2)
-    // _createdAt should be the original value, not the injected one
-    expect(updated.data._createdAt).toBe(originalCreatedAt)
+    const updated = (await putRes.json()) as { data: Record<string, unknown> }
+    // $version should be 2 (auto-incremented), not 999
+    expect(updated.data.$version).toBe(2)
+    // $createdAt should be the original value, not the injected one
+    expect(updated.data.$createdAt).toBe(originalCreatedAt)
   })
 })
 

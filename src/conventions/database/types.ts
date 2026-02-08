@@ -234,7 +234,7 @@ export interface DatabaseConfig {
 
   /**
    * Prefix for meta fields ($id, $type, $version, etc.)
-   * Default: '_' for backward compatibility
+   * Default: '$' (matches headless.ly convention: $type, $id, $context, $version, $createdAt, $createdBy, $updatedAt)
    */
   metaPrefix?: '$' | '_'
 

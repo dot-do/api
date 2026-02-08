@@ -57,7 +57,7 @@ export function validateInput(
 ): ValidationResult {
   const errors: ValidationError[] = []
   const jsonSchema = generateJsonSchema(model)
-  const properties = jsonSchema.properties as Record<string, { type?: string; items?: { type: string } }>
+  const properties = jsonSchema.properties as Record<string, { type?: string; items?: { type: string }; enum?: string[] }>
   const required = (jsonSchema.required as string[]) || []
 
   // Check required fields (only for non-partial validation)
@@ -74,8 +74,8 @@ export function validateInput(
 
   // Type check all provided fields
   for (const [fieldName, value] of Object.entries(data)) {
-    // Skip id and internal fields
-    if (fieldName === 'id' || fieldName.startsWith('_')) continue
+    // Skip id and internal fields (both _ and $ prefixed meta fields)
+    if (fieldName === 'id' || fieldName.startsWith('_') || fieldName.startsWith('$')) continue
 
     const fieldSchema = properties[fieldName]
     if (!fieldSchema) {
@@ -119,6 +119,18 @@ export function validateInput(
         })
       }
     }
+
+    // Validate enum values
+    if (fieldSchema.enum && typeof value === 'string') {
+      if (!fieldSchema.enum.includes(value)) {
+        errors.push({
+          field: fieldName,
+          message: `Field '${fieldName}' must be one of: ${fieldSchema.enum.join(', ')}. Got: '${value}'`,
+          expected: fieldSchema.enum.join(' | '),
+          received: value,
+        })
+      }
+    }
   }
 
   return {
@@ -151,7 +163,7 @@ export function databaseConvention(config: DatabaseConfig): {
   const basePath = config.rest?.basePath || ''
   const pageSize = config.rest?.pageSize || 20
   const maxPageSize = config.rest?.maxPageSize || 100
-  const metaPrefix = config.metaPrefix || '_'
+  const metaPrefix = config.metaPrefix || '$'
   const idFormat = config.idFormat || 'auto'
   const useMetaFormat = metaPrefix !== '_'
 
@@ -217,7 +229,7 @@ export function databaseConvention(config: DatabaseConfig): {
       const result = await db.search(model.name, query, options)
 
       return c.var.respond({
-        data: result.data,
+        data: useMetaFormat ? result.data.map((d) => formatDocument(d, model.name, metaPrefix)) : result.data,
         meta: {
           query,
           total: result.total,
@@ -241,7 +253,12 @@ export function databaseConvention(config: DatabaseConfig): {
 
       // Strip meta fields from user input (allow id for create so users can set custom IDs)
       for (const key of Object.keys(body)) {
-        if (key.startsWith('_')) delete body[key]
+        if (key.startsWith('_') || (key.startsWith('$') && key !== '$id')) delete body[key]
+      }
+      // Normalize $id to id if present
+      if (body.$id !== undefined) {
+        body.id = body.$id
+        delete body.$id
       }
 
       // Validate input before database operations
@@ -310,7 +327,7 @@ export function databaseConvention(config: DatabaseConfig): {
 
       // Strip meta fields from user input
       for (const key of Object.keys(body)) {
-        if (key.startsWith('_') || key === 'id') delete body[key]
+        if (key.startsWith('_') || key.startsWith('$') || key === 'id') delete body[key]
       }
 
       // Validate input before database operations (full validation for PUT)
@@ -359,7 +376,7 @@ export function databaseConvention(config: DatabaseConfig): {
 
       // Strip meta fields from user input
       for (const key of Object.keys(body)) {
-        if (key.startsWith('_') || key === 'id') delete body[key]
+        if (key.startsWith('_') || key.startsWith('$') || key === 'id') delete body[key]
       }
 
       // Validate input before database operations (partial validation for PATCH)
@@ -552,7 +569,7 @@ export function databaseConvention(config: DatabaseConfig): {
 
     // Strip meta fields from user input
     for (const key of Object.keys(body)) {
-      if (key.startsWith('_') || key === 'id') delete body[key]
+      if (key.startsWith('_') || key.startsWith('$') || key === 'id') delete body[key]
     }
 
     const validation = validateInput(model, body, false)
