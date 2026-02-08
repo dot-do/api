@@ -18,7 +18,8 @@ import { matchesWhere, coerceValue } from './match'
 export type { DatabaseConfig, SchemaDef, ModelDef, FieldDef, ParsedSchema, ParsedModel, ParsedField, Document, DatabaseEvent, DatabaseDriverType, DatabaseDriver, DatabaseDriverFactory, QueryOptions, QueryResult, EventSinkConfig, TypeRegistry, ReverseTypeRegistry, DecodedSqid, DatabaseRpc, BatchOperation, BatchResult, RequestContext } from './types'
 export { parseSchema, parseField, parseModel, generateJsonSchema } from './schema'
 export { generateWebhookSignature, generateWebhookSignatureAsync, sendToWebhookSink } from './do'
-export { matchesWhere, coerceValue } from './match'
+export type { WebhookRetryConfig } from './do'
+export { matchesWhere, coerceValue, isSafeRegex } from './match'
 
 // =============================================================================
 // Input Validation
@@ -142,7 +143,7 @@ export function databaseConvention(config: DatabaseConfig): {
   routes: Hono<ApiEnv>
   schema: ParsedSchema
   mcpTools: McpToolDef[]
-  typeRegistry: { forward: TypeRegistry; reverse: ReverseTypeRegistry }
+  typeRegistry: { forward: TypeRegistry; reverse: ReverseTypeRegistry; version: string }
   sqids?: Sqids
 } {
   const app = new Hono<ApiEnv>()
@@ -902,11 +903,38 @@ function formatDocument(doc: Document, modelName: string, prefix: string): Recor
 const DEFAULT_SQID_ALPHABET = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
 
 /**
+ * Compute a deterministic version hash for a type registry.
+ * This hash changes whenever the model-to-number mapping changes,
+ * enabling decode-time validation that sqids were encoded with the same registry.
+ *
+ * Format: "v1:{sorted entries hash}" — allows future versioning of the hash scheme.
+ */
+export function computeTypeRegistryVersion(registry: TypeRegistry): string {
+  // Sort entries for determinism regardless of insertion order
+  const sorted = Object.entries(registry)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([name, num]) => `${name}:${num}`)
+    .join(',')
+  // Simple FNV-1a 32-bit hash for compactness
+  let hash = 2166136261
+  for (let i = 0; i < sorted.length; i++) {
+    hash ^= sorted.charCodeAt(i)
+    hash = Math.imul(hash, 16777619)
+  }
+  return `v1:${(hash >>> 0).toString(36)}`
+}
+
+/**
  * Build a type registry from a parsed schema.
  * Each model gets a stable numeric ID based on insertion order (1-indexed).
- * Provide an explicit registry in config for stability across schema changes.
+ *
+ * **Production**: Provide an explicit `typeRegistry` in config for stability across
+ * schema changes. Auto-generated registries are insertion-order dependent — adding,
+ * removing, or reordering models will change numeric IDs, breaking existing sqids.
+ *
+ * @returns forward/reverse maps plus a version hash for decode-time validation
  */
-export function buildTypeRegistry(schema: ParsedSchema, explicit?: TypeRegistry): { forward: TypeRegistry; reverse: ReverseTypeRegistry } {
+export function buildTypeRegistry(schema: ParsedSchema, explicit?: TypeRegistry): { forward: TypeRegistry; reverse: ReverseTypeRegistry; version: string } {
   const forward: TypeRegistry = {}
   const reverse: ReverseTypeRegistry = {}
 
@@ -926,6 +954,11 @@ export function buildTypeRegistry(schema: ParsedSchema, explicit?: TypeRegistry)
     }
   } else {
     // Auto-generate from schema insertion order (1-indexed)
+    console.warn(
+      '[sqid] WARNING: No explicit typeRegistry provided. Auto-generating from schema insertion order. ' +
+      'This is UNSTABLE across schema changes — adding, removing, or reordering models will change numeric IDs ' +
+      'and break existing sqids. For production, provide an explicit typeRegistry in your DatabaseConfig.'
+    )
     let id = 1
     for (const name of Object.keys(schema.models)) {
       forward[name] = id
@@ -934,7 +967,8 @@ export function buildTypeRegistry(schema: ParsedSchema, explicit?: TypeRegistry)
     }
   }
 
-  return { forward, reverse }
+  const version = computeTypeRegistryVersion(forward)
+  return { forward, reverse, version }
 }
 
 /**
@@ -987,10 +1021,30 @@ function generateSqidId(modelSingular: string, typeNum: number, sqids: Sqids, na
  * Handles both formats:
  * - 3 numbers: [typeNum, timestamp, random] (no namespace)
  * - 4 numbers: [typeNum, namespace, timestamp, random]
+ *
+ * When `expectedRegistryVersion` is provided, the decoded type is validated against
+ * the current registry. If the registry version at encode-time differs from the current
+ * version, the type mapping may be wrong. Pass the version stored alongside the sqid
+ * (e.g., from the `meta` table) to enable this check.
  */
-export function decodeSqid(id: string, sqids: Sqids, reverse: ReverseTypeRegistry): DecodedSqid | null {
+export function decodeSqid(
+  id: string,
+  sqids: Sqids,
+  reverse: ReverseTypeRegistry,
+  options?: { expectedRegistryVersion?: string; currentRegistryVersion?: string },
+): DecodedSqid | null {
   const underscoreIdx = id.indexOf('_')
   if (underscoreIdx === -1) return null
+
+  // Validate registry version if both are provided
+  if (options?.expectedRegistryVersion && options?.currentRegistryVersion) {
+    if (options.expectedRegistryVersion !== options.currentRegistryVersion) {
+      console.warn(
+        `[sqid] Registry version mismatch during decode: id was encoded with registry version "${options.expectedRegistryVersion}" ` +
+        `but current registry version is "${options.currentRegistryVersion}". Type mapping may be incorrect.`
+      )
+    }
+  }
 
   const segment = id.slice(underscoreIdx + 1)
   const numbers = sqids.decode(segment)
