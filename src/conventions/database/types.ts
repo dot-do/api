@@ -175,6 +175,13 @@ export interface DatabaseConfig {
   binding?: string
 
   /**
+   * ParqueDB service binding name (e.g. 'PARQUEDB')
+   * When set, uses @dotdo/db ParqueDB Worker via RPC instead of the embedded DatabaseDO.
+   * Takes priority over `binding` when both are set.
+   */
+  parquedb?: string
+
+  /**
    * Namespace for multi-tenant isolation
    * Can be a string or a function that extracts from context
    */

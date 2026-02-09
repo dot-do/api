@@ -14,12 +14,14 @@ import type { ApiEnv } from '../../types'
 import type { DatabaseConfig, ParsedSchema, ParsedModel, Document, QueryOptions, DatabaseEvent, TypeRegistry, ReverseTypeRegistry, DecodedSqid, RequestContext } from './types'
 import { parseSchema, generateJsonSchema } from './schema'
 import { matchesWhere, coerceValue } from './match'
+import { createParqueDBAdapter } from './parquedb-adapter'
 
 export type { DatabaseConfig, SchemaDef, ModelDef, FieldDef, ParsedSchema, ParsedModel, ParsedField, Document, DatabaseEvent, DatabaseDriverType, DatabaseDriver, DatabaseDriverFactory, QueryOptions, QueryResult, EventSinkConfig, TypeRegistry, ReverseTypeRegistry, DecodedSqid, DatabaseRpc, BatchOperation, BatchResult, RequestContext } from './types'
 export { parseSchema, parseField, parseModel, generateJsonSchema } from './schema'
 export { generateWebhookSignature, generateWebhookSignatureAsync, sendToWebhookSink } from './do'
 export type { WebhookRetryConfig } from './do'
 export { matchesWhere, coerceValue, isSafeRegex } from './match'
+export { createParqueDBAdapter } from './parquedb-adapter'
 
 // =============================================================================
 // Input Validation
@@ -190,7 +192,7 @@ export function databaseConvention(config: DatabaseConfig): {
 
     // COUNT - GET /users/$count
     app.get(`${modelPath}/$count`, async (c) => {
-      const db = await getDatabase(c, config, inMemoryCache)
+      const db = await getDatabase(c, config, inMemoryCache, schema)
       const options = parseQueryOptions(c, pageSize, maxPageSize)
       const count = await db.count(model.name, options.where)
 
@@ -199,7 +201,7 @@ export function databaseConvention(config: DatabaseConfig): {
 
     // LIST - GET /users
     app.get(modelPath, async (c) => {
-      const db = await getDatabase(c, config, inMemoryCache)
+      const db = await getDatabase(c, config, inMemoryCache, schema)
       const options = parseQueryOptions(c, pageSize, maxPageSize)
 
       const result = await db.list(model.name, options)
@@ -222,7 +224,7 @@ export function databaseConvention(config: DatabaseConfig): {
 
     // SEARCH - GET /users/search?q=...
     app.get(`${modelPath}/search`, async (c) => {
-      const db = await getDatabase(c, config, inMemoryCache)
+      const db = await getDatabase(c, config, inMemoryCache, schema)
       const query = c.req.query('q') || ''
       const options = parseQueryOptions(c, pageSize, maxPageSize)
 
@@ -283,7 +285,7 @@ export function databaseConvention(config: DatabaseConfig): {
         body.id = generateId(model.singular, idFormat, typeNum, reqSqids, namespace)
       }
 
-      const db = await getDatabase(c, config, inMemoryCache)
+      const db = await getDatabase(c, config, inMemoryCache, schema)
       const ctx = getRequestContext(c)
 
       const doc = await db.create(model.name, body, ctx)
@@ -296,7 +298,7 @@ export function databaseConvention(config: DatabaseConfig): {
 
     // GET - GET /users/:id
     app.get(`${modelPath}/:id`, async (c) => {
-      const db = await getDatabase(c, config, inMemoryCache)
+      const db = await getDatabase(c, config, inMemoryCache, schema)
       const id = c.req.param('id')
       const include = c.req.query('include')?.split(',')
 
@@ -343,7 +345,7 @@ export function databaseConvention(config: DatabaseConfig): {
         })
       }
 
-      const db = await getDatabase(c, config, inMemoryCache)
+      const db = await getDatabase(c, config, inMemoryCache, schema)
       const ctx = getRequestContext(c)
 
       try {
@@ -392,7 +394,7 @@ export function databaseConvention(config: DatabaseConfig): {
         })
       }
 
-      const db = await getDatabase(c, config, inMemoryCache)
+      const db = await getDatabase(c, config, inMemoryCache, schema)
       const ctx = getRequestContext(c)
 
       try {
@@ -412,7 +414,7 @@ export function databaseConvention(config: DatabaseConfig): {
 
     // DELETE - DELETE /users/:id
     app.delete(`${modelPath}/:id`, async (c) => {
-      const db = await getDatabase(c, config, inMemoryCache)
+      const db = await getDatabase(c, config, inMemoryCache, schema)
       const id = c.req.param('id')
       const ctx = getRequestContext(c)
 
@@ -438,7 +440,7 @@ export function databaseConvention(config: DatabaseConfig): {
       // To-many relations: inverse or forward arrays
       if (field.relation.type === 'inverse' || (field.relation.type === 'forward' && field.relation.many)) {
         app.get(`${modelPath}/:id/${field.name}`, async (c) => {
-          const db = await getDatabase(c, config, inMemoryCache)
+          const db = await getDatabase(c, config, inMemoryCache, schema)
           const id = c.req.param('id')
           const options = parseQueryOptions(c, pageSize, maxPageSize)
 
@@ -469,7 +471,7 @@ export function databaseConvention(config: DatabaseConfig): {
       // To-one relations: forward singular (returns entity, not array)
       if (field.relation.type === 'forward' && !field.relation.many) {
         app.get(`${modelPath}/:id/${field.name}`, async (c) => {
-          const db = await getDatabase(c, config, inMemoryCache)
+          const db = await getDatabase(c, config, inMemoryCache, schema)
           const id = c.req.param('id')
 
           const doc = await db.get(model.name, id)
@@ -531,7 +533,7 @@ export function databaseConvention(config: DatabaseConfig): {
       })
     }
 
-    const db = await getDatabase(c, config, inMemoryCache)
+    const db = await getDatabase(c, config, inMemoryCache, schema)
     const include = c.req.query('include')?.split(',')
     const doc = await db.get(model.name, id, { include })
 
@@ -580,7 +582,7 @@ export function databaseConvention(config: DatabaseConfig): {
       })
     }
 
-    const db = await getDatabase(c, config, inMemoryCache)
+    const db = await getDatabase(c, config, inMemoryCache, schema)
     const ctx = getRequestContext(c)
 
     try {
@@ -607,7 +609,7 @@ export function databaseConvention(config: DatabaseConfig): {
       })
     }
 
-    const db = await getDatabase(c, config, inMemoryCache)
+    const db = await getDatabase(c, config, inMemoryCache, schema)
     const ctx = getRequestContext(c)
 
     const existing = await db.get(model.name, id)
@@ -636,7 +638,7 @@ export function databaseConvention(config: DatabaseConfig): {
       })
     }
 
-    const db = await getDatabase(c, config, inMemoryCache)
+    const db = await getDatabase(c, config, inMemoryCache, schema)
     const doc = await db.get(model.name, id)
     if (!doc) {
       return c.var.respond({
@@ -662,7 +664,7 @@ export function databaseConvention(config: DatabaseConfig): {
   // ==========================================================================
 
   app.get('/events', async (c) => {
-    const db = await getDatabase(c, config, inMemoryCache)
+    const db = await getDatabase(c, config, inMemoryCache, schema)
     const model = c.req.query('model')
     const since = c.req.query('since')
 
@@ -1143,17 +1145,38 @@ interface DatabaseRpcClient {
 /**
  * Get database client from context
  * This connects to the DO that stores the actual data
+ *
+ * Resolution priority:
+ * 1. config.parquedb binding -> ParqueDB Worker via RPC (new path)
+ * 2. config.binding DO namespace -> existing fetch-based RPC wrapper (backwards compat)
+ * 3. No binding -> in-memory fallback (dev/test)
  */
-async function getDatabase(c: { env: Record<string, unknown>; var: { requestId: string } }, config: DatabaseConfig, inMemoryCache: Map<string, DatabaseRpcClient>): Promise<DatabaseRpcClient> {
-  const binding = config.binding || 'DB'
+async function getDatabase(c: { env: Record<string, unknown>; var: { requestId: string } }, config: DatabaseConfig, inMemoryCache: Map<string, DatabaseRpcClient>, schema: ParsedSchema): Promise<DatabaseRpcClient> {
   const namespace = typeof config.namespace === 'function'
     ? config.namespace(c)
     : config.namespace || 'default'
 
+  // 1. ParqueDB Worker via RPC (preferred path)
+  if (config.parquedb) {
+    const service = c.env[config.parquedb]
+    if (service) {
+      const tenantPrefix = `~${namespace}`
+      const cacheKey = `parquedb:${namespace}`
+      let db = inMemoryCache.get(cacheKey)
+      if (!db) {
+        db = createParqueDBAdapter(service as never, schema, tenantPrefix)
+        inMemoryCache.set(cacheKey, db)
+      }
+      return db
+    }
+  }
+
+  // 2. Existing DO-based path (backwards compat)
+  const binding = config.binding || 'DB'
   const doNamespace = c.env[binding] as DurableObjectNamespace | undefined
 
   if (!doNamespace) {
-    // Fallback to in-memory for development/testing — cached per convention instance + namespace
+    // 3. Fallback to in-memory for development/testing — cached per convention instance + namespace
     let db = inMemoryCache.get(namespace)
     if (!db) {
       db = createInMemoryDatabase()
