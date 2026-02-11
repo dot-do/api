@@ -1894,8 +1894,6 @@ async function getDatabase(
 
 function createInMemoryDatabase(): DatabaseRpcClient {
   const store: Record<string, Map<string, Document>> = {}
-  const eventLog: DatabaseEvent[] = []
-  let sequence = 0
 
   function getCollection(model: string): Map<string, Document> {
     if (!store[model]) {
@@ -1906,16 +1904,6 @@ function createInMemoryDatabase(): DatabaseRpcClient {
 
   function generateId(): string {
     return `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
-  }
-
-  function emitEvent(event: Omit<DatabaseEvent, 'id' | 'sequence' | 'timestamp'>): void {
-    sequence++
-    eventLog.push({
-      id: `evt_${sequence}`,
-      sequence,
-      timestamp: new Date().toISOString(),
-      ...event,
-    } as DatabaseEvent)
   }
 
   return {
@@ -1935,7 +1923,6 @@ function createInMemoryDatabase(): DatabaseRpcClient {
       }
 
       collection.set(id, doc)
-      emitEvent({ operation: 'create', model, documentId: id, after: doc, userId: ctx?.userId, requestId: ctx?.requestId })
       return doc
     },
 
@@ -1964,7 +1951,6 @@ function createInMemoryDatabase(): DatabaseRpcClient {
       }
 
       collection.set(id, doc)
-      emitEvent({ operation: 'update', model, documentId: id, before: existing, after: doc, userId: ctx?.userId, requestId: ctx?.requestId })
       return doc
     },
 
@@ -1977,7 +1963,6 @@ function createInMemoryDatabase(): DatabaseRpcClient {
         existing._deletedAt = new Date().toISOString()
         existing._deletedBy = ctx?.userId
         collection.set(id, existing)
-        emitEvent({ operation: 'delete', model, documentId: id, before: existing, userId: ctx?.userId, requestId: ctx?.requestId })
       }
     },
 
@@ -2060,16 +2045,5 @@ function createInMemoryDatabase(): DatabaseRpcClient {
       return docs.length
     },
 
-    async getEvents(options) {
-      let events = [...eventLog]
-      if (options?.model) {
-        events = events.filter((e) => e.model === options.model)
-      }
-      if (options?.since != null) {
-        events = events.filter((e) => e.sequence > options.since!)
-      }
-      const limit = options?.limit || 100
-      return events.slice(0, limit)
-    },
   }
 }
