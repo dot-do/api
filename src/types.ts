@@ -54,6 +54,7 @@ export interface ResponseMeta {
 
 export interface ResponseEnvelope<T = unknown> {
   api: ApiMeta
+  success: boolean
   links?: Links
   actions?: Actions
   data?: T

@@ -20,6 +20,7 @@ export function responseMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv>
           type: getApiType(config),
           version: config.version,
         },
+        success: !error,
         links: {
           self: selfUrl,
           ...links,

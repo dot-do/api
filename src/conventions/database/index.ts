@@ -427,8 +427,8 @@ function databaseConventionWithSchema(
         if (key.startsWith('_') || key.startsWith('$') || key === 'id') delete body[key]
       }
 
-      // Validate input before database operations (full validation for PUT)
-      const validation = validateInput(model, body, false)
+      // Validate input before database operations (partial validation for PUT — only sent fields)
+      const validation = validateInput(model, body, true)
       if (!validation.valid) {
         return c.var.respond({
           error: {
@@ -671,7 +671,7 @@ function databaseConventionWithSchema(
       if (key.startsWith('_') || key.startsWith('$') || key === 'id') delete body[key]
     }
 
-    const validation = validateInput(model, body, false)
+    const validation = validateInput(model, body, true)
     if (!validation.valid) {
       return c.var.respond({
         error: { code: 'VALIDATION_ERROR', message: 'Input validation failed', details: validation.errors },
@@ -1017,7 +1017,7 @@ function databaseConventionWithDiscovery(config: DatabaseConfig): {
       if (key.startsWith('_') || key.startsWith('$') || key === 'id') delete body[key]
     }
 
-    const validation = validateInput(model, body, false)
+    const validation = validateInput(model, body, true)
     if (!validation.valid) {
       return c.var.respond({ error: { code: 'VALIDATION_ERROR', message: 'Input validation failed', details: validation.errors }, status: 400 })
     }
@@ -1146,7 +1146,7 @@ function databaseConventionWithDiscovery(config: DatabaseConfig): {
       if (key.startsWith('_') || key.startsWith('$') || key === 'id') delete body[key]
     }
 
-    const validation = validateInput(model, body, false)
+    const validation = validateInput(model, body, true)
     if (!validation.valid) {
       return c.var.respond({ error: { code: 'VALIDATION_ERROR', message: 'Input validation failed', details: validation.errors }, status: 400 })
     }

@@ -179,6 +179,11 @@ export function createParqueDBAdapter(service: ParqueDBService, schema: ParsedSc
       // ParqueDB DO requires $type on every entity
       if (!input.$type) input.$type = model
 
+      // ParqueDB requires a `name` field on every entity — derive from common display fields
+      if (!input.name) {
+        input.name = (input.subject as string) || (input.title as string) || (input.description as string) || model
+      }
+
       if (ctx?.userId) input.createdBy = ctx.userId
       if (ctx?.requestId) input.requestId = ctx.requestId
 
@@ -188,14 +193,25 @@ export function createParqueDBAdapter(service: ParqueDBService, schema: ParsedSc
 
     async get(model, id) {
       const ns = resolveNamespace(schema, model, tenantPrefix)
+
+      // Try 1: direct get by bare id
       try {
         const entity = await service.get(ns, id)
-        if (!entity) return null
-        return entityToDocument(entity as Record<string, unknown>)
+        if (entity) return entityToDocument(entity as Record<string, unknown>)
       } catch (err) {
-        if (isNotFoundError(err)) return null
-        throw err
+        if (!isNotFoundError(err)) throw err
       }
+
+      // Try 2: get by namespace-qualified id (ParqueDB stores ids as ns/id)
+      try {
+        const qualifiedId = `${ns}/${id}`
+        const entity = await service.get(ns, qualifiedId)
+        if (entity) return entityToDocument(entity as Record<string, unknown>)
+      } catch (err) {
+        if (!isNotFoundError(err)) throw err
+      }
+
+      return null
     },
 
     async update(model, id, data, ctx) {
@@ -204,17 +220,57 @@ export function createParqueDBAdapter(service: ParqueDBService, schema: ParsedSc
 
       if (ctx?.userId) (updateData.$set as Record<string, unknown>).updatedBy = ctx.userId
 
-      await service.update(ns, id, updateData)
+      // Try direct update by bare id
+      try {
+        await service.update(ns, id, updateData)
+      } catch (err) {
+        if (!isNotFoundError(err)) throw err
+        // Try namespace-qualified id
+        try {
+          await service.update(ns, `${ns}/${id}`, updateData)
+        } catch (err2) {
+          if (!isNotFoundError(err2)) throw err2
+          // Fallback: find entity by user-set `id` field, update using internal ID
+          const result = await service.find(ns, { id: id }, { limit: 1 })
+          if (!result.items.length) throw new Error(`Entity ${id} not found`)
+          const entity = result.items[0] as Record<string, unknown>
+          const internalId = (entity.$id as string) || (entity.id as string) || id
+          await service.update(ns, internalId, updateData)
+        }
+      }
 
-      // ParqueDB update returns UpdateResult, not the entity. Re-fetch for Document return.
-      const updated = await service.get(ns, id)
-      if (!updated) throw new Error(`Entity ${id} not found after update`)
-      return entityToDocument(updated as Record<string, unknown>)
+      // Re-fetch to return the updated Document
+      const doc = await this.get(model, id)
+      if (!doc) throw new Error(`Entity ${id} not found after update`)
+      return doc
     },
 
     async delete(model, id) {
       const ns = resolveNamespace(schema, model, tenantPrefix)
-      await service.delete(ns, id)
+      // Try direct delete by bare id
+      try {
+        await service.delete(ns, id)
+        return
+      } catch (err) {
+        if (!isNotFoundError(err)) throw err
+      }
+      // Try namespace-qualified id
+      try {
+        await service.delete(ns, `${ns}/${id}`)
+        return
+      } catch (err) {
+        if (!isNotFoundError(err)) throw err
+      }
+      // Fallback: find entity by user-set `id` field, delete using internal ID
+      try {
+        const result = await service.find(ns, { id: id }, { limit: 1 })
+        if (!result.items.length) return // Already gone
+        const entity = result.items[0] as Record<string, unknown>
+        const internalId = (entity.$id as string) || (entity.id as string) || id
+        await service.delete(ns, internalId)
+      } catch (err) {
+        if (!isNotFoundError(err)) throw err
+      }
     },
 
     async list(model, options) {
