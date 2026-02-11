@@ -251,6 +251,36 @@ function databaseConventionWithSchema(
   const mcpTools = generateMcpTools(schema, config)
 
   // ==========================================================================
+  // CDC Events Endpoint — registered BEFORE model routes so /events isn't
+  // shadowed by the "Event" entity's auto-generated LIST route.
+  // ==========================================================================
+
+  app.get('/events', async (c) => {
+    const db = await getDatabase(c, config, inMemoryCache, schema)
+    const model = c.req.query('model')
+    const since = c.req.query('since')
+
+    // For HTTP, return recent events
+    const events =
+      (await db.getEvents?.({
+        model,
+        since: since ? parseInt(since, 10) : undefined,
+        limit: 100,
+      })) || []
+
+    return c.var.respond({ data: events })
+  })
+
+  // WebSocket for real-time subscriptions
+  app.get('/events/ws', async (c) => {
+    // This would be handled by the DO's WebSocket support
+    return c.var.respond({
+      error: { code: 'USE_WEBSOCKET', message: 'Connect via WebSocket for real-time events' },
+      status: 400,
+    })
+  })
+
+  // ==========================================================================
   // REST Endpoints - Auto-generated per model
   // ==========================================================================
 
@@ -723,35 +753,6 @@ function databaseConventionWithSchema(
     return c.var.respond({
       data: useMetaFormat ? formatDocument(updated, model.name, metaPrefix) : updated,
       meta: { verb },
-    })
-  })
-
-  // ==========================================================================
-  // Events Endpoint
-  // ==========================================================================
-
-  app.get('/events', async (c) => {
-    const db = await getDatabase(c, config, inMemoryCache, schema)
-    const model = c.req.query('model')
-    const since = c.req.query('since')
-
-    // For HTTP, return recent events
-    const events =
-      (await db.getEvents?.({
-        model,
-        since: since ? parseInt(since, 10) : undefined,
-        limit: 100,
-      })) || []
-
-    return c.var.respond({ data: events })
-  })
-
-  // WebSocket for real-time subscriptions
-  app.get('/events/ws', async (c) => {
-    // This would be handled by the DO's WebSocket support
-    return c.var.respond({
-      error: { code: 'USE_WEBSOCKET', message: 'Connect via WebSocket for real-time events' },
-      status: 400,
     })
   })
 
@@ -1873,6 +1874,17 @@ async function getDatabase(
       if (result.error) throw new Error(result.error.message)
       return result.result ?? 0
     },
+
+    async getEvents(options) {
+      const params = new URLSearchParams()
+      if (options.model) params.set('model', options.model)
+      if (options.since != null) params.set('since', String(options.since))
+      if (options.limit != null) params.set('limit', String(options.limit))
+      const qs = params.toString()
+      const response = await stub.fetch(`http://do/events${qs ? `?${qs}` : ''}`)
+      const result = (await response.json()) as { events?: DatabaseEvent[] }
+      return result.events || []
+    },
   }
 }
 
@@ -1882,6 +1894,8 @@ async function getDatabase(
 
 function createInMemoryDatabase(): DatabaseRpcClient {
   const store: Record<string, Map<string, Document>> = {}
+  const eventLog: DatabaseEvent[] = []
+  let sequence = 0
 
   function getCollection(model: string): Map<string, Document> {
     if (!store[model]) {
@@ -1892,6 +1906,16 @@ function createInMemoryDatabase(): DatabaseRpcClient {
 
   function generateId(): string {
     return `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
+  }
+
+  function emitEvent(event: Omit<DatabaseEvent, 'id' | 'sequence' | 'timestamp'>): void {
+    sequence++
+    eventLog.push({
+      id: `evt_${sequence}`,
+      sequence,
+      timestamp: new Date().toISOString(),
+      ...event,
+    } as DatabaseEvent)
   }
 
   return {
@@ -1911,6 +1935,7 @@ function createInMemoryDatabase(): DatabaseRpcClient {
       }
 
       collection.set(id, doc)
+      emitEvent({ operation: 'create', model, documentId: id, after: doc, userId: ctx?.userId, requestId: ctx?.requestId })
       return doc
     },
 
@@ -1939,6 +1964,7 @@ function createInMemoryDatabase(): DatabaseRpcClient {
       }
 
       collection.set(id, doc)
+      emitEvent({ operation: 'update', model, documentId: id, before: existing, after: doc, userId: ctx?.userId, requestId: ctx?.requestId })
       return doc
     },
 
@@ -1951,6 +1977,7 @@ function createInMemoryDatabase(): DatabaseRpcClient {
         existing._deletedAt = new Date().toISOString()
         existing._deletedBy = ctx?.userId
         collection.set(id, existing)
+        emitEvent({ operation: 'delete', model, documentId: id, before: existing, userId: ctx?.userId, requestId: ctx?.requestId })
       }
     },
 
@@ -2031,6 +2058,18 @@ function createInMemoryDatabase(): DatabaseRpcClient {
         docs = docs.filter((doc) => matchesWhere(doc, where))
       }
       return docs.length
+    },
+
+    async getEvents(options) {
+      let events = [...eventLog]
+      if (options?.model) {
+        events = events.filter((e) => e.model === options.model)
+      }
+      if (options?.since != null) {
+        events = events.filter((e) => e.sequence > options.since!)
+      }
+      const limit = options?.limit || 100
+      return events.slice(0, limit)
     },
   }
 }

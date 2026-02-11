@@ -126,5 +126,13 @@ export function API(config: ApiConfig): Hono<ApiEnv> {
     config.routes(app)
   }
 
+  // Catch-all: return JSON error envelope for unmatched routes
+  app.notFound((c) => {
+    return c.var.respond({
+      error: { code: 'NOT_FOUND', message: 'Not Found', status: 404 },
+      status: 404,
+    })
+  })
+
   return app
 }
