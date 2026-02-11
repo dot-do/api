@@ -653,19 +653,12 @@ export async function discoverSchemaFromObjects(
     | { fetch(request: Request): Promise<Response> },
   namespace: string,
 ): Promise<ParsedSchema> {
-  // Try RPC-style access (DurableObjectNamespace with stub methods)
-  if ('idFromName' in objectsBinding) {
-    const doId = objectsBinding.idFromName(namespace)
-    const stub = objectsBinding.get(doId)
-    const result = await stub.listNouns()
-    if (!result.success) {
-      throw new Error('[schema-discovery] Failed to list nouns from objects.do')
-    }
-    return convertNounSchemasToSchema(result.data)
-  }
-
-  // Fallback: fetch-based access (service binding)
-  const response = await objectsBinding.fetch(
+  // Always use fetch-based access (works for both service bindings and DO namespaces).
+  // NOTE: Previously this checked `'idFromName' in objectsBinding` to detect a
+  // DurableObjectNamespace and use RPC, but Cloudflare service binding Proxies are
+  // transparent — the `in` operator returns true for ANY property, causing RPC calls
+  // to non-existent methods and DataCloneError: "Could not serialize RpcPromise".
+  const response = await (objectsBinding as { fetch(request: Request): Promise<Response> }).fetch(
     new Request('https://objects.do/nouns', {
       headers: { 'X-Tenant': namespace },
     }),

@@ -164,6 +164,9 @@ export function createParqueDBAdapter(service: ParqueDBService, schema: ParsedSc
       const ns = resolveNamespace(schema, model, tenantPrefix)
       const input = { ...data } as Record<string, unknown>
 
+      // ParqueDB DO requires $type on every entity
+      if (!input.$type) input.$type = model
+
       if (ctx?.userId) input.createdBy = ctx.userId
       if (ctx?.requestId) input.requestId = ctx.requestId
 
