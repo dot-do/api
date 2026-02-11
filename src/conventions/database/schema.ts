@@ -315,6 +315,13 @@ export function parseModel(name: string, def: Record<string, string>): ParsedMod
     // Skip special keys
     if (fieldName.startsWith('$')) continue
 
+    // Skip null/undefined values (disabled verbs in Noun() definitions)
+    if (fieldDef == null) continue
+
+    // Skip verb definitions (single PascalCase word, e.g., qualify: 'Qualified')
+    // Verbs are handled by the objects.do noun parser, not the schema parser
+    if (typeof fieldDef === 'string' && /^[A-Z][a-zA-Z]*$/.test(fieldDef.trim())) continue
+
     const field = parseField(fieldName, fieldDef)
     fields[fieldName] = field
 
