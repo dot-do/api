@@ -75,8 +75,12 @@ function entityToDocument(entity: Record<string, unknown>): Document {
     deletedBy?: string
   }
 
+  // ParqueDB $id is "ns/id" (e.g. "~default/contacts/contact_abc") — extract just the entity id
+  const rawId = ($id as string) || (entity.id as string) || ''
+  const bareId = rawId.includes('/') ? rawId.slice(rawId.lastIndexOf('/') + 1) : rawId
+
   return {
-    id: ($id as string) || (entity.id as string) || '',
+    id: bareId,
     _version: ($version as number) ?? 1,
     _createdAt: (createdAt as string) || new Date().toISOString(),
     _updatedAt: (updatedAt as string) || new Date().toISOString(),
