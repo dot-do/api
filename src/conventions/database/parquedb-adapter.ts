@@ -151,6 +151,14 @@ function buildSearchFilter(schema: ParsedSchema, model: string, query: string): 
   }
 }
 
+/** Returns true if the error indicates a missing/empty collection (no parquet file yet). */
+function isNotFoundError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err)
+  return /file not found|not found|does not exist|no such/i.test(msg)
+}
+
+const EMPTY_LIST = { data: [] as Document[], total: 0, limit: 20, offset: 0, hasMore: false }
+
 /**
  * Create a DatabaseRpcClient backed by a ParqueDB Worker service binding.
  *
@@ -176,9 +184,14 @@ export function createParqueDBAdapter(service: ParqueDBService, schema: ParsedSc
 
     async get(model, id) {
       const ns = resolveNamespace(schema, model, tenantPrefix)
-      const entity = await service.get(ns, id)
-      if (!entity) return null
-      return entityToDocument(entity as Record<string, unknown>)
+      try {
+        const entity = await service.get(ns, id)
+        if (!entity) return null
+        return entityToDocument(entity as Record<string, unknown>)
+      } catch (err) {
+        if (isNotFoundError(err)) return null
+        throw err
+      }
     },
 
     async update(model, id, data, ctx) {
@@ -205,19 +218,24 @@ export function createParqueDBAdapter(service: ParqueDBService, schema: ParsedSc
       const limit = options?.limit ?? 20
       const offset = options?.offset ?? 0
 
-      const result = await service.find(ns, buildFilter(options?.where), {
-        limit,
-        offset,
-        sort: buildSort(options?.orderBy),
-        cursor: options?.cursor,
-      })
+      try {
+        const result = await service.find(ns, buildFilter(options?.where), {
+          limit,
+          offset,
+          sort: buildSort(options?.orderBy),
+          cursor: options?.cursor,
+        })
 
-      return {
-        data: (result.items || []).map((item) => entityToDocument(item as Record<string, unknown>)),
-        total: result.total ?? 0,
-        limit,
-        offset,
-        hasMore: result.hasMore,
+        return {
+          data: (result.items || []).map((item) => entityToDocument(item as Record<string, unknown>)),
+          total: result.total ?? 0,
+          limit,
+          offset,
+          hasMore: result.hasMore,
+        }
+      } catch (err) {
+        if (isNotFoundError(err)) return { ...EMPTY_LIST, limit, offset }
+        throw err
       }
     },
 
@@ -231,24 +249,34 @@ export function createParqueDBAdapter(service: ParqueDBService, schema: ParsedSc
       const existingFilter = buildFilter(options?.where)
       const combinedFilter = existingFilter ? { $and: [searchFilter, existingFilter] } : searchFilter
 
-      const result = await service.find(ns, combinedFilter, {
-        limit,
-        offset,
-        sort: buildSort(options?.orderBy),
-      })
+      try {
+        const result = await service.find(ns, combinedFilter, {
+          limit,
+          offset,
+          sort: buildSort(options?.orderBy),
+        })
 
-      return {
-        data: (result.items || []).map((item) => entityToDocument(item as Record<string, unknown>)),
-        total: result.total ?? 0,
-        limit,
-        offset,
-        hasMore: result.hasMore,
+        return {
+          data: (result.items || []).map((item) => entityToDocument(item as Record<string, unknown>)),
+          total: result.total ?? 0,
+          limit,
+          offset,
+          hasMore: result.hasMore,
+        }
+      } catch (err) {
+        if (isNotFoundError(err)) return { ...EMPTY_LIST, limit, offset }
+        throw err
       }
     },
 
     async count(model, where) {
       const ns = resolveNamespace(schema, model, tenantPrefix)
-      return service.count(ns, buildFilter(where))
+      try {
+        return await service.count(ns, buildFilter(where))
+      } catch (err) {
+        if (isNotFoundError(err)) return 0
+        throw err
+      }
     },
   }
 }
