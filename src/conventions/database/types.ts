@@ -151,9 +151,18 @@ export type EventSinkConfig =
  */
 export interface DatabaseConfig {
   /**
-   * Schema definition
+   * Schema definition.
+   * Required unless `objects` is provided for schema discovery from objects.do.
    */
-  schema: SchemaDef
+  schema?: SchemaDef
+
+  /**
+   * Service binding name for objects.do (e.g., 'OBJECTS').
+   * When set, discovers schema from objects.do via listNouns() RPC
+   * instead of requiring a static `schema` in config.
+   * Takes priority over `schema` when both are set.
+   */
+  objects?: string
 
   /**
    * Database driver type or custom driver instance
@@ -196,19 +205,23 @@ export interface DatabaseConfig {
    * Enable MCP tools generation
    * Default: true
    */
-  mcp?: boolean | {
-    enabled: boolean
-    prefix?: string
-  }
+  mcp?:
+    | boolean
+    | {
+        enabled: boolean
+        prefix?: string
+      }
 
   /**
    * Enable RPC methods generation
    * Default: true
    */
-  rpc?: boolean | {
-    enabled: boolean
-    path?: string
-  }
+  rpc?:
+    | boolean
+    | {
+        enabled: boolean
+        path?: string
+      }
 
   /**
    * Enable WebSocket subscriptions
@@ -427,10 +440,7 @@ export interface DatabaseDriver {
 /**
  * Driver factory function type
  */
-export type DatabaseDriverFactory = (
-  config: DatabaseConfig,
-  env: Record<string, unknown>
-) => DatabaseDriver | Promise<DatabaseDriver>
+export type DatabaseDriverFactory = (config: DatabaseConfig, env: Record<string, unknown>) => DatabaseDriver | Promise<DatabaseDriver>
 
 // =============================================================================
 // DO RPC Types

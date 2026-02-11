@@ -6,7 +6,7 @@ export { analyticsMiddleware, analyticsRoutes } from './analytics'
 export { analyticsBufferRoutes, AnalyticsBufferDO } from './analytics-buffer'
 export type { AnalyticsBufferConfig, BufferEvent } from './analytics-buffer'
 export { testingConvention, type TestingConfig, type TestCase, type RestTestCase, type Example } from './testing'
-export { databaseConvention, parseSchema, parseField, parseModel, generateJsonSchema, buildTypeRegistry, createSqids, shuffleAlphabet, decodeSqid } from './database'
+export { databaseConvention, databaseConventionAsync, parseSchema, parseField, parseModel, generateJsonSchema, buildTypeRegistry, createSqids, shuffleAlphabet, decodeSqid, convertNounSchemasToSchema, discoverSchemaFromObjects } from './database'
 export type {
   DatabaseConfig,
   SchemaDef,

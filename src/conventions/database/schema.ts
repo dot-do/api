@@ -2,10 +2,43 @@
  * Schema Parser
  *
  * Parses IceType-inspired schema shorthand into structured schema information.
+ * Also provides conversion from objects.do StoredNounSchema for schema discovery.
  */
 
 import type { SchemaDef, ParsedSchema, ParsedModel, ParsedField } from './types'
 import { validateTableName } from '../../helpers/sql-validation'
+
+// ---------------------------------------------------------------------------
+// objects.do types (inline to avoid cross-package import)
+// ---------------------------------------------------------------------------
+
+/** Mirrors ParsedProperty from objects.do */
+interface ObjectsDoProperty {
+  name: string
+  kind: 'field' | 'relationship' | 'enum' | 'verb' | 'disabled'
+  type?: string
+  modifiers?: { required: boolean; optional: boolean; indexed: boolean; unique: boolean; array: boolean }
+  defaultValue?: string
+  enumValues?: string[]
+  operator?: string
+  targetType?: string
+  backref?: string
+  isArray?: boolean
+  verbAction?: string
+}
+
+/** Mirrors StoredNounSchema from objects.do */
+interface ObjectsDoNounSchema {
+  name: string
+  singular: string
+  plural: string
+  slug: string
+  fields: Record<string, ObjectsDoProperty>
+  relationships: Record<string, ObjectsDoProperty>
+  verbs: Record<string, unknown>
+  disabledVerbs: string[]
+  raw: Record<string, string | null>
+}
 
 /**
  * Pluralize a word (simple rules)
@@ -57,7 +90,10 @@ export function parseField(name: string, def: string): ParsedField {
   // Parse word-based modifiers (#unique, #index)
   let unique = remaining.includes('#unique')
   let indexed = remaining.includes('#index') || unique
-  remaining = remaining.replace(/#unique/g, '').replace(/#index/g, '').trim()
+  remaining = remaining
+    .replace(/#unique/g, '')
+    .replace(/#index/g, '')
+    .trim()
 
   // Parse inline ## (unique+indexed) and # (indexed) at end of string
   if (remaining.endsWith('##')) {
@@ -324,9 +360,7 @@ export function parseSchema(schema: SchemaDef): ParsedSchema {
   for (const [modelName, modelDef] of Object.entries(schema)) {
     // Validate table/model name to prevent SQL injection
     if (!validateTableName(modelName)) {
-      throw new Error(
-        `Invalid model name "${modelName}": must start with a letter and contain only alphanumeric characters and underscores`
-      )
+      throw new Error(`Invalid model name "${modelName}": must start with a letter and contain only alphanumeric characters and underscores`)
     }
     models[modelName] = parseModel(modelName, modelDef)
   }
@@ -422,4 +456,222 @@ export function generateJsonSchema(model: ParsedModel): Record<string, unknown> 
     properties,
     required: required.length > 0 ? required : undefined,
   }
+}
+
+// =============================================================================
+// objects.do Schema Discovery
+// =============================================================================
+
+/**
+ * Map an objects.do field type to a ParsedField type
+ */
+function mapFieldType(type: string | undefined): ParsedField['type'] {
+  if (!type) return 'string'
+
+  const typeMap: Record<string, ParsedField['type']> = {
+    string: 'string',
+    text: 'text',
+    number: 'number',
+    int: 'number',
+    integer: 'number',
+    float: 'number',
+    decimal: 'number',
+    boolean: 'boolean',
+    bool: 'boolean',
+    json: 'json',
+    object: 'json',
+    timestamp: 'timestamp',
+    datetime: 'timestamp',
+    date: 'date',
+    cuid: 'cuid',
+    uuid: 'uuid',
+    ulid: 'string',
+    id: 'cuid',
+    url: 'string',
+    email: 'string',
+    markdown: 'string',
+    slug: 'string',
+  }
+
+  return typeMap[type.toLowerCase()] || 'string'
+}
+
+/**
+ * Map an objects.do field type to a format string (if applicable)
+ */
+function mapFieldFormat(type: string | undefined): string | undefined {
+  if (!type) return undefined
+
+  const formatMap: Record<string, string> = {
+    url: 'url',
+    email: 'email',
+    markdown: 'markdown',
+    slug: 'slug',
+  }
+
+  return formatMap[type.toLowerCase()]
+}
+
+/**
+ * Convert a single objects.do ParsedProperty (field or enum) to a ParsedField
+ */
+function convertFieldProperty(prop: ObjectsDoProperty): ParsedField {
+  if (prop.kind === 'enum' && prop.enumValues) {
+    return {
+      name: prop.name,
+      type: 'string',
+      required: prop.modifiers?.required ?? false,
+      unique: prop.modifiers?.unique ?? false,
+      indexed: prop.modifiers?.indexed ?? false,
+      default: prop.defaultValue,
+      enum: prop.enumValues,
+    }
+  }
+
+  const parsedType = mapFieldType(prop.type)
+  const format = mapFieldFormat(prop.type)
+
+  const field: ParsedField = {
+    name: prop.name,
+    type: parsedType,
+    required: prop.modifiers?.required ?? false,
+    unique: prop.modifiers?.unique ?? false,
+    indexed: prop.modifiers?.indexed ?? false,
+    default: prop.defaultValue,
+  }
+
+  if (format) field.format = format
+  if (prop.modifiers?.array) field.array = true
+
+  return field
+}
+
+/**
+ * Convert a single objects.do relationship ParsedProperty to a ParsedField
+ */
+function convertRelationshipProperty(prop: ObjectsDoProperty): ParsedField {
+  const isForward = prop.operator === '->' || prop.operator === '~>'
+  const many = prop.isArray ?? false
+
+  return {
+    name: prop.name,
+    type: 'relation',
+    required: prop.modifiers?.required ?? false,
+    unique: false,
+    indexed: isForward,
+    relation: {
+      type: isForward ? 'forward' : 'inverse',
+      target: prop.targetType || '',
+      many,
+      inverseField: prop.backref,
+    },
+  }
+}
+
+/**
+ * Convert a single StoredNounSchema from objects.do to a ParsedModel
+ */
+function convertNounToModel(noun: ObjectsDoNounSchema): ParsedModel {
+  const fields: Record<string, ParsedField> = {}
+
+  // Convert regular fields and enums
+  for (const [fieldName, prop] of Object.entries(noun.fields)) {
+    fields[fieldName] = convertFieldProperty(prop)
+  }
+
+  // Convert relationships
+  for (const [relName, prop] of Object.entries(noun.relationships)) {
+    fields[relName] = convertRelationshipProperty(prop)
+  }
+
+  // Ensure there's always an id field
+  if (!fields.id) {
+    fields.id = {
+      name: 'id',
+      type: 'cuid',
+      required: true,
+      unique: true,
+      indexed: true,
+    }
+  }
+
+  return {
+    name: noun.name,
+    singular: noun.singular || toCamelCase(noun.name),
+    plural: noun.plural || pluralize(toCamelCase(noun.name)),
+    fields,
+    primaryKey: 'id',
+  }
+}
+
+/**
+ * Convert an array of StoredNounSchema from objects.do into a ParsedSchema.
+ * This is used by schema discovery: objects.do listNouns() returns StoredNounSchema[],
+ * and this function translates them to the ParsedSchema format expected by route generation.
+ */
+export function convertNounSchemasToSchema(nouns: ObjectsDoNounSchema[]): ParsedSchema {
+  const models: Record<string, ParsedModel> = {}
+
+  for (const noun of nouns) {
+    if (!validateTableName(noun.name)) {
+      console.warn(`[schema-discovery] Skipping noun "${noun.name}": invalid model name`)
+      continue
+    }
+    models[noun.name] = convertNounToModel(noun)
+  }
+
+  // Resolve relation targets (warn for missing targets)
+  for (const model of Object.values(models)) {
+    for (const field of Object.values(model.fields)) {
+      if (field.relation && field.relation.target && !models[field.relation.target]) {
+        console.warn(`Warning: Relation target "${field.relation.target}" not found for ${model.name}.${field.name}`)
+      }
+    }
+  }
+
+  return { models }
+}
+
+/**
+ * Discover schema from objects.do via service binding RPC.
+ * Calls listNouns() on the objects.do DO stub and converts the result.
+ *
+ * @param objectsBinding - The objects.do service binding (from env[config.objects])
+ * @param namespace - Tenant namespace for DO isolation
+ * @returns ParsedSchema compatible with route generation
+ */
+export async function discoverSchemaFromObjects(
+  objectsBinding:
+    | { get(id: { name: string }): { listNouns(): Promise<{ success: boolean; data: ObjectsDoNounSchema[] }> }; idFromName(name: string): { name: string } }
+    | { fetch(request: Request): Promise<Response> },
+  namespace: string,
+): Promise<ParsedSchema> {
+  // Try RPC-style access (DurableObjectNamespace with stub methods)
+  if ('idFromName' in objectsBinding) {
+    const doId = objectsBinding.idFromName(namespace)
+    const stub = objectsBinding.get(doId)
+    const result = await stub.listNouns()
+    if (!result.success) {
+      throw new Error('[schema-discovery] Failed to list nouns from objects.do')
+    }
+    return convertNounSchemasToSchema(result.data)
+  }
+
+  // Fallback: fetch-based access (service binding)
+  const response = await objectsBinding.fetch(
+    new Request('https://objects.do/nouns', {
+      headers: { 'X-Tenant': namespace },
+    }),
+  )
+
+  if (!response.ok) {
+    throw new Error(`[schema-discovery] Failed to fetch nouns from objects.do: ${response.status} ${response.statusText}`)
+  }
+
+  const body = (await response.json()) as { success: boolean; data: ObjectsDoNounSchema[] }
+  if (!body.success || !Array.isArray(body.data)) {
+    throw new Error('[schema-discovery] Invalid response from objects.do /nouns')
+  }
+
+  return convertNounSchemasToSchema(body.data)
 }

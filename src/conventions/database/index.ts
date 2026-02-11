@@ -11,13 +11,47 @@
 import { Hono } from 'hono'
 import Sqids from 'sqids'
 import type { ApiEnv } from '../../types'
-import type { DatabaseConfig, ParsedSchema, ParsedModel, Document, QueryOptions, DatabaseEvent, TypeRegistry, ReverseTypeRegistry, DecodedSqid, RequestContext } from './types'
-import { parseSchema, generateJsonSchema } from './schema'
+import type {
+  DatabaseConfig,
+  ParsedSchema,
+  ParsedModel,
+  Document,
+  QueryOptions,
+  DatabaseEvent,
+  TypeRegistry,
+  ReverseTypeRegistry,
+  DecodedSqid,
+  RequestContext,
+} from './types'
+import { parseSchema, generateJsonSchema, discoverSchemaFromObjects } from './schema'
 import { matchesWhere, coerceValue } from './match'
 import { createParqueDBAdapter } from './parquedb-adapter'
 
-export type { DatabaseConfig, SchemaDef, ModelDef, FieldDef, ParsedSchema, ParsedModel, ParsedField, Document, DatabaseEvent, DatabaseDriverType, DatabaseDriver, DatabaseDriverFactory, QueryOptions, QueryResult, EventSinkConfig, TypeRegistry, ReverseTypeRegistry, DecodedSqid, DatabaseRpc, BatchOperation, BatchResult, RequestContext } from './types'
-export { parseSchema, parseField, parseModel, generateJsonSchema } from './schema'
+export type {
+  DatabaseConfig,
+  SchemaDef,
+  ModelDef,
+  FieldDef,
+  ParsedSchema,
+  ParsedModel,
+  ParsedField,
+  Document,
+  DatabaseEvent,
+  DatabaseDriverType,
+  DatabaseDriver,
+  DatabaseDriverFactory,
+  QueryOptions,
+  QueryResult,
+  EventSinkConfig,
+  TypeRegistry,
+  ReverseTypeRegistry,
+  DecodedSqid,
+  DatabaseRpc,
+  BatchOperation,
+  BatchResult,
+  RequestContext,
+} from './types'
+export { parseSchema, parseField, parseModel, generateJsonSchema, convertNounSchemasToSchema, discoverSchemaFromObjects } from './schema'
 export { generateWebhookSignature, generateWebhookSignatureAsync, sendToWebhookSink } from './do'
 export type { WebhookRetryConfig } from './do'
 export { matchesWhere, coerceValue, isSafeRegex } from './match'
@@ -52,11 +86,7 @@ export interface ValidationResult {
  * @param data - The input data to validate
  * @param partial - If true, required fields are not enforced (for PATCH)
  */
-export function validateInput(
-  model: ParsedModel,
-  data: Record<string, unknown>,
-  partial = false
-): ValidationResult {
+export function validateInput(model: ParsedModel, data: Record<string, unknown>, partial = false): ValidationResult {
   const errors: ValidationError[] = []
   const jsonSchema = generateJsonSchema(model)
   const properties = jsonSchema.properties as Record<string, { type?: string; items?: { type: string }; enum?: string[] }>
@@ -152,6 +182,13 @@ function getJsonType(value: unknown): string {
 
 /**
  * Create database convention routes
+ *
+ * Supports two schema sources:
+ * 1. Static: `config.schema` provided directly (existing behavior)
+ * 2. Discovery: `config.objects` names a service binding for objects.do,
+ *    schema is discovered on first request via listNouns() and cached
+ *
+ * When `objects` is provided it takes precedence over `schema`.
  */
 export function databaseConvention(config: DatabaseConfig): {
   routes: Hono<ApiEnv>
@@ -160,8 +197,38 @@ export function databaseConvention(config: DatabaseConfig): {
   typeRegistry: { forward: TypeRegistry; reverse: ReverseTypeRegistry; version: string }
   sqids?: Sqids
 } {
+  // ---------------------------------------------------------------------------
+  // Schema discovery via objects.do — lazy initialization path
+  // ---------------------------------------------------------------------------
+  if (config.objects) {
+    return databaseConventionWithDiscovery(config)
+  }
+
+  // ---------------------------------------------------------------------------
+  // Static schema path (existing behavior)
+  // ---------------------------------------------------------------------------
+  if (!config.schema) {
+    throw new Error('[database-convention] Either "schema" or "objects" must be provided in DatabaseConfig')
+  }
+
+  return databaseConventionWithSchema(config, parseSchema(config.schema))
+}
+
+/**
+ * Internal: create database convention with a resolved ParsedSchema
+ * (shared by both static and discovery paths)
+ */
+function databaseConventionWithSchema(
+  config: DatabaseConfig,
+  schema: ParsedSchema,
+): {
+  routes: Hono<ApiEnv>
+  schema: ParsedSchema
+  mcpTools: McpToolDef[]
+  typeRegistry: { forward: TypeRegistry; reverse: ReverseTypeRegistry; version: string }
+  sqids?: Sqids
+} {
   const app = new Hono<ApiEnv>()
-  const schema = parseSchema(config.schema)
   const basePath = config.rest?.basePath || ''
   const pageSize = config.rest?.pageSize || 20
   const maxPageSize = config.rest?.maxPageSize || 100
@@ -215,9 +282,7 @@ export function databaseConvention(config: DatabaseConfig): {
         },
         links: {
           self: c.req.url,
-          next: result.hasMore
-            ? `${modelPath}?offset=${result.offset + result.limit}&limit=${result.limit}`
-            : undefined,
+          next: result.hasMore ? `${modelPath}?offset=${result.offset + result.limit}&limit=${result.limit}` : undefined,
         },
       })
     })
@@ -453,11 +518,13 @@ export function databaseConvention(config: DatabaseConfig): {
             })
           }
 
-          const relatedData = doc[field.name] as Document[] || []
+          const relatedData = (doc[field.name] as Document[]) || []
 
           return c.var.respond({
             data: useMetaFormat
-              ? relatedData.slice(options.offset || 0, (options.offset || 0) + (options.limit || pageSize)).map((d) => formatDocument(d, field.relation!.target, metaPrefix))
+              ? relatedData
+                  .slice(options.offset || 0, (options.offset || 0) + (options.limit || pageSize))
+                  .map((d) => formatDocument(d, field.relation!.target, metaPrefix))
               : relatedData.slice(options.offset || 0, (options.offset || 0) + (options.limit || pageSize)),
             meta: {
               total: relatedData.length,
@@ -669,11 +736,12 @@ export function databaseConvention(config: DatabaseConfig): {
     const since = c.req.query('since')
 
     // For HTTP, return recent events
-    const events = await db.getEvents?.({
-      model,
-      since: since ? parseInt(since, 10) : undefined,
-      limit: 100,
-    }) || []
+    const events =
+      (await db.getEvents?.({
+        model,
+        since: since ? parseInt(since, 10) : undefined,
+        limit: 100,
+      })) || []
 
     return c.var.respond({ data: events })
   })
@@ -688,6 +756,533 @@ export function databaseConvention(config: DatabaseConfig): {
   })
 
   return { routes: app, schema, mcpTools, typeRegistry: registry, sqids: sqidsInstance }
+}
+
+// =============================================================================
+// Schema Discovery — objects.do lazy initialization
+// =============================================================================
+
+/**
+ * Create database convention with lazy schema discovery from objects.do.
+ *
+ * Since schema discovery is async (requires calling objects.do) but route
+ * registration is sync, this uses a middleware + catch-all route pattern:
+ *
+ * 1. A middleware resolves schema from objects.do on first request and caches it
+ * 2. Dynamic routes resolve the model from the URL path using the cached schema
+ * 3. The /:id self-describing routes work the same way via prefix lookup
+ *
+ * Returns an empty initial schema and mcpTools — callers that need schema
+ * at init time (e.g., for MCP tool registration) should use
+ * `databaseConventionAsync()` instead.
+ */
+function databaseConventionWithDiscovery(config: DatabaseConfig): {
+  routes: Hono<ApiEnv>
+  schema: ParsedSchema
+  mcpTools: McpToolDef[]
+  typeRegistry: { forward: TypeRegistry; reverse: ReverseTypeRegistry; version: string }
+  sqids?: Sqids
+} {
+  const app = new Hono<ApiEnv>()
+  const basePath = config.rest?.basePath || ''
+  const pageSize = config.rest?.pageSize || 20
+  const maxPageSize = config.rest?.maxPageSize || 100
+  const metaPrefix = config.metaPrefix || '$'
+  const idFormat = config.idFormat || 'auto'
+  const useMetaFormat = metaPrefix !== '_'
+
+  // In-memory DB cache
+  const inMemoryCache = new Map<string, DatabaseRpcClient>()
+
+  // Cached discovered schema (populated on first request)
+  let cachedSchema: ParsedSchema | null = null
+  let cachedRegistry: { forward: TypeRegistry; reverse: ReverseTypeRegistry; version: string } | null = null
+  let schemaDiscoveryPromise: Promise<ParsedSchema> | null = null
+
+  // Schema and registry for the initial return value (empty until discovery)
+  const emptySchema: ParsedSchema = { models: {} }
+  const emptyRegistry = buildTypeRegistry(emptySchema, config.typeRegistry)
+
+  // Sqids instance
+  const staticSeed = typeof config.sqidSeed === 'number' ? config.sqidSeed : undefined
+  const staticNamespace = typeof config.sqidNamespace === 'number' ? config.sqidNamespace : undefined
+  const sqidsInstance = idFormat === 'sqid' ? createSqids(staticSeed, config.sqidMinLength) : undefined
+
+  /**
+   * Resolve schema — returns cached or discovers from objects.do.
+   * Uses a single-flight pattern: concurrent requests share one discovery promise.
+   */
+  async function resolveSchema(
+    env: Record<string, unknown>,
+  ): Promise<{ schema: ParsedSchema; registry: { forward: TypeRegistry; reverse: ReverseTypeRegistry; version: string } }> {
+    if (cachedSchema && cachedRegistry) {
+      return { schema: cachedSchema, registry: cachedRegistry }
+    }
+
+    if (!schemaDiscoveryPromise) {
+      const objectsBinding = env[config.objects!]
+      if (!objectsBinding) {
+        throw new Error(`[schema-discovery] Service binding "${config.objects}" not found in env`)
+      }
+
+      const namespace = typeof config.namespace === 'function' ? config.namespace({ env } as never) : config.namespace || 'default'
+
+      schemaDiscoveryPromise = discoverSchemaFromObjects(objectsBinding as never, namespace)
+        .then((schema) => {
+          cachedSchema = schema
+          cachedRegistry = buildTypeRegistry(schema, config.typeRegistry)
+          console.log(`[schema-discovery] Discovered ${Object.keys(schema.models).length} models from objects.do: ${Object.keys(schema.models).join(', ')}`)
+          return schema
+        })
+        .catch((err) => {
+          // Reset promise so next request retries
+          schemaDiscoveryPromise = null
+          throw err
+        })
+    }
+
+    await schemaDiscoveryPromise
+    return { schema: cachedSchema!, registry: cachedRegistry! }
+  }
+
+  /**
+   * Resolve model from plural path segment using discovered schema
+   */
+  function resolveModelByPlural(schema: ParsedSchema, plural: string): ParsedModel | undefined {
+    for (const model of Object.values(schema.models)) {
+      if (model.plural === plural) return model
+    }
+    return undefined
+  }
+
+  /**
+   * Resolve model from singular prefix (for self-describing IDs)
+   */
+  function resolveModelByPrefix(schema: ParsedSchema, prefix: string): ParsedModel | undefined {
+    for (const model of Object.values(schema.models)) {
+      if (model.singular === prefix) return model
+    }
+    return undefined
+  }
+
+  // ==========================================================================
+  // Dynamic REST Endpoints — resolved at request time from discovered schema
+  // ==========================================================================
+
+  // COUNT - GET /:collection/$count
+  app.get(`${basePath}/:collection/\\$count`, async (c) => {
+    const { schema } = await resolveSchema(c.env as Record<string, unknown>)
+    const collection = c.req.param('collection')
+    const model = resolveModelByPlural(schema, collection)
+    if (!model) {
+      return c.var.respond({ error: { code: 'NOT_FOUND', message: `Unknown collection: ${collection}` }, status: 404 })
+    }
+
+    const db = await getDatabase(c, config, inMemoryCache, schema)
+    const options = parseQueryOptions(c, pageSize, maxPageSize)
+    const count = await db.count(model.name, options.where)
+
+    return c.var.respond({ data: count })
+  })
+
+  // SEARCH - GET /:collection/search?q=...
+  app.get(`${basePath}/:collection/search`, async (c) => {
+    const { schema } = await resolveSchema(c.env as Record<string, unknown>)
+    const collection = c.req.param('collection')
+    const model = resolveModelByPlural(schema, collection)
+    if (!model) {
+      return c.var.respond({ error: { code: 'NOT_FOUND', message: `Unknown collection: ${collection}` }, status: 404 })
+    }
+
+    const db = await getDatabase(c, config, inMemoryCache, schema)
+    const query = c.req.query('q') || ''
+    const options = parseQueryOptions(c, pageSize, maxPageSize)
+    const result = await db.search(model.name, query, options)
+
+    return c.var.respond({
+      data: useMetaFormat ? result.data.map((d) => formatDocument(d, model.name, metaPrefix)) : result.data,
+      meta: { query, total: result.total, limit: result.limit, offset: result.offset },
+    })
+  })
+
+  // GET /:collection/:id — get entity by collection + ID
+  app.get(`${basePath}/:collection/:id`, async (c) => {
+    const { schema } = await resolveSchema(c.env as Record<string, unknown>)
+    const collection = c.req.param('collection')
+    const model = resolveModelByPlural(schema, collection)
+    if (!model) {
+      // Fall through — might be a self-describing ID route
+      return c.var.respond({ error: { code: 'NOT_FOUND', message: `Unknown collection: ${collection}` }, status: 404 })
+    }
+
+    const db = await getDatabase(c, config, inMemoryCache, schema)
+    const id = c.req.param('id')
+    const include = c.req.query('include')?.split(',')
+    const doc = await db.get(model.name, id, { include })
+
+    if (!doc) {
+      return c.var.respond({ error: { code: 'NOT_FOUND', message: `${model.name} not found` }, status: 404 })
+    }
+
+    return c.var.respond({ data: useMetaFormat ? formatDocument(doc, model.name, metaPrefix) : doc })
+  })
+
+  // LIST - GET /:collection
+  app.get(`${basePath}/:collection`, async (c) => {
+    const { schema } = await resolveSchema(c.env as Record<string, unknown>)
+    const collection = c.req.param('collection')
+    const model = resolveModelByPlural(schema, collection)
+    if (!model) {
+      return c.var.respond({ error: { code: 'NOT_FOUND', message: `Unknown collection: ${collection}` }, status: 404 })
+    }
+
+    const db = await getDatabase(c, config, inMemoryCache, schema)
+    const options = parseQueryOptions(c, pageSize, maxPageSize)
+    const result = await db.list(model.name, options)
+    const modelPath = `${basePath}/${model.plural}`
+
+    return c.var.respond({
+      data: useMetaFormat ? result.data.map((d) => formatDocument(d, model.name, metaPrefix)) : result.data,
+      meta: { total: result.total, limit: result.limit, offset: result.offset },
+      links: {
+        self: c.req.url,
+        next: result.hasMore ? `${modelPath}?offset=${result.offset + result.limit}&limit=${result.limit}` : undefined,
+      },
+    })
+  })
+
+  // CREATE - POST /:collection
+  app.post(`${basePath}/:collection`, async (c) => {
+    const { schema, registry } = await resolveSchema(c.env as Record<string, unknown>)
+    const collection = c.req.param('collection')
+    const model = resolveModelByPlural(schema, collection)
+    if (!model) {
+      return c.var.respond({ error: { code: 'NOT_FOUND', message: `Unknown collection: ${collection}` }, status: 404 })
+    }
+
+    let body: Record<string, unknown>
+    try {
+      body = await c.req.json()
+    } catch {
+      return c.var.respond({ error: { code: 'INVALID_JSON', message: 'Request body must be valid JSON', status: 400 }, status: 400 })
+    }
+
+    for (const key of Object.keys(body)) {
+      if (key.startsWith('_') || (key.startsWith('$') && key !== '$id')) delete body[key]
+    }
+    if (body.$id !== undefined) {
+      body.id = body.$id
+      delete body.$id
+    }
+
+    const validation = validateInput(model, body, false)
+    if (!validation.valid) {
+      return c.var.respond({ error: { code: 'VALIDATION_ERROR', message: 'Input validation failed', details: validation.errors }, status: 400 })
+    }
+
+    if (!body.id && idFormat !== 'auto') {
+      const typeNum = registry.forward[model.name]
+      const namespace = typeof config.sqidNamespace === 'function' ? config.sqidNamespace(c) : staticNamespace
+      const seed = typeof config.sqidSeed === 'function' ? config.sqidSeed(c) : staticSeed
+      const reqSqids = seed !== staticSeed ? createSqids(seed, config.sqidMinLength) : sqidsInstance
+      body.id = generateId(model.singular, idFormat, typeNum, reqSqids, namespace)
+    }
+
+    const db = await getDatabase(c, config, inMemoryCache, schema)
+    const ctx = getRequestContext(c)
+    const doc = await db.create(model.name, body, ctx)
+
+    return c.var.respond({ data: useMetaFormat ? formatDocument(doc, model.name, metaPrefix) : doc, status: 201 })
+  })
+
+  // UPDATE - PUT /:collection/:id
+  app.put(`${basePath}/:collection/:id`, async (c) => {
+    const { schema } = await resolveSchema(c.env as Record<string, unknown>)
+    const collection = c.req.param('collection')
+    const model = resolveModelByPlural(schema, collection)
+    if (!model) {
+      return c.var.respond({ error: { code: 'NOT_FOUND', message: `Unknown collection: ${collection}` }, status: 404 })
+    }
+
+    const id = c.req.param('id')
+    let body: Record<string, unknown>
+    try {
+      body = await c.req.json()
+    } catch {
+      return c.var.respond({ error: { code: 'INVALID_JSON', message: 'Request body must be valid JSON', status: 400 }, status: 400 })
+    }
+
+    for (const key of Object.keys(body)) {
+      if (key.startsWith('_') || key.startsWith('$') || key === 'id') delete body[key]
+    }
+
+    const validation = validateInput(model, body, false)
+    if (!validation.valid) {
+      return c.var.respond({ error: { code: 'VALIDATION_ERROR', message: 'Input validation failed', details: validation.errors }, status: 400 })
+    }
+
+    const db = await getDatabase(c, config, inMemoryCache, schema)
+    const ctx = getRequestContext(c)
+
+    try {
+      const doc = await db.update(model.name, id, body, ctx)
+      return c.var.respond({ data: useMetaFormat ? formatDocument(doc, model.name, metaPrefix) : doc })
+    } catch (e) {
+      const err = e instanceof Error ? e : new Error(String(e))
+      if (err.message.includes('not found')) {
+        return c.var.respond({ error: { code: 'NOT_FOUND', message: err.message }, status: 404 })
+      }
+      throw e
+    }
+  })
+
+  // PATCH - PATCH /:collection/:id
+  app.patch(`${basePath}/:collection/:id`, async (c) => {
+    const { schema } = await resolveSchema(c.env as Record<string, unknown>)
+    const collection = c.req.param('collection')
+    const model = resolveModelByPlural(schema, collection)
+    if (!model) {
+      return c.var.respond({ error: { code: 'NOT_FOUND', message: `Unknown collection: ${collection}` }, status: 404 })
+    }
+
+    const id = c.req.param('id')
+    let body: Record<string, unknown>
+    try {
+      body = await c.req.json()
+    } catch {
+      return c.var.respond({ error: { code: 'INVALID_JSON', message: 'Request body must be valid JSON', status: 400 }, status: 400 })
+    }
+
+    for (const key of Object.keys(body)) {
+      if (key.startsWith('_') || key.startsWith('$') || key === 'id') delete body[key]
+    }
+
+    const validation = validateInput(model, body, true)
+    if (!validation.valid) {
+      return c.var.respond({ error: { code: 'VALIDATION_ERROR', message: 'Input validation failed', details: validation.errors }, status: 400 })
+    }
+
+    const db = await getDatabase(c, config, inMemoryCache, schema)
+    const ctx = getRequestContext(c)
+
+    try {
+      const doc = await db.update(model.name, id, body, ctx)
+      return c.var.respond({ data: useMetaFormat ? formatDocument(doc, model.name, metaPrefix) : doc })
+    } catch (e) {
+      const err = e instanceof Error ? e : new Error(String(e))
+      if (err.message.includes('not found')) {
+        return c.var.respond({ error: { code: 'NOT_FOUND', message: err.message }, status: 404 })
+      }
+      throw e
+    }
+  })
+
+  // DELETE - DELETE /:collection/:id
+  app.delete(`${basePath}/:collection/:id`, async (c) => {
+    const { schema } = await resolveSchema(c.env as Record<string, unknown>)
+    const collection = c.req.param('collection')
+    const model = resolveModelByPlural(schema, collection)
+    if (!model) {
+      return c.var.respond({ error: { code: 'NOT_FOUND', message: `Unknown collection: ${collection}` }, status: 404 })
+    }
+
+    const db = await getDatabase(c, config, inMemoryCache, schema)
+    const id = c.req.param('id')
+    const ctx = getRequestContext(c)
+
+    const existing = await db.get(model.name, id)
+    if (!existing) {
+      return c.var.respond({ error: { code: 'NOT_FOUND', message: `${model.name} not found` }, status: 404 })
+    }
+
+    await db.delete(model.name, id, ctx)
+    return c.var.respond({ data: { deleted: true, id } })
+  })
+
+  // ==========================================================================
+  // Global /:id Routes — self-describing entity access (same as static path)
+  // ==========================================================================
+
+  // GET /:id
+  app.get(`${basePath}/:id{[a-zA-Z]+_[a-zA-Z0-9]+}`, async (c) => {
+    const { schema } = await resolveSchema(c.env as Record<string, unknown>)
+    const id = c.req.param('id')
+    const prefix = id.split('_')[0] as string
+    const model = resolveModelByPrefix(schema, prefix)
+    if (!model) {
+      return c.var.respond({ error: { code: 'NOT_FOUND', message: `Unknown entity type prefix: ${prefix}` }, status: 404 })
+    }
+
+    const db = await getDatabase(c, config, inMemoryCache, schema)
+    const include = c.req.query('include')?.split(',')
+    const doc = await db.get(model.name, id, { include })
+
+    if (!doc) {
+      return c.var.respond({ error: { code: 'NOT_FOUND', message: `${model.name} not found` }, status: 404 })
+    }
+
+    return c.var.respond({ data: useMetaFormat ? formatDocument(doc, model.name, metaPrefix) : doc })
+  })
+
+  // PUT /:id
+  app.put(`${basePath}/:id{[a-zA-Z]+_[a-zA-Z0-9]+}`, async (c) => {
+    const { schema } = await resolveSchema(c.env as Record<string, unknown>)
+    const id = c.req.param('id')
+    const prefix = id.split('_')[0] as string
+    const model = resolveModelByPrefix(schema, prefix)
+    if (!model) {
+      return c.var.respond({ error: { code: 'NOT_FOUND', message: `Unknown entity type prefix: ${prefix}` }, status: 404 })
+    }
+
+    let body: Record<string, unknown>
+    try {
+      body = await c.req.json()
+    } catch {
+      return c.var.respond({ error: { code: 'INVALID_JSON', message: 'Request body must be valid JSON', status: 400 }, status: 400 })
+    }
+
+    for (const key of Object.keys(body)) {
+      if (key.startsWith('_') || key.startsWith('$') || key === 'id') delete body[key]
+    }
+
+    const validation = validateInput(model, body, false)
+    if (!validation.valid) {
+      return c.var.respond({ error: { code: 'VALIDATION_ERROR', message: 'Input validation failed', details: validation.errors }, status: 400 })
+    }
+
+    const db = await getDatabase(c, config, inMemoryCache, schema)
+    const ctx = getRequestContext(c)
+
+    try {
+      const doc = await db.update(model.name, id, body, ctx)
+      return c.var.respond({ data: useMetaFormat ? formatDocument(doc, model.name, metaPrefix) : doc })
+    } catch (e) {
+      const err = e instanceof Error ? e : new Error(String(e))
+      if (err.message.includes('not found')) {
+        return c.var.respond({ error: { code: 'NOT_FOUND', message: err.message }, status: 404 })
+      }
+      throw e
+    }
+  })
+
+  // DELETE /:id
+  app.delete(`${basePath}/:id{[a-zA-Z]+_[a-zA-Z0-9]+}`, async (c) => {
+    const { schema } = await resolveSchema(c.env as Record<string, unknown>)
+    const id = c.req.param('id')
+    const prefix = id.split('_')[0] as string
+    const model = resolveModelByPrefix(schema, prefix)
+    if (!model) {
+      return c.var.respond({ error: { code: 'NOT_FOUND', message: `Unknown entity type prefix: ${prefix}` }, status: 404 })
+    }
+
+    const db = await getDatabase(c, config, inMemoryCache, schema)
+    const ctx = getRequestContext(c)
+
+    const existing = await db.get(model.name, id)
+    if (!existing) {
+      return c.var.respond({ error: { code: 'NOT_FOUND', message: `${model.name} not found` }, status: 404 })
+    }
+
+    await db.delete(model.name, id, ctx)
+    return c.var.respond({ data: { deleted: true, id } })
+  })
+
+  // POST /:id/:verb
+  app.post(`${basePath}/:id{[a-zA-Z]+_[a-zA-Z0-9]+}/:verb`, async (c) => {
+    const { schema } = await resolveSchema(c.env as Record<string, unknown>)
+    const id = c.req.param('id')
+    const verb = c.req.param('verb')
+    const prefix = id.split('_')[0] as string
+    const model = resolveModelByPrefix(schema, prefix)
+    if (!model) {
+      return c.var.respond({ error: { code: 'NOT_FOUND', message: `Unknown entity type prefix: ${prefix}` }, status: 404 })
+    }
+
+    const db = await getDatabase(c, config, inMemoryCache, schema)
+    const doc = await db.get(model.name, id)
+    if (!doc) {
+      return c.var.respond({ error: { code: 'NOT_FOUND', message: `${model.name} not found` }, status: 404 })
+    }
+
+    const body = await c.req.json().catch(() => ({}))
+    const ctx = getRequestContext(c)
+    const updated = await db.update(model.name, id, { ...body, lastVerb: verb }, ctx)
+
+    return c.var.respond({
+      data: useMetaFormat ? formatDocument(updated, model.name, metaPrefix) : updated,
+      meta: { verb },
+    })
+  })
+
+  // ==========================================================================
+  // Events Endpoint
+  // ==========================================================================
+
+  app.get('/events', async (c) => {
+    const { schema } = await resolveSchema(c.env as Record<string, unknown>)
+    const db = await getDatabase(c, config, inMemoryCache, schema)
+    const model = c.req.query('model')
+    const since = c.req.query('since')
+
+    const events =
+      (await db.getEvents?.({
+        model,
+        since: since ? parseInt(since, 10) : undefined,
+        limit: 100,
+      })) || []
+
+    return c.var.respond({ data: events })
+  })
+
+  app.get('/events/ws', async (c) => {
+    return c.var.respond({
+      error: { code: 'USE_WEBSOCKET', message: 'Connect via WebSocket for real-time events' },
+      status: 400,
+    })
+  })
+
+  // Return empty schema/tools initially — they populate on first request
+  // Consumers that need schema at init time should use databaseConventionAsync()
+  return { routes: app, schema: emptySchema, mcpTools: [], typeRegistry: emptyRegistry, sqids: sqidsInstance }
+}
+
+/**
+ * Async version of databaseConvention that resolves schema from objects.do
+ * before building routes. Use this when you need schema/mcpTools at init time
+ * (e.g., for MCP tool registration).
+ *
+ * @param config - Database convention config with `objects` set
+ * @param env - Worker env object containing the objects.do service binding
+ */
+export async function databaseConventionAsync(
+  config: DatabaseConfig,
+  env: Record<string, unknown>,
+): Promise<{
+  routes: Hono<ApiEnv>
+  schema: ParsedSchema
+  mcpTools: McpToolDef[]
+  typeRegistry: { forward: TypeRegistry; reverse: ReverseTypeRegistry; version: string }
+  sqids?: Sqids
+}> {
+  let schema: ParsedSchema
+
+  if (config.objects) {
+    const objectsBinding = env[config.objects]
+    if (!objectsBinding) {
+      throw new Error(`[database-convention-async] Service binding "${config.objects}" not found in env`)
+    }
+
+    const namespace = typeof config.namespace === 'function' ? config.namespace({ env } as never) : config.namespace || 'default'
+
+    schema = await discoverSchemaFromObjects(objectsBinding as never, namespace)
+    console.log(`[schema-discovery] Discovered ${Object.keys(schema.models).length} models from objects.do: ${Object.keys(schema.models).join(', ')}`)
+  } else if (config.schema) {
+    schema = parseSchema(config.schema)
+  } else {
+    throw new Error('[database-convention-async] Either "schema" or "objects" must be provided in DatabaseConfig')
+  }
+
+  return databaseConventionWithSchema(config, schema)
 }
 
 // =============================================================================
@@ -871,7 +1466,6 @@ function parseFilterValue(value: string, op?: string): unknown {
   return coerceValue(value)
 }
 
-
 /**
  * Get request context for audit trail
  */
@@ -975,8 +1569,8 @@ export function buildTypeRegistry(schema: ParsedSchema, explicit?: TypeRegistry)
     // Auto-generate from schema insertion order (1-indexed)
     console.warn(
       '[sqid] WARNING: No explicit typeRegistry provided. Auto-generating from schema insertion order. ' +
-      'This is UNSTABLE across schema changes — adding, removing, or reordering models will change numeric IDs ' +
-      'and break existing sqids. For production, provide an explicit typeRegistry in your DatabaseConfig.'
+        'This is UNSTABLE across schema changes — adding, removing, or reordering models will change numeric IDs ' +
+        'and break existing sqids. For production, provide an explicit typeRegistry in your DatabaseConfig.',
     )
     let id = 1
     for (const name of Object.keys(schema.models)) {
@@ -1060,7 +1654,7 @@ export function decodeSqid(
     if (options.expectedRegistryVersion !== options.currentRegistryVersion) {
       console.warn(
         `[sqid] Registry version mismatch during decode: id was encoded with registry version "${options.expectedRegistryVersion}" ` +
-        `but current registry version is "${options.currentRegistryVersion}". Type mapping may be incorrect.`
+          `but current registry version is "${options.currentRegistryVersion}". Type mapping may be incorrect.`,
       )
     }
   }
@@ -1151,10 +1745,13 @@ interface DatabaseRpcClient {
  * 2. config.binding DO namespace -> existing fetch-based RPC wrapper (backwards compat)
  * 3. No binding -> in-memory fallback (dev/test)
  */
-async function getDatabase(c: { env: Record<string, unknown>; var: { requestId: string } }, config: DatabaseConfig, inMemoryCache: Map<string, DatabaseRpcClient>, schema: ParsedSchema): Promise<DatabaseRpcClient> {
-  const namespace = typeof config.namespace === 'function'
-    ? config.namespace(c)
-    : config.namespace || 'default'
+async function getDatabase(
+  c: { env: Record<string, unknown>; var: { requestId: string } },
+  config: DatabaseConfig,
+  inMemoryCache: Map<string, DatabaseRpcClient>,
+  schema: ParsedSchema,
+): Promise<DatabaseRpcClient> {
+  const namespace = typeof config.namespace === 'function' ? config.namespace(c) : config.namespace || 'default'
 
   // 1. ParqueDB Worker via RPC (preferred path)
   if (config.parquedb) {
@@ -1197,7 +1794,7 @@ async function getDatabase(c: { env: Record<string, unknown>; var: { requestId: 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ method: 'create', params: { model, data, ctx } }),
       })
-      const result = await response.json() as { result?: Document; error?: { message: string } }
+      const result = (await response.json()) as { result?: Document; error?: { message: string } }
       if (result.error) throw new Error(result.error.message)
       if (!result.result) throw new Error('Unexpected empty response from DO for create')
       return result.result
@@ -1209,7 +1806,7 @@ async function getDatabase(c: { env: Record<string, unknown>; var: { requestId: 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ method: 'get', params: { model, id, options } }),
       })
-      const result = await response.json() as { result?: Document | null; error?: { message: string } }
+      const result = (await response.json()) as { result?: Document | null; error?: { message: string } }
       if (result.error) throw new Error(result.error.message)
       return result.result ?? null
     },
@@ -1220,7 +1817,7 @@ async function getDatabase(c: { env: Record<string, unknown>; var: { requestId: 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ method: 'update', params: { model, id, data, ctx } }),
       })
-      const result = await response.json() as { result?: Document; error?: { message: string } }
+      const result = (await response.json()) as { result?: Document; error?: { message: string } }
       if (result.error) throw new Error(result.error.message)
       if (!result.result) throw new Error('Unexpected empty response from DO for update')
       return result.result
@@ -1232,7 +1829,7 @@ async function getDatabase(c: { env: Record<string, unknown>; var: { requestId: 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ method: 'delete', params: { model, id, ctx } }),
       })
-      const result = await response.json() as { error?: { message: string } }
+      const result = (await response.json()) as { error?: { message: string } }
       if (result.error) throw new Error(result.error.message)
     },
 
@@ -1242,7 +1839,10 @@ async function getDatabase(c: { env: Record<string, unknown>; var: { requestId: 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ method: 'list', params: { model, options } }),
       })
-      const result = await response.json() as { result?: { data: Document[]; total: number; limit: number; offset: number; hasMore: boolean }; error?: { message: string } }
+      const result = (await response.json()) as {
+        result?: { data: Document[]; total: number; limit: number; offset: number; hasMore: boolean }
+        error?: { message: string }
+      }
       if (result.error) throw new Error(result.error.message)
       if (!result.result) throw new Error('Unexpected empty response from DO for list')
       return result.result
@@ -1254,7 +1854,10 @@ async function getDatabase(c: { env: Record<string, unknown>; var: { requestId: 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ method: 'search', params: { model, query, options } }),
       })
-      const result = await response.json() as { result?: { data: Document[]; total: number; limit: number; offset: number; hasMore: boolean }; error?: { message: string } }
+      const result = (await response.json()) as {
+        result?: { data: Document[]; total: number; limit: number; offset: number; hasMore: boolean }
+        error?: { message: string }
+      }
       if (result.error) throw new Error(result.error.message)
       if (!result.result) throw new Error('Unexpected empty response from DO for search')
       return result.result
@@ -1266,7 +1869,7 @@ async function getDatabase(c: { env: Record<string, unknown>; var: { requestId: 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ method: 'count', params: { model, where } }),
       })
-      const result = await response.json() as { result?: number; error?: { message: string } }
+      const result = (await response.json()) as { result?: number; error?: { message: string } }
       if (result.error) throw new Error(result.error.message)
       return result.result ?? 0
     },
@@ -1362,17 +1965,18 @@ function createInMemoryDatabase(): DatabaseRpcClient {
 
       // Apply orderBy
       if (options?.orderBy) {
-        const sortFields = typeof options.orderBy === 'string'
-          ? [{ field: options.orderBy, direction: 'asc' as const }]
-          : Array.isArray(options.orderBy) ? options.orderBy : [options.orderBy]
+        const sortFields =
+          typeof options.orderBy === 'string'
+            ? [{ field: options.orderBy, direction: 'asc' as const }]
+            : Array.isArray(options.orderBy)
+              ? options.orderBy
+              : [options.orderBy]
         const first = sortFields[0]
         if (first?.field) {
           docs.sort((a, b) => {
             const aVal = a[first.field]
             const bVal = b[first.field]
-            const cmp = typeof aVal === 'number' && typeof bVal === 'number'
-              ? aVal - bVal
-              : String(aVal || '').localeCompare(String(bVal || ''))
+            const cmp = typeof aVal === 'number' && typeof bVal === 'number' ? aVal - bVal : String(aVal || '').localeCompare(String(bVal || ''))
             return first.direction === 'desc' ? -cmp : cmp
           })
         }
@@ -1430,4 +2034,3 @@ function createInMemoryDatabase(): DatabaseRpcClient {
     },
   }
 }
-
