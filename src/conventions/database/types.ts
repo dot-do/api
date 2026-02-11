@@ -178,15 +178,13 @@ export interface DatabaseConfig {
   driver?: DatabaseDriverType | DatabaseDriver | DatabaseDriverFactory
 
   /**
-   * Durable Object binding name for the database DO
-   * Used when driver is 'do-sqlite' (default)
+   * @deprecated No longer used. ParqueDB is the only database path.
    */
   binding?: string
 
   /**
-   * ParqueDB service binding name (e.g. 'PARQUEDB')
-   * When set, uses @dotdo/db ParqueDB Worker via RPC instead of the embedded DatabaseDO.
-   * Takes priority over `binding` when both are set.
+   * ParqueDB service binding name (e.g. 'PARQUEDB').
+   * Connects to @dotdo/db ParqueDB Worker via RPC.
    */
   parquedb?: string
 

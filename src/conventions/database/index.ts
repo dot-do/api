@@ -24,7 +24,7 @@ import type {
   RequestContext,
 } from './types'
 import { parseSchema, generateJsonSchema, discoverSchemaFromObjects } from './schema'
-import { matchesWhere, coerceValue } from './match'
+import { coerceValue } from './match'
 import { createParqueDBAdapter } from './parquedb-adapter'
 
 export type {
@@ -1738,13 +1738,9 @@ interface DatabaseRpcClient {
 }
 
 /**
- * Get database client from context
- * This connects to the DO that stores the actual data
- *
- * Resolution priority:
- * 1. config.parquedb binding -> ParqueDB Worker via RPC (new path)
- * 2. config.binding DO namespace -> existing fetch-based RPC wrapper (backwards compat)
- * 3. No binding -> in-memory fallback (dev/test)
+ * Get database client from context.
+ * Connects to ParqueDB Worker via RPC service binding.
+ * Throws if the binding is not configured.
  */
 async function getDatabase(
   c: { env: Record<string, unknown>; var: { requestId: string } },
@@ -1754,296 +1750,18 @@ async function getDatabase(
 ): Promise<DatabaseRpcClient> {
   const namespace = typeof config.namespace === 'function' ? config.namespace(c) : config.namespace || 'default'
 
-  // 1. ParqueDB Worker via RPC (preferred path)
-  if (config.parquedb) {
-    const service = c.env[config.parquedb]
-    if (service) {
-      const tenantPrefix = `~${namespace}`
-      const cacheKey = `parquedb:${namespace}`
-      let db = inMemoryCache.get(cacheKey)
-      if (!db) {
-        db = createParqueDBAdapter(service as never, schema, tenantPrefix)
-        inMemoryCache.set(cacheKey, db)
-      }
-      return db
-    }
+  // ParqueDB Worker via RPC — the only database path
+  const bindingName = config.parquedb || 'PARQUEDB'
+  const service = c.env[bindingName]
+  if (!service) {
+    throw new Error(`[database] ParqueDB binding '${bindingName}' not found in env. Check wrangler.jsonc service bindings.`)
   }
-
-  // 2. Existing DO-based path (backwards compat)
-  const binding = config.binding || 'DB'
-  const doNamespace = c.env[binding] as DurableObjectNamespace | undefined
-
-  if (!doNamespace) {
-    // 3. Fallback to in-memory for development/testing — cached per convention instance + namespace
-    let db = inMemoryCache.get(namespace)
-    if (!db) {
-      db = createInMemoryDatabase()
-      inMemoryCache.set(namespace, db)
-    }
-    return db
+  const tenantPrefix = `~${namespace}`
+  const cacheKey = `parquedb:${namespace}`
+  let db = inMemoryCache.get(cacheKey)
+  if (!db) {
+    db = createParqueDBAdapter(service as never, schema, tenantPrefix)
+    inMemoryCache.set(cacheKey, db)
   }
-
-  // Get or create the DO for this namespace
-  const doId = doNamespace.idFromName(namespace)
-  const stub = doNamespace.get(doId)
-
-  // Return RPC wrapper
-  return {
-    async create(model, data, ctx) {
-      const response = await stub.fetch('http://do/rpc', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ method: 'create', params: { model, data, ctx } }),
-      })
-      const result = (await response.json()) as { result?: Document; error?: { message: string } }
-      if (result.error) throw new Error(result.error.message)
-      if (!result.result) throw new Error('Unexpected empty response from DO for create')
-      return result.result
-    },
-
-    async get(model, id, options) {
-      const response = await stub.fetch('http://do/rpc', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ method: 'get', params: { model, id, options } }),
-      })
-      const result = (await response.json()) as { result?: Document | null; error?: { message: string } }
-      if (result.error) throw new Error(result.error.message)
-      return result.result ?? null
-    },
-
-    async update(model, id, data, ctx) {
-      const response = await stub.fetch('http://do/rpc', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ method: 'update', params: { model, id, data, ctx } }),
-      })
-      const result = (await response.json()) as { result?: Document; error?: { message: string } }
-      if (result.error) throw new Error(result.error.message)
-      if (!result.result) throw new Error('Unexpected empty response from DO for update')
-      return result.result
-    },
-
-    async delete(model, id, ctx) {
-      const response = await stub.fetch('http://do/rpc', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ method: 'delete', params: { model, id, ctx } }),
-      })
-      const result = (await response.json()) as { error?: { message: string } }
-      if (result.error) throw new Error(result.error.message)
-    },
-
-    async list(model, options) {
-      const response = await stub.fetch('http://do/rpc', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ method: 'list', params: { model, options } }),
-      })
-      const result = (await response.json()) as {
-        result?: { data: Document[]; total: number; limit: number; offset: number; hasMore: boolean }
-        error?: { message: string }
-      }
-      if (result.error) throw new Error(result.error.message)
-      if (!result.result) throw new Error('Unexpected empty response from DO for list')
-      return result.result
-    },
-
-    async search(model, query, options) {
-      const response = await stub.fetch('http://do/rpc', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ method: 'search', params: { model, query, options } }),
-      })
-      const result = (await response.json()) as {
-        result?: { data: Document[]; total: number; limit: number; offset: number; hasMore: boolean }
-        error?: { message: string }
-      }
-      if (result.error) throw new Error(result.error.message)
-      if (!result.result) throw new Error('Unexpected empty response from DO for search')
-      return result.result
-    },
-
-    async count(model, where) {
-      const response = await stub.fetch('http://do/rpc', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ method: 'count', params: { model, where } }),
-      })
-      const result = (await response.json()) as { result?: number; error?: { message: string } }
-      if (result.error) throw new Error(result.error.message)
-      return result.result ?? 0
-    },
-
-    async getEvents(options) {
-      const params = new URLSearchParams()
-      if (options.model) params.set('model', options.model)
-      if (options.since != null) params.set('since', String(options.since))
-      if (options.limit != null) params.set('limit', String(options.limit))
-      const qs = params.toString()
-      const response = await stub.fetch(`http://do/events${qs ? `?${qs}` : ''}`)
-      const result = (await response.json()) as { events?: DatabaseEvent[] }
-      return result.events || []
-    },
-  }
-}
-
-// =============================================================================
-// In-Memory Database (for development/testing)
-// =============================================================================
-
-function createInMemoryDatabase(): DatabaseRpcClient {
-  const store: Record<string, Map<string, Document>> = {}
-
-  function getCollection(model: string): Map<string, Document> {
-    if (!store[model]) {
-      store[model] = new Map()
-    }
-    return store[model]
-  }
-
-  function generateId(): string {
-    return `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
-  }
-
-  return {
-    async create(model, data, ctx) {
-      const collection = getCollection(model)
-      const id = (data.id as string) || generateId()
-      const now = new Date().toISOString()
-
-      const doc: Document = {
-        id,
-        ...data,
-        _version: 1,
-        _createdAt: now,
-        _createdBy: ctx?.userId,
-        _updatedAt: now,
-        _updatedBy: ctx?.userId,
-      }
-
-      collection.set(id, doc)
-      return doc
-    },
-
-    async get(model, id) {
-      const collection = getCollection(model)
-      return collection.get(id) || null
-    },
-
-    async update(model, id, data, ctx) {
-      const collection = getCollection(model)
-      const existing = collection.get(id)
-
-      if (!existing) {
-        throw new Error(`${model} ${id} not found`)
-      }
-
-      const doc: Document = {
-        ...existing,
-        ...data,
-        id: existing.id,
-        _version: existing._version + 1,
-        _createdAt: existing._createdAt,
-        _createdBy: existing._createdBy,
-        _updatedAt: new Date().toISOString(),
-        _updatedBy: ctx?.userId,
-      }
-
-      collection.set(id, doc)
-      return doc
-    },
-
-    async delete(model, id, ctx) {
-      const collection = getCollection(model)
-      const existing = collection.get(id)
-
-      if (existing) {
-        // Soft delete
-        existing._deletedAt = new Date().toISOString()
-        existing._deletedBy = ctx?.userId
-        collection.set(id, existing)
-      }
-    },
-
-    async list(model, options) {
-      const collection = getCollection(model)
-      let docs = Array.from(collection.values()).filter((d) => !d._deletedAt)
-
-      // Apply where filter with operator support
-      if (options?.where) {
-        docs = docs.filter((doc) => matchesWhere(doc, options.where!))
-      }
-
-      // Apply orderBy
-      if (options?.orderBy) {
-        const sortFields =
-          typeof options.orderBy === 'string'
-            ? [{ field: options.orderBy, direction: 'asc' as const }]
-            : Array.isArray(options.orderBy)
-              ? options.orderBy
-              : [options.orderBy]
-        const first = sortFields[0]
-        if (first?.field) {
-          docs.sort((a, b) => {
-            const aVal = a[first.field]
-            const bVal = b[first.field]
-            const cmp = typeof aVal === 'number' && typeof bVal === 'number' ? aVal - bVal : String(aVal || '').localeCompare(String(bVal || ''))
-            return first.direction === 'desc' ? -cmp : cmp
-          })
-        }
-      }
-
-      const total = docs.length
-      const limit = options?.limit || 20
-      const offset = options?.offset || 0
-      docs = docs.slice(offset, offset + limit)
-
-      return {
-        data: docs,
-        total,
-        limit,
-        offset,
-        hasMore: offset + docs.length < total,
-      }
-    },
-
-    async search(model, query, options) {
-      const collection = getCollection(model)
-      const q = query.toLowerCase()
-      let docs = Array.from(collection.values()).filter((d) => !d._deletedAt)
-
-      docs = docs.filter((doc) => {
-        for (const value of Object.values(doc)) {
-          if (typeof value === 'string' && value.toLowerCase().includes(q)) {
-            return true
-          }
-        }
-        return false
-      })
-
-      const total = docs.length
-      const limit = options?.limit || 20
-      const offset = options?.offset || 0
-      docs = docs.slice(offset, offset + limit)
-
-      return {
-        data: docs,
-        total,
-        limit,
-        offset,
-        hasMore: offset + docs.length < total,
-      }
-    },
-
-    async count(model, where) {
-      const collection = getCollection(model)
-      let docs = Array.from(collection.values()).filter((d) => !d._deletedAt)
-      if (where) {
-        docs = docs.filter((doc) => matchesWhere(doc, where))
-      }
-      return docs.length
-    },
-
-  }
+  return db
 }

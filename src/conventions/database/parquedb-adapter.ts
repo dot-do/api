@@ -143,7 +143,7 @@ function buildSearchFilter(schema: ParsedSchema, model: string, query: string): 
   }
 
   if (stringFields.length === 1) {
-    return { [stringFields[0]]: { $regex: query, $options: 'i' } }
+    return { [stringFields[0] as string]: { $regex: query, $options: 'i' } }
   }
 
   return {
