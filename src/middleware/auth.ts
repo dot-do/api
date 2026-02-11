@@ -70,14 +70,7 @@ async function verifyToken(authHeader: string, config: ApiConfig, env?: Record<s
       }
     }
 
-    // 2. Fallback: try dynamic import of oauth.do for token verification
-    const oauth: Record<string, unknown> | null = await import('oauth.do').catch(() => null)
-    if (oauth && typeof oauth.verify === 'function') {
-      const user = await (oauth.verify as (token: string) => Promise<UserInfo>)(token)
-      return { user, verified: true }
-    }
-
-    // 3. Last resort: decode JWT without verification if explicitly enabled.
+    // 2. Last resort: decode JWT without verification if explicitly enabled.
     // SECURITY: This is INSECURE and should only be used in controlled environments
     // where tokens have been verified upstream (e.g., by a CDN snippet or trusted edge layer).
     if (authConfig.trustUnverified === true) {
