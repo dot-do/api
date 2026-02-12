@@ -1136,6 +1136,103 @@ function databaseConventionWithDiscovery(config: DatabaseConfig): {
   })
 
   // ==========================================================================
+  // Relationship Routes — dynamic graph traversal
+  // GET /:collection/:id/:relationship
+  // ==========================================================================
+
+  app.get(`${basePath}/:collection/:id/:relationship`, async (c) => {
+    const { schema } = await resolveSchema(c.env as Record<string, unknown>)
+    const collection = c.req.param('collection')
+    const model = resolveModelByPlural(schema, collection)
+    if (!model) {
+      return c.var.respond({ error: { code: 'NOT_FOUND', message: `Unknown collection: ${collection}` }, status: 404 })
+    }
+
+    const db = await getDatabase(c, config, inMemoryCache, schema)
+    const id = c.req.param('id')
+    const relationship = c.req.param('relationship')
+    const options = parseQueryOptions(c, pageSize, maxPageSize)
+
+    // Get the source entity
+    const sourceDoc = await db.get(model.name, id)
+    if (!sourceDoc) {
+      return c.var.respond({ error: { code: 'NOT_FOUND', message: `${model.name} not found` }, status: 404 })
+    }
+
+    // Check if relationship is defined in schema
+    const field = Object.values(model.fields).find((f) => f.name === relationship)
+
+    // Plural relationship → to-many (query target collection)
+    const isPlural = relationship.endsWith('s') && !relationship.endsWith('ss')
+    if (isPlural || (field?.relation?.type === 'inverse') || (field?.relation?.type === 'forward' && field?.relation?.many)) {
+      // Determine target model from schema field or by convention
+      let targetModelName: string | undefined
+      if (field?.relation?.target) {
+        targetModelName = field.relation.target
+      } else {
+        // Convention: pluralize → singularize → capitalize
+        const singular = relationship.endsWith('ies')
+          ? relationship.slice(0, -3) + 'y'
+          : relationship.endsWith('ses') || relationship.endsWith('xes') || relationship.endsWith('zes') || relationship.endsWith('shes') || relationship.endsWith('ches')
+            ? relationship.slice(0, -2)
+            : relationship.endsWith('s') && !relationship.endsWith('ss')
+              ? relationship.slice(0, -1)
+              : relationship
+        targetModelName = singular.charAt(0).toUpperCase() + singular.slice(1)
+      }
+
+      const targetModel = schema.models[targetModelName!]
+      if (!targetModel) {
+        return c.var.respond({ error: { code: 'NOT_FOUND', message: `Unknown relationship: ${relationship}` }, status: 404 })
+      }
+
+      // Build filter: FK field on target = source ID
+      const fkField = model.singular
+      const filter = { ...options.where, [fkField]: id }
+
+      const result = await db.list(targetModel.name, { ...options, where: filter })
+      const hasMore = result.hasMore ?? (result.total != null ? result.offset + result.limit < result.total : result.data.length >= result.limit)
+
+      // Apply in-memory sort if orderBy is set (ParqueDB may not sort related queries)
+      let data: Document[] = useMetaFormat ? result.data.map((d) => formatDocument(d, targetModel.name, metaPrefix) as Document) : result.data
+      if (options.orderBy) {
+        data = applySortToArray(data, options.orderBy)
+      }
+
+      return c.var.respond({
+        data,
+        meta: { total: result.total, limit: result.limit, offset: result.offset, hasMore },
+      })
+    }
+
+    // Singular relationship → to-one (follow FK)
+    const targetId = sourceDoc[relationship] as string
+    if (!targetId) {
+      return c.var.respond({ data: null })
+    }
+
+    // Determine target model
+    let targetModelName: string | undefined
+    if (field?.relation?.target) {
+      targetModelName = field.relation.target
+    } else {
+      targetModelName = relationship.charAt(0).toUpperCase() + relationship.slice(1)
+    }
+
+    const targetModel = schema.models[targetModelName!]
+    if (!targetModel) {
+      return c.var.respond({ error: { code: 'NOT_FOUND', message: `Unknown relationship: ${relationship}` }, status: 404 })
+    }
+
+    const targetDoc = await db.get(targetModel.name, targetId)
+    if (!targetDoc) {
+      return c.var.respond({ data: null })
+    }
+
+    return c.var.respond({ data: useMetaFormat ? formatDocument(targetDoc, targetModel.name, metaPrefix) : targetDoc })
+  })
+
+  // ==========================================================================
   // Global /:id Routes — self-describing entity access (same as static path)
   // ==========================================================================
 
