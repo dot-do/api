@@ -81,6 +81,8 @@ export interface ParsedModel {
   idStrategy?: string
   nameField?: string
   verbs?: Record<string, string>
+  /** CRUD verbs disabled on this model (e.g. ['update', 'delete'] for immutable entities) */
+  disabledVerbs?: string[]
 }
 
 /**
@@ -164,6 +166,13 @@ export interface DatabaseConfig {
    * Takes priority over `schema` when both are set.
    */
   objects?: string
+
+  /**
+   * In-memory noun registry (e.g., () => getAllNouns() from digital-objects).
+   * When set, schema is discovered from the in-memory registry instead of objects.do.
+   * Takes priority over both `objects` and `schema`.
+   */
+  nounRegistry?: () => Map<string, unknown>
 
   /**
    * Database driver type or custom driver instance

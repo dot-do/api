@@ -23,7 +23,7 @@ import type {
   DecodedSqid,
   RequestContext,
 } from './types'
-import { parseSchema, generateJsonSchema, discoverSchemaFromObjects } from './schema'
+import { parseSchema, generateJsonSchema, discoverSchemaFromObjects, discoverSchemaFromRegistry } from './schema'
 import { coerceValue, matchesWhere } from './match'
 import { createParqueDBAdapter } from './parquedb-adapter'
 
@@ -51,7 +51,7 @@ export type {
   BatchResult,
   RequestContext,
 } from './types'
-export { parseSchema, parseField, parseModel, generateJsonSchema, convertNounSchemasToSchema, discoverSchemaFromObjects } from './schema'
+export { parseSchema, parseField, parseModel, generateJsonSchema, convertNounSchemasToSchema, discoverSchemaFromObjects, discoverSchemaFromRegistry } from './schema'
 export { generateWebhookSignature, generateWebhookSignatureAsync, sendToWebhookSink } from './do'
 export type { WebhookRetryConfig } from './do'
 export { matchesWhere, coerceValue, isSafeRegex } from './match'
@@ -768,7 +768,6 @@ function databaseConventionWithSchema(
         break
       }
     }
-
     const db = await getDatabase(c, config, inMemoryCache, schema)
     const doc = await db.get(model.name, id)
     if (!doc) {
@@ -854,6 +853,15 @@ function databaseConventionWithDiscovery(config: DatabaseConfig): {
     }
 
     if (!schemaDiscoveryPromise) {
+      // Try in-memory noun registry first (fastest, always up-to-date with bundled SDK)
+      const registryNouns = config.nounRegistry?.()
+      if (registryNouns && registryNouns.size > 0) {
+        const schema = discoverSchemaFromRegistry(registryNouns as never)
+        cachedSchema = schema
+        cachedRegistry = buildTypeRegistry(schema, config.typeRegistry)
+        return { schema: cachedSchema, registry: cachedRegistry }
+      }
+
       const objectsBinding = env[config.objects!]
       if (!objectsBinding) {
         throw new Error(`[schema-discovery] Service binding "${config.objects}" not found in env`)
@@ -880,11 +888,26 @@ function databaseConventionWithDiscovery(config: DatabaseConfig): {
   }
 
   /**
-   * Resolve model from plural path segment using discovered schema
+   * Normalize a string for case-insensitive + kebab-case matching.
+   * 'featureFlags' → 'featureflags', 'feature-flags' → 'featureflags'
+   */
+  function normalizeCollectionName(s: string): string {
+    return s.replace(/-/g, '').toLowerCase()
+  }
+
+  /**
+   * Resolve model from plural path segment using discovered schema.
+   * Matches exact, case-insensitive, and kebab-case variants.
    */
   function resolveModelByPlural(schema: ParsedSchema, plural: string): ParsedModel | undefined {
+    // Fast exact match
     for (const model of Object.values(schema.models)) {
       if (model.plural === plural) return model
+    }
+    // Normalized match (case-insensitive + kebab-case)
+    const norm = normalizeCollectionName(plural)
+    for (const model of Object.values(schema.models)) {
+      if (normalizeCollectionName(model.plural) === norm) return model
     }
     return undefined
   }
@@ -1039,6 +1062,9 @@ function databaseConventionWithDiscovery(config: DatabaseConfig): {
     if (!model) {
       return c.var.respond({ error: { code: 'NOT_FOUND', message: `Unknown collection: ${collection}` }, status: 404 })
     }
+    if (model.disabledVerbs?.includes('update')) {
+      return c.var.respond({ error: { code: 'IMMUTABLE', message: `${model.name} is immutable and cannot be updated` }, status: 403 })
+    }
 
     const id = c.req.param('id')
     let body: Record<string, unknown>
@@ -1080,6 +1106,9 @@ function databaseConventionWithDiscovery(config: DatabaseConfig): {
     if (!model) {
       return c.var.respond({ error: { code: 'NOT_FOUND', message: `Unknown collection: ${collection}` }, status: 404 })
     }
+    if (model.disabledVerbs?.includes('update')) {
+      return c.var.respond({ error: { code: 'IMMUTABLE', message: `${model.name} is immutable and cannot be updated` }, status: 403 })
+    }
 
     const id = c.req.param('id')
     let body: Record<string, unknown>
@@ -1120,6 +1149,9 @@ function databaseConventionWithDiscovery(config: DatabaseConfig): {
     const model = resolveModelByPlural(schema, collection)
     if (!model) {
       return c.var.respond({ error: { code: 'NOT_FOUND', message: `Unknown collection: ${collection}` }, status: 404 })
+    }
+    if (model.disabledVerbs?.includes('delete')) {
+      return c.var.respond({ error: { code: 'IMMUTABLE', message: `${model.name} is immutable and cannot be deleted` }, status: 403 })
     }
 
     const db = await getDatabase(c, config, inMemoryCache, schema)
@@ -1266,6 +1298,9 @@ function databaseConventionWithDiscovery(config: DatabaseConfig): {
     if (!model) {
       return c.var.respond({ error: { code: 'NOT_FOUND', message: `Unknown entity type prefix: ${prefix}` }, status: 404 })
     }
+    if (model.disabledVerbs?.includes('update')) {
+      return c.var.respond({ error: { code: 'IMMUTABLE', message: `${model.name} is immutable and cannot be updated` }, status: 403 })
+    }
 
     let body: Record<string, unknown>
     try {
@@ -1306,6 +1341,9 @@ function databaseConventionWithDiscovery(config: DatabaseConfig): {
     const model = resolveModelByPrefix(schema, prefix)
     if (!model) {
       return c.var.respond({ error: { code: 'NOT_FOUND', message: `Unknown entity type prefix: ${prefix}` }, status: 404 })
+    }
+    if (model.disabledVerbs?.includes('delete')) {
+      return c.var.respond({ error: { code: 'IMMUTABLE', message: `${model.name} is immutable and cannot be deleted` }, status: 403 })
     }
 
     const db = await getDatabase(c, config, inMemoryCache, schema)
@@ -1418,7 +1456,11 @@ export async function databaseConventionAsync(
 }> {
   let schema: ParsedSchema
 
-  if (config.objects) {
+  // Try in-memory noun registry first (fastest, always up-to-date with bundled SDK)
+  const registryNouns = config.nounRegistry?.()
+  if (registryNouns && registryNouns.size > 0) {
+    schema = discoverSchemaFromRegistry(registryNouns as never)
+  } else if (config.objects) {
     const objectsBinding = env[config.objects]
     if (!objectsBinding) {
       throw new Error(`[database-convention-async] Service binding "${config.objects}" not found in env`)

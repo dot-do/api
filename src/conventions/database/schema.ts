@@ -595,12 +595,36 @@ function convertNounToModel(noun: ObjectsDoNounSchema): ParsedModel {
     fields[relName] = convertRelationshipProperty(prop)
   }
 
-  // Extract verbs
+  // Extract enum fields from raw definition that may be missing from parsed fields
+  // objects.do may not include all fields (e.g. stage: 'Lead | Qualified | ...')
+  if (noun.raw) {
+    for (const [fieldName, rawValue] of Object.entries(noun.raw)) {
+      if (!rawValue || fields[fieldName]) continue
+      // Detect pipe-separated enums (e.g. 'Lead | Qualified | Customer')
+      if (/^[A-Z][a-zA-Z]*\s*\|/.test(rawValue)) {
+        const enumValues = rawValue.split('|').map((v: string) => v.trim())
+        fields[fieldName] = {
+          name: fieldName,
+          type: 'string',
+          required: false,
+          unique: false,
+          indexed: false,
+          enum: enumValues,
+        }
+      }
+    }
+  }
+
+  // Extract verbs: map verb name → target state from the raw Noun definition
+  // The raw definition stores verbs as `verbName: 'TargetState'` (PascalCase value)
+  // e.g. { qualify: 'Qualified', close: 'Closed', pause: 'Paused' }
   const verbs: Record<string, string> = {}
-  if (noun.verbs) {
-    for (const [verbName, verbData] of Object.entries(noun.verbs)) {
-      const prop = verbData as ObjectsDoProperty
-      if (prop.verbAction) verbs[verbName] = prop.verbAction
+  if (noun.verbs && noun.raw) {
+    for (const verbName of Object.keys(noun.verbs)) {
+      const rawValue = noun.raw[verbName]
+      if (rawValue && /^[A-Z]/.test(rawValue)) {
+        verbs[verbName] = rawValue
+      }
     }
   }
 
@@ -615,15 +639,19 @@ function convertNounToModel(noun: ObjectsDoNounSchema): ParsedModel {
     }
   }
 
+  // digital-objects returns human-readable singular/plural ("feature flag", "feature flags")
+  // For URL routing we need camelCase: "featureFlag", "featureFlags"
+  const singular = toCamelCase(noun.name)
   const model: ParsedModel = {
     name: noun.name,
-    singular: noun.singular || toCamelCase(noun.name),
-    plural: noun.plural || pluralize(toCamelCase(noun.name)),
+    singular,
+    plural: pluralize(singular),
     fields,
     primaryKey: 'id',
   }
 
   if (Object.keys(verbs).length > 0) model.verbs = verbs
+  if (noun.disabledVerbs && noun.disabledVerbs.length > 0) model.disabledVerbs = noun.disabledVerbs
 
   return model
 }
@@ -691,4 +719,48 @@ export async function discoverSchemaFromObjects(
   }
 
   return convertNounSchemasToSchema(body.data)
+}
+
+/**
+ * NounSchemaLike — the minimal interface for in-memory noun schemas.
+ * Compatible with NounSchema from digital-objects (which uses Maps/Sets).
+ */
+interface NounSchemaLike {
+  name: string
+  singular: string
+  plural: string
+  slug: string
+  fields: Map<string, unknown>
+  relationships: Map<string, unknown>
+  verbs: Map<string, unknown>
+  disabledVerbs: Set<string>
+  raw: Record<string, string | null>
+}
+
+/**
+ * Discover schema from an in-memory noun registry (e.g. digital-objects getAllNouns()).
+ *
+ * Avoids the round-trip to objects.do and eliminates bootstrap timing issues.
+ * The caller provides the noun Map — typically from getAllNouns() after importing @headlessly/sdk.
+ *
+ * Converts NounSchema (Maps) → ObjectsDoNounSchema (plain objects) → ParsedSchema.
+ */
+export function discoverSchemaFromRegistry(nouns: Map<string, NounSchemaLike>): ParsedSchema {
+  const converted: ObjectsDoNounSchema[] = []
+  for (const [, schema] of nouns) {
+    converted.push({
+      name: schema.name,
+      singular: schema.singular,
+      plural: schema.plural,
+      slug: schema.slug,
+      fields: Object.fromEntries(schema.fields) as Record<string, ObjectsDoProperty>,
+      relationships: Object.fromEntries(schema.relationships) as Record<string, ObjectsDoProperty>,
+      verbs: Object.fromEntries(schema.verbs) as Record<string, unknown>,
+      disabledVerbs: Array.from(schema.disabledVerbs),
+      raw: schema.raw as Record<string, string | null>,
+    })
+  }
+
+  console.log(`[schema-discovery] Discovered ${converted.length} models from in-memory registry: ${converted.map((n) => n.name).join(', ')}`)
+  return convertNounSchemasToSchema(converted)
 }
