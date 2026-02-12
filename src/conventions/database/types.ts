@@ -80,6 +80,7 @@ export interface ParsedModel {
   primaryKey: string
   idStrategy?: string
   nameField?: string
+  verbs?: Record<string, string>
 }
 
 /**

@@ -24,7 +24,7 @@ import type {
   RequestContext,
 } from './types'
 import { parseSchema, generateJsonSchema, discoverSchemaFromObjects } from './schema'
-import { coerceValue } from './match'
+import { coerceValue, matchesWhere } from './match'
 import { createParqueDBAdapter } from './parquedb-adapter'
 
 export type {
@@ -303,16 +303,19 @@ function databaseConventionWithSchema(
 
       const result = await db.list(model.name, options)
 
+      const hasMore = result.hasMore ?? (result.total != null ? result.offset + result.limit < result.total : result.data.length >= result.limit)
+
       return c.var.respond({
         data: useMetaFormat ? result.data.map((d) => formatDocument(d, model.name, metaPrefix)) : result.data,
         meta: {
           total: result.total,
           limit: result.limit,
           offset: result.offset,
+          hasMore,
         },
         links: {
           self: c.req.url,
-          next: result.hasMore ? `${modelPath}?offset=${result.offset + result.limit}&limit=${result.limit}` : undefined,
+          next: hasMore ? `${modelPath}?offset=${result.offset + result.limit}&limit=${result.limit}` : undefined,
         },
       })
     })
@@ -548,18 +551,31 @@ function databaseConventionWithSchema(
             })
           }
 
-          const relatedData = (doc[field.name] as Document[]) || []
+          let relatedData = (doc[field.name] as Document[]) || []
+
+          // Apply where filter
+          if (options.where && Object.keys(options.where).length > 0) {
+            relatedData = relatedData.filter((d) => matchesWhere(d as Record<string, unknown>, options.where!))
+          }
+
+          // Apply orderBy sort
+          if (options.orderBy) {
+            relatedData = applySortToArray(relatedData, options.orderBy)
+          }
+
+          const total = relatedData.length
+          const offset = options.offset || 0
+          const limit = options.limit || pageSize
+          const sliced = relatedData.slice(offset, offset + limit)
+          const hasMore = offset + limit < total
 
           return c.var.respond({
-            data: useMetaFormat
-              ? relatedData
-                  .slice(options.offset || 0, (options.offset || 0) + (options.limit || pageSize))
-                  .map((d) => formatDocument(d, field.relation!.target, metaPrefix))
-              : relatedData.slice(options.offset || 0, (options.offset || 0) + (options.limit || pageSize)),
+            data: useMetaFormat ? sliced.map((d) => formatDocument(d, field.relation!.target, metaPrefix)) : sliced,
             meta: {
-              total: relatedData.length,
-              limit: options.limit || pageSize,
-              offset: options.offset || 0,
+              total,
+              limit,
+              offset,
+              hasMore,
             },
           })
         })
@@ -735,6 +751,24 @@ function databaseConventionWithSchema(
       })
     }
 
+    // Look up verb target state from schema
+    const verbTarget = model.verbs?.[verb]
+    if (!verbTarget) {
+      return c.var.respond({
+        error: { code: 'UNKNOWN_VERB', message: `Unknown verb: ${verb}` },
+        status: 400,
+      })
+    }
+
+    // Find which enum field contains the target state
+    let stateField: string | undefined
+    for (const field of Object.values(model.fields)) {
+      if (field.enum?.includes(verbTarget)) {
+        stateField = field.name
+        break
+      }
+    }
+
     const db = await getDatabase(c, config, inMemoryCache, schema)
     const doc = await db.get(model.name, id)
     if (!doc) {
@@ -744,11 +778,10 @@ function databaseConventionWithSchema(
       })
     }
 
-    // For now, verb execution updates the document with the verb payload
-    // Future: integrate with digital-objects verb conjugation system
     const body = await c.req.json().catch(() => ({}))
     const ctx = getRequestContext(c)
-    const updated = await db.update(model.name, id, { ...body, lastVerb: verb }, ctx)
+    const updateData = { ...body, lastVerb: verb, ...(stateField ? { [stateField]: verbTarget } : {}) }
+    const updated = await db.update(model.name, id, updateData, ctx)
 
     return c.var.respond({
       data: useMetaFormat ? formatDocument(updated, model.name, metaPrefix) : updated,
@@ -942,12 +975,14 @@ function databaseConventionWithDiscovery(config: DatabaseConfig): {
     const result = await db.list(model.name, options)
     const modelPath = `${basePath}/${model.plural}`
 
+    const hasMore = result.hasMore ?? (result.total != null ? result.offset + result.limit < result.total : result.data.length >= result.limit)
+
     return c.var.respond({
       data: useMetaFormat ? result.data.map((d) => formatDocument(d, model.name, metaPrefix)) : result.data,
-      meta: { total: result.total, limit: result.limit, offset: result.offset },
+      meta: { total: result.total, limit: result.limit, offset: result.offset, hasMore },
       links: {
         self: c.req.url,
-        next: result.hasMore ? `${modelPath}?offset=${result.offset + result.limit}&limit=${result.limit}` : undefined,
+        next: hasMore ? `${modelPath}?offset=${result.offset + result.limit}&limit=${result.limit}` : undefined,
       },
     })
   })
@@ -1199,6 +1234,24 @@ function databaseConventionWithDiscovery(config: DatabaseConfig): {
       return c.var.respond({ error: { code: 'NOT_FOUND', message: `Unknown entity type prefix: ${prefix}` }, status: 404 })
     }
 
+    // Look up verb target state from schema
+    const verbTarget = model.verbs?.[verb]
+    if (!verbTarget) {
+      return c.var.respond({
+        error: { code: 'UNKNOWN_VERB', message: `Unknown verb: ${verb}` },
+        status: 400,
+      })
+    }
+
+    // Find which enum field contains the target state
+    let stateField: string | undefined
+    for (const field of Object.values(model.fields)) {
+      if (field.enum?.includes(verbTarget)) {
+        stateField = field.name
+        break
+      }
+    }
+
     const db = await getDatabase(c, config, inMemoryCache, schema)
     const doc = await db.get(model.name, id)
     if (!doc) {
@@ -1207,7 +1260,8 @@ function databaseConventionWithDiscovery(config: DatabaseConfig): {
 
     const body = await c.req.json().catch(() => ({}))
     const ctx = getRequestContext(c)
-    const updated = await db.update(model.name, id, { ...body, lastVerb: verb }, ctx)
+    const updateData = { ...body, lastVerb: verb, ...(stateField ? { [stateField]: verbTarget } : {}) }
+    const updated = await db.update(model.name, id, updateData, ctx)
 
     return c.var.respond({
       data: useMetaFormat ? formatDocument(updated, model.name, metaPrefix) : updated,
@@ -1294,14 +1348,23 @@ interface McpToolDef {
   name: string
   description: string
   inputSchema: Record<string, unknown>
+  routeOnly?: boolean
+  handler?: (input: unknown, c: unknown) => Promise<unknown>
 }
 
 /**
- * Generate MCP tools from schema
+ * Generate MCP tools from schema.
+ *
+ * Returns two categories:
+ * - Per-entity route-only tools (contact.create, contact.get, etc.) — discoverable but invoke via REST
+ * - Three callable tools (search, fetch, do) — invoke directly via MCP tools/call
  */
 function generateMcpTools(schema: ParsedSchema, config: DatabaseConfig): McpToolDef[] {
   const tools: McpToolDef[] = []
   const prefix = typeof config.mcp === 'object' ? config.mcp.prefix || '' : ''
+
+  // In-memory DB cache for MCP tool handlers (shared with route handlers)
+  const mcpInMemoryCache = new Map<string, DatabaseRpcClient>()
 
   for (const model of Object.values(schema.models)) {
     const inputSchema = generateJsonSchema(model)
@@ -1312,6 +1375,7 @@ function generateMcpTools(schema: ParsedSchema, config: DatabaseConfig): McpTool
       name: `${prefix}${name}.create`,
       description: `Create a new ${model.name}`,
       inputSchema,
+      routeOnly: true,
     })
 
     // Get
@@ -1330,6 +1394,7 @@ function generateMcpTools(schema: ParsedSchema, config: DatabaseConfig): McpTool
         },
         required: ['id'],
       },
+      routeOnly: true,
     })
 
     // List
@@ -1345,6 +1410,7 @@ function generateMcpTools(schema: ParsedSchema, config: DatabaseConfig): McpTool
           offset: { type: 'number', description: 'Skip results' },
         },
       },
+      routeOnly: true,
     })
 
     // Search
@@ -1359,6 +1425,7 @@ function generateMcpTools(schema: ParsedSchema, config: DatabaseConfig): McpTool
         },
         required: ['query'],
       },
+      routeOnly: true,
     })
 
     // Update
@@ -1373,6 +1440,7 @@ function generateMcpTools(schema: ParsedSchema, config: DatabaseConfig): McpTool
         },
         required: ['id', 'data'],
       },
+      routeOnly: true,
     })
 
     // Delete
@@ -1386,8 +1454,167 @@ function generateMcpTools(schema: ParsedSchema, config: DatabaseConfig): McpTool
         },
         required: ['id'],
       },
+      routeOnly: true,
     })
   }
+
+  // =========================================================================
+  // Callable MCP tools: search, fetch, do
+  // =========================================================================
+
+  tools.push({
+    name: 'search',
+    description: 'Search entities across the graph by type and optional filter',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        type: { type: 'string', description: 'Entity type (e.g., Contact, Deal)' },
+        filter: { type: 'object', description: 'MongoDB-style filter conditions' },
+        limit: { type: 'number', description: 'Max results (default 20)' },
+        offset: { type: 'number', description: 'Skip results (default 0)' },
+      },
+      required: ['type'],
+    },
+    handler: async (input, c) => {
+      const { type, filter, limit, offset } = input as { type: string; filter?: Record<string, unknown>; limit?: number; offset?: number }
+      const model = schema.models[type]
+      if (!model) throw new Error(`Unknown type: ${type}`)
+      const ctx = c as { env: Record<string, unknown>; var: { requestId: string } }
+      const db = await getDatabase(ctx, config, mcpInMemoryCache, schema)
+      return db.list(model.name, { where: filter, limit: limit ?? 20, offset: offset ?? 0 })
+    },
+  })
+
+  tools.push({
+    name: 'fetch',
+    description: 'Get a specific entity by type and ID',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        type: { type: 'string', description: 'Entity type (e.g., Contact, Deal)' },
+        id: { type: 'string', description: 'Entity ID' },
+      },
+      required: ['type', 'id'],
+    },
+    handler: async (input, c) => {
+      const { type, id } = input as { type: string; id: string }
+      const model = schema.models[type]
+      if (!model) throw new Error(`Unknown type: ${type}`)
+      const ctx = c as { env: Record<string, unknown>; var: { requestId: string } }
+      const db = await getDatabase(ctx, config, mcpInMemoryCache, schema)
+      const doc = await db.get(model.name, id)
+      if (!doc) return { success: false, error: `${type} not found` }
+      return { success: true, data: doc }
+    },
+  })
+
+  tools.push({
+    name: 'do',
+    description: 'Execute any entity operation: Type.create(data), Type.get(id), Type.update(id, data), Type.delete(id), Type.count(filter), Type.verb(id)',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        method: { type: 'string', description: 'Method call (e.g., Contact.create, Deal.update, Contact.qualify)' },
+        args: { type: 'array', description: 'Arguments array (e.g., [data], [id, data], [id])' },
+      },
+      required: ['method'],
+    },
+    handler: async (input, c) => {
+      const { method, args = [] } = input as { method: string; args?: unknown[] }
+      const dotIdx = method.indexOf('.')
+      if (dotIdx === -1) throw new Error(`Invalid method format: ${method}. Expected Type.operation`)
+
+      const typeName = method.slice(0, dotIdx)
+      const operation = method.slice(dotIdx + 1)
+      const model = schema.models[typeName]
+      if (!model) throw new Error(`Unknown type: ${typeName}`)
+
+      const ctx = c as { env: Record<string, unknown>; var: { requestId: string; user?: { id?: string } } }
+      const db = await getDatabase(ctx, config, mcpInMemoryCache, schema)
+      const reqCtx = { userId: ctx.var.user?.id, requestId: ctx.var.requestId }
+
+      switch (operation) {
+        case 'create': {
+          const data = (args[0] ?? {}) as Record<string, unknown>
+          const doc = await db.create(model.name, data, reqCtx)
+          return { success: true, data: doc }
+        }
+        case 'get': {
+          const id = args[0] as string
+          const doc = await db.get(model.name, id)
+          if (!doc) return { success: false, error: `${typeName} not found` }
+          return { success: true, data: doc }
+        }
+        case 'update': {
+          const id = args[0] as string
+          const data = (args[1] ?? {}) as Record<string, unknown>
+          const doc = await db.update(model.name, id, data, reqCtx)
+          return { success: true, data: doc }
+        }
+        case 'delete': {
+          const id = args[0] as string
+          await db.delete(model.name, id, reqCtx)
+          return { success: true, data: { deleted: true, id } }
+        }
+        case 'count': {
+          const filter = args[0] as Record<string, unknown> | undefined
+          const count = await db.count(model.name, filter)
+          return { success: true, data: count }
+        }
+        case 'find':
+        case 'list': {
+          const options = (args[0] ?? {}) as { where?: Record<string, unknown>; limit?: number; offset?: number }
+          const result = await db.list(model.name, options)
+          return { success: true, data: result.data, meta: { total: result.total, limit: result.limit, offset: result.offset, hasMore: result.hasMore } }
+        }
+        case 'related': {
+          const id = args[0] as string
+          const relationship = args[1] as string
+          // Get source entity with relationship included
+          const doc = await db.get(model.name, id, { include: [relationship] })
+          if (!doc) return { success: false, error: `${typeName} not found` }
+          const relatedData = doc[relationship]
+          if (Array.isArray(relatedData)) {
+            return { success: true, data: relatedData, meta: { total: relatedData.length, limit: relatedData.length, offset: 0, hasMore: false } }
+          }
+          return { success: true, data: relatedData ?? null }
+        }
+        case 'relatedCount': {
+          const id = args[0] as string
+          const relationship = args[1] as string
+          const doc = await db.get(model.name, id, { include: [relationship] })
+          if (!doc) return { success: false, error: `${typeName} not found` }
+          const relatedData = doc[relationship]
+          const count = Array.isArray(relatedData) ? relatedData.length : relatedData ? 1 : 0
+          return { success: true, data: { count } }
+        }
+        default: {
+          // Custom verb
+          const verbTarget = model.verbs?.[operation]
+          if (!verbTarget) throw new Error(`Unknown operation: ${typeName}.${operation}`)
+
+          const id = args[0] as string
+          const verbArgs = (args[1] ?? {}) as Record<string, unknown>
+
+          // Find which enum field contains the target state
+          let stateField: string | undefined
+          for (const field of Object.values(model.fields)) {
+            if (field.enum?.includes(verbTarget)) {
+              stateField = field.name
+              break
+            }
+          }
+
+          const doc = await db.get(model.name, id)
+          if (!doc) return { success: false, error: `${typeName} not found` }
+
+          const updateData = { ...verbArgs, lastVerb: operation, ...(stateField ? { [stateField]: verbTarget } : {}) }
+          const updated = await db.update(model.name, id, updateData, reqCtx)
+          return { success: true, data: updated }
+        }
+      }
+    },
+  })
 
   return tools
 }
@@ -1427,7 +1654,18 @@ function parseQueryOptions(c: { req: { query: (k: string) => string | undefined;
   // Parse where from query params with operator support
   const where: Record<string, unknown> = {}
   const url = new URL(c.req.url, 'http://localhost')
-  const reservedParams = new Set(['$limit', '$offset', '$sort', 'limit', 'offset', 'orderBy', 'sort', 'include', 'select', 'cursor', 'q'])
+  const reservedParams = new Set(['$limit', '$offset', '$sort', 'limit', 'offset', 'orderBy', 'sort', 'include', 'select', 'cursor', 'q', 'filter'])
+
+  // Parse ?filter={JSON} param (full MongoDB-style filter as JSON string)
+  const filterParam = url.searchParams.get('filter')
+  if (filterParam) {
+    try {
+      const parsed = JSON.parse(filterParam)
+      if (typeof parsed === 'object' && parsed !== null) Object.assign(where, parsed)
+    } catch {
+      /* not valid JSON, ignored */
+    }
+  }
 
   for (const [rawKey, rawValue] of url.searchParams.entries()) {
     if (reservedParams.has(rawKey)) continue
@@ -1720,6 +1958,32 @@ function generateUlid(): string {
     randStr += ENCODING[arr[i]! % 32]
   }
   return timeStr + randStr
+}
+
+// =============================================================================
+// Sort Helper
+// =============================================================================
+
+/**
+ * Sort an array of documents in-memory using orderBy specification.
+ */
+function applySortToArray(items: Document[], orderBy: string | { field: string; direction: 'asc' | 'desc' }[]): Document[] {
+  const sortFields = typeof orderBy === 'string' ? [{ field: orderBy, direction: 'asc' as const }] : orderBy
+  return [...items].sort((a, b) => {
+    for (const { field, direction } of sortFields) {
+      const dir = direction === 'desc' ? -1 : 1
+      const aVal = a[field]
+      const bVal = b[field]
+      if (aVal === bVal) continue
+      if (aVal == null) return 1 * dir
+      if (bVal == null) return -1 * dir
+      if (typeof aVal === 'number' && typeof bVal === 'number') return (aVal - bVal) * dir
+      if (typeof aVal === 'string' && typeof bVal === 'string') return aVal.localeCompare(bVal) * dir
+      if (aVal < bVal) return -1 * dir
+      if (aVal > bVal) return 1 * dir
+    }
+    return 0
+  })
 }
 
 // =============================================================================

@@ -305,6 +305,7 @@ export function parseField(name: string, def: string): ParsedField {
  */
 export function parseModel(name: string, def: Record<string, string>): ParsedModel {
   const fields: Record<string, ParsedField> = {}
+  const verbs: Record<string, string> = {}
   let primaryKey = 'id'
 
   // Extract $-prefixed metadata before processing fields
@@ -318,9 +319,11 @@ export function parseModel(name: string, def: Record<string, string>): ParsedMod
     // Skip null/undefined values (disabled verbs in Noun() definitions)
     if (fieldDef == null) continue
 
-    // Skip verb definitions (single PascalCase word, e.g., qualify: 'Qualified')
-    // Verbs are handled by the objects.do noun parser, not the schema parser
-    if (typeof fieldDef === 'string' && /^[A-Z][a-zA-Z]*$/.test(fieldDef.trim())) continue
+    // Store verb definitions (single PascalCase word, e.g., qualify: 'Qualified')
+    if (typeof fieldDef === 'string' && /^[A-Z][a-zA-Z]*$/.test(fieldDef.trim())) {
+      verbs[fieldName] = fieldDef.trim()
+      continue
+    }
 
     const field = parseField(fieldName, fieldDef)
     fields[fieldName] = field
@@ -354,6 +357,7 @@ export function parseModel(name: string, def: Record<string, string>): ParsedMod
 
   if (idStrategy) model.idStrategy = idStrategy
   if (nameField) model.nameField = nameField
+  if (Object.keys(verbs).length > 0) model.verbs = verbs
 
   return model
 }
@@ -591,6 +595,15 @@ function convertNounToModel(noun: ObjectsDoNounSchema): ParsedModel {
     fields[relName] = convertRelationshipProperty(prop)
   }
 
+  // Extract verbs
+  const verbs: Record<string, string> = {}
+  if (noun.verbs) {
+    for (const [verbName, verbData] of Object.entries(noun.verbs)) {
+      const prop = verbData as ObjectsDoProperty
+      if (prop.verbAction) verbs[verbName] = prop.verbAction
+    }
+  }
+
   // Ensure there's always an id field
   if (!fields.id) {
     fields.id = {
@@ -602,13 +615,17 @@ function convertNounToModel(noun: ObjectsDoNounSchema): ParsedModel {
     }
   }
 
-  return {
+  const model: ParsedModel = {
     name: noun.name,
     singular: noun.singular || toCamelCase(noun.name),
     plural: noun.plural || pluralize(toCamelCase(noun.name)),
     fields,
     primaryKey: 'id',
   }
+
+  if (Object.keys(verbs).length > 0) model.verbs = verbs
+
+  return model
 }
 
 /**

@@ -78,11 +78,12 @@ export function API(config: ApiConfig): Hono<ApiEnv> {
     app.route('/', routes)
 
     // Register database MCP tools with the unified registry
-    // These are route-only tools - actual implementation is in REST routes
     if (mcpTools.length > 0) {
       mcpRegistry.registerAll(mcpTools.map((t) => ({
         ...t,
-        routeOnly: true,
+        // Callable tools (search, fetch, do) have handlers — don't override with routeOnly
+        // Route-only tools (entity CRUD) are already marked routeOnly by generateMcpTools
+        ...(t.handler ? {} : { routeOnly: true }),
       })))
     }
   }
