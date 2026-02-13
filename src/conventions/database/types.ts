@@ -360,8 +360,8 @@ export interface Document {
   _createdBy?: string
   _updatedAt: string
   _updatedBy?: string
-  _deletedAt?: string
-  _deletedBy?: string
+  _deletedAt?: string | null
+  _deletedBy?: string | null
   [key: string]: unknown
 }
 

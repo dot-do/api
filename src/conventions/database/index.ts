@@ -1877,6 +1877,8 @@ function formatDocument(doc: Document, modelName: string, prefix: string): Recor
       result[`${prefix}deletedAt`] = value
     } else if (key === '_deletedBy') {
       result[`${prefix}deletedBy`] = value
+    } else if (key === '_context') {
+      result[`${prefix}context`] = value
     } else if (!key.startsWith('_')) {
       result[key] = value
     }

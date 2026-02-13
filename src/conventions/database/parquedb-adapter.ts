@@ -62,17 +62,21 @@ interface DatabaseRpcClient {
  * Convert a ParqueDB entity (with $id, $type, createdAt, etc.) to a
  * @dotdo/api Document (with id, _version, _createdAt, etc.)
  */
-function entityToDocument(entity: Record<string, unknown>): Document {
-  const { $id, $type, $version, createdAt, updatedAt, createdBy, updatedBy, deletedAt, deletedBy, ...rest } = entity as Record<string, unknown> & {
-    $id?: string
-    $type?: string
-    $version?: number
-    createdAt?: string
-    updatedAt?: string
-    createdBy?: string
-    updatedBy?: string
-    deletedAt?: string
-    deletedBy?: string
+function entityToDocument(entity: Record<string, unknown>, context?: string): Document {
+  // ParqueDB entities use unprefixed field names (version, createdAt, etc.)
+  // while some paths return $-prefixed names ($version, $createdAt).
+  // Handle both conventions and destructure all meta fields out of ...rest
+  // to prevent them appearing as duplicate data fields.
+  const {
+    $id, $type, $version, $createdAt, $updatedAt, $createdBy, $updatedBy, $deletedAt, $deletedBy,
+    version, createdAt, updatedAt, createdBy, updatedBy, deletedAt, deletedBy,
+    ...rest
+  } = entity as Record<string, unknown> & {
+    $id?: string; $type?: string; $version?: number
+    $createdAt?: string; $updatedAt?: string; $createdBy?: string; $updatedBy?: string
+    $deletedAt?: string; $deletedBy?: string
+    version?: number; createdAt?: string; updatedAt?: string
+    createdBy?: string; updatedBy?: string; deletedAt?: string; deletedBy?: string
   }
 
   // ParqueDB $id is "ns/id" (e.g. "~default/contacts/contact_abc") — extract just the entity id
@@ -81,13 +85,14 @@ function entityToDocument(entity: Record<string, unknown>): Document {
 
   return {
     id: bareId,
-    _version: ($version as number) ?? 1,
-    _createdAt: (createdAt as string) || new Date().toISOString(),
-    _updatedAt: (updatedAt as string) || new Date().toISOString(),
-    _createdBy: createdBy as string | undefined,
-    _updatedBy: updatedBy as string | undefined,
-    _deletedAt: deletedAt as string | undefined,
-    _deletedBy: deletedBy as string | undefined,
+    _version: ($version as number) ?? (version as number) ?? 1,
+    _createdAt: ($createdAt as string) || (createdAt as string) || new Date().toISOString(),
+    _updatedAt: ($updatedAt as string) || (updatedAt as string) || new Date().toISOString(),
+    _createdBy: ($createdBy as string) || (createdBy as string) || undefined,
+    _updatedBy: ($updatedBy as string) || (updatedBy as string) || undefined,
+    _deletedAt: ($deletedAt as string) || (deletedAt as string) || null,
+    _deletedBy: ($deletedBy as string) || (deletedBy as string) || null,
+    _context: context || undefined,
     ...rest,
   }
 }
@@ -171,6 +176,9 @@ const EMPTY_LIST = { data: [] as Document[], total: 0, limit: 20, offset: 0, has
  * @param tenantPrefix - Tenant isolation prefix (e.g. '~acme')
  */
 export function createParqueDBAdapter(service: ParqueDBService, schema: ParsedSchema, tenantPrefix: string): DatabaseRpcClient {
+  // Build context URL from tenant prefix (e.g. '~acme' → 'https://headless.ly/~acme')
+  const contextUrl = tenantPrefix ? `https://headless.ly/${tenantPrefix}` : 'https://headless.ly/~default'
+
   return {
     async create(model, data, ctx) {
       const ns = resolveNamespace(schema, model, tenantPrefix)
@@ -184,11 +192,14 @@ export function createParqueDBAdapter(service: ParqueDBService, schema: ParsedSc
         input.name = (input.subject as string) || (input.title as string) || (input.description as string) || model
       }
 
-      if (ctx?.userId) input.createdBy = ctx.userId
+      if (ctx?.userId) {
+        input.createdBy = ctx.userId
+        input.updatedBy = ctx.userId
+      }
       if (ctx?.requestId) input.requestId = ctx.requestId
 
       const entity = await service.create(ns, input)
-      return entityToDocument(entity as Record<string, unknown>)
+      return entityToDocument(entity as Record<string, unknown>, contextUrl)
     },
 
     async get(model, id) {
@@ -197,7 +208,7 @@ export function createParqueDBAdapter(service: ParqueDBService, schema: ParsedSc
       // Try 1: direct get by bare id
       try {
         const entity = await service.get(ns, id)
-        if (entity) return entityToDocument(entity as Record<string, unknown>)
+        if (entity) return entityToDocument(entity as Record<string, unknown>, contextUrl)
       } catch (err) {
         if (!isNotFoundError(err)) throw err
       }
@@ -206,7 +217,7 @@ export function createParqueDBAdapter(service: ParqueDBService, schema: ParsedSc
       try {
         const qualifiedId = `${ns}/${id}`
         const entity = await service.get(ns, qualifiedId)
-        if (entity) return entityToDocument(entity as Record<string, unknown>)
+        if (entity) return entityToDocument(entity as Record<string, unknown>, contextUrl)
       } catch (err) {
         if (!isNotFoundError(err)) throw err
       }
@@ -287,7 +298,7 @@ export function createParqueDBAdapter(service: ParqueDBService, schema: ParsedSc
         })
 
         return {
-          data: (result.items || []).map((item) => entityToDocument(item as Record<string, unknown>)),
+          data: (result.items || []).map((item) => entityToDocument(item as Record<string, unknown>, contextUrl)),
           total: result.total ?? 0,
           limit,
           offset,
@@ -317,7 +328,7 @@ export function createParqueDBAdapter(service: ParqueDBService, schema: ParsedSc
         })
 
         return {
-          data: (result.items || []).map((item) => entityToDocument(item as Record<string, unknown>)),
+          data: (result.items || []).map((item) => entityToDocument(item as Record<string, unknown>, contextUrl)),
           total: result.total ?? 0,
           limit,
           offset,
