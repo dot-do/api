@@ -531,6 +531,31 @@ function databaseConventionWithSchema(
       })
     })
 
+    // HISTORY - GET /contacts/:id/history — CDC event log for a single entity
+    app.get(`${modelPath}/:id/history`, async (c) => {
+      const db = await getDatabase(c, config, inMemoryCache, schema)
+      const id = c.req.param('id')
+
+      try {
+        const events = await db.getEvents?.({ model: model.name }) ?? []
+        const entityEvents = events
+          .filter((e: DatabaseEvent) => e.documentId === id)
+          .map((e: DatabaseEvent) => ({
+            id: e.id,
+            timestamp: e.timestamp,
+            operation: e.operation,
+            type: model.name,
+            entityId: e.documentId,
+            data: e.data ?? e.after,
+            checksum: undefined,
+          }))
+
+        return c.var.respond({ data: entityEvents })
+      } catch {
+        return c.var.respond({ data: [] })
+      }
+    })
+
     // RELATIONS - GET /users/:id/posts (to-many), GET /posts/:id/author (to-one)
     for (const field of Object.values(model.fields)) {
       if (!field.relation) continue
@@ -1165,6 +1190,43 @@ function databaseConventionWithDiscovery(config: DatabaseConfig): {
 
     await db.delete(model.name, id, ctx)
     return c.var.respond({ data: { deleted: true, id } })
+  })
+
+  // ==========================================================================
+  // Entity History — CDC event log
+  // GET /:collection/:id/history
+  // ==========================================================================
+
+  app.get(`${basePath}/:collection/:id/history`, async (c) => {
+    const { schema } = await resolveSchema(c.env as Record<string, unknown>)
+    const collection = c.req.param('collection')
+    const model = resolveModelByPlural(schema, collection)
+    if (!model) {
+      return c.var.respond({ error: { code: 'NOT_FOUND', message: `Unknown collection: ${collection}` }, status: 404 })
+    }
+
+    const id = c.req.param('id')
+    const db = await getDatabase(c, config, inMemoryCache, schema)
+
+    try {
+      const events = await db.getEvents?.({ model: model.name }) ?? []
+      // Filter events for this specific entity
+      const entityEvents = events
+        .filter((e: DatabaseEvent) => e.documentId === id)
+        .map((e: DatabaseEvent) => ({
+          id: e.id,
+          timestamp: e.timestamp,
+          operation: e.operation,
+          type: model.name,
+          entityId: e.documentId,
+          data: e.data ?? e.after,
+          checksum: undefined,
+        }))
+
+      return c.var.respond({ data: entityEvents })
+    } catch {
+      return c.var.respond({ data: [] })
+    }
   })
 
   // ==========================================================================

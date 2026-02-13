@@ -179,6 +179,32 @@ export function createParqueDBAdapter(service: ParqueDBService, schema: ParsedSc
   // Build context URL from tenant prefix (e.g. '~acme' → 'https://headless.ly/~acme')
   const contextUrl = tenantPrefix ? `https://headless.ly/${tenantPrefix}` : 'https://headless.ly/~default'
 
+  // Event log namespace for CDC history
+  const eventsNs = tenantPrefix ? `${tenantPrefix}/_events` : '_events'
+  let eventSeq = 0
+
+  /** Log a CDC event to the _events namespace */
+  async function logEvent(operation: string, model: string, documentId: string, data?: Record<string, unknown>, before?: Record<string, unknown>, ctx?: RequestContext) {
+    try {
+      eventSeq++
+      await service.create(eventsNs, {
+        $type: 'Event',
+        name: `${operation}:${model}:${documentId}`,
+        operation,
+        model,
+        documentId,
+        data: data ? JSON.stringify(data) : undefined,
+        before: before ? JSON.stringify(before) : undefined,
+        sequence: eventSeq,
+        timestamp: new Date().toISOString(),
+        userId: ctx?.userId,
+        requestId: ctx?.requestId,
+      })
+    } catch {
+      // Event logging is best-effort — never fail the primary operation
+    }
+  }
+
   return {
     async create(model, data, ctx) {
       const ns = resolveNamespace(schema, model, tenantPrefix)
@@ -199,7 +225,10 @@ export function createParqueDBAdapter(service: ParqueDBService, schema: ParsedSc
       if (ctx?.requestId) input.requestId = ctx.requestId
 
       const entity = await service.create(ns, input)
-      return entityToDocument(entity as Record<string, unknown>, contextUrl)
+      const doc = entityToDocument(entity as Record<string, unknown>, contextUrl)
+      // Log CDC event (best-effort, awaited for consistency)
+      await logEvent('create', model, doc.id, doc, undefined, ctx)
+      return doc
     },
 
     async get(model, id) {
@@ -253,6 +282,8 @@ export function createParqueDBAdapter(service: ParqueDBService, schema: ParsedSc
       // Re-fetch to return the updated Document
       const doc = await this.get(model, id)
       if (!doc) throw new Error(`Entity ${id} not found after update`)
+      // Log CDC event (best-effort, awaited for consistency)
+      await logEvent('update', model, id, doc, undefined, ctx)
       return doc
     },
 
@@ -261,6 +292,7 @@ export function createParqueDBAdapter(service: ParqueDBService, schema: ParsedSc
       // Try direct delete by bare id
       try {
         await service.delete(ns, id)
+        await logEvent('soft-delete', model, id)
         return
       } catch (err) {
         if (!isNotFoundError(err)) throw err
@@ -268,6 +300,7 @@ export function createParqueDBAdapter(service: ParqueDBService, schema: ParsedSc
       // Try namespace-qualified id
       try {
         await service.delete(ns, `${ns}/${id}`)
+        await logEvent('soft-delete', model, id)
         return
       } catch (err) {
         if (!isNotFoundError(err)) throw err
@@ -279,6 +312,7 @@ export function createParqueDBAdapter(service: ParqueDBService, schema: ParsedSc
         const entity = result.items[0] as Record<string, unknown>
         const internalId = (entity.$id as string) || (entity.id as string) || id
         await service.delete(ns, internalId)
+        await logEvent('soft-delete', model, id)
       } catch (err) {
         if (!isNotFoundError(err)) throw err
       }
@@ -346,6 +380,38 @@ export function createParqueDBAdapter(service: ParqueDBService, schema: ParsedSc
         return await service.count(ns, buildFilter(where))
       } catch (err) {
         if (isNotFoundError(err)) return 0
+        throw err
+      }
+    },
+
+    async getEvents(options) {
+      try {
+        const filter: Record<string, unknown> = {}
+        if (options?.model) filter.model = options.model
+        if (options?.since) filter.sequence = { $gt: options.since }
+
+        const result = await service.find(eventsNs, filter, {
+          limit: options?.limit ?? 1000,
+          sort: { sequence: 1 },
+        })
+
+        return (result.items || []).map((item) => {
+          const e = item as Record<string, unknown>
+          const rawId = (e.$id as string) || (e.id as string) || ''
+          const bareId = rawId.includes('/') ? rawId.slice(rawId.lastIndexOf('/') + 1) : rawId
+          return {
+            id: bareId,
+            sequence: (e.sequence as number) || 0,
+            timestamp: (e.timestamp as string) || (e.createdAt as string) || '',
+            operation: (e.operation as string) || 'unknown',
+            model: (e.model as string) || '',
+            documentId: (e.documentId as string) || '',
+            data: e.data ? (typeof e.data === 'string' ? JSON.parse(e.data) : e.data) : undefined,
+            before: e.before ? (typeof e.before === 'string' ? JSON.parse(e.before) : e.before) : undefined,
+          } as DatabaseEvent
+        })
+      } catch (err) {
+        if (isNotFoundError(err)) return []
         throw err
       }
     },
