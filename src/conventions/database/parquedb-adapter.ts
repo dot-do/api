@@ -50,8 +50,8 @@ interface ParqueDBService {
  * Method names and signatures differ from ParqueDBService (WorkerEntrypoint).
  */
 interface ParqueDBDOStub {
-  findEntitiesFromSqlite(ns: string, options?: {
-    limit?: number; offset?: number; sort?: Record<string, 1 | -1>; filter?: Record<string, unknown>
+  find(ns: string, filter?: Record<string, unknown>, options?: {
+    limit?: number; offset?: number; sort?: Record<string, 1 | -1>
   }): Promise<{ items: Record<string, unknown>[]; total: number; hasMore: boolean }>
 
   get(ns: string, id: string): Promise<Record<string, unknown> | null>
@@ -62,7 +62,7 @@ interface ParqueDBDOStub {
 
   delete(ns: string, id: string, options?: Record<string, unknown>): Promise<{ deletedCount: number }>
 
-  countEntitiesFromSqlite(ns: string): Promise<number>
+  countEntities(ns: string): Promise<number>
 
   link(fromId: string, predicate: string, toId: string): Promise<void>
   unlink(fromId: string, predicate: string, toId: string): Promise<void>
@@ -75,12 +75,10 @@ interface ParqueDBDOStub {
 export function createDOParqueDBService(stub: ParqueDBDOStub): ParqueDBService {
   return {
     find: (async (ns: string, filter?: Record<string, unknown>, options?: { limit?: number; offset?: number; sort?: Record<string, 1 | -1> }) => {
-      return await stub.findEntitiesFromSqlite(ns, {
-        limit: options?.limit,
-        offset: options?.offset,
-        sort: options?.sort,
-        filter: (filter && Object.keys(filter).length > 0) ? filter : undefined,
-      }) as never
+      return await stub.find(ns,
+        (filter && Object.keys(filter).length > 0) ? filter : undefined,
+        { limit: options?.limit, offset: options?.offset, sort: options?.sort },
+      ) as never
     }),
 
     get: (async (ns: string, id: string) => {
@@ -101,7 +99,7 @@ export function createDOParqueDBService(stub: ParqueDBDOStub): ParqueDBService {
     },
 
     async count(ns) {
-      return stub.countEntitiesFromSqlite(ns)
+      return stub.countEntities(ns)
     },
 
     async link(fromNs, fromId, predicate, toNs, toId) {
