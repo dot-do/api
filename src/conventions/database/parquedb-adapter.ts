@@ -124,45 +124,96 @@ interface DatabaseRpcClient {
   search(model: string, query: string, options?: QueryOptions): Promise<{ data: Document[]; total: number; limit: number; offset: number; hasMore: boolean }>
   count(model: string, where?: Record<string, unknown>): Promise<number>
   getEvents?(options: { model?: string; since?: number; limit?: number }): Promise<DatabaseEvent[]>
+
+  /**
+   * List entities and format them directly to the final $-prefixed response shape.
+   * Bypasses the intermediate Document representation — single-pass transformation.
+   * Returns raw items for the convention to embed directly in the response envelope.
+   */
+  listFormatted?(
+    model: string,
+    prefix: string,
+    options?: QueryOptions,
+  ): Promise<{ data: Record<string, unknown>[]; total: number; limit: number; offset: number; hasMore: boolean }>
+
+  /** Format a single entity directly to the final $-prefixed response shape. */
+  formatOne?(model: string, prefix: string, doc: Document): Record<string, unknown>
 }
+
+// Meta field names to strip from ...rest during entity transformation.
+// Both $-prefixed (ParqueDB) and unprefixed variants are handled.
+const META_KEYS = new Set([
+  '$id', '$type', '$version', '$createdAt', '$updatedAt', '$createdBy', '$updatedBy', '$deletedAt', '$deletedBy',
+  'version', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy', 'deletedAt', 'deletedBy',
+])
 
 /**
  * Convert a ParqueDB entity (with $id, $type, createdAt, etc.) to a
  * @dotdo/api Document (with id, _version, _createdAt, etc.)
  */
 function entityToDocument(entity: Record<string, unknown>, context?: string): Document {
-  // ParqueDB entities use unprefixed field names (version, createdAt, etc.)
-  // while some paths return $-prefixed names ($version, $createdAt).
-  // Handle both conventions and destructure all meta fields out of ...rest
-  // to prevent them appearing as duplicate data fields.
-  const {
-    $id, $type, $version, $createdAt, $updatedAt, $createdBy, $updatedBy, $deletedAt, $deletedBy,
-    version, createdAt, updatedAt, createdBy, updatedBy, deletedAt, deletedBy,
-    ...rest
-  } = entity as Record<string, unknown> & {
-    $id?: string; $type?: string; $version?: number
-    $createdAt?: string; $updatedAt?: string; $createdBy?: string; $updatedBy?: string
-    $deletedAt?: string; $deletedBy?: string
-    version?: number; createdAt?: string; updatedAt?: string
-    createdBy?: string; updatedBy?: string; deletedAt?: string; deletedBy?: string
-  }
-
-  // ParqueDB $id is "ns/id" (e.g. "~default/contacts/contact_abc") — extract just the entity id
-  const rawId = ($id as string) || (entity.id as string) || ''
+  const rawId = (entity.$id as string) || (entity.id as string) || ''
   const bareId = rawId.includes('/') ? rawId.slice(rawId.lastIndexOf('/') + 1) : rawId
 
-  return {
+  const doc: Document = {
     id: bareId,
-    _version: ($version as number) ?? (version as number) ?? 1,
-    _createdAt: ($createdAt as string) || (createdAt as string) || new Date().toISOString(),
-    _updatedAt: ($updatedAt as string) || (updatedAt as string) || new Date().toISOString(),
-    _createdBy: ($createdBy as string) || (createdBy as string) || undefined,
-    _updatedBy: ($updatedBy as string) || (updatedBy as string) || undefined,
-    _deletedAt: ($deletedAt as string) || (deletedAt as string) || null,
-    _deletedBy: ($deletedBy as string) || (deletedBy as string) || null,
+    _version: (entity.$version as number) ?? (entity.version as number) ?? 1,
+    _createdAt: (entity.$createdAt as string) || (entity.createdAt as string) || '',
+    _updatedAt: (entity.$updatedAt as string) || (entity.updatedAt as string) || '',
+    _createdBy: (entity.$createdBy as string) || (entity.createdBy as string) || undefined,
+    _updatedBy: (entity.$updatedBy as string) || (entity.updatedBy as string) || undefined,
+    _deletedAt: (entity.$deletedAt as string) || (entity.deletedAt as string) || null,
+    _deletedBy: (entity.$deletedBy as string) || (entity.deletedBy as string) || null,
     _context: context || undefined,
-    ...rest,
   }
+  for (const key in entity) {
+    if (!META_KEYS.has(key) && key !== 'id') doc[key] = entity[key]
+  }
+  return doc
+}
+
+/**
+ * Convert a ParqueDB entity directly to the final $-prefixed response format.
+ * Merges entityToDocument + formatDocument into a single pass — avoids
+ * creating an intermediate Document object and iterating fields twice.
+ *
+ * @param entity - Raw ParqueDB entity (with $id, $type, createdAt, etc.)
+ * @param modelName - Entity type name (e.g. 'Contact')
+ * @param prefix - Meta field prefix (e.g. '$')
+ * @param context - Tenant context URL (e.g. 'https://headless.ly/~acme')
+ */
+export function formatEntity(
+  entity: Record<string, unknown>,
+  modelName: string,
+  prefix: string,
+  context?: string,
+): Record<string, unknown> {
+  const rawId = (entity.$id as string) || (entity.id as string) || ''
+  const bareId = rawId.includes('/') ? rawId.slice(rawId.lastIndexOf('/') + 1) : rawId
+
+  const result: Record<string, unknown> = {
+    [`${prefix}type`]: modelName,
+    [`${prefix}id`]: bareId,
+    [`${prefix}version`]: (entity.$version as number) ?? (entity.version as number) ?? 1,
+    [`${prefix}createdAt`]: (entity.$createdAt as string) || (entity.createdAt as string) || '',
+    [`${prefix}updatedAt`]: (entity.$updatedAt as string) || (entity.updatedAt as string) || '',
+  }
+
+  const createdBy = (entity.$createdBy as string) || (entity.createdBy as string)
+  if (createdBy) result[`${prefix}createdBy`] = createdBy
+  const updatedBy = (entity.$updatedBy as string) || (entity.updatedBy as string)
+  if (updatedBy) result[`${prefix}updatedBy`] = updatedBy
+  const deletedAt = (entity.$deletedAt as string) || (entity.deletedAt as string)
+  if (deletedAt) result[`${prefix}deletedAt`] = deletedAt
+  const deletedBy = (entity.$deletedBy as string) || (entity.deletedBy as string)
+  if (deletedBy) result[`${prefix}deletedBy`] = deletedBy
+  if (context) result[`${prefix}context`] = context
+
+  for (const key in entity) {
+    if (!META_KEYS.has(key) && key !== 'id') result[key] = entity[key]
+  }
+
+  return result
 }
 
 /**
@@ -426,6 +477,36 @@ export function createParqueDBAdapter(service: ParqueDBService, schema: ParsedSc
       // not in a ParqueDB namespace. Return empty — callers that need
       // real events should query the DO's /events endpoint directly.
       return []
+    },
+
+    async listFormatted(model, prefix, options) {
+      const ns = resolveNamespace(schema, model, tenantPrefix)
+      const limit = options?.limit ?? 20
+      const offset = options?.offset ?? 0
+
+      try {
+        const result = await service.find(ns, buildFilter(options?.where), {
+          limit,
+          offset,
+          sort: buildSort(options?.orderBy),
+          cursor: options?.cursor,
+        })
+
+        return {
+          data: (result.items || []).map((item) => formatEntity(item as Record<string, unknown>, model, prefix, contextUrl)),
+          total: result.total ?? 0,
+          limit,
+          offset,
+          hasMore: result.hasMore,
+        }
+      } catch (err) {
+        if (isNotFoundError(err)) return { ...EMPTY_LIST, limit, offset }
+        throw err
+      }
+    },
+
+    formatOne(model, prefix, doc) {
+      return formatEntity(doc as unknown as Record<string, unknown>, model, prefix, contextUrl)
     },
   }
 }

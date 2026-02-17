@@ -55,7 +55,7 @@ export { parseSchema, parseField, parseModel, generateJsonSchema, convertNounSch
 export { generateWebhookSignature, generateWebhookSignatureAsync, sendToWebhookSink } from './do'
 export type { WebhookRetryConfig } from './do'
 export { matchesWhere, coerceValue, isSafeRegex } from './match'
-export { createParqueDBAdapter } from './parquedb-adapter'
+export { createParqueDBAdapter, formatEntity } from './parquedb-adapter'
 
 // =============================================================================
 // Input Validation
@@ -301,8 +301,22 @@ function databaseConventionWithSchema(
       const db = await getDatabase(c, config, inMemoryCache, schema)
       const options = parseQueryOptions(c, pageSize, maxPageSize)
 
-      const result = await db.list(model.name, options)
+      // Fast path: single-pass transformation (skips intermediate Document objects)
+      if (useMetaFormat && db.listFormatted) {
+        const result = await db.listFormatted(model.name, metaPrefix, options)
+        const hasMore = result.hasMore ?? (result.total != null ? result.offset + result.limit < result.total : result.data.length >= result.limit)
 
+        return c.var.respond({
+          data: result.data,
+          meta: { total: result.total, limit: result.limit, offset: result.offset, hasMore },
+          links: {
+            self: c.req.url,
+            next: hasMore ? `${modelPath}?offset=${result.offset + result.limit}&limit=${result.limit}` : undefined,
+          },
+        })
+      }
+
+      const result = await db.list(model.name, options)
       const hasMore = result.hasMore ?? (result.total != null ? result.offset + result.limit < result.total : result.data.length >= result.limit)
 
       return c.var.respond({
@@ -389,7 +403,7 @@ function databaseConventionWithSchema(
       const doc = await db.create(model.name, body, ctx)
 
       return c.var.respond({
-        data: useMetaFormat ? formatDocument(doc, model.name, metaPrefix) : doc,
+        data: useMetaFormat ? (db.formatOne ? db.formatOne(model.name, metaPrefix, doc) : formatDocument(doc, model.name, metaPrefix)) : doc,
         status: 201,
       })
     })
@@ -409,7 +423,7 @@ function databaseConventionWithSchema(
         })
       }
 
-      return c.var.respond({ data: useMetaFormat ? formatDocument(doc, model.name, metaPrefix) : doc })
+      return c.var.respond({ data: useMetaFormat ? (db.formatOne ? db.formatOne(model.name, metaPrefix, doc) : formatDocument(doc, model.name, metaPrefix)) : doc })
     })
 
     // UPDATE - PUT /users/:id
@@ -1830,6 +1844,9 @@ function generateMcpTools(schema: ParsedSchema, config: DatabaseConfig): McpTool
  *   ?$sort=-value            → orderBy: [{ field: 'value', direction: 'desc' }]
  *   ?$limit=10&$offset=20    → { limit: 10, offset: 20 }
  */
+// Hoisted outside the function — allocated once, not per request
+const RESERVED_PARAMS = new Set(['$limit', '$offset', '$sort', 'limit', 'offset', 'orderBy', 'sort', 'include', 'select', 'cursor', 'q', 'filter'])
+
 function parseQueryOptions(c: { req: { query: (k: string) => string | undefined; url: string } }, defaultLimit: number, maxLimit: number): QueryOptions {
   const limitParam = c.req.query('$limit') || c.req.query('limit')
   const offsetParam = c.req.query('$offset') || c.req.query('offset')
@@ -1855,7 +1872,6 @@ function parseQueryOptions(c: { req: { query: (k: string) => string | undefined;
   // Parse where from query params with operator support
   const where: Record<string, unknown> = {}
   const url = new URL(c.req.url, 'http://localhost')
-  const reservedParams = new Set(['$limit', '$offset', '$sort', 'limit', 'offset', 'orderBy', 'sort', 'include', 'select', 'cursor', 'q', 'filter'])
 
   // Parse ?filter={JSON} param (full MongoDB-style filter as JSON string)
   const filterParam = url.searchParams.get('filter')
@@ -1869,7 +1885,7 @@ function parseQueryOptions(c: { req: { query: (k: string) => string | undefined;
   }
 
   for (const [rawKey, rawValue] of url.searchParams.entries()) {
-    if (reservedParams.has(rawKey)) continue
+    if (RESERVED_PARAMS.has(rawKey)) continue
 
     // Check for operator syntax: field[$op]=value
     const opMatch = rawKey.match(/^([^[]+)\[(\$\w+)\]$/)
@@ -2202,6 +2218,10 @@ interface DatabaseRpcClient {
   search(model: string, query: string, options?: QueryOptions): Promise<{ data: Document[]; total: number; limit: number; offset: number; hasMore: boolean }>
   count(model: string, where?: Record<string, unknown>): Promise<number>
   getEvents?(options: { model?: string; since?: number; limit?: number }): Promise<DatabaseEvent[]>
+  /** Single-pass list → formatted response (skips intermediate Document objects) */
+  listFormatted?(model: string, prefix: string, options?: QueryOptions): Promise<{ data: Record<string, unknown>[]; total: number; limit: number; offset: number; hasMore: boolean }>
+  /** Single-pass entity → formatted response */
+  formatOne?(model: string, prefix: string, doc: Document): Record<string, unknown>
 }
 
 /**
