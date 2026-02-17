@@ -193,10 +193,16 @@ export interface DatabaseConfig {
   binding?: string
 
   /**
-   * ParqueDB service binding name (e.g. 'PARQUEDB').
-   * Connects to @dotdo/db ParqueDB Worker via RPC.
+   * @deprecated Use `database` instead. Falls back to ParqueDB Worker via RPC.
    */
   parquedb?: string
+
+  /**
+   * DatabaseDO DurableObjectNamespace binding name (e.g. 'DATABASE').
+   * Routes directly to the unified DatabaseDO (extends ParqueDBDO).
+   * Preferred over `parquedb` — eliminates the ParqueDB Worker middleman.
+   */
+  database?: string
 
   /**
    * Namespace for multi-tenant isolation

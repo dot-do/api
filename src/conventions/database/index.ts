@@ -25,7 +25,7 @@ import type {
 } from './types'
 import { parseSchema, generateJsonSchema, discoverSchemaFromObjects, discoverSchemaFromRegistry } from './schema'
 import { coerceValue, matchesWhere } from './match'
-import { createParqueDBAdapter } from './parquedb-adapter'
+import { createParqueDBAdapter, createDOParqueDBService } from './parquedb-adapter'
 
 export type {
   DatabaseConfig,
@@ -2206,8 +2206,8 @@ interface DatabaseRpcClient {
 
 /**
  * Get database client from context.
- * Connects to ParqueDB Worker via RPC service binding.
- * Throws if the binding is not configured.
+ * Prefers DATABASE DurableObjectNamespace (direct DO RPC) over
+ * PARQUEDB service binding (WorkerEntrypoint middleman).
  */
 async function getDatabase(
   c: { env: Record<string, unknown>; var: { requestId: string } },
@@ -2216,14 +2216,35 @@ async function getDatabase(
   schema: ParsedSchema,
 ): Promise<DatabaseRpcClient> {
   const namespace = typeof config.namespace === 'function' ? config.namespace(c) : config.namespace || 'default'
+  const tenantPrefix = `~${namespace}`
 
-  // ParqueDB Worker via RPC — the only database path
+  // Prefer DATABASE DO binding (direct RPC to the unified DatabaseDO)
+  const dbBindingName = config.database
+  if (dbBindingName) {
+    const doNamespace = c.env[dbBindingName] as { idFromName(name: string): { toString(): string }; get(id: unknown): unknown } | undefined
+    if (doNamespace?.idFromName) {
+      const cacheKey = `database:${namespace}`
+      let db = inMemoryCache.get(cacheKey)
+      if (!db) {
+        const doId = doNamespace.idFromName(namespace)
+        const stub = doNamespace.get(doId)
+        const service = createDOParqueDBService(stub as never)
+        db = createParqueDBAdapter(service as never, schema, tenantPrefix)
+        inMemoryCache.set(cacheKey, db)
+      }
+      return db
+    }
+  }
+
+  // Fallback: ParqueDB Worker via RPC service binding
   const bindingName = config.parquedb || 'PARQUEDB'
   const service = c.env[bindingName]
   if (!service) {
-    throw new Error(`[database] ParqueDB binding '${bindingName}' not found in env. Check wrangler.jsonc service bindings.`)
+    throw new Error(
+      `[database] No database binding found. Set 'database' (DO binding) or 'parquedb' (service binding) in config. ` +
+      `Checked: database='${dbBindingName || '(not set)'}', parquedb='${bindingName}'.`
+    )
   }
-  const tenantPrefix = `~${namespace}`
   const cacheKey = `parquedb:${namespace}`
   let db = inMemoryCache.get(cacheKey)
   if (!db) {

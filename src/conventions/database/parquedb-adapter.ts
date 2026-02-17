@@ -45,6 +45,76 @@ interface ParqueDBService {
 }
 
 /**
+ * ParqueDBDO stub interface for Durable Object RPC.
+ * Matches the public methods on ParqueDBDO (via DurableObjectStub RPC).
+ * Method names and signatures differ from ParqueDBService (WorkerEntrypoint).
+ */
+interface ParqueDBDOStub {
+  findEntitiesFromSqlite(ns: string, options?: {
+    limit?: number; offset?: number; sort?: Record<string, 1 | -1>; filter?: Record<string, unknown>
+  }): Promise<{ items: Record<string, unknown>[]; total: number; hasMore: boolean }>
+
+  get(ns: string, id: string): Promise<Record<string, unknown> | null>
+
+  create(ns: string, data: Record<string, unknown>, options?: Record<string, unknown>): Promise<Record<string, unknown>>
+
+  update(ns: string, id: string, update: Record<string, unknown>, options?: Record<string, unknown>): Promise<Record<string, unknown>>
+
+  delete(ns: string, id: string, options?: Record<string, unknown>): Promise<{ deletedCount: number }>
+
+  countEntitiesFromSqlite(ns: string): Promise<number>
+
+  link(fromId: string, predicate: string, toId: string): Promise<void>
+  unlink(fromId: string, predicate: string, toId: string): Promise<void>
+}
+
+/**
+ * Wrap a DatabaseDO stub (DurableObject RPC) as a ParqueDBService.
+ * Adapts method names and return types to match the adapter's expected interface.
+ */
+export function createDOParqueDBService(stub: ParqueDBDOStub): ParqueDBService {
+  return {
+    find: (async (ns: string, filter?: Record<string, unknown>, options?: { limit?: number; offset?: number; sort?: Record<string, 1 | -1> }) => {
+      return await stub.findEntitiesFromSqlite(ns, {
+        limit: options?.limit,
+        offset: options?.offset,
+        sort: options?.sort,
+        filter: (filter && Object.keys(filter).length > 0) ? filter : undefined,
+      }) as never
+    }),
+
+    get: (async (ns: string, id: string) => {
+      return await stub.get(ns, id) as never
+    }),
+
+    create: (async (ns: string, data: Record<string, unknown>) => {
+      return await stub.create(ns, data) as never
+    }),
+
+    async update(ns, id, update) {
+      const entity = await stub.update(ns, id, update)
+      return { matchedCount: entity ? 1 : 0, modifiedCount: entity ? 1 : 0 }
+    },
+
+    async delete(ns, id) {
+      return stub.delete(ns, id)
+    },
+
+    async count(ns) {
+      return stub.countEntitiesFromSqlite(ns)
+    },
+
+    async link(fromNs, fromId, predicate, toNs, toId) {
+      return stub.link(`${fromNs}/${fromId}`, predicate, `${toNs}/${toId}`)
+    },
+
+    async unlink(fromNs, fromId, predicate, toNs, toId) {
+      return stub.unlink(`${fromNs}/${fromId}`, predicate, `${toNs}/${toId}`)
+    },
+  }
+}
+
+/**
  * DatabaseRpcClient interface (matches the private interface in index.ts)
  */
 interface DatabaseRpcClient {
