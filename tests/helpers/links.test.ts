@@ -146,11 +146,13 @@ describe('Link helpers', () => {
     })
 
     describe('collection method', () => {
-      it('generates collection links with self and docs', () => {
+      it('generates collection links with self, home, collection, and docs', () => {
         const builder = createLinkBuilder({ baseUrl: 'https://api.example.com' })
         const links = builder.collection('/users')
 
         expect(links.self).toBe('https://api.example.com/users')
+        expect(links.home).toBe('https://api.example.com/')
+        expect(links.collection).toBe('https://api.example.com/users')
         expect(links.docs).toBe('https://api.example.com/docs')
       })
 
@@ -162,6 +164,7 @@ describe('Link helpers', () => {
         const links = builder.collection('/products')
 
         expect(links.self).toBe('https://api.example.com/v1/products')
+        expect(links.home).toBe('https://api.example.com/v1/')
         expect(links.docs).toBe('https://api.example.com/v1/docs')
       })
 
@@ -183,11 +186,12 @@ describe('Link helpers', () => {
     })
 
     describe('resource method', () => {
-      it('generates resource links with self and collection', () => {
+      it('generates resource links with self, home, and collection', () => {
         const builder = createLinkBuilder({ baseUrl: 'https://api.example.com' })
         const links = builder.resource('/users', '123')
 
         expect(links.self).toBe('https://api.example.com/users/123')
+        expect(links.home).toBe('https://api.example.com/')
         expect(links.collection).toBe('https://api.example.com/users')
       })
 
@@ -199,6 +203,7 @@ describe('Link helpers', () => {
         const links = builder.resource('/items', 'abc-456')
 
         expect(links.self).toBe('https://api.example.com/api/v2/items/abc-456')
+        expect(links.home).toBe('https://api.example.com/api/v2/')
         expect(links.collection).toBe('https://api.example.com/api/v2/items')
       })
 

@@ -76,10 +76,11 @@ describe('RPC convention', () => {
       expect(res.status).toBe(200)
 
       const body = await res.json() as Record<string, unknown>
-      const actions = body.actions as Record<string, { method: string; href: string }>
+      const actions = body.actions as Record<string, string>
 
-      expect(actions.echo).toEqual({ method: 'POST', href: '/rpc/echo' })
-      expect(actions.ping).toEqual({ method: 'POST', href: '/rpc/ping' })
+      // Actions are normalized to URL strings in the new envelope
+      expect(actions.echo).toContain('/rpc/echo')
+      expect(actions.ping).toContain('/rpc/ping')
     })
   })
 

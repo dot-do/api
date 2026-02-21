@@ -23,6 +23,8 @@ export function createLinkBuilder(options: LinkBuilderOptions) {
       const base = this.build(path)
       return {
         self: base,
+        home: this.build('/'),
+        collection: base,
         docs: this.build('/docs'),
       }
     },
@@ -30,6 +32,7 @@ export function createLinkBuilder(options: LinkBuilderOptions) {
     resource(path: string, id: string): Links {
       return {
         self: this.build(`${path}/${id}`),
+        home: this.build('/'),
         collection: this.build(path),
       }
     },

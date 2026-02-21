@@ -36,17 +36,19 @@ export function createErrorHandler(config: ApiConfig): ErrorHandler<ApiEnv> {
     // Fallback if respond helper is not available
     // Build a minimal envelope matching the respond helper format
     const url = new URL(c.req.url)
+    const baseUrl = `${url.protocol}//${url.host}${config.basePath || ''}`
 
     return c.json(
       {
         api: {
           name: config.name,
-          description: config.description,
-          url: `${url.protocol}//${url.host}${config.basePath || ''}`,
-          version: config.version,
+          ...(config.description && { description: config.description }),
+          url: baseUrl,
+          ...(config.version && { version: config.version }),
         },
         links: {
           self: url.toString(),
+          home: baseUrl,
         },
         error: errorDetail,
       },

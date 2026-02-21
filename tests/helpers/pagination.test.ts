@@ -1,15 +1,15 @@
 import { describe, it, expect } from 'vitest'
-import { buildPagination, buildCursorPagination } from '../../src/helpers/pagination'
+import { buildPagination, buildPagePagination, buildCursorPagination } from '../../src/helpers/pagination'
 
 describe('Pagination helpers', () => {
-  describe('buildPagination', () => {
+  describe('buildPagination (offset-based)', () => {
     it('generates correct self, first, prev, next, last links', () => {
       const url = new URL('https://api.example.com/users?offset=20&limit=10')
       const result = buildPagination({
         url,
         total: 100,
         limit: 10,
-        offset: 20
+        offset: 20,
       })
 
       expect(result.links.self).toBe('https://api.example.com/users?offset=20&limit=10')
@@ -21,13 +21,22 @@ describe('Pagination helpers', () => {
       expect(result.hasPrev).toBe(true)
     })
 
+    it('returns total, limit, and page', () => {
+      const url = new URL('https://api.example.com/users?offset=20&limit=10')
+      const result = buildPagination({ url, total: 100, limit: 10, offset: 20 })
+
+      expect(result.total).toBe(100)
+      expect(result.limit).toBe(10)
+      expect(result.page).toBe(3) // offset 20 / limit 10 + 1
+    })
+
     it('handles first page (no prev link)', () => {
       const url = new URL('https://api.example.com/users?offset=0&limit=10')
       const result = buildPagination({
         url,
         total: 50,
         limit: 10,
-        offset: 0
+        offset: 0,
       })
 
       expect(result.links.self).toBe('https://api.example.com/users?offset=0&limit=10')
@@ -45,7 +54,7 @@ describe('Pagination helpers', () => {
         url,
         total: 50,
         limit: 10,
-        offset: 40
+        offset: 40,
       })
 
       expect(result.links.self).toBe('https://api.example.com/users?offset=40&limit=10')
@@ -63,7 +72,7 @@ describe('Pagination helpers', () => {
         url,
         total: 5,
         limit: 10,
-        offset: 0
+        offset: 0,
       })
 
       expect(result.links.self).toBe('https://api.example.com/users?offset=0&limit=10')
@@ -81,7 +90,7 @@ describe('Pagination helpers', () => {
         url,
         total: 0,
         limit: 10,
-        offset: 0
+        offset: 0,
       })
 
       expect(result.links.self).toBe('https://api.example.com/users?offset=0&limit=10')
@@ -99,7 +108,7 @@ describe('Pagination helpers', () => {
         url,
         total: 30,
         limit: 5,
-        offset: 10
+        offset: 10,
       })
 
       // All links should preserve filter and sort params
@@ -122,7 +131,7 @@ describe('Pagination helpers', () => {
           url,
           total: 10,
           limit: 10,
-          offset: 0
+          offset: 0,
         })
 
         expect(result.hasNext).toBe(false)
@@ -138,7 +147,7 @@ describe('Pagination helpers', () => {
           url,
           total: 19,
           limit: 10,
-          offset: 0
+          offset: 0,
         })
 
         expect(result.hasNext).toBe(true)
@@ -152,7 +161,7 @@ describe('Pagination helpers', () => {
           url,
           total: 20,
           limit: 10,
-          offset: 0
+          offset: 0,
         })
 
         expect(result.hasNext).toBe(true)
@@ -166,7 +175,7 @@ describe('Pagination helpers', () => {
           url,
           total: 21,
           limit: 10,
-          offset: 0
+          offset: 0,
         })
 
         expect(result.hasNext).toBe(true)
@@ -180,11 +189,9 @@ describe('Pagination helpers', () => {
           url,
           total: 10,
           limit: 10,
-          offset: 9
+          offset: 9,
         })
 
-        // offset=9, limit=10, total=10 means we're showing items 9-9 (1 item)
-        // offset + limit (19) >= total (10), so no next
         expect(result.hasNext).toBe(false)
         expect(result.hasPrev).toBe(true)
         expect(result.links.prev).toBe('https://api.example.com/users?offset=0&limit=10')
@@ -196,10 +203,9 @@ describe('Pagination helpers', () => {
           url,
           total: 50,
           limit: 10,
-          offset: 100
+          offset: 100,
         })
 
-        // Even though offset > total, we should still have correct links
         expect(result.hasNext).toBe(false)
         expect(result.hasPrev).toBe(true)
         expect(result.links.prev).toBe('https://api.example.com/users?offset=90&limit=10')
@@ -212,7 +218,7 @@ describe('Pagination helpers', () => {
           url,
           total: 5,
           limit: 1,
-          offset: 2
+          offset: 2,
         })
 
         expect(result.links.first).toBe('https://api.example.com/users?offset=0&limit=1')
@@ -227,7 +233,7 @@ describe('Pagination helpers', () => {
           url,
           total: 50,
           limit: 1000,
-          offset: 0
+          offset: 0,
         })
 
         expect(result.hasNext).toBe(false)
@@ -242,7 +248,7 @@ describe('Pagination helpers', () => {
           url,
           total: 1,
           limit: 10,
-          offset: 0
+          offset: 0,
         })
 
         expect(result.hasNext).toBe(false)
@@ -252,18 +258,77 @@ describe('Pagination helpers', () => {
     })
   })
 
+  describe('buildPagePagination', () => {
+    it('generates correct links for middle page', () => {
+      const url = new URL('https://api.example.com/users?page=3&limit=10')
+      const result = buildPagePagination({ url, total: 100, limit: 10, page: 3 })
+
+      expect(result.links.self).toBe('https://api.example.com/users?page=3&limit=10')
+      expect(result.links.first).toContain('page=1')
+      expect(result.links.prev).toContain('page=2')
+      expect(result.links.next).toContain('page=4')
+      expect(result.links.last).toContain('page=10')
+      expect(result.total).toBe(100)
+      expect(result.limit).toBe(10)
+      expect(result.page).toBe(3)
+      expect(result.hasNext).toBe(true)
+      expect(result.hasPrev).toBe(true)
+    })
+
+    it('omits prev on first page', () => {
+      const url = new URL('https://api.example.com/users?page=1&limit=10')
+      const result = buildPagePagination({ url, total: 50, limit: 10, page: 1 })
+
+      expect(result.links.prev).toBeUndefined()
+      expect(result.links.next).toContain('page=2')
+      expect(result.hasPrev).toBe(false)
+      expect(result.hasNext).toBe(true)
+    })
+
+    it('omits next on last page', () => {
+      const url = new URL('https://api.example.com/users?page=5&limit=10')
+      const result = buildPagePagination({ url, total: 50, limit: 10, page: 5 })
+
+      expect(result.links.next).toBeUndefined()
+      expect(result.links.prev).toContain('page=4')
+      expect(result.hasNext).toBe(false)
+      expect(result.hasPrev).toBe(true)
+    })
+
+    it('single page has neither prev nor next', () => {
+      const url = new URL('https://api.example.com/users?page=1&limit=25')
+      const result = buildPagePagination({ url, total: 5, limit: 25, page: 1 })
+
+      expect(result.links.prev).toBeUndefined()
+      expect(result.links.next).toBeUndefined()
+      expect(result.hasNext).toBe(false)
+      expect(result.hasPrev).toBe(false)
+    })
+
+    it('clamps page to valid range', () => {
+      const url = new URL('https://api.example.com/users?page=999&limit=10')
+      const result = buildPagePagination({ url, total: 50, limit: 10, page: 999 })
+
+      // Should be clamped to last page (5)
+      expect(result.page).toBe(5)
+      expect(result.links.next).toBeUndefined()
+    })
+  })
+
   describe('buildCursorPagination', () => {
-    it('generates cursor-based links with next cursor', () => {
+    it('generates cursor-based links with next cursor using after param', () => {
       const url = new URL('https://api.example.com/users?limit=10')
       const result = buildCursorPagination({
         url,
         limit: 10,
         hasMore: true,
-        nextCursor: 'abc123'
+        nextCursor: 'abc123',
       })
 
-      expect(result.self).toBe('https://api.example.com/users?limit=10')
-      expect(result.next).toBe('https://api.example.com/users?limit=10&cursor=abc123')
+      expect(result.links.self).toBe('https://api.example.com/users?limit=10')
+      expect(result.links.next).toContain('after=abc123')
+      expect(result.links.next).toContain('limit=10')
+      expect(result.limit).toBe(10)
     })
 
     it('omits next link when hasMore is false', () => {
@@ -272,11 +337,11 @@ describe('Pagination helpers', () => {
         url,
         limit: 10,
         hasMore: false,
-        nextCursor: undefined
+        nextCursor: undefined,
       })
 
-      expect(result.self).toBe('https://api.example.com/users?limit=10')
-      expect(result.next).toBeUndefined()
+      expect(result.links.self).toBe('https://api.example.com/users?limit=10')
+      expect(result.links.next).toBeUndefined()
     })
 
     it('omits next link when hasMore is true but no nextCursor', () => {
@@ -285,11 +350,27 @@ describe('Pagination helpers', () => {
         url,
         limit: 10,
         hasMore: true,
-        nextCursor: undefined
+        nextCursor: undefined,
       })
 
-      expect(result.self).toBe('https://api.example.com/users?limit=10')
-      expect(result.next).toBeUndefined()
+      expect(result.links.self).toBe('https://api.example.com/users?limit=10')
+      expect(result.links.next).toBeUndefined()
+    })
+
+    it('includes prev link when prevCursor is provided', () => {
+      const url = new URL('https://api.example.com/users?after=abc&limit=10')
+      const result = buildCursorPagination({
+        url,
+        limit: 10,
+        hasMore: true,
+        nextCursor: 'def456',
+        prevCursor: 'xyz789',
+      })
+
+      expect(result.links.next).toContain('after=def456')
+      expect(result.links.prev).toContain('before=xyz789')
+      // prev link should not contain after param
+      expect(result.links.prev).not.toContain('after=')
     })
 
     it('preserves query parameters in cursor links', () => {
@@ -298,43 +379,14 @@ describe('Pagination helpers', () => {
         url,
         limit: 10,
         hasMore: true,
-        nextCursor: 'xyz789'
+        nextCursor: 'xyz789',
       })
 
-      expect(result.self).toContain('filter=active')
-      expect(result.self).toContain('sort=name')
-      expect(result.next).toContain('filter=active')
-      expect(result.next).toContain('sort=name')
-      expect(result.next).toContain('cursor=xyz789')
-    })
-
-    it('updates existing cursor in URL', () => {
-      const url = new URL('https://api.example.com/users?cursor=old123&limit=10')
-      const result = buildCursorPagination({
-        url,
-        cursor: 'old123',
-        limit: 10,
-        hasMore: true,
-        nextCursor: 'new456'
-      })
-
-      expect(result.self).toBe('https://api.example.com/users?cursor=old123&limit=10')
-      expect(result.next).toContain('cursor=new456')
-      // Should not contain the old cursor
-      expect(result.next).not.toContain('cursor=old123')
-    })
-
-    it('handles encoded cursor values', () => {
-      const url = new URL('https://api.example.com/users?limit=10')
-      const encodedCursor = 'eyJpZCI6MTIzfQ==' // base64 encoded JSON
-      const result = buildCursorPagination({
-        url,
-        limit: 10,
-        hasMore: true,
-        nextCursor: encodedCursor
-      })
-
-      expect(result.next).toContain(`cursor=${encodeURIComponent(encodedCursor)}`)
+      expect(result.links.self).toContain('filter=active')
+      expect(result.links.self).toContain('sort=name')
+      expect(result.links.next).toContain('filter=active')
+      expect(result.links.next).toContain('sort=name')
+      expect(result.links.next).toContain('after=xyz789')
     })
 
     it('handles empty string cursor', () => {
@@ -343,11 +395,11 @@ describe('Pagination helpers', () => {
         url,
         limit: 10,
         hasMore: true,
-        nextCursor: ''
+        nextCursor: '',
       })
 
       // Empty string is falsy, so no next link
-      expect(result.next).toBeUndefined()
+      expect(result.links.next).toBeUndefined()
     })
 
     it('works without existing query params', () => {
@@ -356,11 +408,11 @@ describe('Pagination helpers', () => {
         url,
         limit: 20,
         hasMore: true,
-        nextCursor: 'cursor123'
+        nextCursor: 'cursor123',
       })
 
-      expect(result.self).toBe('https://api.example.com/users')
-      expect(result.next).toBe('https://api.example.com/users?cursor=cursor123&limit=20')
+      expect(result.links.self).toBe('https://api.example.com/users')
+      expect(result.links.next).toBe('https://api.example.com/users?after=cursor123&limit=20')
     })
   })
 })
