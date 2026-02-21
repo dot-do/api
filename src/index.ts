@@ -72,3 +72,7 @@ export type { BuildOptionsConfig } from './helpers/options'
 // Helpers — query filter parsing and canonicalization
 export { parseFilters, canonicalizeFilter, parseSort, canonicalizeSort } from './helpers/filters'
 export type { ParseFilterResult, ParseFilterOptions } from './helpers/filters'
+
+// Function-call URL convention
+export { FunctionRegistry, functionCallConvention } from './conventions/function-calls'
+export type { RegisteredFunction, FunctionCallInput, FunctionCallContext, FunctionCallConfig, FunctionListEntry, RegisterOptions } from './conventions/function-calls'
