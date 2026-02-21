@@ -15,28 +15,49 @@ export interface ApiMeta {
   name: string
   description?: string
   url?: string
+  docs?: string
+  repo?: string
   type?: string
   version?: string
 }
 
+/** HATEOAS links — all values are URL strings. Absent keys mean not applicable. */
 export interface Links {
   self?: string
-  next?: string
-  prev?: string
+  home?: string
+  collection?: string
   first?: string
+  prev?: string
+  next?: string
   last?: string
   docs?: string
   [key: string]: string | undefined
 }
 
+/** Actions — map of action name to mutation URL string (or legacy {method, href} object for backward compatibility) */
 export interface Actions {
-  [key: string]: {
-    method: string
-    href: string
-    description?: string
-  }
+  [key: string]: string | { method: string; href: string; description?: string }
 }
 
+/** Options — map of option name to view-customization URL */
+export interface Options {
+  [key: string]: string
+}
+
+export interface UserContext {
+  authenticated: boolean
+  level?: 'L0' | 'L1' | 'L2' | 'L3'
+  id?: string
+  name?: string
+  email?: string
+  tenant?: string
+  agent?: { id: string; name: string }
+  plan?: string
+  usage?: Record<string, { used: number; limit: number; period?: string }>
+  links?: Record<string, string>
+}
+
+/** @deprecated Use UserContext instead */
 export interface UserInfo {
   id?: string
   email?: string
@@ -44,6 +65,7 @@ export interface UserInfo {
   [key: string]: unknown
 }
 
+/** @deprecated Use top-level total/limit/page instead */
 export interface ResponseMeta {
   total?: number
   limit?: number
@@ -52,16 +74,21 @@ export interface ResponseMeta {
   [key: string]: unknown
 }
 
-export interface ResponseEnvelope<T = unknown> {
+export interface ResponseEnvelope {
   api: ApiMeta
-  success: boolean
+  $context?: string
+  $type?: string
+  $id?: string
+  total?: number
+  limit?: number
+  page?: number
   links?: Links
+  // Semantic payload key (e.g. "contacts", "contact", "score") — added dynamically
+  [payloadKey: string]: unknown
   actions?: Actions
-  data?: T
-  user?: UserInfo
-  meta?: ResponseMeta
+  options?: Options
   error?: ErrorDetail
-  [key: string]: unknown
+  user?: UserContext
 }
 
 export interface ErrorDetail {
@@ -73,14 +100,30 @@ export interface ErrorDetail {
 
 // Respond helper options
 export interface RespondOptions<T = unknown> {
+  /** The data payload */
   data?: T
+  /** Semantic key name for the payload (e.g. "contacts", "contact", "score"). Defaults to "data". */
   key?: string
+  /** MDXLD $context — tenant namespace URL */
+  $context?: string
+  /** MDXLD $type — collection/type URL */
+  $type?: string
+  /** MDXLD $id — specific resource URL */
+  $id?: string
+  /** Total count (list responses) */
+  total?: number
+  /** Page size (list responses) */
+  limit?: number
+  /** Current page number (page-based pagination) */
+  page?: number
   links?: Links
   actions?: Actions
+  options?: Options
+  /** @deprecated Use top-level total/limit/page instead */
   meta?: ResponseMeta
   status?: number
   error?: ErrorDetail
-  user?: UserInfo
+  user?: UserContext | UserInfo
 }
 
 // Auth configuration
@@ -239,9 +282,15 @@ export interface Bindings {
 export interface Variables {
   requestId: string
   respond: <T = unknown>(options: RespondOptions<T>) => Response
-  user?: UserInfo
+  user?: UserContext | UserInfo
   geo?: GeoInfo
   apiConfig: ApiConfig
+  /** Set by routerMiddleware: complete parsed route info */
+  routeInfo?: import('./router').RouteInfo
+  /** Set by routerMiddleware: resolved tenant slug */
+  tenant?: string
+  /** Set by routerMiddleware: source of tenant resolution */
+  tenantSource?: 'path' | 'header' | 'subdomain' | 'token' | 'default'
 }
 
 export interface GeoInfo {

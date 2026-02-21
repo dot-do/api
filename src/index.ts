@@ -25,6 +25,8 @@ export type {
   RespondOptions,
   Links,
   Actions,
+  Options,
+  UserContext,
   UserInfo,
   ResponseMeta,
   ErrorDetail,
@@ -40,6 +42,18 @@ export type { AnalyticsBufferConfig, BufferEvent, TestingConfig, TestCase, RestT
 export type { FunctionsConfig, FunctionDef, ProxyDef, MashupDef, LookupDef, PipelineDef } from './conventions'
 export { parseSchema, parseField, parseModel, generateJsonSchema, buildTypeRegistry, createSqids, shuffleAlphabet, decodeSqid } from './conventions/database'
 export type { ParsedSchema, ParsedModel, ParsedField, Document, DatabaseEvent, DatabaseDriverType, DatabaseDriver, DatabaseDriverFactory, QueryOptions, QueryResult, TypeRegistry, ReverseTypeRegistry, DecodedSqid } from './conventions/database'
-export { buildPagination, buildCursorPagination } from './helpers/pagination'
+export { buildPagination, buildPagePagination, buildCursorPagination } from './helpers/pagination'
 export { createLinkBuilder } from './helpers/links'
 export { notFound, badRequest, unauthorized, forbidden, rateLimited, internal, ErrorCode, type ErrorCodeType } from './helpers/errors'
+
+// Router — self-describing ID URL routing
+export { routerMiddleware, parseRoute } from './router'
+export type { RouteInfo, ParsedRoute, CollectionRoute, EntityRoute, EntityActionRoute, CollectionActionRoute, MetaRoute, FunctionCallRoute, SearchRoute, UnknownRoute, RouterConfig } from './router'
+
+// Helpers — ID parsing, function-call parsing, tenant resolution
+export { parseEntityId, isEntityId } from './helpers/id-parser'
+export type { ParsedEntityId } from './helpers/id-parser'
+export { parseFunctionCall, isFunctionCall } from './helpers/function-parser'
+export type { ParsedFunctionCall, ParsedArg, FunctionArgType } from './helpers/function-parser'
+export { resolveTenant, extractTenantFromPath, extractTenantFromSubdomain } from './helpers/tenant'
+export type { TenantResolution } from './helpers/tenant'
