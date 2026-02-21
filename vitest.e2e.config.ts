@@ -12,6 +12,11 @@ import { defineConfig } from 'vitest/config'
  *   vitest run --config vitest.e2e.config.ts
  */
 export default defineConfig({
+  resolve: {
+    alias: {
+      'cloudflare:workers': new URL('./tests/mocks/cloudflare-workers.ts', import.meta.url).pathname,
+    },
+  },
   test: {
     include: ['tests/**/*.e2e.test.ts'],
     testTimeout: 30_000,
