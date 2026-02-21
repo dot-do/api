@@ -40,9 +40,10 @@ export type {
 } from './types'
 
 export { responseMiddleware } from './response'
-export { contextMiddleware, corsMiddleware, authMiddleware, authLevelMiddleware, requireAuth, buildUserContext, rateLimitMiddleware, createErrorHandler, metaMiddleware, mutationMiddleware } from './middleware'
-export type { AuthLevel, AuthLevelConfig, MutationConfig } from './middleware'
-export { crudConvention, proxyConvention, rpcConvention, mcpConvention, analyticsMiddleware, analyticsRoutes, analyticsBufferRoutes, AnalyticsBufferDO, testingConvention, databaseConvention, DatabaseDO, functionsConvention } from './conventions'
+export { contextMiddleware, corsMiddleware, authMiddleware, authLevelMiddleware, requireAuth, buildUserContext, rateLimitMiddleware, billingMiddleware, requirePlan, requireFeature, getFeatureRequirements, createErrorHandler, metaMiddleware, mutationMiddleware } from './middleware'
+export type { AuthLevel, AuthLevelConfig, MutationConfig, BillingConfig, PlanConfig, PlanRate, PlanQuota } from './middleware'
+export { crudConvention, proxyConvention, rpcConvention, mcpConvention, analyticsMiddleware, analyticsRoutes, analyticsBufferRoutes, AnalyticsBufferDO, testingConvention, databaseConvention, DatabaseDO, functionsConvention, searchConvention } from './conventions'
+export type { SearchConfig, SearchProvider, FacetProvider, SearchResult, SearchOptions } from './conventions'
 export { handlePageSize, handleSort, handleCount, handleSchema, handlePages, handleDistinct, handleFacets, handleHistory, handleEvents, stripMetaSegment } from './conventions'
 export type { MetaResourceConfig } from './conventions'
 export type { AnalyticsBufferConfig, BufferEvent, TestingConfig, TestCase, RestTestCase, Example } from './conventions'
