@@ -67,3 +67,65 @@ describe('API factory', () => {
     expect(res.headers.get('x-request-id')).toBeTruthy()
   })
 })
+
+describe('API zero-config', () => {
+  it('creates a valid Hono app with no args', async () => {
+    const app = API()
+
+    const res = await app.request('/')
+    expect(res.status).toBe(200)
+
+    const body = await res.json()
+    expect(body.api.name).toBe('api')
+  })
+
+  it('creates app with functions-only input', async () => {
+    const scoreFn = (contact: unknown) => ({ value: 87, grade: 'A' })
+    const app = API({
+      score: scoreFn,
+    })
+
+    const res = await app.request('/')
+    expect(res.status).toBe(200)
+
+    const body = await res.json()
+    expect(body.api.name).toBe('api')
+  })
+
+  it('creates app with mixed config and functions', async () => {
+    const scoreFn = (contact: unknown) => ({ value: 87 })
+    const app = API({
+      name: 'crm.do',
+      description: 'AI-native CRM',
+      score: scoreFn,
+    })
+
+    const res = await app.request('/')
+    expect(res.status).toBe(200)
+
+    const body = await res.json()
+    expect(body.api.name).toBe('crm.do')
+    expect(body.api.description).toBe('AI-native CRM')
+  })
+
+  it('backward compatible — full ApiConfig still works', async () => {
+    const app = API({
+      name: 'legacy-api',
+      description: 'Legacy',
+      version: '1.0.0',
+      routes: (a) => {
+        a.get('/ping', (c) => c.var.respond({ data: 'pong' }))
+      },
+    })
+
+    const res = await app.request('/')
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.api.name).toBe('legacy-api')
+
+    const pingRes = await app.request('/ping')
+    expect(pingRes.status).toBe(200)
+    const pingBody = await pingRes.json()
+    expect(pingBody.data).toBe('pong')
+  })
+})

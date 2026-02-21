@@ -32,6 +32,8 @@ export type {
   UserInfo,
   ResponseMeta,
   ErrorDetail,
+  ErrorContext,
+  ErrorResponse,
   GeoInfo,
   Bindings,
   Variables,
@@ -46,7 +48,8 @@ export { parseSchema, parseField, parseModel, generateJsonSchema, buildTypeRegis
 export type { ParsedSchema, ParsedModel, ParsedField, Document, DatabaseEvent, DatabaseDriverType, DatabaseDriver, DatabaseDriverFactory, QueryOptions, QueryResult, TypeRegistry, ReverseTypeRegistry, DecodedSqid } from './conventions/database'
 export { buildPagination, buildPagePagination, buildCursorPagination } from './helpers/pagination'
 export { createLinkBuilder } from './helpers/links'
-export { notFound, badRequest, unauthorized, forbidden, rateLimited, internal, ErrorCode, type ErrorCodeType } from './helpers/errors'
+export { notFound, badRequest, unauthorized, forbidden, rateLimited, internal, validationError, conflict, paymentRequired, buildErrorLinks, ApiError, ErrorCode, type ErrorCodeType } from './helpers/errors'
+export type { ApiErrorOptions } from './helpers/errors'
 
 // Router — self-describing ID URL routing
 export { routerMiddleware, parseRoute } from './router'

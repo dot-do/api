@@ -1,11 +1,64 @@
 import { Hono } from 'hono'
 import type { ApiConfig, ApiEnv } from './types'
+import type { ApiInput } from './config'
+import { resolveConfig } from './config'
 import { responseMiddleware } from './response'
 import { contextMiddleware, corsMiddleware, authMiddleware, rateLimitMiddleware, createErrorHandler } from './middleware'
 import { crudConvention, proxyConvention, rpcConvention, mcpConvention, analyticsMiddleware, analyticsRoutes, analyticsBufferRoutes, testingConvention, databaseConvention, functionsConvention } from './conventions'
 import { McpToolRegistry } from './mcp-registry'
+import type { FunctionsConfig, FunctionDef } from './conventions/functions/types'
 
-export function API(config: ApiConfig): Hono<ApiEnv> {
+/**
+ * Convert extracted bare functions into a FunctionsConfig suitable for functionsConvention.
+ *
+ * Each `{ name: fn }` entry becomes a FunctionDef with:
+ * - name: the key
+ * - description: auto-generated from key
+ * - input: open JSON Schema (accepts any object)
+ * - handler: wraps the bare function to match FunctionHandler signature
+ */
+function toFunctionsConfig(functions: Record<string, Function>): FunctionsConfig {
+  const defs: FunctionDef[] = Object.entries(functions).map(([name, fn]) => ({
+    name,
+    description: `${name} function`,
+    input: { type: 'object' },
+    handler: async (input: unknown, _ctx: unknown) => {
+      return fn(input)
+    },
+  }))
+  return { functions: defs }
+}
+
+// TypeScript function overloads for backward compatibility + zero-config
+
+/** Zero-config: auto-discover everything from env */
+export function API(): Hono<ApiEnv>
+/** Full ApiConfig (backward compatible) */
+export function API(config: ApiConfig): Hono<ApiEnv>
+/** Mixed: config keys + inline functions, or functions-only */
+export function API(input: Record<string, unknown>): Hono<ApiEnv>
+
+export function API(input?: ApiInput): Hono<ApiEnv> {
+  const { config, functions } = resolveConfig(input)
+
+  // If bare functions were extracted, merge them into config.functions
+  if (functions) {
+    const extractedFunctionsConfig = toFunctionsConfig(functions)
+    if (config.functions) {
+      // Merge: existing functions config + extracted bare functions
+      const existing = config.functions
+      config.functions = {
+        ...existing,
+        functions: [
+          ...(existing.functions || []),
+          ...(extractedFunctionsConfig.functions || []),
+        ],
+      }
+    } else {
+      config.functions = extractedFunctionsConfig
+    }
+  }
+
   const app = new Hono<ApiEnv>()
   const basePath = config.basePath || ''
 
