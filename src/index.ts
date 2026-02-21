@@ -40,8 +40,11 @@ export type {
 } from './types'
 
 export { responseMiddleware } from './response'
-export { contextMiddleware, corsMiddleware, authMiddleware, rateLimitMiddleware, createErrorHandler } from './middleware'
+export { contextMiddleware, corsMiddleware, authMiddleware, authLevelMiddleware, requireAuth, buildUserContext, rateLimitMiddleware, createErrorHandler, metaMiddleware } from './middleware'
+export type { AuthLevel, AuthLevelConfig } from './middleware'
 export { crudConvention, proxyConvention, rpcConvention, mcpConvention, analyticsMiddleware, analyticsRoutes, analyticsBufferRoutes, AnalyticsBufferDO, testingConvention, databaseConvention, DatabaseDO, functionsConvention } from './conventions'
+export { handlePageSize, handleSort, handleCount, handleSchema, handlePages, handleDistinct, handleFacets, handleHistory, handleEvents, stripMetaSegment } from './conventions'
+export type { MetaResourceConfig } from './conventions'
 export type { AnalyticsBufferConfig, BufferEvent, TestingConfig, TestCase, RestTestCase, Example } from './conventions'
 export type { FunctionsConfig, FunctionDef, ProxyDef, MashupDef, LookupDef, PipelineDef } from './conventions'
 export { parseSchema, parseField, parseModel, generateJsonSchema, buildTypeRegistry, createSqids, shuffleAlphabet, decodeSqid } from './conventions/database'
