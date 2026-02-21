@@ -96,6 +96,29 @@ export interface ErrorDetail {
   code?: string
   status?: number
   details?: unknown
+  fields?: Record<string, string>
+  retryAfter?: number
+  yourVersion?: number
+  currentVersion?: number
+  feature?: string
+}
+
+/** Context for building actionable error links */
+export interface ErrorContext {
+  baseUrl?: string
+  tenant?: string
+  collection?: string
+  entityId?: string
+  query?: string
+}
+
+/** Full error response with actionable links */
+export interface ErrorResponse {
+  error: ErrorDetail
+  links?: Record<string, string>
+  actions?: Record<string, string>
+  options?: Record<string, string>
+  upgrade?: Record<string, string>
 }
 
 // Respond helper options

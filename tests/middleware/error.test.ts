@@ -372,4 +372,155 @@ describe('Error Middleware', () => {
       expect(body.error.details).toBeUndefined()
     })
   })
+
+  // ============================================================================
+  // Enriched error handler — actionable links
+  // ============================================================================
+  describe('enriched error with actionable links', () => {
+    it('should always include home link in error response', async () => {
+      const app = API({
+        name: 'error-test',
+        routes: (a) => {
+          a.get('/throw', () => {
+            throw new Error('test')
+          })
+        },
+      })
+
+      const res = await app.request('/throw')
+      const body = await res.json()
+
+      expect(body.links).toBeDefined()
+      expect(body.links.home).toBeDefined()
+    })
+
+    it('should include status link for internal errors', async () => {
+      const app = API({
+        name: 'error-test',
+        routes: (a) => {
+          a.get('/throw', () => {
+            throw new Error('Server crash')
+          })
+        },
+      })
+
+      const res = await app.request('/throw')
+      const body = await res.json()
+
+      expect(body.links).toBeDefined()
+      expect(body.links.status).toBeDefined()
+    })
+
+    it('should extract context from request URL for link building', async () => {
+      const app = API({
+        name: 'error-test',
+        routes: (a) => {
+          a.get('/throw', () => {
+            throw new Error('test')
+          })
+        },
+      })
+
+      const res = await app.request('/throw')
+      const body = await res.json()
+
+      // The links should be based on the request URL
+      expect(body.links.home).toContain('http')
+    })
+
+    it('should handle ApiError with status and links', async () => {
+      const { ApiError } = await import('../../src/helpers/errors')
+
+      const app = API({
+        name: 'error-test',
+        routes: (a) => {
+          a.get('/not-found', () => {
+            throw new ApiError('Contact not found', {
+              code: 'NOT_FOUND',
+              status: 404,
+            })
+          })
+        },
+      })
+
+      const res = await app.request('/not-found')
+      expect(res.status).toBe(404)
+
+      const body = await res.json()
+      expect(body.error.code).toBe('NOT_FOUND')
+      expect(body.error.message).toBe('Contact not found')
+      expect(body.links).toBeDefined()
+      expect(body.links.home).toBeDefined()
+    })
+
+    it('should handle ApiError with custom links', async () => {
+      const { ApiError } = await import('../../src/helpers/errors')
+
+      const app = API({
+        name: 'error-test',
+        routes: (a) => {
+          a.get('/forbidden', () => {
+            throw new ApiError('Plan required', {
+              code: 'FORBIDDEN',
+              status: 403,
+              links: { upgrade: 'https://billing.do/upgrade' },
+            })
+          })
+        },
+      })
+
+      const res = await app.request('/forbidden')
+      expect(res.status).toBe(403)
+
+      const body = await res.json()
+      expect(body.error.code).toBe('FORBIDDEN')
+      expect(body.links.upgrade).toBe('https://billing.do/upgrade')
+    })
+
+    it('should handle ApiError with fields for validation errors', async () => {
+      const { ApiError } = await import('../../src/helpers/errors')
+
+      const app = API({
+        name: 'error-test',
+        routes: (a) => {
+          a.post('/contacts', () => {
+            throw new ApiError('2 fields failed validation', {
+              code: 'VALIDATION_ERROR',
+              status: 422,
+              fields: { email: 'Must be a valid email', name: 'Required' },
+            })
+          })
+        },
+      })
+
+      const res = await app.request('/contacts', { method: 'POST' })
+      expect(res.status).toBe(422)
+
+      const body = await res.json()
+      expect(body.error.fields).toEqual({ email: 'Must be a valid email', name: 'Required' })
+    })
+
+    it('should handle ApiError with retryAfter for rate limiting', async () => {
+      const { ApiError } = await import('../../src/helpers/errors')
+
+      const app = API({
+        name: 'error-test',
+        routes: (a) => {
+          a.get('/limited', () => {
+            throw new ApiError('Rate limit exceeded', {
+              code: 'RATE_LIMITED',
+              status: 429,
+              retryAfter: 1847,
+            })
+          })
+        },
+      })
+
+      const res = await app.request('/limited')
+      expect(res.status).toBe(429)
+
+      const body = await res.json()
+      expect(body.error.retryAfter).toBe(1847)
+    })
+  })
 })
