@@ -30,6 +30,8 @@ export type {
   RequestContext,
 } from './database'
 export { DatabaseDO } from './database/do'
+export { handlePageSize, handleSort, handleCount, handleSchema, handlePages, handleDistinct, handleFacets, handleHistory, handleEvents, stripMetaSegment } from './meta-resources'
+export type { MetaResourceConfig } from './meta-resources'
 export { functionsConvention } from './functions'
 export type {
   FunctionsConfig,
