@@ -1,4 +1,6 @@
 export { API } from './api'
+export { resolveConfig, separateFunctionsFromConfig, discoverEnv, inferApiName, KNOWN_CONFIG_KEYS } from './config'
+export type { ApiInput, ResolvedConfig } from './config'
 export { McpToolRegistry, createMcpToolRegistry } from './mcp-registry'
 export type { RegistryTool } from './mcp-registry'
 export type {
@@ -63,3 +65,7 @@ export { toMapFormat, toArrayFormat, formatCollection, isArrayMode } from './hel
 export type { FormatOptions } from './helpers/format'
 export { buildOptions } from './helpers/options'
 export type { BuildOptionsConfig } from './helpers/options'
+
+// Helpers — query filter parsing and canonicalization
+export { parseFilters, canonicalizeFilter, parseSort, canonicalizeSort } from './helpers/filters'
+export type { ParseFilterResult, ParseFilterOptions } from './helpers/filters'
