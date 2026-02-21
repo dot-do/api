@@ -50,3 +50,9 @@ export type {
   CacheConfig,
   RateLimitConfig,
 } from './functions'
+export { jobsConvention, JobManager } from './jobs'
+export type { JobConfig, Job, JobStatus, JobProgress, FunctionExecutor } from './jobs'
+export { parquetConvention, generateSnippetManifest } from './parquet'
+export type { ParquetSourceConfig, ParquetFieldDef, ParquetFieldType, SnippetRule, SnippetManifest } from './parquet'
+export { detectInputType, wrapPackage, wrapClient } from './config-detection'
+export type { InputKind, DetectedInput, PackageWrapConfig, ClientWrapConfig, GeneratedRoute } from './config-detection'
