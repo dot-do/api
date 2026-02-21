@@ -57,3 +57,9 @@ export { parseFunctionCall, isFunctionCall } from './helpers/function-parser'
 export type { ParsedFunctionCall, ParsedArg, FunctionArgType } from './helpers/function-parser'
 export { resolveTenant, extractTenantFromPath, extractTenantFromSubdomain } from './helpers/tenant'
 export type { TenantResolution } from './helpers/tenant'
+
+// Helpers — collection format (map/array) and options block
+export { toMapFormat, toArrayFormat, formatCollection, isArrayMode } from './helpers/format'
+export type { FormatOptions } from './helpers/format'
+export { buildOptions } from './helpers/options'
+export type { BuildOptionsConfig } from './helpers/options'
