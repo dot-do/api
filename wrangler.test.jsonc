@@ -1,0 +1,12 @@
+{
+  // Test worker config for @cloudflare/vitest-pool-workers integration tests
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "dotdo-api-test",
+  "main": "tests/test-worker.ts",
+  "compatibility_date": "2026-01-24",
+  "compatibility_flags": ["nodejs_compat"],
+
+  "vars": {
+    "API_NAME": "test.do"
+  }
+}
