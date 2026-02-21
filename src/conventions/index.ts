@@ -32,6 +32,10 @@ export type {
 export { DatabaseDO } from './database/do'
 export { handlePageSize, handleSort, handleCount, handleSchema, handlePages, handleDistinct, handleFacets, handleHistory, handleEvents, stripMetaSegment } from './meta-resources'
 export type { MetaResourceConfig } from './meta-resources'
+export { searchConvention } from './search'
+export type { SearchConfig, SearchProvider, FacetProvider, SearchResult, SearchOptions } from './search'
+export { transportConvention } from './transport'
+export type { TransportConfig } from './transport'
 export { functionsConvention } from './functions'
 export type {
   FunctionsConfig,
