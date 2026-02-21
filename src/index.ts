@@ -40,8 +40,8 @@ export type {
 } from './types'
 
 export { responseMiddleware } from './response'
-export { contextMiddleware, corsMiddleware, authMiddleware, authLevelMiddleware, requireAuth, buildUserContext, rateLimitMiddleware, createErrorHandler, metaMiddleware } from './middleware'
-export type { AuthLevel, AuthLevelConfig } from './middleware'
+export { contextMiddleware, corsMiddleware, authMiddleware, authLevelMiddleware, requireAuth, buildUserContext, rateLimitMiddleware, createErrorHandler, metaMiddleware, mutationMiddleware } from './middleware'
+export type { AuthLevel, AuthLevelConfig, MutationConfig } from './middleware'
 export { crudConvention, proxyConvention, rpcConvention, mcpConvention, analyticsMiddleware, analyticsRoutes, analyticsBufferRoutes, AnalyticsBufferDO, testingConvention, databaseConvention, DatabaseDO, functionsConvention } from './conventions'
 export { handlePageSize, handleSort, handleCount, handleSchema, handlePages, handleDistinct, handleFacets, handleHistory, handleEvents, stripMetaSegment } from './conventions'
 export type { MetaResourceConfig } from './conventions'
@@ -75,6 +75,10 @@ export type { BuildOptionsConfig } from './helpers/options'
 // Helpers — query filter parsing and canonicalization
 export { parseFilters, canonicalizeFilter, parseSort, canonicalizeSort } from './helpers/filters'
 export type { ParseFilterResult, ParseFilterOptions } from './helpers/filters'
+
+// Helpers — GET mutation confirmation flow
+export { generateConfirmHash, validateConfirmHash, buildConfirmUrl, buildConfirmPreview } from './helpers/confirm'
+export type { ConfirmParams, ConfirmPreview, BuildConfirmPreviewOptions } from './helpers/confirm'
 
 // Function-call URL convention
 export { FunctionRegistry, functionCallConvention } from './conventions/function-calls'
