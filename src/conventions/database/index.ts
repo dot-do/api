@@ -2238,21 +2238,18 @@ async function getDatabase(
   const namespace = typeof config.namespace === 'function' ? config.namespace(c) : config.namespace || 'default'
   const tenantPrefix = `~${namespace}`
 
-  // Prefer DATABASE DO binding (direct RPC to the unified DatabaseDO)
+  // Prefer DATABASE DO binding (direct RPC to the unified DatabaseDO).
+  // DO stubs MUST NOT be cached across requests — their internal I/O context
+  // (OutgoingFactory) is request-scoped. Reusing a cached stub from a previous
+  // request causes: "Cannot perform I/O on behalf of a different request".
   const dbBindingName = config.database
   if (dbBindingName) {
     const doNamespace = c.env[dbBindingName] as { idFromName(name: string): { toString(): string }; get(id: unknown): unknown } | undefined
     if (doNamespace?.idFromName) {
-      const cacheKey = `database:${namespace}`
-      let db = inMemoryCache.get(cacheKey)
-      if (!db) {
-        const doId = doNamespace.idFromName(namespace)
-        const stub = doNamespace.get(doId)
-        const service = createDOParqueDBService(stub as never)
-        db = createParqueDBAdapter(service as never, schema, tenantPrefix)
-        inMemoryCache.set(cacheKey, db)
-      }
-      return db
+      const doId = doNamespace.idFromName(namespace)
+      const stub = doNamespace.get(doId)
+      const service = createDOParqueDBService(stub as never)
+      return createParqueDBAdapter(service as never, schema, tenantPrefix)
     }
   }
 
