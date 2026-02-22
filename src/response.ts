@@ -223,9 +223,13 @@ function resolveApiIdentity(hostname: string, config: ApiConfig): { name: string
     const base = parts.slice(-2).join('.')
     return { name: hostname, from: `https://${base}` }
   }
-  // headless.ly
-  if (hostname.endsWith('headless.ly')) {
-    return { name: config.name, from: 'https://platform.do' }
+  // subdomain.headless.ly (e.g. crm.headless.ly) → from headless.ly
+  if (hostname.endsWith('.headless.ly')) {
+    return { name: config.name, from: 'https://headless.ly' }
+  }
+  // bare headless.ly — its own brand, no from
+  if (hostname === 'headless.ly') {
+    return { name: config.name }
   }
   return { name: config.name }
 }
