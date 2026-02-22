@@ -61,7 +61,7 @@ function buildPlanOrder(plans: Record<string, PlanConfig>): Record<string, numbe
 }
 
 function getPlanTier(planName: string, planOrder: Record<string, number>): number {
-  if (planName in planOrder) return planOrder[planName]
+  if (planName in planOrder) return planOrder[planName]!
   // Unknown plans (e.g. 'enterprise') are treated as highest tier
   const maxTier = Math.max(0, ...Object.values(planOrder))
   return maxTier + 1
@@ -72,7 +72,6 @@ function getPlanTier(planName: string, planOrder: Record<string, number>): numbe
 // ---------------------------------------------------------------------------
 
 export function billingMiddleware(config: BillingConfig): MiddlewareHandler {
-  const planOrder = buildPlanOrder(config.plans)
   const defaultPlan = Object.keys(config.plans)[0] || 'free'
 
   return async (c, next) => {
@@ -271,8 +270,6 @@ export function requireFeature(
 
     const defaultPlan = Object.keys(plans)[0] || 'free'
     const userPlan = user.plan || defaultPlan
-    const userTier = getPlanTier(userPlan, planOrder)
-
     // Check if the user's plan includes the feature
     const userFeatures = features[userPlan] || []
     if (userFeatures.includes(featureName)) {

@@ -139,7 +139,7 @@ export function discoverEnv(env: Record<string, unknown>): Partial<ApiConfig> {
   if (env.DB || env.DATABASE) {
     const bindingName = env.DB ? 'DB' : 'DATABASE'
     discovered.database = {
-      driver: 'do',
+      driver: 'do-sqlite',
       binding: bindingName,
       schema: {},
     } as DatabaseConfig

@@ -211,7 +211,7 @@ export function authLevelMiddleware(config?: AuthLevelConfig): MiddlewareHandler
  * - `requireAuth('verified')` → L3+
  */
 export function requireAuth(level?: AuthLevel): MiddlewareHandler {
-  const minLevel: Level = level ? AUTH_LEVEL_MAP[level] : 'L1'
+  const minLevel: Level = level ? (AUTH_LEVEL_MAP[level] ?? 'L1') : 'L1'
   const minOrder = LEVEL_ORDER[minLevel]
 
   return async (c, next) => {

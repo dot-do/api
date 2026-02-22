@@ -16,7 +16,6 @@ import {
   handleCount,
   handleSchema,
   handlePages,
-  handleDistinct,
   handleFacets,
   handleHistory,
   handleEvents,
@@ -27,10 +26,7 @@ import {
  */
 const COLLECTION_META = new Set(['schema', 'pageSize', 'facets', 'pages', 'sort', 'count', 'distinct'])
 
-/**
- * Known entity-level meta-resources (available on /entity_id/$resource)
- */
-const ENTITY_META = new Set(['history', 'events'])
+// Entity-level meta-resources (history, events) are handled inline below
 
 /**
  * Create meta-resource middleware.

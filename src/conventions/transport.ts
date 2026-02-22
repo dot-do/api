@@ -16,6 +16,7 @@ import { Hono } from 'hono'
 import type { Context } from 'hono'
 import type { ApiEnv } from '../types'
 import type { FunctionRegistry, FunctionCallInput, FunctionCallContext } from './function-calls'
+import type { ParsedArg } from '../helpers/function-parser'
 
 // =============================================================================
 // Types
@@ -178,9 +179,9 @@ function generateFunctionTools(registry: FunctionRegistry): GeneratedTool[] {
 /**
  * Classify an RPC argument string into a typed arg.
  */
-function classifyArg(value: unknown): { value: unknown; type: string } {
+function classifyArg(value: unknown): ParsedArg {
   if (typeof value !== 'string') {
-    return { value, type: typeof value }
+    return { value: String(value), type: 'string' }
   }
   return { value, type: 'string' }
 }
@@ -201,7 +202,7 @@ function classifyArg(value: unknown): { value: unknown; type: string } {
  */
 export function transportConvention(config: TransportConfig): Hono<ApiEnv> {
   const app = new Hono<ApiEnv>()
-  const { registry, collections = [], entityVerbs = {}, mcp } = config
+  const { registry, collections = [], mcp } = config
 
   // Collect all method names for RPC listing
   const getAllMethodNames = (): string[] => {

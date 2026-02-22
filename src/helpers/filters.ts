@@ -137,7 +137,7 @@ function applyDotSuffix(filter: Record<string, any>, field: string, op: string, 
     }
     case 'between': {
       const [low, high] = value.split(',')
-      filter[field] = { $gte: coerceValue(low), $lte: coerceValue(high) }
+      filter[field] = { $gte: coerceValue(low ?? ''), $lte: coerceValue(high ?? '') }
       break
     }
     case 'nin': {
@@ -300,8 +300,8 @@ export function parseFilters(searchParams: URLSearchParams, opts?: ParseFilterOp
     const match = SYMBOLIC_REGEX.exec(fullParam)
     if (match) {
       const [, field, op, value] = match
-      if (!reserved.has(field) && value !== '') {
-        applySymbolic(filter, field, op, value)
+      if (field && !reserved.has(field) && value !== '') {
+        applySymbolic(filter, field, op!, value!)
         continue
       }
     }
