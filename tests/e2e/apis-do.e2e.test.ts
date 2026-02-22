@@ -17,41 +17,42 @@ const APIS_DO_URL = process.env.APIS_DO_URL || 'https://apis.do'
 
 describe('E2E: apis.do', () => {
   describe('root endpoint', () => {
-    it('returns clickable-links discovery', async () => {
+    it('returns discovery links (not nested in data)', async () => {
       const res = await fetch(APIS_DO_URL)
       expect(res.ok).toBe(true)
 
       const body = (await res.json()) as Record<string, unknown>
       expect(body.api).toBeDefined()
 
-      const data = body.data as Record<string, unknown>
-      expect(data.api).toBe('apis.do')
-      expect(data.platform).toBeDefined()
-      expect(data.events).toBeDefined()
-      expect(data.compute).toBeDefined()
-      expect(data.transports).toBeDefined()
+      // Discovery links in envelope.links
+      const links = body.links as Record<string, string>
+      expect(links.services).toMatch(/^https:\/\/apis\.do\//)
+      expect(links.categories).toMatch(/^https:\/\/apis\.do\//)
+      expect(links.events).toMatch(/^https:\/\/apis\.do\//)
+      expect(links.mcp).toMatch(/^https:\/\/apis\.do\//)
 
-      // All links should be full URLs
-      const platform = data.platform as Record<string, string>
-      expect(platform.services).toMatch(/^https:\/\/apis\.do\//)
+      // No data wrapper — landing is pure discovery
+      expect(body.data).toBeUndefined()
     })
 
-    it('includes links', async () => {
+    it('includes links and user', async () => {
       const res = await fetch(APIS_DO_URL)
       const body = (await res.json()) as Record<string, unknown>
       expect(body.links).toBeDefined()
+      expect(body.user).toBeDefined()
     })
   })
 
   describe('service registry', () => {
-    it('lists all services', async () => {
+    it('lists all services under semantic key', async () => {
       const res = await fetch(`${APIS_DO_URL}/services`)
       expect(res.ok).toBe(true)
 
       const body = (await res.json()) as Record<string, unknown>
-      const list = body.data as unknown[]
+      const list = body.services as unknown[]
       expect(Array.isArray(list)).toBe(true)
       expect(list.length).toBeGreaterThan(300)
+      expect(body.total).toBe(list.length)
     })
 
     it('filters by category', async () => {
@@ -59,7 +60,7 @@ describe('E2E: apis.do', () => {
       expect(res.ok).toBe(true)
 
       const body = (await res.json()) as Record<string, unknown>
-      const list = body.data as Array<{ category: string }>
+      const list = body.services as Array<{ category: string }>
       expect(list.every((s) => s.category === 'ai')).toBe(true)
     })
 
@@ -68,19 +69,20 @@ describe('E2E: apis.do', () => {
       expect(res.ok).toBe(true)
 
       const body = (await res.json()) as Record<string, unknown>
-      const list = body.data as unknown[]
+      const list = body.services as unknown[]
       expect(list.length).toBeGreaterThan(0)
     })
   })
 
   describe('categories', () => {
-    it('lists categories', async () => {
+    it('lists categories under semantic key', async () => {
       const res = await fetch(`${APIS_DO_URL}/categories`)
       expect(res.ok).toBe(true)
 
       const body = (await res.json()) as Record<string, unknown>
-      const list = body.data as Array<{ slug: string }>
+      const list = body.categories as Array<{ slug: string }>
       expect(list.length).toBeGreaterThan(5)
+      expect(body.total).toBe(list.length)
     })
 
     it('returns category detail', async () => {
@@ -88,19 +90,19 @@ describe('E2E: apis.do', () => {
       expect(res.ok).toBe(true)
 
       const body = (await res.json()) as Record<string, unknown>
-      const data = body.data as Record<string, unknown>
-      expect(data.slug).toBe('infrastructure')
-      expect(data.services).toBeDefined()
+      const cat = body.category as Record<string, unknown>
+      expect(cat.slug).toBe('infrastructure')
+      expect(cat.services).toBeDefined()
     })
   })
 
   describe('backward-compat: /apis', () => {
-    it('lists available APIs', async () => {
+    it('lists available APIs under semantic key', async () => {
       const res = await fetch(`${APIS_DO_URL}/apis`)
       expect(res.ok).toBe(true)
 
       const body = (await res.json()) as Record<string, unknown>
-      const list = body.data as unknown[]
+      const list = body.apis as unknown[]
       expect(Array.isArray(list)).toBe(true)
       expect(list.length).toBeGreaterThan(300)
     })
@@ -110,21 +112,22 @@ describe('E2E: apis.do', () => {
       expect(res.ok).toBe(true)
 
       const body = (await res.json()) as Record<string, unknown>
-      const list = body.data as unknown[]
+      const list = body.apis as unknown[]
       expect(Array.isArray(list)).toBe(true)
       expect(list.length).toBeGreaterThan(0)
     })
   })
 
   describe('service-scoped discovery', () => {
-    it('returns events service page', async () => {
+    it('returns events service with dynamic key and links', async () => {
       const res = await fetch(`${APIS_DO_URL}/events`)
       expect(res.ok).toBe(true)
 
       const body = (await res.json()) as Record<string, unknown>
-      const data = body.data as Record<string, unknown>
-      expect(data.api).toBe('events')
-      expect(data.also).toBe('https://events.do/api')
+      const svc = body.events as Record<string, unknown>
+      expect(svc.name).toBe('events')
+      const links = body.links as Record<string, string>
+      expect(links.also).toBe('https://events.do/api')
     })
   })
 
