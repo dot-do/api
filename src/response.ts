@@ -21,6 +21,8 @@ export function responseMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv>
           url: baseUrl,
           ...(apiType !== 'api' && { type: apiType }),
           ...(config.version && { version: config.version }),
+          login: `${baseUrl}/login`,
+          signup: `${baseUrl}/login`,
           docs: `https://docs.headless.ly`,
         },
       }
@@ -144,35 +146,93 @@ function enrichUserContext(user: UserContext, c: Context): Record<string, unknow
   const cf = (c.req.raw as { cf?: Record<string, unknown> }).cf
   const result: Record<string, unknown> = { ...user }
 
-  // Request metadata — cf-ray format: "8f2e3a4b5c6d7e8f-IAD"
-  const cfRay = c.req.header('cf-ray')
-  const rawId = cfRay || c.req.header('x-request-id') || crypto.randomUUID()
-  const colo = cf?.colo as string | undefined
-  result.requestId = `request_${rawId}`
+  // Strip auth-level internals — these belong in api header or nowhere, not user
+  delete result.links
+  delete result.level
+
+  // Plan — derive from auth level or default to free tier name
+  if (!result.plan) result.plan = result.authenticated ? 'Pro' : 'Free'
+
+  // Client metadata
+  result.userAgent = c.req.header('user-agent')
+  result.ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for')
 
   if (cf) {
     if (cf.asOrganization) result.isp = cf.asOrganization
     if (cf.country) {
-      result.country = cf.country
       result.flag = countryFlag(cf.country as string)
+      result.zipcode = cf.postalCode || undefined
+      result.city = cf.city || undefined
+      result.metro = cf.metroCode ? (DMA_NAMES[cf.metroCode as number] || cf.metroCode) : undefined
+      result.region = cf.region || undefined
+      result.country = countryName(cf.country as string)
+      result.continent = CONTINENT_NAMES[cf.continent as string] || cf.continent || undefined
     }
-    if (cf.city) result.city = cf.city
-    if (cf.region) result.region = cf.region
-    if (cf.postalCode) result.zipcode = cf.postalCode
-    if (cf.metroCode) {
-      const code = cf.metroCode as number
-      result.metro = DMA_NAMES[code] || code
-    }
-    if (cf.continent) result.continent = cf.continent
-    if (cf.timezone) {
-      result.timezone = cf.timezone
-      result.localTime = new Date().toLocaleString('en-US', { timeZone: cf.timezone as string })
-    }
-    if (colo) result.colo = colo
-    if (cf.clientTcpRtt) result.latencyMilliseconds = cf.clientTcpRtt
+
+    // Request identity
+    const cfRay = c.req.header('cf-ray')
+    const rawId = cfRay || c.req.header('x-request-id') || crypto.randomUUID()
+    const colo = cf.colo as string | undefined
+    result.requestId = `request_${rawId}${colo ? `-${colo}` : ''}`
+    result.localTime = cf.timezone
+      ? new Date().toLocaleString('en-US', { timeZone: cf.timezone as string })
+      : undefined
+    result.timezone = cf.timezone || undefined
+
+    // Edge network
+    result.edgeLocation = colo ? (COLO_CITIES[colo] || colo) : undefined
+    result.latencyMilliseconds = cf.clientTcpRtt || undefined
+  } else {
+    // No cf object (local dev) — still generate requestId
+    const rawId = c.req.header('x-request-id') || crypto.randomUUID()
+    result.requestId = `request_${rawId}`
+  }
+
+  // Strip undefined values for clean output
+  for (const key of Object.keys(result)) {
+    if (result[key] === undefined) delete result[key]
   }
 
   return result
+}
+
+/** Convert ISO 3166-1 alpha-2 country code to full country name */
+function countryName(code: string): string {
+  try {
+    return new Intl.DisplayNames(['en'], { type: 'region' }).of(code) || code
+  } catch {
+    return code
+  }
+}
+
+const CONTINENT_NAMES: Record<string, string> = {
+  AF: 'Africa', AN: 'Antarctica', AS: 'Asia', EU: 'Europe',
+  NA: 'North America', OC: 'Oceania', SA: 'South America',
+}
+
+/** Cloudflare colo IATA code → city name (major colos) */
+const COLO_CITIES: Record<string, string> = {
+  // North America
+  ATL: 'Atlanta', BOS: 'Boston', ORD: 'Chicago', DFW: 'Dallas', DEN: 'Denver',
+  DTW: 'Detroit', IAH: 'Houston', MCI: 'Kansas City', LAX: 'Los Angeles',
+  MIA: 'Miami', MSP: 'Minneapolis', BNA: 'Nashville', EWR: 'Newark', JFK: 'New York',
+  PHL: 'Philadelphia', PHX: 'Phoenix', PDX: 'Portland', RDU: 'Raleigh',
+  SLC: 'Salt Lake City', SAN: 'San Diego', SFO: 'San Francisco', SJC: 'San Jose',
+  SEA: 'Seattle', STL: 'St. Louis', TPA: 'Tampa', IAD: 'Washington DC',
+  YYZ: 'Toronto', YVR: 'Vancouver', YUL: 'Montreal',
+  // Europe
+  AMS: 'Amsterdam', ARN: 'Stockholm', BCN: 'Barcelona', BRU: 'Brussels',
+  BUD: 'Budapest', CDG: 'Paris', CPH: 'Copenhagen', DUB: 'Dublin', DUS: 'Dusseldorf',
+  FRA: 'Frankfurt', HAM: 'Hamburg', HEL: 'Helsinki', LHR: 'London', LIS: 'Lisbon',
+  MAD: 'Madrid', MAN: 'Manchester', MRS: 'Marseille', MXP: 'Milan', MUC: 'Munich',
+  OSL: 'Oslo', PRG: 'Prague', VIE: 'Vienna', WAW: 'Warsaw', ZRH: 'Zurich',
+  // Asia-Pacific
+  BOM: 'Mumbai', DEL: 'Delhi', HKG: 'Hong Kong', ICN: 'Seoul', KIX: 'Osaka',
+  NRT: 'Tokyo', SIN: 'Singapore', SYD: 'Sydney', MEL: 'Melbourne', BKK: 'Bangkok',
+  CGK: 'Jakarta', KUL: 'Kuala Lumpur', MNL: 'Manila', TPE: 'Taipei',
+  // Other
+  GRU: 'São Paulo', GIG: 'Rio de Janeiro', SCL: 'Santiago', BOG: 'Bogotá',
+  JNB: 'Johannesburg', CPT: 'Cape Town', CAI: 'Cairo', DXB: 'Dubai', TLV: 'Tel Aviv',
 }
 
 /** Nielsen DMA (Designated Market Area) names by metro code. Source: ctx.do */

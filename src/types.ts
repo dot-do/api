@@ -19,6 +19,9 @@ export interface ApiMeta {
   repo?: string
   type?: string
   version?: string
+  login?: string
+  signup?: string
+  from?: string
 }
 
 /** HATEOAS links — all values are URL strings. Absent keys mean not applicable. */
