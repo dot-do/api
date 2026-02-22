@@ -75,8 +75,10 @@ export function responseMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv>
       const enriched = enrichUserContext(normalizeUser(resolvedUser), c)
       ;(envelope as Record<string, unknown>).user = enriched
 
-      c.header('Content-Type', 'application/json; charset=utf-8')
-      return c.json(envelope, status as ContentfulStatusCode)
+      return new Response(JSON.stringify(envelope, null, 2), {
+        status,
+        headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      })
     })
 
     await next()
