@@ -210,29 +210,92 @@ const CONTINENT_NAMES: Record<string, string> = {
   NA: 'North America', OC: 'Oceania', SA: 'South America',
 }
 
-/** Cloudflare colo IATA code → city name (major colos) */
+/**
+ * Cloudflare colo IATA code → city name.
+ * 346 data centers sourced from cloudflarestatus.com + LufsX/Cloudflare-Data-Center-IATA-Code-list.
+ * Chinese DCs use major metro names (not the smaller nearby cities CF physically occupies).
+ */
 const COLO_CITIES: Record<string, string> = {
-  // North America
-  ATL: 'Atlanta', BOS: 'Boston', ORD: 'Chicago', DFW: 'Dallas', DEN: 'Denver',
-  DTW: 'Detroit', IAH: 'Houston', MCI: 'Kansas City', LAX: 'Los Angeles',
-  MIA: 'Miami', MSP: 'Minneapolis', BNA: 'Nashville', EWR: 'Newark', JFK: 'New York',
-  PHL: 'Philadelphia', PHX: 'Phoenix', PDX: 'Portland', RDU: 'Raleigh',
-  SLC: 'Salt Lake City', SAN: 'San Diego', SFO: 'San Francisco', SJC: 'San Jose',
-  SEA: 'Seattle', STL: 'St. Louis', TPA: 'Tampa', IAD: 'Washington DC',
-  YYZ: 'Toronto', YVR: 'Vancouver', YUL: 'Montreal',
-  // Europe
-  AMS: 'Amsterdam', ARN: 'Stockholm', BCN: 'Barcelona', BRU: 'Brussels',
-  BUD: 'Budapest', CDG: 'Paris', CPH: 'Copenhagen', DUB: 'Dublin', DUS: 'Dusseldorf',
-  FRA: 'Frankfurt', HAM: 'Hamburg', HEL: 'Helsinki', LHR: 'London', LIS: 'Lisbon',
-  MAD: 'Madrid', MAN: 'Manchester', MRS: 'Marseille', MXP: 'Milan', MUC: 'Munich',
-  OSL: 'Oslo', PRG: 'Prague', VIE: 'Vienna', WAW: 'Warsaw', ZRH: 'Zurich',
-  // Asia-Pacific
-  BOM: 'Mumbai', DEL: 'Delhi', HKG: 'Hong Kong', ICN: 'Seoul', KIX: 'Osaka',
-  NRT: 'Tokyo', SIN: 'Singapore', SYD: 'Sydney', MEL: 'Melbourne', BKK: 'Bangkok',
-  CGK: 'Jakarta', KUL: 'Kuala Lumpur', MNL: 'Manila', TPE: 'Taipei',
-  // Other
-  GRU: 'São Paulo', GIG: 'Rio de Janeiro', SCL: 'Santiago', BOG: 'Bogotá',
-  JNB: 'Johannesburg', CPT: 'Cape Town', CAI: 'Cairo', DXB: 'Dubai', TLV: 'Tel Aviv',
+  // Africa (33)
+  AAE: 'Annaba', ABJ: 'Abidjan', ACC: 'Accra', ADD: 'Addis Ababa', ALG: 'Algiers',
+  ASK: 'Yamoussoukro', CAI: 'Cairo', CPT: 'Cape Town', CZL: 'Constantine', DAR: 'Dar es Salaam',
+  DKR: 'Dakar', DUR: 'Durban', EBB: 'Kampala', FIH: 'Kinshasa', GBE: 'Gaborone',
+  HRE: 'Harare', JIB: 'Djibouti City', JNB: 'Johannesburg', KGL: 'Kigali', LAD: 'Luanda',
+  LLW: 'Lilongwe', LOS: 'Lagos', LUN: 'Lusaka', MBA: 'Mombasa', MPM: 'Maputo',
+  MRU: 'Port Louis', NBO: 'Nairobi', ORN: 'Oran', OUA: 'Ouagadougou', RUN: 'Réunion',
+  TNR: 'Antananarivo', TUN: 'Tunis', WDH: 'Windhoek',
+  // Asia (90)
+  AGR: 'Agra', AKX: 'Aktobe', ALA: 'Almaty', AMD: 'Ahmedabad', BBI: 'Bhubaneswar',
+  BHY: 'Beihai', BKK: 'Bangkok', BLR: 'Bangalore', BOM: 'Mumbai', BWN: 'Bandar Seri Begawan',
+  CAN: 'Guangzhou', CCU: 'Kolkata', CEB: 'Cebu', CGD: 'Changde', CGK: 'Jakarta',
+  CGO: 'Zhengzhou', CGP: 'Chittagong', CGY: 'Cagayan de Oro', CJB: 'Coimbatore', CKG: 'Chongqing',
+  CMB: 'Colombo', CNN: 'Kannur', CNX: 'Chiang Mai', COK: 'Kochi', CRK: 'Clark',
+  CSX: 'Changsha', CTU: 'Chengdu', CZX: 'Changzhou', DAC: 'Dhaka', DAD: 'Da Nang',
+  DEL: 'New Delhi', DLC: 'Dalian', DPS: 'Denpasar', EVN: 'Yerevan', FOC: 'Fuzhou',
+  FRU: 'Bishkek', FUK: 'Fukuoka', FUO: 'Foshan', HAK: 'Haikou', HAN: 'Hanoi',
+  HFE: 'Hefei', HGH: 'Hangzhou', HKG: 'Hong Kong', HYD: 'Hyderabad', HYN: 'Taizhou',
+  ICN: 'Seoul', ISB: 'Islamabad', IXC: 'Chandigarh', JHB: 'Johor Bahru', JOG: 'Yogyakarta',
+  JSR: 'Jashore', JXG: 'Jiaxing', KCH: 'Kuching', KHH: 'Kaohsiung', KHI: 'Karachi',
+  KHN: 'Nanchang', KIX: 'Osaka', KJA: 'Krasnoyarsk', KMG: 'Kunming', KNU: 'Kanpur',
+  KTM: 'Kathmandu', KUL: 'Kuala Lumpur', KWE: 'Guiyang', LHE: 'Lahore', LHW: 'Lanzhou',
+  MAA: 'Chennai', MFM: 'Macau', MLE: 'Malé', MLG: 'Malang', MNL: 'Manila',
+  NAG: 'Nagpur', NNG: 'Nanning', NQZ: 'Astana', NRT: 'Tokyo', OKA: 'Naha',
+  PAT: 'Patna', PBH: 'Thimphu', PKX: 'Beijing', PNH: 'Phnom Penh', SHA: 'Shanghai',
+  SGN: 'Ho Chi Minh City', SIN: 'Singapore', SJW: 'Shijiazhuang', SZX: 'Shenzhen', TAO: 'Qingdao',
+  TAS: 'Tashkent', TEN: 'Tongren', TNA: 'Jinan', TPE: 'Taipei', TSN: 'Tianjin',
+  TYN: 'Taiyuan', ULN: 'Ulaanbaatar', URT: 'Surat Thani', VTE: 'Vientiane', WHU: 'Wuhu',
+  XFN: 'Xiangyang', XIY: "Xi'an", XNN: 'Xining', ZGN: 'Zhongshan',
+  // Europe (60)
+  ADB: 'Izmir', AMS: 'Amsterdam', ARN: 'Stockholm', ATH: 'Athens', BCN: 'Barcelona',
+  BEG: 'Belgrade', BOD: 'Bordeaux', BRU: 'Brussels', BTS: 'Bratislava', BUD: 'Budapest',
+  CDG: 'Paris', CPH: 'Copenhagen', DME: 'Moscow', DUB: 'Dublin', DUS: 'Düsseldorf',
+  EDI: 'Edinburgh', FCO: 'Rome', FRA: 'Frankfurt', GOT: 'Gothenburg', GVA: 'Geneva',
+  HAM: 'Hamburg', HEL: 'Helsinki', IST: 'Istanbul', KBP: 'Kyiv', KEF: 'Reykjavík',
+  KIV: 'Chișinău', LCA: 'Nicosia', LED: 'Saint Petersburg', LHR: 'London', LIS: 'Lisbon',
+  LUX: 'Luxembourg City', LYS: 'Lyon', MAD: 'Madrid', MAN: 'Manchester', MLA: 'Valletta',
+  MRS: 'Marseille', MSQ: 'Minsk', MUC: 'Munich', MXP: 'Milan', ORK: 'Cork',
+  OSL: 'Oslo', OTP: 'Bucharest', PMO: 'Palermo', PRG: 'Prague', RIX: 'Riga',
+  SKG: 'Thessaloniki', SKP: 'Skopje', SOF: 'Sofia', STR: 'Stuttgart', SVX: 'Yekaterinburg',
+  TBS: 'Tbilisi', TIA: 'Tirana', TLL: 'Tallinn', TXL: 'Berlin', VIE: 'Vienna',
+  VNO: 'Vilnius', WAW: 'Warsaw', WRO: 'Wroclaw', ZAG: 'Zagreb', ZRH: 'Zurich',
+  // Latin America & Caribbean (59)
+  ARI: 'Arica', ARU: 'Araçatuba', ASU: 'Asunción', BAQ: 'Barranquilla', BEL: 'Belém',
+  BGI: 'Bridgetown', BNU: 'Blumenau', BOG: 'Bogotá', BSB: 'Brasília', CAW: 'Campos dos Goytacazes',
+  CCP: 'Concepción', CFC: 'Caçador', CGB: 'Cuiabá', CLO: 'Cali', CNF: 'Belo Horizonte',
+  COR: 'Córdoba', CWB: 'Curitiba', EZE: 'Buenos Aires', FLN: 'Florianópolis', FOR: 'Fortaleza',
+  GEO: 'Georgetown', GIG: 'Rio de Janeiro', GND: "St. George's", GRU: 'São Paulo',
+  GUA: 'Guatemala City', GYE: 'Guayaquil', GYN: 'Goiânia', ITJ: 'Itajaí', JDO: 'Juazeiro do Norte',
+  JOI: 'Joinville', LIM: 'Lima', LPB: 'La Paz', MAO: 'Manaus', MDE: 'Medellín',
+  MFE: 'McAllen', NQN: 'Neuquén', NVT: 'Navegantes', PBM: 'Paramaribo', PMW: 'Palmas',
+  POA: 'Porto Alegre', POS: 'Port of Spain', PTY: 'Panama City', QRO: 'Querétaro',
+  QWJ: 'Americana', RAO: 'Ribeirão Preto', REC: 'Recife', SAP: 'San Pedro Sula',
+  SCL: 'Santiago', SDQ: 'Santo Domingo', SJK: 'São José dos Campos', SJO: 'San José',
+  SJP: 'São José do Rio Preto', SJU: 'San Juan', SOD: 'Sorocaba', SSA: 'Salvador',
+  STI: 'Santiago de los Caballeros', TGU: 'Tegucigalpa', UDI: 'Uberlândia', UIO: 'Quito',
+  VCP: 'Campinas', VIX: 'Vitória', XAP: 'Chapecó',
+  // Middle East (21)
+  AMM: 'Amman', BAH: 'Manama', BEY: 'Beirut', BGW: 'Baghdad', BSR: 'Basra',
+  DMM: 'Dammam', DOH: 'Doha', DXB: 'Dubai', EBL: 'Erbil', GYD: 'Baku',
+  HFA: 'Haifa', ISU: 'Sulaymaniyah', JED: 'Jeddah', KWI: 'Kuwait City', LLK: 'Astara',
+  MCT: 'Muscat', NJF: 'Najaf', RUH: 'Riyadh', TLV: 'Tel Aviv', XNH: 'Nasiriyah',
+  ZDM: 'Ramallah',
+  // North America (57)
+  ABQ: 'Albuquerque', ANC: 'Anchorage', ATL: 'Atlanta', AUS: 'Austin', BGR: 'Bangor',
+  BNA: 'Nashville', BOS: 'Boston', BUF: 'Buffalo', CLT: 'Charlotte', CLE: 'Cleveland',
+  CMH: 'Columbus', DEN: 'Denver', DFW: 'Dallas', DTW: 'Detroit', EWR: 'Newark',
+  FSD: 'Sioux Falls', GDL: 'Guadalajara', HNL: 'Honolulu', IAD: 'Ashburn', IAH: 'Houston',
+  IND: 'Indianapolis', JAX: 'Jacksonville', KIN: 'Kingston', LAS: 'Las Vegas', LAX: 'Los Angeles',
+  MCI: 'Kansas City', MEM: 'Memphis', MEX: 'Mexico City', MIA: 'Miami', MSP: 'Minneapolis',
+  OKC: 'Oklahoma City', OMA: 'Omaha', ORD: 'Chicago', ORF: 'Norfolk', PDX: 'Portland',
+  PHL: 'Philadelphia', PHX: 'Phoenix', PIT: 'Pittsburgh', RDU: 'Raleigh-Durham', RIC: 'Richmond',
+  SAN: 'San Diego', SAT: 'San Antonio', SEA: 'Seattle', SFO: 'San Francisco', SJC: 'San Jose',
+  SLC: 'Salt Lake City', SMF: 'Sacramento', STL: 'St. Louis', TLH: 'Tallahassee', TPA: 'Tampa',
+  YHZ: 'Halifax', YOW: 'Ottawa', YUL: 'Montréal', YVR: 'Vancouver', YWG: 'Winnipeg',
+  YXE: 'Saskatoon', YYC: 'Calgary', YYZ: 'Toronto',
+  // Oceania (13)
+  ADL: 'Adelaide', AKL: 'Auckland', BNE: 'Brisbane', CBR: 'Canberra', CHC: 'Christchurch',
+  GUM: 'Hagåtña', HBA: 'Hobart', MEL: 'Melbourne', NOU: 'Nouméa', PER: 'Perth',
+  PPT: 'Tahiti', SUV: 'Suva', SYD: 'Sydney',
 }
 
 /** Nielsen DMA (Designated Market Area) names by metro code. Source: ctx.do */
