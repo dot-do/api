@@ -22,6 +22,7 @@ export function responseMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv>
           url: baseUrl,
           ...(apiType !== 'api' && { type: apiType }),
           ...(config.version && { version: config.version }),
+          docs: `https://docs.headless.ly`,
         },
       }
 
@@ -86,7 +87,6 @@ function getApiType(config: ApiConfig): string {
   if (config.proxy) return 'proxy'
   if (config.crud) return 'crud'
   if (config.rpc) return 'rpc'
-  if (config.mcp) return 'mcp'
   return 'api'
 }
 
@@ -172,8 +172,6 @@ function enrichUserContext(user: UserContext, c: Context): Record<string, unknow
   result.links = {
     ...(result.authenticated && result.id ? { profile: `${baseUrl}/me` } : undefined),
     request: `${baseUrl}/${requestId}`,
-    events: `${baseUrl}/api/events`,
-    docs: `https://docs.headless.ly`,
   }
 
   return result
