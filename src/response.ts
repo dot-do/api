@@ -1,5 +1,4 @@
 import type { Context, MiddlewareHandler } from 'hono'
-import type { ContentfulStatusCode } from 'hono/utils/http-status'
 import type { Actions, ApiConfig, ApiEnv, RespondOptions, ResponseEnvelope, UserContext, UserInfo } from './types'
 
 export function responseMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv> {
@@ -74,6 +73,12 @@ export function responseMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv>
       const resolvedUser = user || c.var.user || { authenticated: false }
       const enriched = enrichUserContext(normalizeUser(resolvedUser), c)
       ;(envelope as Record<string, unknown>).user = enriched
+
+      // Authenticated-only traceability links (top-level, not nested in user)
+      if (enriched.authenticated && enriched.requestId) {
+        envelope.links!.request = `${baseUrl}/${enriched.requestId}`
+        if (enriched.id) envelope.links!.profile = `${baseUrl}/me`
+      }
 
       return new Response(JSON.stringify(envelope, null, 2), {
         status,
@@ -165,15 +170,6 @@ function enrichUserContext(user: UserContext, c: Context): Record<string, unknow
     }
     if (colo) result.colo = colo
     if (cf.clientTcpRtt) result.latencyMilliseconds = cf.clientTcpRtt
-  }
-
-  // Traceability links — self-describing IDs are their own URLs
-  const url = new URL(c.req.url)
-  const baseUrl = `${url.protocol}//${url.host}`
-  const requestId = result.requestId as string
-  result.links = {
-    ...(result.authenticated && result.id ? { profile: `${baseUrl}/me` } : undefined),
-    request: `${baseUrl}/${requestId}`,
   }
 
   return result
