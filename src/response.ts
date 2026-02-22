@@ -4,6 +4,7 @@ import type { Actions, ApiConfig, ApiEnv, RespondOptions, ResponseEnvelope, User
 export function responseMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv> {
   return async (c, next) => {
     c.set('apiConfig', config)
+    const requestStart = performance.now()
 
     c.set('respond', <T = unknown>(options: RespondOptions<T>): Response => {
       const { data, key, links, actions, options: opts, status = 200, error, user } = options
@@ -13,10 +14,11 @@ export function responseMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv>
       const baseUrl = `${url.protocol}//${url.host}${config.basePath || ''}`
 
       const apiType = getApiType(config)
+      const { name: apiName, from: apiFrom } = resolveApiIdentity(url.hostname, config)
 
       const envelope: ResponseEnvelope = {
         api: {
-          name: config.name,
+          name: apiName,
           ...(config.description && { description: config.description }),
           url: baseUrl,
           ...(apiType !== 'api' && { type: apiType }),
@@ -24,6 +26,7 @@ export function responseMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv>
           login: `${baseUrl}/login`,
           signup: `${baseUrl}/login`,
           docs: `https://docs.headless.ly`,
+          ...(apiFrom && { from: apiFrom }),
         },
       }
 
@@ -73,7 +76,8 @@ export function responseMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv>
 
       // Caller context — always last (always included, even for anonymous)
       const resolvedUser = user || c.var.user || { authenticated: false }
-      const enriched = enrichUserContext(normalizeUser(resolvedUser), c)
+      const serviceLatency = Math.round(performance.now() - requestStart)
+      const enriched = enrichUserContext(normalizeUser(resolvedUser), c, serviceLatency)
       ;(envelope as Record<string, unknown>).user = enriched
 
       // Authenticated-only traceability links (top-level, not nested in user)
@@ -142,7 +146,7 @@ function normalizeUser(raw: UserContext | UserInfo): UserContext {
  * Produces the rich user object matching the .do ecosystem convention
  * (e.g. apis.vin, colo.do).
  */
-function enrichUserContext(user: UserContext, c: Context): Record<string, unknown> {
+function enrichUserContext(user: UserContext, c: Context, serviceLatency: number): Record<string, unknown> {
   const cf = (c.req.raw as { cf?: Record<string, unknown> }).cf
   const result: Record<string, unknown> = { ...user }
 
@@ -150,11 +154,14 @@ function enrichUserContext(user: UserContext, c: Context): Record<string, unknow
   delete result.links
   delete result.level
 
-  // Plan — derive from auth level or default to free tier name
-  if (!result.plan) result.plan = result.authenticated ? 'Pro' : 'Free'
+  // Plan — derive from auth level or default to Starter tier
+  if (!result.plan) result.plan = result.authenticated ? 'Pro' : 'Starter'
 
-  // Client metadata
-  result.userAgent = c.req.header('user-agent')
+  // Client metadata — parse UA into clean browser/os instead of raw string
+  const rawUA = c.req.header('user-agent') || ''
+  const { browser, os } = parseUserAgent(rawUA)
+  if (browser) result.browser = browser
+  if (os) result.os = os
   result.ip = c.req.header('cf-connecting-ip') || c.req.header('x-forwarded-for')
 
   if (cf) {
@@ -188,12 +195,70 @@ function enrichUserContext(user: UserContext, c: Context): Record<string, unknow
     result.requestId = `request_${rawId}`
   }
 
+  // Service latency — time spent in the worker processing the request
+  result.serviceLatency = serviceLatency
+
   // Strip undefined values for clean output
   for (const key of Object.keys(result)) {
     if (result[key] === undefined) delete result[key]
   }
 
   return result
+}
+
+/**
+ * Resolve the API name and `from` chain based on hostname.
+ * .do domains use the hostname as the name (e.g. events.do → "events.do").
+ * The `from` field traces the platform hierarchy.
+ */
+function resolveApiIdentity(hostname: string, config: ApiConfig): { name: string; from?: string } {
+  const parts = hostname.split('.')
+  // bare .do domain (e.g. events.do, apis.do) — exactly 2 parts
+  if (parts.length === 2 && parts[1] === 'do') {
+    if (hostname === 'platform.do') return { name: 'platform.do', from: 'https://do.industries' }
+    return { name: hostname, from: 'https://platform.do' }
+  }
+  // subdomain.do pattern (e.g. dashboard.platform.do) — 3+ parts ending in .do
+  if (hostname.endsWith('.do')) {
+    const base = parts.slice(-2).join('.')
+    return { name: hostname, from: `https://${base}` }
+  }
+  // headless.ly
+  if (hostname.endsWith('headless.ly')) {
+    return { name: config.name, from: 'https://platform.do' }
+  }
+  return { name: config.name }
+}
+
+/** Parse User-Agent string into clean browser and OS names */
+function parseUserAgent(ua: string): { browser?: string; os?: string } {
+  if (!ua) return {}
+
+  // OS detection (order matters — check specific before general)
+  let os: string | undefined
+  if (/iPhone|iPad|iPod/.test(ua)) os = 'iOS'
+  else if (/Android/.test(ua)) os = 'Android'
+  else if (/Mac OS X|macOS/.test(ua)) os = 'macOS'
+  else if (/Windows/.test(ua)) os = 'Windows'
+  else if (/Linux/.test(ua)) os = 'Linux'
+  else if (/CrOS/.test(ua)) os = 'Chrome OS'
+
+  // Browser detection (order matters — check specific before general)
+  let browser: string | undefined
+  if (/curl\//i.test(ua)) browser = 'curl'
+  else if (/Postman/i.test(ua)) browser = 'Postman'
+  else if (/Claude|Anthropic/i.test(ua)) browser = 'Claude'
+  else if (/OpenAI|ChatGPT/i.test(ua)) browser = 'ChatGPT'
+  else if (/Edg\//.test(ua)) browser = 'Edge'
+  else if (/OPR\/|Opera/.test(ua)) browser = 'Opera'
+  else if (/Brave/.test(ua)) browser = 'Brave'
+  else if (/Vivaldi/.test(ua)) browser = 'Vivaldi'
+  else if (/Firefox\//.test(ua)) browser = 'Firefox'
+  else if (/Chrome\//.test(ua) && !/Edg\//.test(ua)) browser = 'Chrome'
+  else if (/Safari\//.test(ua) && !/Chrome\//.test(ua)) browser = 'Safari'
+  else if (/bot|crawl|spider|scraper/i.test(ua)) browser = 'Bot'
+
+  return { browser, os }
 }
 
 /** Convert ISO 3166-1 alpha-2 country code to full country name */
