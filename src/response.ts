@@ -165,12 +165,13 @@ function enrichUserContext(user: UserContext, c: Context): Record<string, unknow
     if (cf.clientTcpRtt) result.latencyMilliseconds = cf.clientTcpRtt
   }
 
-  // Traceability links
+  // Traceability links — self-describing IDs are their own URLs
   const url = new URL(c.req.url)
   const baseUrl = `${url.protocol}//${url.host}`
+  const requestId = result.requestId as string
   result.links = {
     ...(result.authenticated && result.id ? { profile: `${baseUrl}/me` } : undefined),
-    logs: `${baseUrl}/views/requests${cfRay ? `?ray=${cfRay}` : ''}`,
+    request: `${baseUrl}/${requestId}`,
     events: `${baseUrl}/api/events`,
     docs: `https://docs.headless.ly`,
   }
