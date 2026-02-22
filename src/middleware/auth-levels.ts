@@ -69,12 +69,13 @@ function detectAuth(c: Context): DetectedAuth {
     }
   }
 
-  // 2. Check Authorization header
+  // 2. Check Authorization header, then auth cookie
   const authHeader = c.req.header('authorization')
-  if (!authHeader) return { level: 'L0', claims: null }
+  const cookieToken = !authHeader ? extractCookieToken(c.req.header('cookie')) : undefined
+  const rawToken = authHeader?.replace(/^Bearer\s+/i, '').trim() || cookieToken
+  if (!rawToken) return { level: 'L0', claims: null }
 
-  const token = authHeader.replace(/^Bearer\s+/i, '').trim()
-  if (!token) return { level: 'L0', claims: null }
+  const token = rawToken
 
   // 2a. API key in Authorization header
   if (isApiKey(token)) {
@@ -94,6 +95,13 @@ function detectAuth(c: Context): DetectedAuth {
   }
 
   return { level: 'L2', claims: payload }
+}
+
+/** Extract token from auth cookie (oauth.do convention) or wos-session (WorkOS AuthKit) */
+function extractCookieToken(cookie?: string): string | undefined {
+  if (!cookie) return undefined
+  const match = cookie.match(/(?:^|;\s*)auth=([^;]+)/) || cookie.match(/(?:^|;\s*)wos-session=([^;]+)/)
+  return match?.[1]
 }
 
 // ---------------------------------------------------------------------------

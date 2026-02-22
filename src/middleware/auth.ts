@@ -25,10 +25,13 @@ export function authMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv> {
       }
     }
 
-    // Try Authorization header
+    // Try Authorization header, then auth cookie
     const authHeader = c.req.header('authorization')
-    if (authHeader) {
-      const result = await verifyToken(authHeader, config, c.env as Record<string, unknown>)
+    const cookieToken = !authHeader ? extractCookieToken(c.req.header('cookie')) : undefined
+    const tokenSource = authHeader || (cookieToken ? `Bearer ${cookieToken}` : undefined)
+
+    if (tokenSource) {
+      const result = await verifyToken(tokenSource, config, c.env as Record<string, unknown>)
       if (result.user) {
         c.set('user', result.user)
         await next()
@@ -46,6 +49,13 @@ export function authMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv> {
 
     await next()
   }
+}
+
+/** Extract token from auth cookie (oauth.do convention) or wos-session (WorkOS AuthKit) */
+function extractCookieToken(cookie?: string): string | undefined {
+  if (!cookie) return undefined
+  const match = cookie.match(/(?:^|;\s*)auth=([^;]+)/) || cookie.match(/(?:^|;\s*)wos-session=([^;]+)/)
+  return match?.[1]
 }
 
 interface VerifyResult {
