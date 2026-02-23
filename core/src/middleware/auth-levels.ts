@@ -1,5 +1,6 @@
 import type { MiddlewareHandler, Context } from 'hono'
 import type { UserContext } from '../types'
+import { extractCookieToken } from '../helpers/cookies'
 
 // SECURITY NOTE: This middleware performs NO cryptographic verification.
 // It inspects token format to classify auth level (L0-L3).
@@ -38,12 +39,20 @@ const AUTH_LEVEL_MAP: Record<string, Level> = {
 // Token parsing helpers (no crypto — simple string inspection)
 // ---------------------------------------------------------------------------
 
-/** All recognized API key prefixes — order matters: longer prefixes before shorter ones. */
-const API_KEY_PREFIXES = ['agent_', 'sk_live_', 'sk_test_', 'oai_', 'hly_sk_', 'sk_', 'ses_']
-
-/** Check whether a raw token string looks like an API key. */
+/**
+ * Check whether a raw token string is an API key (vs JWT).
+ * Simple heuristic: JWTs contain dots (header.payload.signature), API keys don't.
+ */
 function isApiKey(token: string): boolean {
-  return API_KEY_PREFIXES.some((prefix) => token.startsWith(prefix))
+  return !token.includes('.')
+}
+
+/** Known API key prefixes — stripped to derive a human-friendly agent name. */
+const API_KEY_PREFIXES = /^(agent_|sk_live_|sk_test_|oai_|hly_sk_|sk_|ses_)/
+
+/** Strip known API key prefix to derive a short agent name for display. */
+function stripKeyPrefix(key: string): string {
+  return key.replace(API_KEY_PREFIXES, '')
 }
 
 /** Decode a JWT payload segment (base64url → JSON). Returns null on any failure. */
@@ -78,12 +87,12 @@ function detectAuth(c: Context): DetectedAuth {
     }
   }
 
-  // 1. Check x-api-key header first
+  // 1. Check x-api-key header first — intent is unambiguous, any value is an API key
   const apiKey = c.req.header('x-api-key')
-  if (apiKey && isApiKey(apiKey)) {
+  if (apiKey) {
     return {
       level: 'L1',
-      claims: { agentId: apiKey, agentName: apiKey.replace(/^(agent_|sk_live_|sk_test_|oai_|hly_sk_|sk_|ses_)/, '') },
+      claims: { agentId: apiKey, agentName: stripKeyPrefix(apiKey) },
     }
   }
 
@@ -95,11 +104,11 @@ function detectAuth(c: Context): DetectedAuth {
 
   const token = rawToken
 
-  // 2a. API key in Authorization header
+  // 2a. API key in Authorization header (any non-JWT token)
   if (isApiKey(token)) {
     return {
       level: 'L1',
-      claims: { agentId: token, agentName: token.replace(/^(agent_|sk_live_|sk_test_|oai_|hly_sk_|sk_|ses_)/, '') },
+      claims: { agentId: token, agentName: stripKeyPrefix(token) },
     }
   }
 
@@ -113,13 +122,6 @@ function detectAuth(c: Context): DetectedAuth {
   }
 
   return { level: 'L2', claims: payload }
-}
-
-/** Extract token from auth cookie (oauth.do convention) or wos-session (WorkOS AuthKit) */
-function extractCookieToken(cookie?: string): string | undefined {
-  if (!cookie) return undefined
-  const match = cookie.match(/(?:^|;\s*)auth=([^;]+)/) || cookie.match(/(?:^|;\s*)wos-session=([^;]+)/)
-  return match?.[1]
 }
 
 // ---------------------------------------------------------------------------

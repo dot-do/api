@@ -1,5 +1,6 @@
 import type { MiddlewareHandler } from 'hono'
 import type { ApiConfig, ApiEnv, UserInfo } from '../types'
+import { extractCookieToken } from '../helpers/cookies'
 
 export function authMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv> {
   const authConfig = config.auth || { mode: 'none' }
@@ -54,13 +55,6 @@ export function authMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv> {
 
     await next()
   }
-}
-
-/** Extract token from auth cookie (oauth.do convention) or wos-session (WorkOS AuthKit) */
-function extractCookieToken(cookie?: string): string | undefined {
-  if (!cookie) return undefined
-  const match = cookie.match(/(?:^|;\s*)auth=([^;]+)/) || cookie.match(/(?:^|;\s*)wos-session=([^;]+)/)
-  return match?.[1]
 }
 
 interface VerifyResult {
