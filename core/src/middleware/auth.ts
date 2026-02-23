@@ -10,6 +10,10 @@ export function authMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv> {
       return
     }
 
+    // NOTE: When used alongside authLevelMiddleware, that middleware will
+    // overwrite the 'user' context variable with a richer UserContext object.
+    // This middleware's UserInfo is sufficient for simple auth checks.
+
     // Fast path: trust cf.actor set by auth-identity snippet (tamper-proof —
     // external clients cannot set request.cf). Skips the AUTH RPC binding
     // call entirely, saving 5-10ms of latency per request.

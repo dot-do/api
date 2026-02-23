@@ -1,6 +1,12 @@
 import type { MiddlewareHandler, Context } from 'hono'
 import type { UserContext } from '../types'
 
+// SECURITY NOTE: This middleware performs NO cryptographic verification.
+// It inspects token format to classify auth level (L0-L3).
+// It MUST be used after authMiddleware (which verifies via AUTH RPC)
+// or behind the auth-identity snippet (which verifies at CDN edge).
+// Using this middleware standalone provides NO authentication guarantee.
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -32,9 +38,12 @@ const AUTH_LEVEL_MAP: Record<string, Level> = {
 // Token parsing helpers (no crypto — simple string inspection)
 // ---------------------------------------------------------------------------
 
-/** Check whether a raw token string looks like an API key (agent_ / sk_live_ / sk_test_). */
+/** All recognized API key prefixes — order matters: longer prefixes before shorter ones. */
+const API_KEY_PREFIXES = ['agent_', 'sk_live_', 'sk_test_', 'oai_', 'hly_sk_', 'sk_', 'ses_']
+
+/** Check whether a raw token string looks like an API key. */
 function isApiKey(token: string): boolean {
-  return token.startsWith('agent_') || token.startsWith('sk_live_') || token.startsWith('sk_test_')
+  return API_KEY_PREFIXES.some((prefix) => token.startsWith(prefix))
 }
 
 /** Decode a JWT payload segment (base64url → JSON). Returns null on any failure. */
@@ -74,7 +83,7 @@ function detectAuth(c: Context): DetectedAuth {
   if (apiKey && isApiKey(apiKey)) {
     return {
       level: 'L1',
-      claims: { agentId: apiKey, agentName: apiKey.replace(/^(agent_|sk_live_|sk_test_)/, '') },
+      claims: { agentId: apiKey, agentName: apiKey.replace(/^(agent_|sk_live_|sk_test_|oai_|hly_sk_|sk_|ses_)/, '') },
     }
   }
 
@@ -90,7 +99,7 @@ function detectAuth(c: Context): DetectedAuth {
   if (isApiKey(token)) {
     return {
       level: 'L1',
-      claims: { agentId: token, agentName: token.replace(/^(agent_|sk_live_|sk_test_)/, '') },
+      claims: { agentId: token, agentName: token.replace(/^(agent_|sk_live_|sk_test_|oai_|hly_sk_|sk_|ses_)/, '') },
     }
   }
 
