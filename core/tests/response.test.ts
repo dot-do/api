@@ -174,7 +174,7 @@ describe('Response envelope', () => {
     expect(body.user.email).toBe('test@example.com')
   })
 
-  it('passes through UserContext as-is', async () => {
+  it('enriches UserContext (strips level, preserves other fields)', async () => {
     const app = API({
       name: 'user-context-test',
       routes: (a) => {
@@ -196,7 +196,7 @@ describe('Response envelope', () => {
     const res = await app.request('/me')
     const body = await res.json()
     expect(body.user.authenticated).toBe(true)
-    expect(body.user.level).toBe('L2')
+    expect(body.user.level).toBeUndefined() // level is stripped by enrichUserContext
     expect(body.user.name).toBe('Alice')
     expect(body.user.tenant).toBe('acme')
     expect(body.user.plan).toBe('pro')

@@ -8,5 +8,21 @@
 
   "vars": {
     "API_NAME": "test.do"
-  }
+  },
+
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "DATABASE",
+        "class_name": "DatabaseDO"
+      }
+    ]
+  },
+
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["DatabaseDO"]
+    }
+  ]
 }

@@ -150,7 +150,7 @@ describe('Mutation Middleware', () => {
 
       const body = await res.json()
       expect(body.api).toBeDefined()
-      expect(body.api.name).toBe('test-api')
+      expect(body.api.name).toBe('crm.do') // resolveApiIdentity uses hostname for .do domains
     })
   })
 

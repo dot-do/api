@@ -1,4 +1,8 @@
 import { API } from '../src'
+import { DatabaseDO } from '../src/conventions/database/do'
+
+// Re-export DatabaseDO so wrangler can find it
+export { DatabaseDO }
 
 /**
  * Test worker that exercises API() with all major conventions enabled.

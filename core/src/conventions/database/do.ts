@@ -714,6 +714,7 @@ export class DatabaseDO extends DurableObject<Env> {
   // ===========================================================================
 
   async create(model: string, data: Record<string, unknown>, ctx?: RequestContext): Promise<Document> {
+    this.ensureInitialized()
     const id = (data.id as string) || this.generateId()
     const now = new Date().toISOString()
 
@@ -753,6 +754,7 @@ export class DatabaseDO extends DurableObject<Env> {
   }
 
   async get(model: string, id: string, options?: { include?: string[] }): Promise<Document | null> {
+    this.ensureInitialized()
     const rows = this.sql.exec(
       'SELECT * FROM entities WHERE id = ? AND type = ? AND deleted_at IS NULL',
       id,
@@ -813,6 +815,7 @@ export class DatabaseDO extends DurableObject<Env> {
   }
 
   async update(model: string, id: string, data: Record<string, unknown>, ctx?: RequestContext): Promise<Document> {
+    this.ensureInitialized()
     const existingRows = this.sql.exec(
       'SELECT * FROM entities WHERE id = ? AND type = ? AND deleted_at IS NULL',
       id,
@@ -864,6 +867,7 @@ export class DatabaseDO extends DurableObject<Env> {
   }
 
   async delete(model: string, id: string, ctx?: RequestContext): Promise<void> {
+    this.ensureInitialized()
     const existingRows = this.sql.exec(
       'SELECT * FROM entities WHERE id = ? AND type = ? AND deleted_at IS NULL',
       id,
@@ -898,6 +902,7 @@ export class DatabaseDO extends DurableObject<Env> {
   }
 
   async list(model: string, options?: QueryOptions): Promise<{ data: Document[]; total: number; limit: number; offset: number; hasMore: boolean }> {
+    this.ensureInitialized()
     // Fetch all non-deleted entities of this type from SQLite
     const rows = this.sql.exec(
       'SELECT * FROM entities WHERE type = ? AND deleted_at IS NULL',
@@ -953,6 +958,7 @@ export class DatabaseDO extends DurableObject<Env> {
   }
 
   async search(model: string, query: string, options?: QueryOptions): Promise<{ data: Document[]; total: number; limit: number; offset: number; hasMore: boolean }> {
+    this.ensureInitialized()
     // Use SQLite LIKE for initial filtering, then refine in-memory
     // The LIKE search checks the JSON data column for the query string
     const q = query.toLowerCase()
@@ -988,6 +994,7 @@ export class DatabaseDO extends DurableObject<Env> {
   }
 
   async count(model: string, where?: Record<string, unknown>): Promise<number> {
+    this.ensureInitialized()
     if (!where) {
       // Fast path: use SQL COUNT (always returns exactly 1 row)
       const result = this.sql.exec(
@@ -1007,6 +1014,33 @@ export class DatabaseDO extends DurableObject<Env> {
     docs = docs.filter((doc) => matchesWhere(doc, where))
 
     return docs.length
+  }
+
+  // ===========================================================================
+  // RPC Aliases (match ParqueDBDOStub interface for createDOParqueDBService)
+  // ===========================================================================
+
+  /**
+   * Alias for list() — matches ParqueDBDOStub.find() interface.
+   * Returns { items, total, hasMore } instead of { data, total, hasMore }.
+   */
+  async find(
+    model: string,
+    filter?: Record<string, unknown>,
+    options?: { limit?: number; offset?: number; sort?: Record<string, 1 | -1> },
+  ): Promise<{ items: Record<string, unknown>[]; total: number; hasMore: boolean }> {
+    const orderBy = options?.sort
+      ? Object.entries(options.sort).map(([field, dir]) => ({ field, direction: dir === 1 ? 'asc' as const : 'desc' as const }))
+      : undefined
+    const result = await this.list(model, { where: filter, limit: options?.limit, offset: options?.offset, orderBy })
+    return { items: result.data, total: result.total, hasMore: result.hasMore }
+  }
+
+  /**
+   * Alias for count() — matches ParqueDBDOStub.countEntities() interface.
+   */
+  async countEntities(model: string): Promise<number> {
+    return this.count(model)
   }
 
   // ===========================================================================
