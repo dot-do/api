@@ -10,7 +10,23 @@ export function authMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv> {
       return
     }
 
-    // Check snippet headers first (CDN-layer pre-verification)
+    // Fast path: trust cf.actor set by auth-identity snippet (tamper-proof —
+    // external clients cannot set request.cf). Skips the AUTH RPC binding
+    // call entirely, saving 5-10ms of latency per request.
+    const cf = (c.req.raw as unknown as { cf?: { authenticated?: boolean; actor?: { id: string; name: string; email: string; orgId: string } } }).cf
+    if (cf?.authenticated && cf.actor) {
+      const user: UserInfo = {
+        id: cf.actor.id,
+        email: cf.actor.email,
+        name: cf.actor.name,
+        orgId: cf.actor.orgId,
+      }
+      c.set('user', user)
+      await next()
+      return
+    }
+
+    // Fallback: check snippet headers (for local dev / environments without snippets)
     if (authConfig.trustSnippets) {
       const snippetValid = c.req.header('x-snippet-auth-valid')
       if (snippetValid === 'true') {

@@ -60,6 +60,15 @@ interface DetectedAuth {
 }
 
 function detectAuth(c: Context): DetectedAuth {
+  // 0. Fast path: trust cf.actor from auth-identity snippet (tamper-proof)
+  const cf = (c.req.raw as unknown as { cf?: { authenticated?: boolean; actor?: { id: string; name: string; email: string; orgId: string } } }).cf
+  if (cf?.authenticated && cf.actor) {
+    return {
+      level: cf.actor.orgId ? 'L3' : 'L2',
+      claims: { sub: cf.actor.id, name: cf.actor.name, email: cf.actor.email, orgId: cf.actor.orgId },
+    }
+  }
+
   // 1. Check x-api-key header first
   const apiKey = c.req.header('x-api-key')
   if (apiKey && isApiKey(apiKey)) {
