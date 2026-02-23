@@ -155,7 +155,6 @@ export interface RespondOptions<T = unknown> {
 // Auth configuration
 export interface AuthConfig {
   mode: 'required' | 'optional' | 'none'
-  trustSnippets?: boolean
   /**
    * SECURITY WARNING: When set to true, allows JWT tokens to be decoded without
    * cryptographic signature verification. This is INSECURE and should only be used

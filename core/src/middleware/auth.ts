@@ -26,21 +26,6 @@ export function authMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv> {
       return
     }
 
-    // Fallback: check snippet headers (for local dev / environments without snippets)
-    if (authConfig.trustSnippets) {
-      const snippetValid = c.req.header('x-snippet-auth-valid')
-      if (snippetValid === 'true') {
-        const user: UserInfo = {
-          id: c.req.header('x-snippet-user-id'),
-          email: c.req.header('x-snippet-user-email'),
-          name: c.req.header('x-snippet-user-name'),
-        }
-        c.set('user', user)
-        await next()
-        return
-      }
-    }
-
     // Try Authorization header, then auth cookie
     const authHeader = c.req.header('authorization')
     const cookieToken = !authHeader ? extractCookieToken(c.req.header('cookie')) : undefined

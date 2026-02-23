@@ -258,118 +258,13 @@ describe('Auth Middleware', () => {
   })
 
   // ============================================================================
-  // Snippet trust headers (X-Snippet-*) when trustSnippets: true
+  // cf.actor — tamper-proof identity from auth-identity snippet
   // ============================================================================
-  describe('trustSnippets: true', () => {
-    it('should accept pre-verified auth from snippet headers', async () => {
-      const app = API({
-        name: 'snippet-api',
-        auth: { mode: 'required', trustSnippets: true },
-        routes: (a) => {
-          a.get('/protected', (c) => c.var.respond({ data: { user: c.var.user } }))
-        },
-      })
-
-      const res = await app.request('/protected', {
-        headers: {
-          'x-snippet-auth-valid': 'true',
-          'x-snippet-user-id': 'cdn-user-123',
-          'x-snippet-user-email': 'cdn@example.com',
-          'x-snippet-user-name': 'CDN Verified User',
-        },
-      })
-
-      expect(res.status).toBe(200)
-      const body = await res.json()
-      expect(body.data.user).toBeDefined()
-      expect(body.data.user.id).toBe('cdn-user-123')
-      expect(body.data.user.email).toBe('cdn@example.com')
-      expect(body.data.user.name).toBe('CDN Verified User')
-    })
-
-    it('should reject when x-snippet-auth-valid is not "true"', async () => {
-      const app = API({
-        name: 'snippet-api',
-        auth: { mode: 'required', trustSnippets: true },
-        routes: (a) => {
-          a.get('/protected', (c) => c.var.respond({ data: {} }))
-        },
-      })
-
-      const res = await app.request('/protected', {
-        headers: {
-          'x-snippet-auth-valid': 'false',
-          'x-snippet-user-id': 'cdn-user-123',
-        },
-      })
-
-      expect(res.status).toBe(401)
-    })
-
-    it('should not trust snippet headers when trustSnippets is false', async () => {
-      const app = API({
-        name: 'secure-api',
-        auth: { mode: 'required', trustSnippets: false },
-        routes: (a) => {
-          a.get('/protected', (c) => c.var.respond({ data: {} }))
-        },
-      })
-
-      const res = await app.request('/protected', {
-        headers: {
-          'x-snippet-auth-valid': 'true',
-          'x-snippet-user-id': 'cdn-user-123',
-        },
-      })
-
-      // Should reject because trustSnippets is false
-      expect(res.status).toBe(401)
-    })
-
-    it('should not trust snippet headers by default', async () => {
-      const app = API({
-        name: 'secure-api',
-        auth: { mode: 'required' },
-        routes: (a) => {
-          a.get('/protected', (c) => c.var.respond({ data: {} }))
-        },
-      })
-
-      const res = await app.request('/protected', {
-        headers: {
-          'x-snippet-auth-valid': 'true',
-          'x-snippet-user-id': 'cdn-user-123',
-        },
-      })
-
-      // Should reject because trustSnippets defaults to undefined/false
-      expect(res.status).toBe(401)
-    })
-
-    it('should handle partial snippet user info', async () => {
-      const app = API({
-        name: 'snippet-api',
-        auth: { mode: 'required', trustSnippets: true },
-        routes: (a) => {
-          a.get('/protected', (c) => c.var.respond({ data: { user: c.var.user } }))
-        },
-      })
-
-      const res = await app.request('/protected', {
-        headers: {
-          'x-snippet-auth-valid': 'true',
-          'x-snippet-user-id': 'user-only-id',
-          // No email or name provided
-        },
-      })
-
-      expect(res.status).toBe(200)
-      const body = await res.json()
-      expect(body.data.user.id).toBe('user-only-id')
-      expect(body.data.user.email).toBeUndefined()
-      expect(body.data.user.name).toBeUndefined()
-    })
-  })
+  // NOTE: Hono's app.request() doesn't support setting request.cf directly,
+  // so cf.actor tests require integration/e2e testing against a real worker.
+  // The middleware implementation is straightforward: if cf.authenticated && cf.actor,
+  // extract user and skip AUTH RPC. Unit tests for the downstream token paths
+  // (Authorization header, cookie) cover the fallback behavior.
 
   // ============================================================================
   // User info extraction from valid token
@@ -779,64 +674,5 @@ describe('Auth Middleware', () => {
       })
     })
 
-    describe('Snippet and token priority', () => {
-      it('should prefer snippet headers over token when both are present', async () => {
-        const fakeToken = createFakeJwt({
-          sub: 'token-user',
-          email: 'token@example.com',
-        })
-
-        const app = API({
-          name: 'snippet-api',
-          auth: { mode: 'required', trustSnippets: true, trustUnverified: true },
-          routes: (a) => {
-            a.get('/check', (c) => c.var.respond({ data: { user: c.var.user } }))
-          },
-        })
-
-        const res = await app.request('/check', {
-          headers: {
-            'Authorization': `Bearer ${fakeToken}`,
-            'x-snippet-auth-valid': 'true',
-            'x-snippet-user-id': 'snippet-user',
-            'x-snippet-user-email': 'snippet@example.com',
-          },
-        })
-
-        expect(res.status).toBe(200)
-        const body = await res.json()
-        // Snippet headers should take precedence
-        expect(body.data.user.id).toBe('snippet-user')
-        expect(body.data.user.email).toBe('snippet@example.com')
-      })
-
-      it('should fall back to token when snippet validation fails', async () => {
-        const fakeToken = createFakeJwt({
-          sub: 'token-user',
-          email: 'token@example.com',
-        })
-
-        const app = API({
-          name: 'snippet-api',
-          auth: { mode: 'required', trustSnippets: true, trustUnverified: true },
-          routes: (a) => {
-            a.get('/check', (c) => c.var.respond({ data: { user: c.var.user } }))
-          },
-        })
-
-        const res = await app.request('/check', {
-          headers: {
-            'Authorization': `Bearer ${fakeToken}`,
-            'x-snippet-auth-valid': 'false', // Invalid snippet
-            'x-snippet-user-id': 'snippet-user',
-          },
-        })
-
-        expect(res.status).toBe(200)
-        const body = await res.json()
-        // Should fall back to token
-        expect(body.data.user.id).toBe('token-user')
-      })
-    })
   })
 })

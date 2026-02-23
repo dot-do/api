@@ -11,7 +11,7 @@ export default API({
   name: 'my-api',
   description: 'Example API built with api.do',
   version: '1.0.0',
-  auth: { mode: 'optional', trustSnippets: true },
+  auth: { mode: 'optional' },
   crud: {
     db: 'DB',
     table: 'items',

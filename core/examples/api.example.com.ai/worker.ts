@@ -4,7 +4,7 @@ export default API({
   name: 'api.example.com.ai',
   description: 'Example API demonstrating the api.do framework',
   version: '1.0.0',
-  auth: { mode: 'optional', trustSnippets: true },
+  auth: { mode: 'optional' },
   crud: {
     db: 'DB',
     table: 'projects',

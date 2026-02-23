@@ -4,7 +4,7 @@ export default API({
   name: 'directory.example.com.ai',
   description: 'API Directory - Discover and explore available APIs',
   version: '1.0.0',
-  auth: { mode: 'optional', trustSnippets: true },
+  auth: { mode: 'optional' },
   crud: {
     db: 'DB',
     table: 'apis',
