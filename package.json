@@ -1,65 +1,24 @@
 {
-  "name": "@dotdo/api",
-  "version": "0.1.0",
-  "description": "Core API framework for building Hono-based APIs on Cloudflare Workers with conventions, middleware, and MCP tools",
+  "name": "apis.do",
+  "version": "0.2.0",
   "type": "module",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
-    },
-    "./snippets/*": "./snippets/*"
-  },
-  "files": [
-    "dist",
-    "snippets"
-  ],
+  "main": "./src/index.ts",
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
     "test": "vitest run",
-    "test:unit": "vitest run",
-    "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:e2e": "vitest run --config vitest.e2e.config.ts",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "typecheck": "tsc --noEmit",
-    "prepublishOnly": "pnpm build"
+    "typecheck": "wrangler types && tsc --noEmit",
+    "types": "wrangler types",
+    "generate:domains": "npx tsx scripts/generate-domains.ts"
   },
   "dependencies": {
-    "hono": "^4.7.0",
-    "sqids": "^0.3.0"
-  },
-  "optionalDependencies": {
-    "@dotdo/documentdb": "^0.1.0",
-    "@electric-sql/pglite": "^0.3.15",
-    "oauth.do": "^0.2.2",
-    "postgres.do": "^0.1.0",
-    "rpc.do": "*"
+    "@dotdo/api": "workspace:*"
   },
   "devDependencies": {
-    "@cloudflare/vitest-pool-workers": "^0.12.4",
-    "@cloudflare/workers-types": "^4.20260219.0",
-    "esbuild": "^0.24.0",
-    "tsup": "^8.3.0",
-    "tsx": "^4.19.0",
-    "typescript": "^5.7.0",
+    "@cloudflare/vitest-pool-workers": "^0.12.9",
     "vitest": "^3.0.0",
-    "wrangler": "^4.62.0"
-  },
-  "keywords": [
-    "hono",
-    "cloudflare",
-    "workers",
-    "api",
-    "framework",
-    "dotdo",
-    "mcp",
-    "middleware"
-  ],
-  "license": "MIT"
+    "wrangler": "^4.62.0",
+    "typescript": "^5.7.0"
+  }
 }

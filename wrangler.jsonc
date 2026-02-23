@@ -1,0 +1,33 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "api",
+  "account_id": "b6641681fe423910342b9ffa1364c76d",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-02-17",
+  "compatibility_flags": ["nodejs_compat"],
+  "routes": [
+    // apis.do — own zone
+    { "pattern": "apis.do/*", "zone_name": "apis.do" },
+    { "pattern": "apis.do", "zone_name": "apis.do" },
+    // Key .do domains — serve API directory on /api paths
+    { "pattern": "events.do/api*", "zone_name": "events.do" },
+    { "pattern": "database.do/api*", "zone_name": "database.do" },
+    { "pattern": "functions.do/api*", "zone_name": "functions.do" },
+    { "pattern": "workflows.do/api*", "zone_name": "workflows.do" },
+    { "pattern": "agents.do/api*", "zone_name": "agents.do" },
+    // Catch-all: /api on any custom hostname on workers.do zone
+    { "pattern": "*/api*", "zone_name": "workers.do" }
+  ],
+  "services": [
+    { "binding": "AUTH", "service": "auth-verifier", "entrypoint": "AuthRPC" },
+    { "binding": "AUTH_HTTP", "service": "auth" },
+    { "binding": "HEADLESSLY", "service": "headlessly-api" }
+  ],
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["BatchStreamManager", "EventStreamManager", "SearchStreamManager"] },
+    { "tag": "v2", "deleted_classes": ["BatchStreamManager", "EventStreamManager", "SearchStreamManager"] }
+  ],
+  "vars": {
+    "API_NAME": "apis.do"
+  }
+}

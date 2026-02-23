@@ -1,0 +1,280 @@
+import { describe, it, expect } from 'vitest'
+import app from '../src/index'
+
+describe('Landing Page', () => {
+  it('returns discovery links at root with discover key', async () => {
+    const res = await app.request('https://apis.do/')
+    expect(res.ok).toBe(true)
+
+    const body = await res.json()
+    expect(body.api.name).toBe('apis.do')
+    expect(body.discover).toBeDefined()
+    expect(body.discover['Search APIs']).toBe('https://apis.do/search?q=database')
+    expect(body.discover['Event Streams']).toBe('https://apis.do/events')
+    expect(body.discover['Functions']).toBe('https://apis.do/functions')
+    expect(body.discover['Database']).toBe('https://apis.do/database')
+
+    // No emojis in keys
+    for (const key of Object.keys(body.discover)) {
+      if (key === '---') continue
+      expect(key).not.toMatch(/[\u{1F000}-\u{1FFFF}]/u)
+    }
+
+    // Links
+    expect(body.links.mcp).toBe('https://apis.do/mcp')
+    expect(body.links.rpc).toBe('https://apis.do/rpc')
+    expect(body.links.sdk).toBe('https://apis.do/sdk')
+
+    // Actions
+    expect(body.actions['Toggle Link Domains']).toBe('https://apis.do/?domains=true')
+  })
+})
+
+describe('Service Registry', () => {
+  it('returns services under semantic key', async () => {
+    const res = await app.request('https://apis.do/services')
+    expect(res.ok).toBe(true)
+
+    const body = await res.json()
+    expect(body.services).toBeDefined()
+    expect(Array.isArray(body.services)).toBe(true)
+    expect(body.services.length).toBeGreaterThan(300)
+    expect(body.total).toBe(body.services.length)
+  })
+
+  it('returns categories under semantic key', async () => {
+    const res = await app.request('https://apis.do/categories')
+    expect(res.ok).toBe(true)
+
+    const body = await res.json()
+    expect(body.categories).toBeDefined()
+    expect(Array.isArray(body.categories)).toBe(true)
+    expect(body.categories.length).toBeGreaterThan(5)
+    expect(body.total).toBe(body.categories.length)
+  })
+
+  it('filters services by category', async () => {
+    const res = await app.request('https://apis.do/services?category=ai')
+    expect(res.ok).toBe(true)
+
+    const body = await res.json()
+    expect(body.services.every((s: { category: string }) => s.category === 'ai')).toBe(true)
+  })
+
+  it('searches services by query', async () => {
+    const res = await app.request('https://apis.do/services?q=database')
+    expect(res.ok).toBe(true)
+
+    const body = await res.json()
+    expect(body.services.length).toBeGreaterThan(0)
+  })
+
+  it('returns service detail with links', async () => {
+    const res = await app.request('https://apis.do/services/events')
+    expect(res.ok).toBe(true)
+
+    const body = await res.json()
+    expect(body.service.name).toBe('events')
+    expect(body.service.domain).toBe('events.do')
+    expect(body.links.also).toBe('https://events.do/api')
+    expect(body.links.api).toBe('https://apis.do/events')
+  })
+
+  it('returns backward-compat /apis endpoint', async () => {
+    const res = await app.request('https://apis.do/apis')
+    expect(res.ok).toBe(true)
+
+    const body = await res.json()
+    expect(Array.isArray(body.apis)).toBe(true)
+    expect(body.apis.length).toBeGreaterThan(300)
+    expect(body.total).toBe(body.apis.length)
+  })
+})
+
+describe('Events — Auth Protection', () => {
+  it('rejects unauthenticated requests to /events with 401', async () => {
+    const res = await app.request('https://apis.do/events')
+    expect(res.status).toBe(401)
+  })
+
+  it('rejects unauthenticated requests to /events/system with 401', async () => {
+    const res = await app.request('https://apis.do/events/system')
+    expect(res.status).toBe(401)
+  })
+
+  it('rejects unauthenticated requests to /events/data with 401', async () => {
+    const res = await app.request('https://apis.do/events/data')
+    expect(res.status).toBe(401)
+  })
+
+  it('rejects unauthenticated requests to /events/integration with 401', async () => {
+    const res = await app.request('https://apis.do/events/integration')
+    expect(res.status).toBe(401)
+  })
+
+  it('rejects unauthenticated requests to /events/agent with 401', async () => {
+    const res = await app.request('https://apis.do/events/agent')
+    expect(res.status).toBe(401)
+  })
+
+  it('rejects unauthenticated requests to /events/user with 401', async () => {
+    const res = await app.request('https://apis.do/events/user')
+    expect(res.status).toBe(401)
+  })
+
+  it('rejects unauthenticated requests to /events/integration/:provider with 401', async () => {
+    const res = await app.request('https://apis.do/events/integration/stripe')
+    expect(res.status).toBe(401)
+  })
+})
+
+describe('Entity Proxy', () => {
+  const mockHeadlessly = {
+    fetch: (req: Request) => {
+      const url = new URL(req.url)
+      return new Response(JSON.stringify({ data: [], total: 0, path: url.pathname }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    },
+  }
+  const env = { HEADLESSLY: mockHeadlessly } as unknown as Record<string, unknown>
+
+  it('proxies /contacts to HEADLESSLY service binding', async () => {
+    const res = await app.request('https://apis.do/contacts', {}, env)
+    expect(res.ok).toBe(true)
+
+    const body = await res.json()
+    expect(body.path).toBe('/api/contacts')
+  })
+
+  it('proxies /contacts/:id to HEADLESSLY', async () => {
+    const res = await app.request('https://apis.do/contacts/contact_abc123', {}, env)
+    expect(res.ok).toBe(true)
+
+    const body = await res.json()
+    expect(body.path).toBe('/api/contacts/contact_abc123')
+  })
+
+  it('proxies /deals to HEADLESSLY', async () => {
+    const res = await app.request('https://apis.do/deals', {}, env)
+    expect(res.ok).toBe(true)
+
+    const body = await res.json()
+    expect(body.path).toBe('/api/deals')
+  })
+
+  it('returns 503 when HEADLESSLY binding not available', async () => {
+    const res = await app.request('https://apis.do/contacts')
+    expect(res.status).toBe(503)
+
+    const body = await res.json()
+    expect(body.error).toBe('Entity service unavailable')
+  })
+})
+
+describe('Static Discovery Routes', () => {
+  it('returns database discovery without emojis', async () => {
+    const res = await app.request('https://apis.do/database')
+    expect(res.ok).toBe(true)
+
+    const body = await res.json()
+    expect(body.discover).toBeDefined()
+    expect(body.discover['Schemas']).toBe('https://apis.do/database/schemas')
+    for (const key of Object.keys(body.discover)) {
+      expect(key).not.toMatch(/[\u{1F000}-\u{1FFFF}]/u)
+    }
+  })
+
+  it('returns functions discovery', async () => {
+    const res = await app.request('https://apis.do/functions')
+    expect(res.ok).toBe(true)
+
+    const body = await res.json()
+    expect(body.discover['Code Functions']).toBe('https://apis.do/functions/code')
+  })
+
+  it('returns workflows discovery', async () => {
+    const res = await app.request('https://apis.do/workflows')
+    expect(res.ok).toBe(true)
+
+    const body = await res.json()
+    expect(body.discover['All Workflows']).toBe('https://apis.do/workflows/all')
+  })
+
+  it('returns agents discovery', async () => {
+    const res = await app.request('https://apis.do/agents')
+    expect(res.ok).toBe(true)
+
+    const body = await res.json()
+    expect(body.discover['All Agents']).toBe('https://apis.do/agents/all')
+  })
+
+  it('returns integrations discovery', async () => {
+    const res = await app.request('https://apis.do/integrations')
+    expect(res.ok).toBe(true)
+
+    const body = await res.json()
+    expect(body.discover['Stripe']).toBe('https://apis.do/stripe')
+    expect(body.discover['GitHub']).toBe('https://apis.do/github')
+  })
+
+  it('returns stripe discovery', async () => {
+    const res = await app.request('https://apis.do/stripe')
+    expect(res.ok).toBe(true)
+
+    const body = await res.json()
+    expect(body.discover['Customers']).toBe('https://apis.do/stripe/customers')
+    expect(body.links.events).toBe('https://apis.do/events/integration/stripe')
+  })
+
+  it('returns github discovery', async () => {
+    const res = await app.request('https://apis.do/github')
+    expect(res.ok).toBe(true)
+
+    const body = await res.json()
+    expect(body.discover['Repositories']).toBe('https://apis.do/github/repos')
+    expect(body.links.events).toBe('https://apis.do/events/integration/github')
+  })
+
+  it('returns payments discovery', async () => {
+    const res = await app.request('https://apis.do/payments')
+    expect(res.ok).toBe(true)
+
+    const body = await res.json()
+    expect(body.discover['Payment Methods']).toBe('https://apis.do/payments/methods')
+  })
+})
+
+describe('Service Catch-All', () => {
+  it('returns service info with category link', async () => {
+    const res = await app.request('https://apis.do/events')
+    // /events is now a live route, not catch-all — but registry service should still work
+    // Test with a pure registry service
+    const svcRes = await app.request('https://apis.do/services/analytics')
+    expect(svcRes.ok).toBe(true)
+
+    const body = await svcRes.json()
+    expect(body.service.name).toBe('analytics')
+    expect(body.links.category).toMatch(/categories\//)
+  })
+
+  it('returns 404 for unknown service', async () => {
+    const res = await app.request('https://apis.do/nonexistent-service-xyz')
+    expect(res.status).toBe(404)
+  })
+})
+
+describe('Category Detail', () => {
+  it('returns category with services under semantic key', async () => {
+    const res = await app.request('https://apis.do/categories/infrastructure')
+    expect(res.ok).toBe(true)
+
+    const body = await res.json()
+    expect(body.category.slug).toBe('infrastructure')
+    expect(body.category.services).toBeDefined()
+    expect(body.category.services.length).toBeGreaterThan(3)
+    expect(body.category.services[0].api).toMatch(/^https:\/\/apis\.do\//)
+    expect(body.category.services[0].also).toMatch(/\.do\/api$/)
+  })
+})
