@@ -2209,60 +2209,6 @@ function applySortToArray(items: Document[], orderBy: string | { field: string; 
 // Database Client Interface
 // =============================================================================
 
-/**
- * DatabaseDO stub interface — matches the public RPC methods on DatabaseDO.
- * Used for direct DO-to-adapter communication without the ParqueDB middleman.
- */
-interface DatabaseDOStub {
-  create(model: string, data: Record<string, unknown>, ctx?: RequestContext): Promise<Document>
-  get(model: string, id: string, options?: { include?: string[] }): Promise<Document | null>
-  update(model: string, id: string, data: Record<string, unknown>, ctx?: RequestContext): Promise<Document>
-  delete(model: string, id: string, ctx?: RequestContext): Promise<void>
-  list(model: string, options?: QueryOptions): Promise<{ data: Document[]; total: number; limit: number; offset: number; hasMore: boolean }>
-  search(model: string, query: string, options?: QueryOptions): Promise<{ data: Document[]; total: number; limit: number; offset: number; hasMore: boolean }>
-  count(model: string, where?: Record<string, unknown>): Promise<number>
-}
-
-/**
- * Create a DatabaseRpcClient that talks directly to a DatabaseDO stub.
- *
- * Unlike the ParqueDB adapter path (createDOParqueDBService → createParqueDBAdapter)
- * which converts between ParqueDB entity format ($id, $version) and Document format
- * (id, _version), this adapter calls the DO's native CRUD methods directly.
- * The DO already returns Document objects with the correct _-prefixed meta fields.
- */
-function createDatabaseDOAdapter(stub: DatabaseDOStub, _schema: ParsedSchema): DatabaseRpcClient {
-  return {
-    async create(model, data, ctx) {
-      return stub.create(model, data, ctx)
-    },
-
-    async get(model, id, options) {
-      return stub.get(model, id, options)
-    },
-
-    async update(model, id, data, ctx) {
-      return stub.update(model, id, data, ctx)
-    },
-
-    async delete(model, id, ctx) {
-      return stub.delete(model, id, ctx)
-    },
-
-    async list(model, options) {
-      return stub.list(model, options)
-    },
-
-    async search(model, query, options) {
-      return stub.search(model, query, options)
-    },
-
-    async count(model, where) {
-      return stub.count(model, where)
-    },
-  }
-}
-
 interface DatabaseRpcClient {
   create(model: string, data: Record<string, unknown>, ctx?: RequestContext): Promise<Document>
   get(model: string, id: string, options?: { include?: string[] }): Promise<Document | null>
@@ -2296,13 +2242,18 @@ async function getDatabase(
   // DO stubs MUST NOT be cached across requests — their internal I/O context
   // (OutgoingFactory) is request-scoped. Reusing a cached stub from a previous
   // request causes: "Cannot perform I/O on behalf of a different request".
+  //
+  // The DO is wrapped via createDOParqueDBService → createParqueDBAdapter so that
+  // both the production DO (ParqueDB-style: find/countEntities) and the test DO
+  // (which also exposes find/countEntities aliases) go through the same code path.
   const dbBindingName = config.database
   if (dbBindingName) {
     const doNamespace = c.env[dbBindingName] as { idFromName(name: string): { toString(): string }; get(id: unknown): unknown } | undefined
     if (doNamespace?.idFromName) {
       const doId = doNamespace.idFromName(namespace)
-      const stub = doNamespace.get(doId) as DatabaseDOStub
-      return createDatabaseDOAdapter(stub, schema)
+      const stub = doNamespace.get(doId)
+      const service = createDOParqueDBService(stub as Parameters<typeof createDOParqueDBService>[0])
+      return createParqueDBAdapter(service, schema, tenantPrefix)
     }
   }
 

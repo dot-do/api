@@ -150,13 +150,18 @@ export function matchesWhere(doc: Record<string, unknown>, where: Record<string,
             const pattern = String(opVal)
             if (!isSafeRegex(pattern)) return false
             try {
-              const re = new RegExp(pattern)
+              // Read $options sibling (e.g. 'i' for case-insensitive)
+              const flags = typeof ops.$options === 'string' ? ops.$options : ''
+              const re = new RegExp(pattern, flags)
               if (typeof docVal !== 'string' || !re.test(docVal)) return false
             } catch {
               return false
             }
             break
           }
+          case '$options':
+            // Handled alongside $regex — skip
+            break
         }
       }
     } else {

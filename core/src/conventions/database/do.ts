@@ -816,6 +816,9 @@ export class DatabaseDO extends DurableObject<Env> {
 
   async update(model: string, id: string, data: Record<string, unknown>, ctx?: RequestContext): Promise<Document> {
     this.ensureInitialized()
+    // Unwrap $set wrapper if present — the ParqueDB adapter sends { $set: { ... } }
+    const updates = (data.$set as Record<string, unknown>) || data
+
     const existingRows = this.sql.exec(
       'SELECT * FROM entities WHERE id = ? AND type = ? AND deleted_at IS NULL',
       id,
@@ -833,7 +836,7 @@ export class DatabaseDO extends DurableObject<Env> {
 
     const doc: Document = {
       ...existing,
-      ...data,
+      ...updates,
       id: existing.id,
       _version: existing._version + 1,
       _createdAt: existing._createdAt,

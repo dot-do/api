@@ -98,8 +98,13 @@ export function createDOParqueDBService(stub: ParqueDBDOStub): ParqueDBService {
       return stub.delete(ns, id)
     },
 
-    async count(ns) {
-      return stub.countEntities(ns)
+    async count(ns, filter) {
+      if (!filter || Object.keys(filter).length === 0) {
+        return stub.countEntities(ns)
+      }
+      // Filtered count: use find() with filter and return total
+      const result = await stub.find(ns, filter, { limit: 1 })
+      return result.total
     },
 
     async link(fromNs, fromId, predicate, toNs, toId) {
@@ -141,15 +146,22 @@ interface DatabaseRpcClient {
 }
 
 // Meta field names to strip from ...rest during entity transformation.
-// Both $-prefixed (ParqueDB) and unprefixed variants are handled.
+// $-prefixed (ParqueDB), _-prefixed (Document), and unprefixed variants are all handled
+// so entityToDocument is idempotent — calling it on a Document returns an equivalent Document.
 const META_KEYS = new Set([
   '$id', '$type', '$version', '$createdAt', '$updatedAt', '$createdBy', '$updatedBy', '$deletedAt', '$deletedBy',
+  '_version', '_createdAt', '_updatedAt', '_createdBy', '_updatedBy', '_deletedAt', '_deletedBy', '_context',
   'version', 'createdAt', 'updatedAt', 'createdBy', 'updatedBy', 'deletedAt', 'deletedBy',
 ])
 
 /**
  * Convert a ParqueDB entity (with $id, $type, createdAt, etc.) to a
  * @dotdo/api Document (with id, _version, _createdAt, etc.)
+ *
+ * Also handles _-prefixed Document fields, making this function idempotent —
+ * calling it on an already-converted Document returns an equivalent Document.
+ * This is needed because the DO binding may return Documents directly (test DO)
+ * or ParqueDB entities (production DO), and the adapter must handle both.
  */
 function entityToDocument(entity: Record<string, unknown>, context?: string): Document {
   const rawId = (entity.$id as string) || (entity.id as string) || ''
@@ -157,14 +169,14 @@ function entityToDocument(entity: Record<string, unknown>, context?: string): Do
 
   const doc: Document = {
     id: bareId,
-    _version: (entity.$version as number) ?? (entity.version as number) ?? 1,
-    _createdAt: (entity.$createdAt as string) || (entity.createdAt as string) || '',
-    _updatedAt: (entity.$updatedAt as string) || (entity.updatedAt as string) || '',
-    _createdBy: (entity.$createdBy as string) || (entity.createdBy as string) || undefined,
-    _updatedBy: (entity.$updatedBy as string) || (entity.updatedBy as string) || undefined,
-    _deletedAt: (entity.$deletedAt as string) || (entity.deletedAt as string) || null,
-    _deletedBy: (entity.$deletedBy as string) || (entity.deletedBy as string) || null,
-    _context: context || undefined,
+    _version: (entity.$version as number) ?? (entity._version as number) ?? (entity.version as number) ?? 1,
+    _createdAt: (entity.$createdAt as string) || (entity._createdAt as string) || (entity.createdAt as string) || '',
+    _updatedAt: (entity.$updatedAt as string) || (entity._updatedAt as string) || (entity.updatedAt as string) || '',
+    _createdBy: (entity.$createdBy as string) || (entity._createdBy as string) || (entity.createdBy as string) || undefined,
+    _updatedBy: (entity.$updatedBy as string) || (entity._updatedBy as string) || (entity.updatedBy as string) || undefined,
+    _deletedAt: (entity.$deletedAt as string) || (entity._deletedAt as string) || (entity.deletedAt as string) || null,
+    _deletedBy: (entity.$deletedBy as string) || (entity._deletedBy as string) || (entity.deletedBy as string) || null,
+    _context: context || (entity._context as string) || undefined,
   }
   for (const key in entity) {
     if (!META_KEYS.has(key) && key !== 'id') doc[key] = entity[key]
@@ -194,18 +206,18 @@ export function formatEntity(
   const result: Record<string, unknown> = {
     [`${prefix}type`]: modelName,
     [`${prefix}id`]: bareId,
-    [`${prefix}version`]: (entity.$version as number) ?? (entity.version as number) ?? 1,
-    [`${prefix}createdAt`]: (entity.$createdAt as string) || (entity.createdAt as string) || '',
-    [`${prefix}updatedAt`]: (entity.$updatedAt as string) || (entity.updatedAt as string) || '',
+    [`${prefix}version`]: (entity.$version as number) ?? (entity._version as number) ?? (entity.version as number) ?? 1,
+    [`${prefix}createdAt`]: (entity.$createdAt as string) || (entity._createdAt as string) || (entity.createdAt as string) || '',
+    [`${prefix}updatedAt`]: (entity.$updatedAt as string) || (entity._updatedAt as string) || (entity.updatedAt as string) || '',
   }
 
-  const createdBy = (entity.$createdBy as string) || (entity.createdBy as string)
+  const createdBy = (entity.$createdBy as string) || (entity._createdBy as string) || (entity.createdBy as string)
   if (createdBy) result[`${prefix}createdBy`] = createdBy
-  const updatedBy = (entity.$updatedBy as string) || (entity.updatedBy as string)
+  const updatedBy = (entity.$updatedBy as string) || (entity._updatedBy as string) || (entity.updatedBy as string)
   if (updatedBy) result[`${prefix}updatedBy`] = updatedBy
-  const deletedAt = (entity.$deletedAt as string) || (entity.deletedAt as string)
+  const deletedAt = (entity.$deletedAt as string) || (entity._deletedAt as string) || (entity.deletedAt as string)
   if (deletedAt) result[`${prefix}deletedAt`] = deletedAt
-  const deletedBy = (entity.$deletedBy as string) || (entity.deletedBy as string)
+  const deletedBy = (entity.$deletedBy as string) || (entity._deletedBy as string) || (entity.deletedBy as string)
   if (deletedBy) result[`${prefix}deletedBy`] = deletedBy
   if (context) result[`${prefix}context`] = context
 
