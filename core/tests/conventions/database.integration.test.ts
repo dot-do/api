@@ -4,6 +4,7 @@ import { Hono } from 'hono'
 import { databaseConvention } from '../../src/conventions/database'
 import { responseMiddleware } from '../../src/response'
 import { contextMiddleware } from '../../src/middleware/context'
+import { authLevelMiddleware, requireAuth } from '../../src/middleware/auth-levels'
 import type { ApiEnv } from '../../src/types'
 
 function createTestApp(schema: Record<string, Record<string, string>>) {
@@ -1716,5 +1717,246 @@ describe('links.next pagination', () => {
     const body3 = (await res3.json()) as { data: { id: string }[]; links: { next?: string } }
     expect(body3.data.length).toBe(1)
     expect(body3.links.next).toBeUndefined()
+  })
+})
+
+// =============================================================================
+// Auth Middleware Enforcement
+// =============================================================================
+
+describe('Auth middleware enforcement', () => {
+  const schema = {
+    Widget: {
+      name: 'string!',
+      color: 'string',
+    },
+  }
+
+  /**
+   * Creates a test app with authLevelMiddleware + requireAuth on write methods.
+   * GET requests pass through without auth; POST/PUT/PATCH/DELETE require L1+.
+   */
+  function createAuthTestApp() {
+    const app = new Hono<ApiEnv>()
+
+    app.use('*', contextMiddleware())
+    app.use('*', responseMiddleware({ name: 'auth-test' }))
+    app.use('*', authLevelMiddleware())
+
+    // Guard all write methods — requireAuth() defaults to L1+ (any authenticated)
+    const writeMethods = ['POST', 'PUT', 'PATCH', 'DELETE'] as const
+    for (const method of writeMethods) {
+      app.on(method, '*', requireAuth())
+    }
+
+    const { routes } = databaseConvention({ schema, database: 'DATABASE' })
+    app.route('', routes)
+
+    return app
+  }
+
+  it('GET requests pass through without auth', async () => {
+    const app = createAuthTestApp()
+
+    // Seed a widget via direct DB so we can test GET without auth
+    // Instead, just test that the list endpoint works unauthenticated
+    const listRes = await req(app, '/widgets')
+    expect(listRes.status).toBe(200)
+    const listBody = (await listRes.json()) as { data: unknown[]; meta: { total: number } }
+    expect(listBody.data).toBeDefined()
+    expect(Array.isArray(listBody.data)).toBe(true)
+
+    // GET single entity (404 is fine — auth is not blocking it)
+    const getRes = await req(app, '/widgets/nonexistent')
+    expect(getRes.status).toBe(404)
+    const getBody = (await getRes.json()) as { error: { code: string } }
+    expect(getBody.error.code).toBe('NOT_FOUND')
+  })
+
+  it('POST returns 401 when requireAuth is enabled and no token', async () => {
+    const app = createAuthTestApp()
+
+    const res = await req(app, '/widgets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Unauthorized Widget', color: 'red' }),
+    })
+
+    expect(res.status).toBe(401)
+    const body = (await res.json()) as { error: { code: string; message: string } }
+    expect(body.error.code).toBe('UNAUTHORIZED')
+    expect(body.error.message).toBe('Authentication required')
+  })
+
+  it('PUT returns 401 when requireAuth is enabled and no token', async () => {
+    const app = createAuthTestApp()
+
+    const res = await req(app, '/widgets/widget-1', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'Updated Widget', color: 'blue' }),
+    })
+
+    expect(res.status).toBe(401)
+    const body = (await res.json()) as { error: { code: string; message: string } }
+    expect(body.error.code).toBe('UNAUTHORIZED')
+    expect(body.error.message).toBe('Authentication required')
+  })
+
+  it('DELETE returns 401 when requireAuth is enabled and no token', async () => {
+    const app = createAuthTestApp()
+
+    const res = await req(app, '/widgets/widget-1', {
+      method: 'DELETE',
+    })
+
+    expect(res.status).toBe(401)
+    const body = (await res.json()) as { error: { code: string; message: string } }
+    expect(body.error.code).toBe('UNAUTHORIZED')
+    expect(body.error.message).toBe('Authentication required')
+  })
+
+  it('POST succeeds with valid API key auth', async () => {
+    const app = createAuthTestApp()
+
+    const res = await req(app, '/widgets', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': 'agent_test-bot',
+      },
+      body: JSON.stringify({ id: 'auth-widget-1', name: 'Authed Widget', color: 'green' }),
+    })
+
+    expect(res.status).toBe(201)
+    const body = (await res.json()) as { data: Record<string, unknown> }
+    expect(body.data.$id).toBe('auth-widget-1')
+    expect(body.data.name).toBe('Authed Widget')
+  })
+
+  it('PATCH returns 401 when requireAuth is enabled and no token', async () => {
+    const app = createAuthTestApp()
+
+    const res = await req(app, '/widgets/widget-1', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ color: 'purple' }),
+    })
+
+    expect(res.status).toBe(401)
+    const body = (await res.json()) as { error: { code: string; message: string } }
+    expect(body.error.code).toBe('UNAUTHORIZED')
+    expect(body.error.message).toBe('Authentication required')
+  })
+})
+
+// =============================================================================
+// Multi-tenant Namespace Isolation
+// =============================================================================
+
+describe('Multi-tenant namespace isolation', () => {
+  const schema = {
+    Contact: {
+      name: 'string!',
+      email: 'email',
+    },
+  }
+
+  function createTenantApp(namespace: string) {
+    return createTestAppWithConfig({ schema, namespace })
+  }
+
+  it('data created in tenant A is not visible in tenant B', async () => {
+    const { app: appA } = createTenantApp('tenant-a')
+    const { app: appB } = createTenantApp('tenant-b')
+
+    // Create a contact in tenant A
+    const createRes = await req(appA, '/contacts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'iso_c1', name: 'Alice', email: 'alice@tenant-a.com' }),
+    })
+    expect(createRes.status).toBe(201)
+
+    // List in tenant B should be empty
+    const listB = await req(appB, '/contacts')
+    expect(listB.status).toBe(200)
+    const bodyB = (await listB.json()) as { data: Record<string, unknown>[]; meta: { total: number } }
+    expect(bodyB.data.length).toBe(0)
+    expect(bodyB.meta.total).toBe(0)
+
+    // List in tenant A should find the contact
+    const listA = await req(appA, '/contacts')
+    expect(listA.status).toBe(200)
+    const bodyA = (await listA.json()) as { data: Record<string, unknown>[]; meta: { total: number } }
+    expect(bodyA.data.length).toBe(1)
+    expect(bodyA.data[0]!.name).toBe('Alice')
+  })
+
+  it('count is scoped to tenant namespace', async () => {
+    const { app: appA } = createTenantApp('tenant-count-a')
+    const { app: appB } = createTenantApp('tenant-count-b')
+
+    // Create 2 contacts in tenant A
+    await req(appA, '/contacts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'cnt_a1', name: 'Alice', email: 'alice@a.com' }),
+    })
+    await req(appA, '/contacts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'cnt_a2', name: 'Bob', email: 'bob@a.com' }),
+    })
+
+    // Create 1 contact in tenant B
+    await req(appB, '/contacts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'cnt_b1', name: 'Charlie', email: 'charlie@b.com' }),
+    })
+
+    // Count in tenant A should be 2
+    const countA = await req(appA, '/contacts/$count')
+    expect(countA.status).toBe(200)
+    const countBodyA = (await countA.json()) as { data: number }
+    expect(countBodyA.data).toBe(2)
+
+    // Count in tenant B should be 1
+    const countB = await req(appB, '/contacts/$count')
+    expect(countB.status).toBe(200)
+    const countBodyB = (await countB.json()) as { data: number }
+    expect(countBodyB.data).toBe(1)
+  })
+
+  it('updates in one tenant do not affect the other', async () => {
+    const { app: appA } = createTenantApp('tenant-update-a')
+    const { app: appB } = createTenantApp('tenant-update-b')
+
+    // Create contact with same ID in both tenants but different data
+    await req(appA, '/contacts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'shared_id', name: 'Tenant A Contact', email: 'a@a.com' }),
+    })
+    await req(appB, '/contacts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: 'shared_id', name: 'Tenant B Contact', email: 'b@b.com' }),
+    })
+
+    // GET in tenant A should return tenant A's data
+    const getA = await req(appA, '/contacts/shared_id')
+    expect(getA.status).toBe(200)
+    const bodyA = (await getA.json()) as { data: Record<string, unknown> }
+    expect(bodyA.data.name).toBe('Tenant A Contact')
+    expect(bodyA.data.email).toBe('a@a.com')
+
+    // GET in tenant B should return tenant B's data
+    const getB = await req(appB, '/contacts/shared_id')
+    expect(getB.status).toBe(200)
+    const bodyB = (await getB.json()) as { data: Record<string, unknown> }
+    expect(bodyB.data.name).toBe('Tenant B Contact')
+    expect(bodyB.data.email).toBe('b@b.com')
   })
 })

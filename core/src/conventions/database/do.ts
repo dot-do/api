@@ -956,7 +956,7 @@ export class DatabaseDO extends DurableObject<Env> {
       total,
       limit,
       offset,
-      hasMore: offset + docs.length < total,
+      hasMore: offset + limit < total,
     }
   }
 
@@ -992,7 +992,7 @@ export class DatabaseDO extends DurableObject<Env> {
       total,
       limit,
       offset,
-      hasMore: offset + docs.length < total,
+      hasMore: offset + limit < total,
     }
   }
 
