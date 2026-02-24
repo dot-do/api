@@ -118,7 +118,12 @@ function detectAuth(c: Context): DetectedAuth {
   if (!payload || !payload.sub) return { level: 'L0', claims: null }
 
   // Determine L2 vs L3 from claims
-  if (payload.org_verified === true || typeof payload.sso_connection === 'string') {
+  // L3 if: org with id (member of an org), org_verified, sso_connection, or admin/owner role
+  const org = payload.org as { id?: string } | undefined
+  const roles = payload.roles as string[] | undefined
+  const hasOrg = !!(org?.id || payload.org_id || payload.orgId)
+  const hasAdminRole = Array.isArray(roles) && roles.some((r) => /admin|owner/i.test(r))
+  if (hasOrg || hasAdminRole || payload.org_verified === true || typeof payload.sso_connection === 'string') {
     return { level: 'L3', claims: payload }
   }
 
@@ -170,7 +175,8 @@ export function buildUserContext(
     }
 
     case 'L2': {
-      const tenant = (claims?.tenant as string) || undefined
+      const org = claims?.org as { id?: string } | undefined
+      const tenant = (claims?.tenant as string) || org?.id || (claims?.org_id as string) || (claims?.orgId as string) || undefined
       const tenantSuffix = tenant ? `/~${tenant}` : ''
       return {
         authenticated: true,
@@ -191,7 +197,8 @@ export function buildUserContext(
     }
 
     case 'L3': {
-      const tenant = (claims?.tenant as string) || undefined
+      const org = claims?.org as { id?: string } | undefined
+      const tenant = (claims?.tenant as string) || org?.id || (claims?.org_id as string) || (claims?.orgId as string) || undefined
       const tenantSuffix = tenant ? `/~${tenant}` : ''
       return {
         authenticated: true,
