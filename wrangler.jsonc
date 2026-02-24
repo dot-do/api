@@ -29,6 +29,7 @@
     { "tag": "v2", "deleted_classes": ["BatchStreamManager", "EventStreamManager", "SearchStreamManager"] }
   ],
   "vars": {
-    "API_NAME": "apis.do"
+    "API_NAME": "apis.do",
+    "PLATFORM_ORG_ID": "org_01K05B2AERNQ8N0QVSRFBSCNMS"
   }
 }

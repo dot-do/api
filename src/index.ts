@@ -103,6 +103,20 @@ const app = API({
     ],
   },
   routes: (app) => {
+    // ==================== Identity / Debug ====================
+
+    app.get('/me', (c) => {
+      const user = c.get('user' as never)
+      if (!user?.authenticated) {
+        return c.var.respond({
+          error: { message: 'Not authenticated', code: 'UNAUTHORIZED', status: 401 },
+          links: { login: `${base}/login` },
+          status: 401,
+        })
+      }
+      return c.var.respond({ data: user, key: 'user' })
+    })
+
     // ==================== Search ====================
 
     app.get('/search', (c) => {
