@@ -176,11 +176,10 @@ function enrichUserContext(user: UserContext, c: Context, serviceLatency: number
       result.continent = CONTINENT_NAMES[cf.continent as string] || cf.continent || undefined
     }
 
-    // Request identity
-    const cfRay = c.req.header('cf-ray')
-    const rawId = cfRay || c.req.header('x-request-id') || crypto.randomUUID()
+    // Request identity — cf-ray already includes the colo code
+    const rawId = c.req.header('cf-ray') || c.req.header('x-request-id') || crypto.randomUUID()
     const colo = cf.colo as string | undefined
-    result.requestId = `request_${rawId}${colo ? `-${colo}` : ''}`
+    result.requestId = `request_${rawId}`
     result.localTime = cf.timezone
       ? new Date().toLocaleString('en-US', { timeZone: cf.timezone as string })
       : undefined

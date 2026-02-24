@@ -413,29 +413,27 @@ const app = API({
 
       // 1. Request trace (request_* — contains hyphens so doesn't match isEntityId)
       if (id.startsWith('request_')) {
-        const ray = id.slice('request_'.length)
-        const coloMatch = ray.match(/^(.+)-([A-Z]{3})$/)
-        const rayId = coloMatch ? coloMatch[1] : ray
-        const colo = coloMatch ? coloMatch[2] : null
+        const cfRay = id.slice('request_'.length) // e.g. '9d2ed000983652a6-ORD'
 
         if (getChCredentials(c.env)) {
           try {
             const events = await chQuery(
               c.env,
-              `SELECT id, ray, ns, ts, type, event, url, source
+              `SELECT *
                FROM events
-               WHERE ray IN ({r1:String}, {r2:String})
+               WHERE ray = {cfRay:String}
+                  OR data.event.request.headers.\`cf-ray\` = {cfRay:String}
                ORDER BY ts DESC
                LIMIT 50`,
-              { r1: ray, r2: rayId },
+              { cfRay },
               'platform',
             )
             if (events.length) {
               return c.var.respond({
                 $type: 'Request',
                 $id: id,
-                data: events,
-                key: 'trace',
+                data: events.length === 1 ? events[0] : events,
+                key: events.length === 1 ? 'request' : 'trace',
                 total: events.length,
                 links: { events: `${base}/events` },
               })
@@ -448,7 +446,7 @@ const app = API({
         return c.var.respond({
           $type: 'Request',
           $id: id,
-          data: { id, ray: rayId, ...(colo ? { colo } : {}) },
+          data: { id, cfRay },
           key: 'request',
           links: { events: `${base}/events` },
         })
