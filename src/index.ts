@@ -61,7 +61,7 @@ const app = API({
   events: {
     scope: '*',
     topLevelRoutes: false,
-    auth: 'admin',
+    auth: 'superadmin',
   },
   landing: (c) => {
     return c.var.respond({
@@ -217,22 +217,66 @@ const app = API({
 
     // ==================== Static Discovery Routes ====================
 
-    app.get('/database', (c) => {
+    const databaseHandler = (c: any) => {
       return c.var.respond({
         data: {
-          'Schemas': `${base}/database/schemas`,
-          'Collections': `${base}/database/collections`,
-          'Queries': `${base}/database/queries`,
-          'Migrations': `${base}/database/migrations`,
+          // Identity
+          'Users': `${base}/users`,
+          'API Keys': `${base}/api-keys`,
+          // CRM
+          'Organizations': `${base}/organizations`,
+          'Contacts': `${base}/contacts`,
+          'Leads': `${base}/leads`,
+          'Deals': `${base}/deals`,
+          'Activities': `${base}/activities`,
+          'Pipelines': `${base}/pipelines`,
+          // Billing
+          'Customers': `${base}/customers`,
+          'Products': `${base}/products`,
+          'Plans': `${base}/plans`,
+          'Prices': `${base}/prices`,
+          'Subscriptions': `${base}/subscriptions`,
+          'Invoices': `${base}/invoices`,
+          'Payments': `${base}/payments`,
+          // Projects
+          'Projects': `${base}/projects`,
+          'Issues': `${base}/issues`,
+          'Comments': `${base}/comments`,
+          // Content
+          'Content': `${base}/content`,
+          'Assets': `${base}/assets`,
+          'Sites': `${base}/sites`,
+          // Support
+          'Tickets': `${base}/tickets`,
+          // Analytics
+          'Events': `${base}/events`,
+          'Metrics': `${base}/metrics`,
+          'Funnels': `${base}/funnels`,
+          'Goals': `${base}/goals`,
+          // Marketing
+          'Campaigns': `${base}/campaigns`,
+          'Segments': `${base}/segments`,
+          'Forms': `${base}/forms`,
+          // Experiments
+          'Experiments': `${base}/experiments`,
+          'Feature Flags': `${base}/feature-flags`,
+          // Platform
+          'Workflows': `${base}/workflows`,
+          'Integrations': `${base}/integrations`,
+          'Agents': `${base}/agents`,
+          // Communication
+          'Messages': `${base}/messages`,
         },
-        key: 'discover',
+        key: 'collections',
+        total: 35,
         links: { also: 'https://database.do/api', docs: 'https://docs.headless.ly/database' },
         actions: {
-          'Create Collection': `POST ${base}/database/collections`,
           'Run Query': `POST ${base}/database/queries`,
         },
       })
-    })
+    }
+    app.get('/database', databaseHandler)
+    app.get('/db', databaseHandler)
 
     app.get('/functions', (c) => {
       return c.var.respond({

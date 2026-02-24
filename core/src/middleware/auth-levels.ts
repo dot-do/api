@@ -3,7 +3,7 @@ import type { UserContext } from '../types'
 import { extractCookieToken } from '../helpers/cookies'
 
 // SECURITY NOTE: This middleware performs NO cryptographic verification.
-// It inspects token format to classify auth level (L0-L3).
+// It inspects token format to classify auth level (L0-L4).
 // It MUST be used after authMiddleware (which verifies via AUTH RPC)
 // or behind the auth-identity snippet (which verifies at CDN edge).
 // Using this middleware standalone provides NO authentication guarantee.
@@ -12,14 +12,14 @@ import { extractCookieToken } from '../helpers/cookies'
 // Types
 // ---------------------------------------------------------------------------
 
-export type AuthLevel = 'claimed' | 'verified'
+export type AuthLevel = 'claimed' | 'verified' | 'admin' | 'superadmin'
 
 export interface AuthLevelConfig {
   identityUrl?: string
   billingUrl?: string
 }
 
-type Level = 'L0' | 'L1' | 'L2' | 'L3'
+type Level = 'L0' | 'L1' | 'L2' | 'L3' | 'L4'
 
 /** Numeric ordering so we can compare with >= */
 const LEVEL_ORDER: Record<Level, number> = {
@@ -27,13 +27,15 @@ const LEVEL_ORDER: Record<Level, number> = {
   L1: 1,
   L2: 2,
   L3: 3,
+  L4: 4,
 }
 
 /** Map the friendly requireAuth argument to the minimum Level needed. */
 const AUTH_LEVEL_MAP: Record<string, Level> = {
   claimed: 'L2',
-  verified: 'L3',
+  verified: 'L2',
   admin: 'L3',
+  superadmin: 'L4',
 }
 
 // ---------------------------------------------------------------------------
@@ -72,6 +74,13 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
 // ---------------------------------------------------------------------------
 // Determine auth level from the raw request
 // ---------------------------------------------------------------------------
+//
+// L0 — Anonymous (no token)
+// L1 — API key (agent identity)
+// L2 — Authenticated user (valid JWT with sub)
+// L3 — Org admin (admin/owner role within their org/tenant)
+// L4 — Superadmin (platformRole: 'superadmin' — .do org only, minted by AUTH worker)
+//
 
 interface DetectedAuth {
   level: Level
@@ -80,10 +89,13 @@ interface DetectedAuth {
 
 function detectAuth(c: Context): DetectedAuth {
   // 0. Fast path: trust cf.actor from auth-identity snippet (tamper-proof)
-  const cf = (c.req.raw as unknown as { cf?: { authenticated?: boolean; actor?: { id: string; name: string; email: string; orgId: string; platformRole?: string } } }).cf
+  const cf = (c.req.raw as unknown as { cf?: { authenticated?: boolean; actor?: { id: string; name: string; email: string; orgId: string; platformRole?: string; roles?: string[] } } }).cf
   if (cf?.authenticated && cf.actor) {
+    const isSuperadmin = cf.actor.platformRole === 'superadmin'
+    const isOrgAdmin = Array.isArray(cf.actor.roles) && cf.actor.roles.some((r) => /admin|owner/i.test(r))
+    const level: Level = isSuperadmin ? 'L4' : isOrgAdmin ? 'L3' : 'L2'
     return {
-      level: cf.actor.platformRole === 'superadmin' ? 'L3' : 'L2',
+      level,
       claims: { sub: cf.actor.id, name: cf.actor.name, email: cf.actor.email, orgId: cf.actor.orgId, platformRole: cf.actor.platformRole },
     }
   }
@@ -113,17 +125,22 @@ function detectAuth(c: Context): DetectedAuth {
     }
   }
 
-  // 2b. JWT in Authorization header
+  // 2b. JWT
   const payload = decodeJwtPayload(token)
   if (!payload || !payload.sub) return { level: 'L0', claims: null }
 
-  // Determine L2 vs L3 from claims
-  // L3 = platform superadmin: AUTH worker mints platformRole: 'superadmin' for .do org members
-  // L2 = any authenticated user with a valid JWT
+  // L4 — platform superadmin (AUTH worker mints platformRole: 'superadmin' for .do org)
   if (payload.platformRole === 'superadmin') {
+    return { level: 'L4', claims: payload }
+  }
+
+  // L3 — org admin (admin/owner role in their tenant)
+  const roles = payload.roles as string[] | undefined
+  if (Array.isArray(roles) && roles.some((r) => /admin|owner/i.test(r))) {
     return { level: 'L3', claims: payload }
   }
 
+  // L2 — authenticated user
   return { level: 'L2', claims: payload }
 }
 
@@ -133,6 +150,13 @@ function detectAuth(c: Context): DetectedAuth {
 
 const DEFAULT_IDENTITY_URL = 'https://id.org.ai'
 const DEFAULT_BILLING_URL = 'https://billing.do'
+
+/** Extract org/tenant ID from JWT claims (supports multiple formats) */
+function extractTenant(claims: Record<string, unknown> | null): string | undefined {
+  if (!claims) return undefined
+  const org = claims.org as { id?: string } | undefined
+  return (claims.tenant as string) || org?.id || (claims.org_id as string) || (claims.orgId as string) || undefined
+}
 
 export function buildUserContext(
   claims: Record<string, unknown> | null,
@@ -161,9 +185,6 @@ export function buildUserContext(
         level: 'L1',
         agent: { id: agentId, name: agentName },
         plan: 'free',
-        usage: {
-          requests: { used: 0, limit: 1000 },
-        },
         links: {
           claim: `${identityUrl}/claim`,
           upgrade: `${billingUrl}/upgrade`,
@@ -172,8 +193,7 @@ export function buildUserContext(
     }
 
     case 'L2': {
-      const org = claims?.org as { id?: string } | undefined
-      const tenant = (claims?.tenant as string) || org?.id || (claims?.org_id as string) || (claims?.orgId as string) || undefined
+      const tenant = extractTenant(claims)
       const tenantSuffix = tenant ? `/~${tenant}` : ''
       return {
         authenticated: true,
@@ -183,9 +203,6 @@ export function buildUserContext(
         email: claims?.email as string | undefined,
         tenant,
         plan: (claims?.plan as string) || 'free',
-        usage: {
-          requests: { used: 0, limit: 50000 },
-        },
         links: {
           billing: `${billingUrl}${tenantSuffix}`,
           settings: `${identityUrl}${tenantSuffix}/settings`,
@@ -194,8 +211,7 @@ export function buildUserContext(
     }
 
     case 'L3': {
-      const org = claims?.org as { id?: string } | undefined
-      const tenant = (claims?.tenant as string) || org?.id || (claims?.org_id as string) || (claims?.orgId as string) || undefined
+      const tenant = extractTenant(claims)
       const tenantSuffix = tenant ? `/~${tenant}` : ''
       return {
         authenticated: true,
@@ -204,15 +220,32 @@ export function buildUserContext(
         name: claims?.name as string | undefined,
         email: claims?.email as string | undefined,
         tenant,
-        plan: (claims?.plan as string) || 'enterprise',
-        usage: {
-          requests: { used: 0, limit: 500000 },
+        plan: (claims?.plan as string) || 'pro',
+        links: {
+          billing: `${billingUrl}${tenantSuffix}`,
+          settings: `${identityUrl}${tenantSuffix}/settings`,
+          team: `${identityUrl}${tenantSuffix}/team`,
         },
+      }
+    }
+
+    case 'L4': {
+      const tenant = extractTenant(claims)
+      const tenantSuffix = tenant ? `/~${tenant}` : ''
+      return {
+        authenticated: true,
+        level: 'L4',
+        id: claims?.sub as string | undefined,
+        name: claims?.name as string | undefined,
+        email: claims?.email as string | undefined,
+        tenant,
+        plan: 'enterprise',
         links: {
           billing: `${billingUrl}${tenantSuffix}`,
           settings: `${identityUrl}${tenantSuffix}/settings`,
           team: `${identityUrl}${tenantSuffix}/team`,
           sso: `${identityUrl}${tenantSuffix}/sso`,
+          admin: `${identityUrl}/admin`,
         },
       }
     }
@@ -239,9 +272,10 @@ export function authLevelMiddleware(config?: AuthLevelConfig): MiddlewareHandler
 /**
  * Route-level guard middleware.
  *
- * - `requireAuth()`           → L1+ (any authenticated)
- * - `requireAuth('claimed')`  → L2+
- * - `requireAuth('verified')` → L3+
+ * - `requireAuth()`              → L1+ (any authenticated)
+ * - `requireAuth('claimed')`     → L2+ (authenticated user)
+ * - `requireAuth('admin')`       → L3+ (org admin)
+ * - `requireAuth('superadmin')`  → L4  (platform superadmin)
  */
 export function requireAuth(level?: AuthLevel): MiddlewareHandler {
   const minLevel: Level = level ? (AUTH_LEVEL_MAP[level] ?? 'L1') : 'L1'

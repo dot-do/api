@@ -49,7 +49,7 @@ export interface Options {
 
 export interface UserContext {
   authenticated: boolean
-  level?: 'L0' | 'L1' | 'L2' | 'L3'
+  level?: 'L0' | 'L1' | 'L2' | 'L3' | 'L4'
   id?: string
   name?: string
   email?: string
