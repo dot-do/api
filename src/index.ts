@@ -1,4 +1,4 @@
-import { API, authLevelMiddleware, requireAuth } from '@dotdo/api'
+import { API, authLevelMiddleware, parseEntityId } from '@dotdo/api'
 import { buildRegistry, searchServices, getService, getCategory, listCategories } from './registry'
 import { chQuery, formatCount, getChCredentials } from './clickhouse'
 
@@ -37,7 +37,7 @@ const ENTITY_PLURALS = new Set([
   'assets',
   'sites',
   'tickets',
-  // 'events' — handled by ClickHouse analytics routes, not entity proxy
+  // 'events' — handled by eventsConvention via EVENTS service binding, not entity proxy
   'metrics',
   'funnels',
   'goals',
@@ -52,99 +52,6 @@ const ENTITY_PLURALS = new Set([
   'messages',
 ])
 
-// ── ClickHouse event category filters ─────────────────────────────────────────
-const EVENT_CATEGORIES: Record<string, { types: string[]; like?: string; label: string }> = {
-  system: { types: ['request', 'rpc', 'trace'], label: 'System Events' },
-  data: { types: ['cdc'], label: 'Data Events (CDC)' },
-  integration: { types: ['webhook'], label: 'Integration Events' },
-  agent: { types: [], like: 'llm.%', label: 'Agent Events' },
-  user: { types: ['pageview', 'track', 'identify', 'page'], label: 'User Events' },
-}
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-function safeInt(val: string | undefined, fallback: number, min: number, max: number): number {
-  const n = parseInt(val || String(fallback), 10)
-  return Math.min(Math.max(isNaN(n) ? fallback : n, min), max)
-}
-
-function parseSince(since: string | null): string | null {
-  if (!since) return null
-  const match = since.match(/^(\d+)(h|d|m)$/)
-  if (!match) return null
-  const [, num, unit] = match
-  const intervals: Record<string, string> = { h: 'HOUR', d: 'DAY', m: 'MINUTE' }
-  return `now() - INTERVAL ${num} ${intervals[unit]}`
-}
-
-function buildEventConditions(
-  opts: { type?: string | null; event?: string | null; source?: string | null; since?: string | null; excludeTail?: boolean },
-  extraConditions: string[] = [],
-): { where: string; params: Record<string, string | number> } {
-  const conditions: string[] = [...extraConditions]
-  const params: Record<string, string | number> = {}
-
-  if (opts.type) {
-    params.type = opts.type
-    conditions.push('type = {type:String}')
-  }
-  if (opts.event) {
-    params.event = opts.event
-    conditions.push('event = {event:String}')
-  }
-  if (opts.source) {
-    params.source = opts.source
-    conditions.push('source = {source:String}')
-  } else if (opts.excludeTail !== false) {
-    conditions.push("source != 'tail'")
-  }
-
-  const sinceExpr = parseSince(opts.since)
-  if (sinceExpr) {
-    conditions.push(`ts >= ${sinceExpr}`)
-  } else if (!opts.since) {
-    conditions.push('ts >= now() - INTERVAL 7 DAY')
-  }
-
-  return { where: conditions.length ? conditions.join(' AND ') : '1=1', params }
-}
-
-async function queryEventsFacets(
-  env: Record<string, unknown>,
-  where: string,
-  params: Record<string, string | number>,
-): Promise<{ total: number; facets: Record<string, string> }> {
-  const [countData, facetData] = await Promise.all([
-    chQuery(env, `SELECT count() AS total FROM events WHERE ${where}`, params),
-    chQuery(env, `SELECT type, count() AS cnt FROM events WHERE ${where} GROUP BY type ORDER BY cnt DESC LIMIT 20`, params),
-  ])
-
-  const total = Number(countData[0]?.total ?? 0)
-  const facets: Record<string, string> = {}
-  for (const row of facetData) {
-    const t = String(row.type)
-    const cnt = Number(row.cnt)
-    facets[`${t} (${formatCount(cnt)})`] = `${base}/events?type=${t}`
-  }
-
-  return { total, facets }
-}
-
-async function querySubFacets(
-  env: Record<string, unknown>,
-  where: string,
-  params: Record<string, string | number>,
-): Promise<Record<string, string>> {
-  const facetData = await chQuery(env, `SELECT event, count() AS cnt FROM events WHERE ${where} GROUP BY event ORDER BY cnt DESC LIMIT 20`, params)
-  const facets: Record<string, string> = {}
-  for (const row of facetData) {
-    const e = String(row.event)
-    const cnt = Number(row.cnt)
-    facets[`${e} (${formatCount(cnt)})`] = `${base}/events?event=${e}`
-  }
-  return facets
-}
-
 // ── App ───────────────────────────────────────────────────────────────────────
 
 const app = API({
@@ -153,26 +60,11 @@ const app = API({
   version: '0.4.0',
   auth: { mode: 'optional' },
   mcp: { name: 'apis.do', version: '0.4.0' },
-  landing: async (c) => {
-    // Try to fetch live event type facets from ClickHouse
-    let eventFacets: Record<string, string> | null = null
-    try {
-      if (getChCredentials(c.env)) {
-        const facetData = await chQuery(
-          c.env,
-          'SELECT type, count() AS cnt FROM events WHERE ts >= now() - INTERVAL 7 DAY GROUP BY type ORDER BY cnt DESC LIMIT 10',
-        )
-        eventFacets = {}
-        for (const row of facetData) {
-          const t = String(row.type)
-          const cnt = Number(row.cnt)
-          eventFacets[`${t} (${formatCount(cnt)})`] = `${base}/events?type=${t}`
-        }
-      }
-    } catch {
-      // Graceful degradation — show discover without counts
-    }
-
+  events: {
+    scope: '*',
+    topLevelRoutes: false,
+  },
+  landing: (c) => {
     return c.var.respond({
       data: {
         'Search APIs': `${base}/search?q=database`,
@@ -186,7 +78,6 @@ const app = API({
         'Payments': `${base}/payments`,
         'Integrations': `${base}/integrations`,
         'Identity & Auth': `${base}/oauth`,
-        ...(eventFacets ? { '---': '---', ...eventFacets } : {}),
       },
       key: 'discover',
       links: {
@@ -311,184 +202,6 @@ const app = API({
       const q = c.req.query('q')?.toLowerCase()
       const results = q ? searchServices(registry, q) : registry.services
       return c.var.respond({ data: results, key: 'apis', total: results.length })
-    })
-
-    // ==================== Events — Live from ClickHouse ====================
-    // Events require verified org (L3) + admin role.
-    // Future: allow tenant-scoped event access for non-admin org members.
-    app.use('/events/*', requireAuth('verified'))
-    app.use('/events', requireAuth('verified'))
-
-    // After L3 gate, check admin role via AUTH RPC binding
-    const requireEventsAdmin = async (c: any, next: any) => {
-      const token = c.req.header('authorization')?.replace('Bearer ', '') || c.req.header('cookie')?.match(/(?:auth|wos-session)=([^;]+)/)?.[1]
-      if (token && c.env?.AUTH?.isAdmin) {
-        const isAdmin = await c.env.AUTH.isAdmin(token)
-        if (!isAdmin) {
-          return c.json({ error: 'Admin access required — event data is restricted to organization administrators' }, 403)
-        }
-      }
-      return next()
-    }
-    app.use('/events/*', requireEventsAdmin)
-    app.use('/events', requireEventsAdmin)
-
-    app.get('/events', async (c) => {
-      if (!getChCredentials(c.env)) {
-        return c.var.respond({
-          data: {
-            'System Events': `${base}/events/system`,
-            'Data Events (CDC)': `${base}/events/data`,
-            'Integration Events': `${base}/events/integration`,
-            'Agent Events': `${base}/events/agent`,
-            'User Events': `${base}/events/user`,
-          },
-          key: 'discover',
-          links: { also: 'https://events.do/api', docs: 'https://docs.headless.ly/events' },
-        })
-      }
-
-      try {
-        const limit = safeInt(c.req.query('limit'), 20, 1, 1000)
-        const offset = safeInt(c.req.query('offset'), 0, 0, 1_000_000)
-        const { where, params } = buildEventConditions({
-          type: c.req.query('type'),
-          event: c.req.query('event'),
-          source: c.req.query('source'),
-          since: c.req.query('since'),
-        })
-
-        const { total, facets } = await queryEventsFacets(c.env, where, params)
-
-        const links: Record<string, string> = {
-          also: 'https://events.do/api',
-          docs: 'https://docs.headless.ly/events',
-        }
-        if (offset + limit < total) {
-          links.next = `${base}/events?limit=${limit}&offset=${offset + limit}${c.req.query('type') ? `&type=${c.req.query('type')}` : ''}${c.req.query('since') ? `&since=${c.req.query('since')}` : ''}`
-        }
-        if (offset > 0) {
-          links.prev = `${base}/events?limit=${limit}&offset=${Math.max(0, offset - limit)}${c.req.query('type') ? `&type=${c.req.query('type')}` : ''}${c.req.query('since') ? `&since=${c.req.query('since')}` : ''}`
-        }
-
-        return c.var.respond({
-          data: facets,
-          key: 'discover',
-          total,
-          limit,
-          links,
-          options: {
-            'Last Hour': `${base}/events?since=1h`,
-            'Last 24 Hours': `${base}/events?since=24h`,
-            'Last Week': `${base}/events?since=7d`,
-            'Last 30 Days': `${base}/events?since=30d`,
-          },
-        })
-      } catch (err) {
-        console.error('[events] ClickHouse query failed:', err)
-        return c.json({ error: 'ClickHouse Cloud unavailable' }, 503)
-      }
-    })
-
-    // Event sub-categories
-    for (const [category, config] of Object.entries(EVENT_CATEGORIES)) {
-      app.get(`/events/${category}`, async (c) => {
-        if (!getChCredentials(c.env)) {
-          return c.json({ error: 'ClickHouse not configured' }, 503)
-        }
-
-        try {
-          const limit = Math.min(parseInt(c.req.query('limit') || '20', 10), 1000)
-          const offset = parseInt(c.req.query('offset') || '0', 10)
-
-          const extraConditions: string[] = []
-          if (config.types.length) {
-            extraConditions.push(`type IN (${config.types.map((t) => `'${t}'`).join(', ')})`)
-          }
-          if (config.like) {
-            extraConditions.push(`type LIKE '${config.like}'`)
-          }
-
-          const { where, params } = buildEventConditions(
-            {
-              event: c.req.query('event'),
-              source: c.req.query('source'),
-              since: c.req.query('since'),
-            },
-            extraConditions,
-          )
-
-          const [{ total, facets }, subFacets] = await Promise.all([
-            queryEventsFacets(c.env, where, params),
-            querySubFacets(c.env, where, params),
-          ])
-
-          return c.var.respond({
-            data: Object.keys(subFacets).length ? subFacets : facets,
-            key: 'discover',
-            total,
-            limit,
-            links: {
-              parent: `${base}/events`,
-              also: `https://events.do/api/${category}`,
-            },
-            options: {
-              'Last Hour': `${base}/events/${category}?since=1h`,
-              'Last 24 Hours': `${base}/events/${category}?since=24h`,
-              'Last Week': `${base}/events/${category}?since=7d`,
-            },
-          })
-        } catch (err) {
-          console.error(`[events/${category}] ClickHouse query failed:`, err)
-          return c.json({ error: 'ClickHouse Cloud unavailable' }, 503)
-        }
-      })
-    }
-
-    // Integration drill-down by provider
-    app.get('/events/integration/:provider', async (c) => {
-      const provider = c.req.param('provider')
-
-      if (!getChCredentials(c.env)) {
-        const svc = getService(registry, provider)
-        return c.var.respond({
-          data: { provider, description: svc?.description || `${provider} integration events`, status: svc ? 'connected' : 'available' },
-          key: 'integration',
-          links: { parent: `${base}/events/integration`, also: `https://${provider}.do/api/events` },
-        })
-      }
-
-      try {
-        const { where, params } = buildEventConditions(
-          { since: c.req.query('since') },
-          ['type = {_wh_type:String}', 'event LIKE {_providerPrefix:String}'],
-        )
-        params._wh_type = 'webhook'
-        params._providerPrefix = `${provider}.%`
-
-        const subFacets = await querySubFacets(c.env, where, params)
-        const countData = await chQuery(c.env, `SELECT count() AS total FROM events WHERE ${where}`, params)
-        const total = Number(countData[0]?.total ?? 0)
-
-        return c.var.respond({
-          data: subFacets,
-          key: 'discover',
-          total,
-          links: {
-            parent: `${base}/events/integration`,
-            also: `https://${provider}.do/api/events`,
-            webhooks: `${base}/${provider}/webhooks`,
-          },
-          options: {
-            'Last Hour': `${base}/events/integration/${provider}?since=1h`,
-            'Last 24 Hours': `${base}/events/integration/${provider}?since=24h`,
-            'Last Week': `${base}/events/integration/${provider}?since=7d`,
-          },
-        })
-      } catch (err) {
-        console.error(`[events/integration/${provider}] ClickHouse query failed:`, err)
-        return c.json({ error: 'ClickHouse Cloud unavailable' }, 503)
-      }
     })
 
     // ==================== Static Discovery Routes ====================
@@ -689,11 +402,93 @@ const app = API({
     app.all('/device', (c) => c.env.AUTH_HTTP.fetch(c.req.raw))
     app.all('/admin-portal', (c) => c.env.AUTH_HTTP.fetch(c.req.raw))
 
-    // ==================== Service-Scoped Catch-All ====================
+    // ==================== Self-Describing ID + Service Catch-All ====================
+    // Handles three patterns:
+    //   1. request_<ray>-<colo>  → Request trace lookup (ClickHouse)
+    //   2. <type>_<sqid>         → Entity lookup (HEADLESSLY proxy)
+    //   3. <name>                → Service registry lookup
 
-    app.get('/:service', (c) => {
-      const name = c.req.param('service')
-      const svc = getService(registry, name)
+    app.get('/:id', async (c) => {
+      const id = c.req.param('id')
+
+      // 1. Request trace (request_* — contains hyphens so doesn't match isEntityId)
+      if (id.startsWith('request_')) {
+        const ray = id.slice('request_'.length)
+        const coloMatch = ray.match(/^(.+)-([A-Z]{3})$/)
+        const rayId = coloMatch ? coloMatch[1] : ray
+        const colo = coloMatch ? coloMatch[2] : null
+
+        if (getChCredentials(c.env)) {
+          try {
+            const events = await chQuery(
+              c.env,
+              `SELECT id, ray, ns, ts, type, event, url, source
+               FROM events
+               WHERE ray IN ({r1:String}, {r2:String})
+               ORDER BY ts DESC
+               LIMIT 50`,
+              { r1: ray, r2: rayId },
+              'platform',
+            )
+            if (events.length) {
+              return c.var.respond({
+                $type: 'Request',
+                $id: id,
+                data: events,
+                key: 'trace',
+                total: events.length,
+                links: { events: `${base}/events` },
+              })
+            }
+          } catch (err) {
+            console.error('[request] ClickHouse trace lookup failed:', err)
+          }
+        }
+
+        return c.var.respond({
+          $type: 'Request',
+          $id: id,
+          data: { id, ray: rayId, ...(colo ? { colo } : {}) },
+          key: 'request',
+          links: { events: `${base}/events` },
+        })
+      }
+
+      // 2. Entity ID (type_sqid format — e.g. contact_abc, deal_kRziM)
+      const parsed = parseEntityId(id)
+      if (parsed) {
+        if (!getChCredentials(c.env)) return c.json({ error: 'Data service unavailable' }, 503)
+        try {
+          const rows = await chQuery(
+            c.env,
+            `SELECT id, type, name, data, ns, updatedAt, updatedBy, v
+             FROM data
+             WHERE id = {id:String}
+             ORDER BY v DESC
+             LIMIT 1`,
+            { id: parsed.id },
+            'platform',
+          )
+          if (rows.length) {
+            const row = rows[0]!
+            return c.var.respond({
+              $type: parsed.type,
+              $id: parsed.id,
+              data: row.data ?? row,
+              key: parsed.type,
+              links: {
+                collection: `${base}/${parsed.collection}`,
+              },
+            })
+          }
+        } catch (err) {
+          console.error(`[entity] ClickHouse lookup failed for ${parsed.id}:`, err)
+        }
+        return c.notFound()
+      }
+
+      // 3. Service registry lookup (fallback)
+      const svc = getService(registry, id)
       if (!svc) return c.notFound()
 
       return c.var.respond({

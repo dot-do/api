@@ -21,7 +21,8 @@
   "services": [
     { "binding": "AUTH", "service": "auth", "entrypoint": "AuthRPC" },
     { "binding": "AUTH_HTTP", "service": "oauth" },
-    { "binding": "HEADLESSLY", "service": "headlessly-api" }
+    { "binding": "HEADLESSLY", "service": "headlessly-api" },
+    { "binding": "EVENTS", "service": "events", "entrypoint": "EventsService" }
   ],
   "migrations": [
     { "tag": "v1", "new_sqlite_classes": ["BatchStreamManager", "EventStreamManager", "SearchStreamManager"] },
