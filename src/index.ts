@@ -1,4 +1,4 @@
-import { API, authLevelMiddleware, parseEntityId } from '@dotdo/api'
+import { API, parseEntityId } from '@dotdo/api'
 import { buildRegistry, searchServices, getService, getCategory, listCategories } from './registry'
 import { formatCount } from './clickhouse'
 
@@ -103,8 +103,6 @@ const app = API({
     ],
   },
   routes: (app) => {
-    app.use('*', authLevelMiddleware())
-
     // ==================== Search ====================
 
     app.get('/search', (c) => {

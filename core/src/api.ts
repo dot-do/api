@@ -3,7 +3,7 @@ import type { ApiConfig, ApiEnv } from './types'
 import type { ApiInput } from './config'
 import { resolveConfig } from './config'
 import { responseMiddleware } from './response'
-import { contextMiddleware, corsMiddleware, authMiddleware, rateLimitMiddleware, createErrorHandler } from './middleware'
+import { contextMiddleware, corsMiddleware, authMiddleware, authLevelMiddleware, rateLimitMiddleware, createErrorHandler } from './middleware'
 import { crudConvention, proxyConvention, rpcConvention, mcpConvention, analyticsMiddleware, analyticsRoutes, analyticsBufferRoutes, testingConvention, databaseConvention, functionsConvention, eventsConvention } from './conventions'
 import { McpToolRegistry } from './mcp-registry'
 import type { FunctionsConfig, FunctionDef } from './conventions/functions/types'
@@ -70,10 +70,14 @@ export function API(input?: ApiInput): Hono<ApiEnv> {
   app.use('*', contextMiddleware())
   app.use('*', responseMiddleware(config))
 
-  // Auth middleware
+  // Auth middleware — verifies tokens via AUTH RPC binding
   if (config.auth && config.auth.mode !== 'none') {
     app.use('*', authMiddleware(config))
   }
+
+  // Auth level middleware — classifies auth level (L0-L3) from token/cookie
+  // Must run after authMiddleware and BEFORE any requireAuth() guards
+  app.use('*', authLevelMiddleware())
 
   // Rate limiting
   if (config.rateLimit) {
