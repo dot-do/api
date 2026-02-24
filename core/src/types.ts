@@ -142,6 +142,10 @@ export interface RespondOptions<T = unknown> {
   limit?: number
   /** Current page number (page-based pagination) */
   page?: number
+  /** Whether more results exist beyond the current page */
+  hasMore?: boolean
+  /** Current offset (offset-based pagination) */
+  offset?: number
   links?: Links
   actions?: Actions
   options?: Options
@@ -150,6 +154,8 @@ export interface RespondOptions<T = unknown> {
   status?: number
   error?: ErrorDetail
   user?: UserContext | UserInfo
+  /** Extra keyed sections to include in the response envelope */
+  [key: string]: unknown
 }
 
 // Auth configuration

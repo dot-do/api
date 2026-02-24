@@ -7,7 +7,7 @@ export function responseMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv>
     const requestStart = performance.now()
 
     c.set('respond', <T = unknown>(options: RespondOptions<T>): Response => {
-      const { data, key, links, actions, options: opts, status = 200, error, user } = options
+      const { data, key, links, actions, options: opts, status = 200, error, user, ...extra } = options
 
       const url = new URL(c.req.url)
       const selfUrl = url.toString()
@@ -73,6 +73,18 @@ export function responseMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv>
 
       // View customization links
       if (opts) envelope.options = opts
+
+      // Extra keyed sections (e.g. discover, recent, hasMore, offset)
+      const reserved = new Set(['data', 'key', 'links', 'actions', 'options', 'status', 'error', 'user', '$context', '$type', '$id', 'total', 'limit', 'page', 'hasMore', 'offset', 'meta'])
+      for (const [k, v] of Object.entries(extra)) {
+        if (!reserved.has(k) && v !== undefined) {
+          ;(envelope as Record<string, unknown>)[k] = v
+        }
+      }
+
+      // Pagination extras
+      if (options.hasMore !== undefined) (envelope as Record<string, unknown>).hasMore = options.hasMore
+      if (options.offset !== undefined) (envelope as Record<string, unknown>).offset = options.offset
 
       // Caller context — always last (always included, even for anonymous)
       const resolvedUser = user || c.var.user || { authenticated: false }

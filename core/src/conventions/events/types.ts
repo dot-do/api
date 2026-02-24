@@ -107,6 +107,19 @@ export interface EventsConfig {
    * Default: '7d'
    */
   defaultSince?: string
+
+  /**
+   * Authentication level required for event routes.
+   * - 'admin': only admin users (L3/verified) can view all events
+   * - 'verified': verified users see tenant-scoped events, admins see all
+   * - 'claimed': claimed users see tenant-scoped events
+   * - true: any authenticated user, tenant-scoped
+   * - false/undefined: no auth required (NOT RECOMMENDED for production)
+   *
+   * When auth is enabled, non-admin users are automatically scoped to
+   * their tenant namespace via c.var.tenant.
+   */
+  auth?: 'admin' | 'verified' | 'claimed' | boolean
 }
 
 /**

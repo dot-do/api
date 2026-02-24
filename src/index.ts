@@ -1,11 +1,9 @@
 import { API, authLevelMiddleware, parseEntityId } from '@dotdo/api'
 import { buildRegistry, searchServices, getService, getCategory, listCategories } from './registry'
-import { chQuery, formatCount, getChCredentials } from './clickhouse'
+import { formatCount } from './clickhouse'
 
 declare module '@dotdo/api' {
   interface Bindings extends Cloudflare.Env {
-    CLICKHOUSE_URL?: string
-    CLICKHOUSE_PASSWORD?: string
     HEADLESSLY?: Fetcher
   }
 }
@@ -63,6 +61,7 @@ const app = API({
   events: {
     scope: '*',
     topLevelRoutes: false,
+    auth: true,
   },
   landing: (c) => {
     return c.var.respond({
@@ -283,17 +282,14 @@ const app = API({
     app.get('/stripe', async (c) => {
       let eventFacets: Record<string, string> = {}
       try {
-        if (getChCredentials(c.env)) {
-          const facetData = await chQuery(
-            c.env,
-            "SELECT event, count() AS cnt FROM events WHERE type = 'webhook' AND event LIKE 'stripe.%' AND ts >= now() - INTERVAL 7 DAY GROUP BY event ORDER BY cnt DESC LIMIT 10",
-          )
-          for (const row of facetData) {
-            eventFacets[`${row.event} (${formatCount(Number(row.cnt))})`] = `${base}/events?event=${row.event}`
-          }
+        const result = await c.env.EVENTS.sql(
+          "SELECT event, count() AS cnt FROM events WHERE type = 'webhook' AND event LIKE 'stripe.%' AND ts >= now() - INTERVAL 7 DAY GROUP BY event ORDER BY cnt DESC LIMIT 10",
+        )
+        for (const row of result.data) {
+          eventFacets[`${row.event} (${formatCount(Number(row.cnt))})`] = `${base}/events?event=${row.event}`
         }
       } catch (err) {
-        console.error('[stripe] ClickHouse facet query failed:', err)
+        console.error('[stripe] EVENTS facet query failed:', err)
       }
 
       return c.var.respond({
@@ -314,17 +310,14 @@ const app = API({
     app.get('/github', async (c) => {
       let eventFacets: Record<string, string> = {}
       try {
-        if (getChCredentials(c.env)) {
-          const facetData = await chQuery(
-            c.env,
-            "SELECT event, count() AS cnt FROM events WHERE type = 'webhook' AND event LIKE 'github.%' AND ts >= now() - INTERVAL 7 DAY GROUP BY event ORDER BY cnt DESC LIMIT 10",
-          )
-          for (const row of facetData) {
-            eventFacets[`${row.event} (${formatCount(Number(row.cnt))})`] = `${base}/events?event=${row.event}`
-          }
+        const result = await c.env.EVENTS.sql(
+          "SELECT event, count() AS cnt FROM events WHERE type = 'webhook' AND event LIKE 'github.%' AND ts >= now() - INTERVAL 7 DAY GROUP BY event ORDER BY cnt DESC LIMIT 10",
+        )
+        for (const row of result.data) {
+          eventFacets[`${row.event} (${formatCount(Number(row.cnt))})`] = `${base}/events?event=${row.event}`
         }
       } catch (err) {
-        console.error('[github] ClickHouse facet query failed:', err)
+        console.error('[github] EVENTS facet query failed:', err)
       }
 
       return c.var.respond({
@@ -413,34 +406,36 @@ const app = API({
 
       // 1. Request trace (request_* — contains hyphens so doesn't match isEntityId)
       if (id.startsWith('request_')) {
-        const cfRay = id.slice('request_'.length) // e.g. '9d2ed000983652a6-ORD'
+        const rawRay = id.slice('request_'.length) // e.g. '9d2ed000983652a6-ORD' or '9d2ed000983652a6'
+        const cfRay = rawRay.includes('-') ? rawRay.split('-')[0] : rawRay // strip colo suffix — ClickHouse stores ray without colo
 
-        if (getChCredentials(c.env)) {
-          try {
-            const events = await chQuery(
-              c.env,
-              `SELECT *
-               FROM events
-               WHERE ray = {cfRay:String}
-                  OR data.event.request.headers.\`cf-ray\` = {cfRay:String}
-               ORDER BY ts DESC
-               LIMIT 50`,
-              { cfRay },
-              'platform',
-            )
-            if (events.length) {
-              return c.var.respond({
-                $type: 'Request',
-                $id: id,
-                data: events.length === 1 ? events[0] : events,
-                key: events.length === 1 ? 'request' : 'trace',
-                total: events.length,
-                links: { events: `${base}/events` },
-              })
-            }
-          } catch (err) {
-            console.error('[request] ClickHouse trace lookup failed:', err)
+        try {
+          // Query headlessly.events — data is a String column with full headers
+          // (platform.events uses JSON type which prunes headers)
+          const result = await c.env.EVENTS.sql(
+            `SELECT id, ns, ts, type, event, source, data
+             FROM headlessly.events
+             WHERE JSONExtractString(data, 'event', 'request', 'headers', 'cf-ray') = {cfRay:String}
+             ORDER BY ts DESC
+             LIMIT 50`,
+            { cfRay },
+          )
+          if (result.data.length) {
+            // Parse the data string into JSON for each row
+            const events = result.data.map((r) => {
+              try { return { ...r, data: JSON.parse(r.data as string) } } catch { return r }
+            })
+            return c.var.respond({
+              $type: 'Request',
+              $id: id,
+              data: events.length === 1 ? events[0] : events,
+              key: events.length === 1 ? 'request' : 'trace',
+              total: events.length,
+              links: { events: `${base}/events` },
+            })
           }
+        } catch (err) {
+          console.error('[request] EVENTS trace lookup failed:', err)
         }
 
         return c.var.respond({
@@ -455,20 +450,17 @@ const app = API({
       // 2. Entity ID (type_sqid format — e.g. contact_abc, deal_kRziM)
       const parsed = parseEntityId(id)
       if (parsed) {
-        if (!getChCredentials(c.env)) return c.json({ error: 'Data service unavailable' }, 503)
         try {
-          const rows = await chQuery(
-            c.env,
+          const result = await c.env.EVENTS.sql(
             `SELECT id, type, name, data, ns, updatedAt, updatedBy, v
              FROM data
              WHERE id = {id:String}
              ORDER BY v DESC
              LIMIT 1`,
             { id: parsed.id },
-            'platform',
           )
-          if (rows.length) {
-            const row = rows[0]!
+          if (result.data.length) {
+            const row = result.data[0]!
             return c.var.respond({
               $type: parsed.type,
               $id: parsed.id,
@@ -480,7 +472,7 @@ const app = API({
             })
           }
         } catch (err) {
-          console.error(`[entity] ClickHouse lookup failed for ${parsed.id}:`, err)
+          console.error(`[entity] EVENTS lookup failed for ${parsed.id}:`, err)
         }
         return c.notFound()
       }

@@ -20,6 +20,7 @@ import type { ApiEnv } from '../../types'
 import type { EventsConfig, EventCategory, EventsBinding } from './types'
 import { DEFAULT_EVENT_CATEGORIES } from './types'
 import { inferScope, formatCount, safeInt } from './helpers'
+import { requireAuth } from '../../middleware'
 
 export type { EventsConfig, EventCategory, EventsBinding } from './types'
 export { DEFAULT_EVENT_CATEGORIES } from './types'
@@ -40,6 +41,12 @@ export function eventsConvention(config: EventsConfig = {}): ConventionResult {
   const topLevel = config.topLevelRoutes !== false
   const defaultSince = config.defaultSince || '7d'
 
+  // Auth middleware — applied to all event routes when configured
+  if (config.auth) {
+    const authLevel = typeof config.auth === 'string' ? config.auth : undefined
+    app.use('*', requireAuth(authLevel as any))
+  }
+
   // Merge categories
   const categories: Record<string, EventCategory> = { ...DEFAULT_EVENT_CATEGORIES }
   if (config.categories) {
@@ -54,10 +61,27 @@ export function eventsConvention(config: EventsConfig = {}): ConventionResult {
     return (env[bindingName] as EventsBinding) || null
   }
 
-  /** Resolve scope */
-  function getScope(hostname: string): string | string[] | '*' {
-    if (config.scope !== undefined) return config.scope
-    return inferScope(hostname)
+  /** Resolve scope — admin users see all, regular users scoped to tenant */
+  function getScope(c: Context<ApiEnv>): string | string[] | undefined {
+    const user = c.get('user' as never) as { level?: string; tenant?: string } | undefined
+    const isAdmin = user?.level === 'L3'
+
+    // Admin sees all events
+    if (isAdmin) {
+      const explicitScope = config.scope
+      if (explicitScope === '*' || explicitScope === undefined) return undefined
+      return explicitScope
+    }
+
+    // Non-admin: scope to tenant
+    const tenant = c.var.tenant || user?.tenant
+    if (tenant) return tenant
+
+    // Fallback: config scope or hostname-based
+    if (config.scope !== undefined && config.scope !== '*') return config.scope
+    const hostname = new URL(c.req.url).hostname
+    const inferred = inferScope(hostname)
+    return inferred === '*' ? undefined : inferred
   }
 
   // -- Category route handler -------------------------------------------------
@@ -77,32 +101,35 @@ export function eventsConvention(config: EventsConfig = {}): ConventionResult {
       }
 
       try {
-        const scope = getScope(url.hostname)
+        const scope = getScope(c)
         // Build filters from category definition
         const type = category.types?.length === 1 ? category.types[0] : undefined
-        const filters: Record<string, unknown> = {
-          type,
-          since: c.req.query('since') || defaultSince,
-          source: c.req.query('source'),
-          event: c.req.query('event'),
-          ns: c.req.query('ns'),
-        }
+        const since = c.req.query('since') || defaultSince
+        const source = c.req.query('source')
+        const event = c.req.query('event')
+        const ns = c.req.query('ns')
+        const limit = safeInt(c.req.query('limit'), 20, 1, 1000)
+        const offset = safeInt(c.req.query('offset'), 0, 0, 1_000_000)
+        const filters: Record<string, unknown> = { type, since, source, event, ns, limit, offset }
 
-        // Get facets for this category
-        const [facetResult, countResult] = await Promise.all([
-          binding.facets({ dimension: 'event', filters }, scope !== '*' ? (scope as string | string[]) : undefined),
-          binding.count({ filters }, scope !== '*' ? (scope as string | string[]) : undefined),
+        const [searchResult, facetResult] = await Promise.all([
+          binding.search(filters, scope),
+          binding.facets({ dimension: 'event', filters: { type, since, source, event, ns } }, scope),
         ])
 
-        const data: Record<string, string> = {}
+        const discover: Record<string, string> = {}
         for (const f of facetResult.facets) {
-          data[`${f.value} (${formatCount(f.count)})`] = `${base}/events?event=${encodeURIComponent(f.value)}`
+          discover[`${f.value} (${formatCount(f.count)})`] = `${base}/events?event=${encodeURIComponent(f.value)}`
         }
 
         return c.var.respond({
-          data,
-          key: 'discover',
-          total: countResult.count,
+          data: searchResult.data,
+          key: 'events',
+          total: searchResult.total,
+          limit: searchResult.limit,
+          offset: searchResult.offset,
+          hasMore: searchResult.hasMore,
+          discover,
           links: { self: url.toString(), events: `${base}/events` },
           options: {
             'Last Hour': `${base}/${categoryName}?since=1h`,
@@ -132,7 +159,7 @@ export function eventsConvention(config: EventsConfig = {}): ConventionResult {
     app.get(`/events/${name}`, categoryHandler(name, cat))
   }
 
-  // /events -- faceted discovery
+  // /events -- faceted discovery OR event data when filters are applied
   app.get('/events', async (c) => {
     const binding = getBinding(c.env as unknown as Record<string, unknown>)
     const url = new URL(c.req.url)
@@ -147,34 +174,82 @@ export function eventsConvention(config: EventsConfig = {}): ConventionResult {
     }
 
     try {
-      const scope = getScope(url.hostname)
-      const filters: Record<string, unknown> = {
-        type: c.req.query('type'),
-        event: c.req.query('event'),
-        source: c.req.query('source'),
-        since: c.req.query('since') || defaultSince,
-        ns: c.req.query('ns'),
-        limit: safeInt(c.req.query('limit'), 20, 1, 1000),
-        offset: safeInt(c.req.query('offset'), 0, 0, 1_000_000),
+      const scope = getScope(c)
+      const type = c.req.query('type')
+      const event = c.req.query('event')
+      const source = c.req.query('source')
+      const ns = c.req.query('ns')
+      const since = c.req.query('since') || defaultSince
+      const limit = safeInt(c.req.query('limit'), 20, 1, 1000)
+      const offset = safeInt(c.req.query('offset'), 0, 0, 1_000_000)
+      const hasFilters = type || event || source || ns
+
+      const filters: Record<string, unknown> = { type, event, source, since, ns, limit, offset }
+
+      if (!hasFilters) {
+        // No filters → faceted discovery by type + recent events
+        const [facetResult, searchResult] = await Promise.all([
+          binding.facets({ dimension: 'type', filters }, scope),
+          binding.search({ since, limit: 10 }, scope),
+        ])
+        const data: Record<string, string> = {}
+        for (const f of facetResult.facets) {
+          data[`${f.value} (${formatCount(f.count)})`] = `${base}/events/${encodeURIComponent(f.value)}`
+        }
+        return c.var.respond({
+          data,
+          key: 'discover',
+          total: facetResult.total,
+          recent: searchResult.data,
+          links: { self: url.toString() },
+          options: {
+            'Last Hour': `${base}/events?since=1h`,
+            'Last 24 Hours': `${base}/events?since=24h`,
+            'Last Week': `${base}/events?since=7d`,
+            'Last 30 Days': `${base}/events?since=30d`,
+          },
+        })
       }
 
-      const facetResult = await binding.facets({ dimension: 'type', filters }, scope !== '*' ? (scope as string | string[]) : undefined)
+      // Filters applied → return actual event data
+      const [searchResult, facetResult] = await Promise.all([
+        binding.search(filters, scope),
+        binding.facets({ dimension: type ? 'event' : 'type', filters: { type, event, source, since, ns } }, scope),
+      ])
 
-      const data: Record<string, string> = {}
+      const discover: Record<string, string> = {}
       for (const f of facetResult.facets) {
-        data[`${f.value} (${formatCount(f.count)})`] = `${base}/events?type=${encodeURIComponent(f.value)}`
+        if (type) {
+          // Drilling into a type — show sub-events as query param filter
+          discover[`${f.value} (${formatCount(f.count)})`] = `${base}/events/${encodeURIComponent(type)}?event=${encodeURIComponent(f.value)}`
+        } else {
+          // No type filter — link to path-based type routes
+          discover[`${f.value} (${formatCount(f.count)})`] = `${base}/events/${encodeURIComponent(f.value)}`
+        }
       }
+
+      const qs = new URLSearchParams()
+      if (type) qs.set('type', type)
+      if (event) qs.set('event', event)
+      if (source) qs.set('source', source)
+      if (ns) qs.set('ns', ns)
+      const qsStr = qs.toString()
+      const qsSuffix = qsStr ? `?${qsStr}&` : '?'
 
       return c.var.respond({
-        data,
-        key: 'discover',
-        total: facetResult.total,
-        links: { self: url.toString() },
+        data: searchResult.data,
+        key: 'events',
+        total: searchResult.total,
+        limit: searchResult.limit,
+        offset: searchResult.offset,
+        hasMore: searchResult.hasMore,
+        discover,
+        links: { self: url.toString(), parent: `${base}/events` },
         options: {
-          'Last Hour': `${base}/events?since=1h`,
-          'Last 24 Hours': `${base}/events?since=24h`,
-          'Last Week': `${base}/events?since=7d`,
-          'Last 30 Days': `${base}/events?since=30d`,
+          'Last Hour': `${base}/events${qsSuffix}since=1h`,
+          'Last 24 Hours': `${base}/events${qsSuffix}since=24h`,
+          'Last Week': `${base}/events${qsSuffix}since=7d`,
+          'Last 30 Days': `${base}/events${qsSuffix}since=30d`,
         },
       })
     } catch (err) {
@@ -183,7 +258,7 @@ export function eventsConvention(config: EventsConfig = {}): ConventionResult {
     }
   })
 
-  // /events/:type -- drill into specific type
+  // /events/:type -- drill into specific type with actual event data
   app.get('/events/:type', async (c) => {
     const eventType = c.req.param('type')
 
@@ -205,32 +280,40 @@ export function eventsConvention(config: EventsConfig = {}): ConventionResult {
     }
 
     try {
-      const scope = getScope(url.hostname)
-      const facetResult = await binding.facets(
-        {
-          dimension: 'event',
-          filters: {
-            type: eventType,
-            since: c.req.query('since') || defaultSince,
-          },
-        },
-        scope !== '*' ? (scope as string | string[]) : undefined,
-      )
+      const scope = getScope(c)
+      const since = c.req.query('since') || defaultSince
+      const event = c.req.query('event')
+      const source = c.req.query('source')
+      const ns = c.req.query('ns')
+      const limit = safeInt(c.req.query('limit'), 20, 1, 1000)
+      const offset = safeInt(c.req.query('offset'), 0, 0, 1_000_000)
 
-      const data: Record<string, string> = {}
+      const filters: Record<string, unknown> = { type: eventType, event, source, ns, since, limit, offset }
+
+      const [searchResult, facetResult] = await Promise.all([
+        binding.search(filters, scope),
+        binding.facets({ dimension: 'event', filters: { type: eventType, event, source, ns, since } }, scope),
+      ])
+
+      const discover: Record<string, string> = {}
       for (const f of facetResult.facets) {
-        data[`${f.value} (${formatCount(f.count)})`] = `${base}/events?type=${encodeURIComponent(eventType)}&event=${encodeURIComponent(f.value)}`
+        discover[`${f.value} (${formatCount(f.count)})`] = `${base}/events/${encodeURIComponent(eventType)}?event=${encodeURIComponent(f.value)}`
       }
 
       return c.var.respond({
-        data,
-        key: 'discover',
-        total: facetResult.total,
+        data: searchResult.data,
+        key: 'events',
+        total: searchResult.total,
+        limit: searchResult.limit,
+        offset: searchResult.offset,
+        hasMore: searchResult.hasMore,
+        discover,
         links: { self: url.toString(), parent: `${base}/events` },
         options: {
           'Last Hour': `${base}/events/${eventType}?since=1h`,
           'Last 24 Hours': `${base}/events/${eventType}?since=24h`,
           'Last Week': `${base}/events/${eventType}?since=7d`,
+          'Last 30 Days': `${base}/events/${eventType}?since=30d`,
         },
       })
     } catch (err) {
