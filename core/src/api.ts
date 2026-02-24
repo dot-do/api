@@ -4,7 +4,7 @@ import type { ApiInput } from './config'
 import { resolveConfig } from './config'
 import { responseMiddleware } from './response'
 import { contextMiddleware, corsMiddleware, authMiddleware, rateLimitMiddleware, createErrorHandler } from './middleware'
-import { crudConvention, proxyConvention, rpcConvention, mcpConvention, analyticsMiddleware, analyticsRoutes, analyticsBufferRoutes, testingConvention, databaseConvention, functionsConvention } from './conventions'
+import { crudConvention, proxyConvention, rpcConvention, mcpConvention, analyticsMiddleware, analyticsRoutes, analyticsBufferRoutes, testingConvention, databaseConvention, functionsConvention, eventsConvention } from './conventions'
 import { McpToolRegistry } from './mcp-registry'
 import type { FunctionsConfig, FunctionDef } from './conventions/functions/types'
 
@@ -154,6 +154,16 @@ export function API(input?: ApiInput): Hono<ApiEnv> {
         ...t,
         routeOnly: true,
       })))
+    }
+  }
+
+  // Events convention — routes via EVENTS service binding
+  if (config.events) {
+    const { routes: eventsRoutes, mcpTools: eventsMcpTools } = eventsConvention(config.events)
+    app.route('/', eventsRoutes)
+
+    if (eventsMcpTools.length > 0) {
+      mcpRegistry.registerAll(eventsMcpTools.map((t) => ({ ...t })))
     }
   }
 
