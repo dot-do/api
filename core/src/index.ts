@@ -42,7 +42,7 @@ export type {
 export { responseMiddleware } from './response'
 export { contextMiddleware, corsMiddleware, authMiddleware, authLevelMiddleware, requireAuth, buildUserContext, rateLimitMiddleware, billingMiddleware, requirePlan, requireFeature, getFeatureRequirements, createErrorHandler, metaMiddleware, mutationMiddleware, responseModesMiddleware, rewriteUrlToDomainStyle } from './middleware'
 export type { AuthLevel, AuthLevelConfig, MutationConfig, BillingConfig, PlanConfig, PlanRate, PlanQuota, ResponseMode, ResponseModeConfig } from './middleware'
-export { crudConvention, proxyConvention, rpcConvention, mcpConvention, analyticsMiddleware, analyticsRoutes, analyticsBufferRoutes, AnalyticsBufferDO, testingConvention, databaseConvention, DatabaseDO, functionsConvention, searchConvention, transportConvention, jobsConvention, JobManager, parquetConvention, generateSnippetManifest } from './conventions'
+export { crudConvention, proxyConvention, rpcConvention, mcpConvention, analyticsMiddleware, analyticsRoutes, analyticsBufferRoutes, AnalyticsBufferDO, testingConvention, databaseConvention, DatabaseDO, functionsConvention, searchConvention, transportConvention, jobsConvention, JobManager, parquetConvention, generateSnippetManifest, eventsConvention } from './conventions'
 export type { TransportConfig } from './conventions'
 export type { SearchConfig, SearchProvider, FacetProvider, SearchResult, SearchOptions } from './conventions'
 export { handlePageSize, handleSort, handleCount, handleSchema, handlePages, handleDistinct, handleFacets, handleHistory, handleEvents, stripMetaSegment } from './conventions'
