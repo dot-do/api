@@ -45,9 +45,8 @@ interface ParqueDBService {
 }
 
 /**
- * ParqueDBDO stub interface for Durable Object RPC.
- * Matches the public methods on ParqueDBDO (via DurableObjectStub RPC).
- * Method names and signatures differ from ParqueDBService (WorkerEntrypoint).
+ * @deprecated Use createDBAdapter from ./db-adapter instead.
+ * Legacy ParqueDBDO stub interface — method signatures don't match production DB DO.
  */
 interface ParqueDBDOStub {
   find(ns: string, filter?: Record<string, unknown>, options?: {
@@ -69,8 +68,8 @@ interface ParqueDBDOStub {
 }
 
 /**
+ * @deprecated Use createDBAdapter from ./db-adapter instead.
  * Wrap a DatabaseDO stub (DurableObject RPC) as a ParqueDBService.
- * Adapts method names and return types to match the adapter's expected interface.
  */
 export function createDOParqueDBService(stub: ParqueDBDOStub): ParqueDBService {
   return {

@@ -25,7 +25,8 @@ import type {
 } from './types'
 import { parseSchema, generateJsonSchema, discoverSchemaFromObjects, discoverSchemaFromRegistry } from './schema'
 import { coerceValue, matchesWhere } from './match'
-import { createParqueDBAdapter, createDOParqueDBService } from './parquedb-adapter'
+import { createParqueDBAdapter } from './parquedb-adapter'
+import { createDBAdapter } from './db-adapter'
 
 export type {
   DatabaseConfig,
@@ -56,6 +57,8 @@ export { generateWebhookSignature, generateWebhookSignatureAsync, sendToWebhookS
 export type { WebhookRetryConfig } from './do'
 export { matchesWhere, coerceValue, isSafeRegex } from './match'
 export { createParqueDBAdapter, formatEntity } from './parquedb-adapter'
+export { createDBAdapter, stripTenantPrefix } from './db-adapter'
+export type { DBDOStub } from './db-adapter'
 
 // =============================================================================
 // Input Validation
@@ -2243,17 +2246,17 @@ async function getDatabase(
   // (OutgoingFactory) is request-scoped. Reusing a cached stub from a previous
   // request causes: "Cannot perform I/O on behalf of a different request".
   //
-  // The DO is wrapped via createDOParqueDBService → createParqueDBAdapter so that
-  // both the production DO (ParqueDB-style: find/countEntities) and the test DO
-  // (which also exposes find/countEntities aliases) go through the same code path.
+  // The DO is wrapped via createDBAdapter which goes directly from
+  // DB DO stub → DatabaseRpcClient (no ParqueDB intermediary).
+  // The DO is already tenant-scoped via idFromName, so the adapter
+  // resolves model names to bare types (e.g. Contact → 'contacts').
   const dbBindingName = config.database
   if (dbBindingName) {
     const doNamespace = c.env[dbBindingName] as { idFromName(name: string): { toString(): string }; get(id: unknown): unknown } | undefined
     if (doNamespace?.idFromName) {
       const doId = doNamespace.idFromName(namespace)
       const stub = doNamespace.get(doId)
-      const service = createDOParqueDBService(stub as Parameters<typeof createDOParqueDBService>[0])
-      return createParqueDBAdapter(service, schema, tenantPrefix)
+      return createDBAdapter(stub as Parameters<typeof createDBAdapter>[0], schema, tenantPrefix)
     }
   }
 
