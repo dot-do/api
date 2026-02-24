@@ -17,8 +17,6 @@ export type AuthLevel = 'claimed' | 'verified'
 export interface AuthLevelConfig {
   identityUrl?: string
   billingUrl?: string
-  /** WorkOS org ID for the platform org. Users in this org get L3 (admin). Read from env.PLATFORM_ORG_ID if not set. */
-  platformOrgId?: string
 }
 
 type Level = 'L0' | 'L1' | 'L2' | 'L3'
@@ -80,14 +78,13 @@ interface DetectedAuth {
   claims: Record<string, unknown> | null
 }
 
-function detectAuth(c: Context, platformOrgId?: string): DetectedAuth {
+function detectAuth(c: Context): DetectedAuth {
   // 0. Fast path: trust cf.actor from auth-identity snippet (tamper-proof)
-  const cf = (c.req.raw as unknown as { cf?: { authenticated?: boolean; actor?: { id: string; name: string; email: string; orgId: string } } }).cf
+  const cf = (c.req.raw as unknown as { cf?: { authenticated?: boolean; actor?: { id: string; name: string; email: string; orgId: string; platformRole?: string } } }).cf
   if (cf?.authenticated && cf.actor) {
-    const isPlatformAdmin = platformOrgId ? cf.actor.orgId === platformOrgId : !!cf.actor.orgId
     return {
-      level: isPlatformAdmin ? 'L3' : 'L2',
-      claims: { sub: cf.actor.id, name: cf.actor.name, email: cf.actor.email, orgId: cf.actor.orgId },
+      level: cf.actor.platformRole === 'superadmin' ? 'L3' : 'L2',
+      claims: { sub: cf.actor.id, name: cf.actor.name, email: cf.actor.email, orgId: cf.actor.orgId, platformRole: cf.actor.platformRole },
     }
   }
 
@@ -121,20 +118,10 @@ function detectAuth(c: Context, platformOrgId?: string): DetectedAuth {
   if (!payload || !payload.sub) return { level: 'L0', claims: null }
 
   // Determine L2 vs L3 from claims
-  // L3 = platform admin: user's org matches PLATFORM_ORG_ID
+  // L3 = platform superadmin: AUTH worker mints platformRole: 'superadmin' for .do org members
   // L2 = any authenticated user with a valid JWT
-  const org = payload.org as { id?: string } | undefined
-  const userOrgId = org?.id || (payload.org_id as string) || (payload.orgId as string) || undefined
-  if (platformOrgId && userOrgId === platformOrgId) {
+  if (payload.platformRole === 'superadmin') {
     return { level: 'L3', claims: payload }
-  }
-  // Legacy fallback: if no platformOrgId configured, check for explicit admin signals
-  if (!platformOrgId) {
-    const roles = payload.roles as string[] | undefined
-    const hasAdminRole = Array.isArray(roles) && roles.some((r) => /admin|owner/i.test(r))
-    if (hasAdminRole || payload.org_verified === true || typeof payload.sso_connection === 'string') {
-      return { level: 'L3', claims: payload }
-    }
   }
 
   return { level: 'L2', claims: payload }
@@ -238,9 +225,7 @@ export function buildUserContext(
 
 export function authLevelMiddleware(config?: AuthLevelConfig): MiddlewareHandler {
   return async (c, next) => {
-    const env = c.env as Record<string, unknown> | undefined
-    const platformOrgId = config?.platformOrgId || (env?.PLATFORM_ORG_ID as string | undefined)
-    const { level, claims } = detectAuth(c, platformOrgId)
+    const { level, claims } = detectAuth(c)
     const user = buildUserContext(claims, level, config)
     c.set('user' as never, user as never)
     await next()
