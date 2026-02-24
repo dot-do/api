@@ -293,6 +293,7 @@ export interface ApiConfig {
   analyticsBuffer?: import('./conventions/analytics-buffer').AnalyticsBufferConfig
   testing?: TestingConfig
   database?: DatabaseConfig
+  events?: import('./conventions/events/types').EventsConfig
   functions?: import('./conventions/functions').FunctionsConfig
   landing?: LandingConfig
   routes?: (app: Hono<ApiEnv>) => void

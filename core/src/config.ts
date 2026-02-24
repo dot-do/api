@@ -25,6 +25,7 @@ export const KNOWN_CONFIG_KEYS = new Set([
   'analyticsBuffer',
   'testing',
   'database',
+  'events',
   'functions',
   'landing',
   'routes',
@@ -159,8 +160,10 @@ export function discoverEnv(env: Record<string, unknown>): Partial<ApiConfig> {
     } as RateLimitConfig
   }
 
-  // EVENTS / PIPELINE — future placeholder, no-op for now
-  // When implemented, this will enable CDC event forwarding
+  // Events service binding
+  if (env.EVENTS) {
+    discovered.events = {}
+  }
 
   return discovered
 }

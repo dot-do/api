@@ -51,6 +51,8 @@ export type { AnalyticsBufferConfig, BufferEvent, TestingConfig, TestCase, RestT
 export type { FunctionsConfig, FunctionDef, ProxyDef, MashupDef, LookupDef, PipelineDef } from './conventions'
 export type { JobConfig, Job, JobStatus, JobProgress, FunctionExecutor } from './conventions'
 export type { ParquetSourceConfig, ParquetFieldDef, ParquetFieldType, SnippetRule, SnippetManifest } from './conventions'
+export type { EventsConfig, EventCategory, EventsBinding } from './conventions'
+export { DEFAULT_EVENT_CATEGORIES } from './conventions'
 export { parseSchema, parseField, parseModel, generateJsonSchema, buildTypeRegistry, createSqids, shuffleAlphabet, decodeSqid } from './conventions/database'
 export type { ParsedSchema, ParsedModel, ParsedField, Document, DatabaseEvent, DatabaseDriverType, DatabaseDriver, DatabaseDriverFactory, QueryOptions, QueryResult, TypeRegistry, ReverseTypeRegistry, DecodedSqid } from './conventions/database'
 export { buildPagination, buildPagePagination, buildCursorPagination } from './helpers/pagination'
