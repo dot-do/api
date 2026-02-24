@@ -41,18 +41,25 @@ export function eventsConvention(config: EventsConfig = {}): ConventionResult {
   const topLevel = config.topLevelRoutes !== false
   const defaultSince = config.defaultSince || '7d'
 
-  // Auth middleware — applied to all event routes when configured
-  if (config.auth) {
-    const authLevel = typeof config.auth === 'string' ? config.auth : undefined
-    app.use('*', requireAuth(authLevel as any))
-  }
-
   // Merge categories
   const categories: Record<string, EventCategory> = { ...DEFAULT_EVENT_CATEGORIES }
   if (config.categories) {
     for (const [key, value] of Object.entries(config.categories)) {
       if (value === false) delete categories[key]
       else categories[key] = value
+    }
+  }
+
+  // Auth middleware — applied only to event routes (not other routes on the host)
+  if (config.auth) {
+    const authLevel = typeof config.auth === 'string' ? config.auth : undefined
+    const authMw = requireAuth(authLevel as any)
+    app.use('/events', authMw)
+    app.use('/events/*', authMw)
+    if (topLevel) {
+      for (const name of Object.keys(categories)) {
+        app.use(`/${name}`, authMw)
+      }
     }
   }
 

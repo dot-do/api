@@ -61,7 +61,7 @@ const app = API({
   events: {
     scope: '*',
     topLevelRoutes: false,
-    auth: true,
+    auth: 'admin',
   },
   landing: (c) => {
     return c.var.respond({

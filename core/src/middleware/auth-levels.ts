@@ -33,6 +33,7 @@ const LEVEL_ORDER: Record<Level, number> = {
 const AUTH_LEVEL_MAP: Record<string, Level> = {
   claimed: 'L2',
   verified: 'L3',
+  admin: 'L3',
 }
 
 // ---------------------------------------------------------------------------
@@ -252,17 +253,36 @@ export function requireAuth(level?: AuthLevel): MiddlewareHandler {
       return
     }
 
-    // Not authenticated at all → 401
+    const url = new URL(c.req.url)
+    const baseUrl = url.origin
+    const loginUrl = `${baseUrl}/login`
+    const signupUrl = `${baseUrl}/signup`
+
+    // Browser detection — redirect to login instead of returning JSON
+    const accept = c.req.header('accept') || ''
+    const isBrowser = accept.includes('text/html')
+
+    // Not authenticated at all → 401 (or redirect for browsers)
     if (!user?.authenticated) {
-      const links = user?.links || {}
+      if (isBrowser) {
+        const redirectUrl = `${loginUrl}?redirect=${encodeURIComponent(url.toString())}`
+        return c.redirect(redirectUrl, 302)
+      }
+
+      // Use c.var.respond if available for full envelope, otherwise bare JSON
+      const respond = c.var?.respond
+      if (respond) {
+        return respond({
+          error: { message: 'Authentication required', code: 'UNAUTHORIZED', status: 401 },
+          links: { login: loginUrl, signup: signupUrl, ...(user?.links || {}) },
+          status: 401,
+        })
+      }
+
       return c.json(
         {
-          error: {
-            message: 'Authentication required',
-            code: 'UNAUTHORIZED',
-            status: 401,
-          },
-          links,
+          error: { message: 'Authentication required', code: 'UNAUTHORIZED', status: 401 },
+          links: { login: loginUrl, signup: signupUrl, ...(user?.links || {}) },
         },
         401,
       )
@@ -273,26 +293,23 @@ export function requireAuth(level?: AuthLevel): MiddlewareHandler {
 
     // Add contextual upgrade links based on what's needed
     if (minLevel === 'L2') {
-      // Need claimed identity
-      if (!links.claim) {
-        const identityUrl = DEFAULT_IDENTITY_URL
-        links.claim = `${identityUrl}/claim`
-      }
+      if (!links.claim) links.claim = `${DEFAULT_IDENTITY_URL}/claim`
     } else if (minLevel === 'L3') {
-      // Need verified org
-      if (!links.upgrade) {
-        const billingUrl = DEFAULT_BILLING_URL
-        links.upgrade = `${billingUrl}/upgrade`
-      }
+      if (!links.upgrade) links.upgrade = `${DEFAULT_BILLING_URL}/upgrade`
+    }
+
+    const respond = c.var?.respond
+    if (respond) {
+      return respond({
+        error: { message: `Insufficient auth level: requires ${minLevel}, current is ${currentLevel}`, code: 'FORBIDDEN', status: 403 },
+        links,
+        status: 403,
+      })
     }
 
     return c.json(
       {
-        error: {
-          message: `Insufficient auth level: requires ${minLevel}, current is ${currentLevel}`,
-          code: 'FORBIDDEN',
-          status: 403,
-        },
+        error: { message: `Insufficient auth level: requires ${minLevel}, current is ${currentLevel}`, code: 'FORBIDDEN', status: 403 },
         links,
       },
       403,

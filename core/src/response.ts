@@ -24,7 +24,7 @@ export function responseMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv>
           ...(apiType !== 'api' && { type: apiType }),
           ...(config.version && { version: config.version }),
           login: `${baseUrl}/login`,
-          signup: `${baseUrl}/login`,
+          signup: `${baseUrl}/signup`,
           docs: `https://docs.headless.ly`,
           ...(apiFrom && { from: apiFrom }),
         },
