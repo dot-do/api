@@ -28,7 +28,7 @@ export function responseMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv>
           url: baseUrl,
           ...(apiType !== 'api' && { type: apiType }),
           ...(!isAuthenticated && { login: `${baseUrl}/login`, signup: `${baseUrl}/signup` }),
-          ...(isAuthenticated && { manage: `${baseUrl}/me`, upgrade: `https://billing.do/upgrade` }),
+          ...(isAuthenticated && { manage: `${baseUrl}/me`, upgrade: `${baseUrl}/upgrade` }),
           docs: `https://docs.platform.do/api`,
           ...(apiFrom && { from: apiFrom }),
         },
