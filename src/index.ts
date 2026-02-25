@@ -66,12 +66,12 @@ const app = API({
     auth: 'superadmin',
   },
   landing: (c) => {
-    const useLocal = c.req.query('domains') !== undefined
-    const nav = buildNavigator(base, useLocal)
+    const useDomains = c.req.query('domains') !== undefined
+    const nav = buildNavigator(base, !useDomains)
     return c.var.respond({
       ...nav,
       actions: {
-        [useLocal ? 'Show .do Domains' : 'Show Local Paths']: useLocal ? `${base}/` : `${base}/?domains`,
+        [useDomains ? 'Show Local Paths' : 'Show .do Domains']: useDomains ? `${base}/` : `${base}/?domains`,
       },
     })
   },

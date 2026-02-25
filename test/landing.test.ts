@@ -28,13 +28,14 @@ describe('Landing Page', () => {
     const coreKeys = Object.keys(body.core)
     expect(coreKeys[0]).toBe('Domain')
 
-    // Default uses .do domains
-    expect(body.core.Noun).toBe('https://nouns.do')
-    expect(body.core.Event).toBe('https://events.do')
-    expect(body.intelligence.Database).toBe('https://database.do')
-
-    // Domain has no .do domain — uses apis.do path
+    // Default uses local paths
+    expect(body.core.Noun).toBe('https://apis.do/nouns')
+    expect(body.core.Event).toBe('https://apis.do/events')
+    expect(body.intelligence.Database).toBe('https://apis.do/database')
     expect(body.core.Domain).toBe('https://apis.do/domains')
+
+    // Action offers to show .do domains
+    expect(body.actions['Show .do Domains']).toBe('https://apis.do/?domains')
 
     // Only auto-generated links (home, self)
     expect(body.links.home).toBe('https://apis.do')
@@ -44,15 +45,15 @@ describe('Landing Page', () => {
     expect(body.discover).toBeUndefined()
   })
 
-  it('toggles to local paths with ?domains', async () => {
+  it('shows .do domains with ?domains', async () => {
     const res = await app.request('https://apis.do/?domains')
     expect(res.ok).toBe(true)
 
     const body = await res.json()
-    expect(body.core.Noun).toBe('https://apis.do/nouns')
-    expect(body.core.Event).toBe('https://apis.do/events')
-    expect(body.intelligence.Database).toBe('https://apis.do/database')
-    expect(body.actions['Show .do Domains']).toBe('https://apis.do/')
+    expect(body.core.Noun).toBe('https://nouns.do')
+    expect(body.core.Event).toBe('https://events.do')
+    expect(body.intelligence.Database).toBe('https://database.do')
+    expect(body.actions['Show Local Paths']).toBe('https://apis.do/')
   })
 })
 
