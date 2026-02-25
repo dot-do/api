@@ -580,26 +580,11 @@ const app = API({
         return c.notFound()
       }
 
-      // 3. Service registry lookup (fallback)
+      // 3. Service registry lookup → redirect to the actual .do domain
       const svc = getService(registry, id)
       if (!svc) return c.notFound()
 
-      return c.var.respond({
-        data: {
-          name: svc.name,
-          domain: svc.domain,
-          description: svc.description,
-          category: svc.category,
-          status: svc.status,
-        },
-        key: svc.name,
-        links: {
-          api: `${base}/${svc.name}`,
-          also: `https://${svc.domain}/api`,
-          events: `${base}/events`,
-          category: `${base}/categories/${svc.category}`,
-        },
-      })
+      return c.redirect(`https://${svc.domain}`, 302)
     })
   },
 })

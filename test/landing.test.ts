@@ -274,16 +274,10 @@ describe('Static Discovery Routes', () => {
 })
 
 describe('Service Catch-All', () => {
-  it('returns service info with category link', async () => {
-    const res = await app.request('https://apis.do/events')
-    // /events is now a live route, not catch-all — but registry service should still work
-    // Test with a pure registry service
-    const svcRes = await app.request('https://apis.do/services/analytics')
-    expect(svcRes.ok).toBe(true)
-
-    const body = await svcRes.json()
-    expect(body.service.name).toBe('analytics')
-    expect(body.links.category).toMatch(/categories\//)
+  it('redirects known services to their .do domain', async () => {
+    const res = await app.request('https://apis.do/analytics', { redirect: 'manual' })
+    expect(res.status).toBe(302)
+    expect(res.headers.get('Location')).toBe('https://analytics.do')
   })
 
   it('returns 404 for unknown service', async () => {
