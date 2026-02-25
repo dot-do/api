@@ -305,3 +305,24 @@ describe('Category Detail', () => {
     expect(body.category.services[0].also).toMatch(/\.do\/api$/)
   })
 })
+
+describe('Alias Resolution Routes', () => {
+  it('redirects /db to /database', async () => {
+    const res = await app.request('https://apis.do/db', { redirect: 'manual' })
+    expect(res.status).toBe(302)
+    expect(res.headers.get('Location')).toBe('https://apis.do/database')
+  })
+
+  it('redirects /fn to /functions', async () => {
+    const res = await app.request('https://apis.do/fn', { redirect: 'manual' })
+    expect(res.status).toBe(302)
+    expect(res.headers.get('Location')).toBe('https://apis.do/functions')
+  })
+
+  it('does not redirect canonical paths', async () => {
+    const res = await app.request('https://apis.do/database')
+    expect(res.ok).toBe(true)
+    // Should not be a redirect
+    expect(res.status).not.toBe(302)
+  })
+})

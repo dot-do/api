@@ -2,6 +2,7 @@ import { API, parseEntityId } from '@dotdo/api'
 import { buildRegistry, searchServices, getService, getCategory, listCategories } from './registry'
 import { formatCount } from './clickhouse'
 import { buildNavigator } from './primitives'
+import { resolve } from './aliases'
 
 declare module '@dotdo/api' {
   interface Bindings extends Cloudflare.Env {
@@ -96,6 +97,19 @@ const app = API({
     ],
   },
   routes: (app) => {
+    // ==================== Alias Resolution ====================
+    // Redirect abbreviated paths to canonical names (e.g., /db → /database, /fn → /functions)
+    app.use('/:name{[a-z][a-z0-9-]*}', async (c, next) => {
+      const name = c.req.param('name')
+      const canonical = resolve(name)
+      if (canonical !== name) {
+        const url = new URL(c.req.url)
+        url.pathname = url.pathname.replace(`/${name}`, `/${canonical}`)
+        return c.redirect(url.toString(), 302)
+      }
+      await next()
+    })
+
     // ==================== Identity / Debug ====================
 
     app.get('/me', (c) => {
@@ -269,7 +283,6 @@ const app = API({
       })
     }
     app.get('/database', databaseHandler)
-    app.get('/db', databaseHandler)
 
     app.get('/functions', (c) => {
       return c.var.respond({
