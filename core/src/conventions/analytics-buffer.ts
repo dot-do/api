@@ -309,8 +309,12 @@ export class AnalyticsBufferDO {
    * Alarm handler - periodic flush
    */
   async alarm(): Promise<void> {
-    if (this.buffer.length > 0) {
-      await this.flush()
+    try {
+      if (this.buffer.length > 0) {
+        await this.flush()
+      }
+    } catch (err) {
+      console.error('[AnalyticsBufferDO] Alarm flush failed:', err)
     }
   }
 
