@@ -5,6 +5,12 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-02-17",
   "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true
+  },
+  "tail_consumers": [
+    { "service": "tail" }
+  ],
   "routes": [
     // apis.do — own zone
     { "pattern": "apis.do/*", "zone_name": "apis.do" },
