@@ -16,16 +16,20 @@ export function responseMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv>
       const apiType = getApiType(config)
       const { name: apiName, from: apiFrom } = resolveApiIdentity(url.hostname, config)
 
+      // Resolve auth state for api section (login/signup vs manage/upgrade)
+      const resolvedUser = user || c.var.user || { authenticated: false }
+      const isAuthenticated = 'authenticated' in resolvedUser ? (resolvedUser as UserContext).authenticated : Boolean((resolvedUser as UserInfo).id)
+
       const envelope: ResponseEnvelope = {
         api: {
           name: apiName,
           ...(config.description && { description: config.description }),
+          ...(config.version && { version: config.version }),
           url: baseUrl,
           ...(apiType !== 'api' && { type: apiType }),
-          ...(config.version && { version: config.version }),
-          login: `${baseUrl}/login`,
-          signup: `${baseUrl}/signup`,
-          docs: `https://docs.headless.ly`,
+          ...(!isAuthenticated && { login: `${baseUrl}/login`, signup: `${baseUrl}/signup` }),
+          ...(isAuthenticated && { manage: `${baseUrl}/me`, upgrade: `https://billing.do/upgrade` }),
+          docs: `https://docs.platform.do/api`,
           ...(apiFrom && { from: apiFrom }),
         },
       }
@@ -53,11 +57,19 @@ export function responseMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv>
         ;(envelope as Record<string, unknown>).meta = options.meta
       }
 
-      // HATEOAS links — always include self
+      // HATEOAS links — always include home + self
       envelope.links = {
-        self: selfUrl,
         home: baseUrl,
+        self: selfUrl,
         ...links,
+      }
+
+      // Extra keyed sections — placed before payload so facets/types appear above data
+      const reserved = new Set(['data', 'key', 'links', 'actions', 'options', 'status', 'error', 'user', '$context', '$type', '$id', 'total', 'limit', 'page', 'hasMore', 'offset', 'meta'])
+      for (const [k, v] of Object.entries(extra)) {
+        if (!reserved.has(k) && v !== undefined) {
+          ;(envelope as Record<string, unknown>)[k] = v
+        }
       }
 
       // Payload or error
@@ -74,34 +86,47 @@ export function responseMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv>
       // View customization links
       if (opts) envelope.options = opts
 
-      // Extra keyed sections (e.g. discover, recent, hasMore, offset)
-      const reserved = new Set(['data', 'key', 'links', 'actions', 'options', 'status', 'error', 'user', '$context', '$type', '$id', 'total', 'limit', 'page', 'hasMore', 'offset', 'meta'])
-      for (const [k, v] of Object.entries(extra)) {
-        if (!reserved.has(k) && v !== undefined) {
-          ;(envelope as Record<string, unknown>)[k] = v
-        }
-      }
-
       // Pagination extras
       if (options.hasMore !== undefined) (envelope as Record<string, unknown>).hasMore = options.hasMore
       if (options.offset !== undefined) (envelope as Record<string, unknown>).offset = options.offset
 
       // Caller context — always last (always included, even for anonymous)
-      const resolvedUser = user || c.var.user || { authenticated: false }
       const serviceLatency = Math.round(performance.now() - requestStart)
       const enriched = enrichUserContext(normalizeUser(resolvedUser), c, serviceLatency)
-      ;(envelope as Record<string, unknown>).user = enriched
 
-      // Authenticated-only traceability links (top-level, not nested in user)
-      if (enriched.authenticated && enriched.requestId) {
-        envelope.links!.request = `${baseUrl}/${enriched.requestId}`
-        if (enriched.id) envelope.links!.profile = `${baseUrl}/me`
+      // Hoist usage/plan out of user into top-level (set by billing middleware)
+      if (enriched.usage) {
+        ;(envelope as Record<string, unknown>).usage = enriched.usage
+        delete enriched.usage
       }
 
-      return new Response(JSON.stringify(envelope, null, 2), {
-        status,
-        headers: { 'Content-Type': 'application/json; charset=utf-8' },
-      })
+      // Ensure user is always last: delete any earlier 'user' key (e.g. from payload key: 'user')
+      delete (envelope as Record<string, unknown>).user
+
+      // Relationships — contextual resource links based on auth state
+      if (enriched.authenticated) {
+        const rels: Record<string, string> = {}
+        if (enriched.id) rels.profile = `${baseUrl}/me`
+        if (enriched.requestId) rels.request = `${baseUrl}/${enriched.requestId}`
+        if (enriched.org) rels.org = `${baseUrl}/${enriched.org}`
+        if (enriched.plan) rels.plan = `${baseUrl}/account`
+        if (Object.keys(rels).length) {
+          ;(envelope as Record<string, unknown>).relationships = rels
+        }
+      }
+
+      // User context — always last in the envelope
+      ;(envelope as Record<string, unknown>).user = enriched
+
+      // Log user context for tail event tracing (shows up in data.logs)
+      console.info({ user: enriched })
+
+      const headers: Record<string, string> = { 'Content-Type': 'application/json; charset=utf-8' }
+
+      // Server-Timing header — includes total service time + any custom timings
+      headers['Server-Timing'] = `total;dur=${serviceLatency}`
+
+      return new Response(JSON.stringify(envelope, null, 2), { status, headers })
     })
 
     await next()
@@ -277,9 +302,10 @@ function parseUserAgent(ua: string): { browser?: string; os?: string } {
 }
 
 /** Convert ISO 3166-1 alpha-2 country code to full country name */
+const regionNames = new Intl.DisplayNames(['en'], { type: 'region' })
 function countryName(code: string): string {
   try {
-    return new Intl.DisplayNames(['en'], { type: 'region' }).of(code) || code
+    return regionNames.of(code) || code
   } catch {
     return code
   }
