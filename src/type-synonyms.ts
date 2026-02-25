@@ -31,4 +31,8 @@ export const SOURCE_ROUTES: Record<string, string> = {
   organization: 'AUTH',
   user: 'AUTH',
   request: 'EVENTS',
+  repo: 'GITHUB',
+  issue: 'GITHUB',
+  pr: 'GITHUB',
+  pull_request: 'GITHUB',
 }

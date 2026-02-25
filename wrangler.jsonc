@@ -33,6 +33,7 @@
     { "binding": "CODE", "service": "code-headless-ly", "entrypoint": "CodeService" },
     { "binding": "AGENTS", "service": "agents-headless-ly", "entrypoint": "AgentsService" },
     { "binding": "PAYMENTS", "service": "payments-do" },
+    { "binding": "GITHUB", "service": "github-do", "entrypoint": "GitHubService" },
     { "binding": "MCP_SERVER", "service": "mcp" },
     { "binding": "TAIL", "service": "tail" }
   ],
