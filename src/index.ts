@@ -580,11 +580,50 @@ const app = API({
         return c.notFound()
       }
 
-      // 3. Service registry lookup → redirect to the actual .do domain
+      // 3. Known service → try data sources: HEADLESSLY (data), EVENTS (events), then 404
       const svc = getService(registry, id)
       if (!svc) return c.notFound()
 
-      return c.redirect(`https://${svc.domain}`, 302)
+      // 3a. Try HEADLESSLY — it may be a Payload collection
+      if (c.env?.HEADLESSLY) {
+        try {
+          const proxyUrl = new URL(c.req.url)
+          proxyUrl.pathname = `/api/${id}`
+          const headers = new Headers(c.req.raw.headers)
+          if (!headers.has('x-tenant')) headers.set('x-tenant', 'default')
+          const resp = await c.env.HEADLESSLY.fetch(new Request(proxyUrl.toString(), { method: 'GET', headers }))
+          if (resp.ok) return resp
+        } catch { /* fall through */ }
+      }
+
+      // 3b. Try EVENTS — recent events for this service
+      if (c.env?.EVENTS) {
+        try {
+          const result = await c.env.EVENTS.sql(
+            `SELECT id, ns, ts, type, event, source, data
+             FROM platform.events
+             WHERE source = {source:String}
+                OR event LIKE {eventPrefix:String}
+             ORDER BY ts DESC
+             LIMIT 25`,
+            { source: id, eventPrefix: `${id}.%` },
+          )
+          if (result.data.length) {
+            return c.var.respond({
+              data: result.data,
+              key: 'events',
+              total: result.data.length,
+              links: {
+                also: `https://${svc.domain}`,
+                events: `${base}/events`,
+              },
+            })
+          }
+        } catch { /* fall through */ }
+      }
+
+      // 3c. No data found
+      return c.notFound()
     })
   },
 })

@@ -274,10 +274,15 @@ describe('Static Discovery Routes', () => {
 })
 
 describe('Service Catch-All', () => {
-  it('redirects known services to their .do domain', async () => {
-    const res = await app.request('https://apis.do/analytics', { redirect: 'manual' })
-    expect(res.status).toBe(302)
-    expect(res.headers.get('Location')).toBe('https://analytics.do')
+  it('proxies known service to HEADLESSLY when available', async () => {
+    const mockHeadlessly = {
+      fetch: () => new Response(JSON.stringify({ data: [{ id: 'noun_1', name: 'Contact' }] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    }
+    const res = await app.request('https://apis.do/analytics', {}, { HEADLESSLY: mockHeadlessly } as any)
+    expect(res.ok).toBe(true)
   })
 
   it('returns 404 for unknown service', async () => {
