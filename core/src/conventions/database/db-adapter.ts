@@ -174,7 +174,6 @@ function buildSearchFilter(schema: ParsedSchema, model: string, query: string): 
 // Create DB Adapter
 // =========================================================================
 
-const EMPTY_LIST = { data: [] as Document[], total: 0, limit: 20, offset: 0, hasMore: false }
 
 /**
  * Create a DatabaseRpcClient backed by a DB Durable Object (direct RPC).

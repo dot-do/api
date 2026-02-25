@@ -93,7 +93,7 @@ export function billingMiddleware(config: BillingConfig): MiddlewareHandler {
     const effectivePlan = userPlan
 
     // Track usage if callback provided
-    let currentUsage = user.usage?.requests?.used || 0
+    let currentUsage = (user.usage?.requests as { used?: number } | undefined)?.used || 0
     if (config.trackUsage && user.id) {
       const result = config.trackUsage(user.id, effectivePlan)
       currentUsage = result instanceof Promise ? await result : result
@@ -105,8 +105,8 @@ export function billingMiddleware(config: BillingConfig): MiddlewareHandler {
     // Check quota exceeded before proceeding
     if (quotaLimit > 0 && currentUsage > quotaLimit) {
       const billingUrl = config.billingUrl || 'https://billing.do'
-      const tenant = user.tenant
-      const tenantSuffix = tenant ? `/~${tenant}` : ''
+      const org = user.org
+      const orgSuffix = org ? `/~${org}` : ''
 
       return c.json(
         {
@@ -116,8 +116,8 @@ export function billingMiddleware(config: BillingConfig): MiddlewareHandler {
             status: 429,
           },
           links: {
-            upgrade: `${billingUrl}${tenantSuffix}/upgrade`,
-            usage: `${billingUrl}${tenantSuffix}/usage`,
+            upgrade: `${billingUrl}${orgSuffix}/upgrade`,
+            usage: `${billingUrl}${orgSuffix}/usage`,
           },
         },
         429,
@@ -147,11 +147,11 @@ export function billingMiddleware(config: BillingConfig): MiddlewareHandler {
     const isTopTier = planKeys.length === 0 || planKeys[planKeys.length - 1] === effectivePlan || !isKnownPlan
     if (!isTopTier) {
       const billingUrl = config.billingUrl || 'https://billing.do'
-      const tenant = user.tenant
-      const tenantSuffix = tenant ? `/~${tenant}` : ''
+      const org = user.org
+      const orgSuffix = org ? `/~${org}` : ''
       enrichedUser.links = {
         ...enrichedUser.links,
-        upgrade: `${billingUrl}${tenantSuffix}/upgrade`,
+        upgrade: `${billingUrl}${orgSuffix}/upgrade`,
       }
     }
 
@@ -208,8 +208,8 @@ export function requirePlan(
 
     // User's plan is below required tier
     const upgradeBaseUrl = billingUrl || 'https://billing.do'
-    const tenant = user.tenant
-    const tenantSuffix = tenant ? `/~${tenant}` : ''
+    const org = user.org
+    const orgSuffix = org ? `/~${org}` : ''
     const planConfig = plans[requiredPlan]
     const priceHint = planConfig?.price ? ` (${planConfig.price})` : ''
 
@@ -223,7 +223,7 @@ export function requirePlan(
           currentPlan: userPlan,
         },
         links: {
-          upgrade: `${upgradeBaseUrl}${tenantSuffix}/upgrade?plan=${requiredPlan}`,
+          upgrade: `${upgradeBaseUrl}${orgSuffix}/upgrade?plan=${requiredPlan}`,
         },
       },
       403,
@@ -287,8 +287,8 @@ export function requireFeature(
     const requiredPlan = findLowestPlanForFeature(featureName, features, planOrder)
 
     const upgradeBaseUrl = billingUrl || 'https://billing.do'
-    const tenant = user.tenant
-    const tenantSuffix = tenant ? `/~${tenant}` : ''
+    const org = user.org
+    const orgSuffix = org ? `/~${org}` : ''
     const planConfig = requiredPlan ? plans[requiredPlan] : undefined
     const priceHint = planConfig?.price ? ` (${planConfig.price})` : ''
 
@@ -303,7 +303,7 @@ export function requireFeature(
           currentPlan: userPlan,
         },
         links: {
-          upgrade: `${upgradeBaseUrl}${tenantSuffix}/upgrade?feature=${featureName}${requiredPlan ? `&plan=${requiredPlan}` : ''}`,
+          upgrade: `${upgradeBaseUrl}${orgSuffix}/upgrade?feature=${featureName}${requiredPlan ? `&plan=${requiredPlan}` : ''}`,
         },
       },
       403,

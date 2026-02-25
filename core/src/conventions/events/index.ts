@@ -20,6 +20,18 @@ import type { ApiEnv } from '../../types'
 import type { EventsConfig, EventCategory, EventsBinding } from './types'
 import { DEFAULT_EVENT_CATEGORIES } from './types'
 import { inferScope, formatCount, safeInt } from './helpers'
+import { buildCursorPagination } from '../../helpers/pagination'
+
+/** Extract ts cursors from event search results (DESC order: first=newest, last=oldest) */
+function extractCursors(data: Record<string, unknown>[]): { nextCursor?: string; prevCursor?: string } {
+  if (!data.length) return {}
+  const last = data[data.length - 1]
+  const first = data[0]
+  return {
+    nextCursor: last?.ts as string | undefined,
+    prevCursor: first?.ts as string | undefined,
+  }
+}
 import { requireAuth } from '../../middleware'
 
 export type { EventsConfig, EventCategory, EventsBinding } from './types'
@@ -68,20 +80,22 @@ export function eventsConvention(config: EventsConfig = {}): ConventionResult {
     return (env[bindingName] as EventsBinding) || null
   }
 
-  /** Resolve scope — admin users see all, regular users scoped to tenant */
-  function getScope(c: Context<ApiEnv>): string | string[] | undefined {
-    const user = c.get('user' as never) as { level?: string; tenant?: string } | undefined
-    const isAdmin = user?.level === 'L3'
+  /** Resolve scope — determines what events a user can see */
+  function getScope(c: Context<ApiEnv>): string | string[] | undefined | false {
+    const user = c.get('user' as never) as { level?: string; org?: string; authenticated?: boolean } | undefined
 
-    // Admin sees all events
-    if (isAdmin) {
+    // Anonymous users see nothing
+    if (!user?.authenticated) return false
+
+    // L4 (superadmin) sees all events (platform-wide)
+    if (user.level === 'L4') {
       const explicitScope = config.scope
       if (explicitScope === '*' || explicitScope === undefined) return undefined
       return explicitScope
     }
 
-    // Non-admin: scope to tenant
-    const tenant = c.var.tenant || user?.tenant
+    // L1-L3: scope to their org/tenant
+    const tenant = c.var.tenant || user?.org
     if (tenant) return tenant
 
     // Fallback: config scope or hostname-based
@@ -109,6 +123,7 @@ export function eventsConvention(config: EventsConfig = {}): ConventionResult {
 
       try {
         const scope = getScope(c)
+        if (scope === false) return c.json({ error: 'Authentication required' }, 401)
         // Build filters from category definition
         const type = category.types?.length === 1 ? category.types[0] : undefined
         const since = c.req.query('since') || defaultSince
@@ -116,8 +131,13 @@ export function eventsConvention(config: EventsConfig = {}): ConventionResult {
         const event = c.req.query('event')
         const ns = c.req.query('ns')
         const limit = safeInt(c.req.query('limit'), 20, 1, 1000)
-        const offset = safeInt(c.req.query('offset'), 0, 0, 1_000_000)
-        const filters: Record<string, unknown> = { type, since, source, event, ns, limit, offset }
+        const after = c.req.query('after')   // cursor: older events (ts <= after)
+        const before = c.req.query('before') // cursor: newer events (ts >= before)
+        const filters: Record<string, unknown> = {
+          type, source, event, ns, limit, cursor: 0,
+          since: before || since,
+          ...(after && { until: after }),
+        }
 
         const [searchResult, facetResult] = await Promise.all([
           binding.search(filters, scope),
@@ -129,15 +149,21 @@ export function eventsConvention(config: EventsConfig = {}): ConventionResult {
           discover[`${f.value} (${formatCount(f.count)})`] = `${base}/events?event=${encodeURIComponent(f.value)}`
         }
 
+        const cursors = extractCursors(searchResult.data)
+        const pagination = buildCursorPagination({
+          url, limit: searchResult.limit, hasMore: searchResult.hasMore,
+          nextCursor: searchResult.hasMore ? cursors.nextCursor : undefined,
+          prevCursor: after ? cursors.prevCursor : undefined,
+        })
+
         return c.var.respond({
           data: searchResult.data,
           key: 'events',
           total: searchResult.total,
-          limit: searchResult.limit,
-          offset: searchResult.offset,
+          limit: pagination.limit,
           hasMore: searchResult.hasMore,
           discover,
-          links: { self: url.toString(), events: `${base}/events` },
+          links: { ...pagination.links, events: `${base}/events` },
           options: {
             'Last Hour': `${base}/${categoryName}?since=1h`,
             'Last 24 Hours': `${base}/${categoryName}?since=24h`,
@@ -181,34 +207,68 @@ export function eventsConvention(config: EventsConfig = {}): ConventionResult {
     }
 
     try {
+      const t0 = performance.now()
       const scope = getScope(c)
+      if (scope === false) return c.json({ error: 'Authentication required' }, 401)
       const type = c.req.query('type')
       const event = c.req.query('event')
       const source = c.req.query('source')
       const ns = c.req.query('ns')
       const since = c.req.query('since') || defaultSince
       const limit = safeInt(c.req.query('limit'), 20, 1, 1000)
-      const offset = safeInt(c.req.query('offset'), 0, 0, 1_000_000)
+      const after = c.req.query('after')   // cursor: older events (ts <= after)
+      const before = c.req.query('before') // cursor: newer events (ts >= before)
       const hasFilters = type || event || source || ns
 
-      const filters: Record<string, unknown> = { type, event, source, since, ns, limit, offset }
+      if (!hasFilters && !after && !before) {
+        // No filters → discovery view: type facets + recent events
+        const cacheKey = `https://events-discovery-v2/${scope ?? 'global'}/${since}`
+        const cache = caches.default
+        let searchResult: Awaited<ReturnType<typeof binding.search>> | undefined
+        let facetResult: Awaited<ReturnType<typeof binding.facets>> | undefined
 
-      if (!hasFilters) {
-        // No filters → faceted discovery by type + recent events
-        const [facetResult, searchResult] = await Promise.all([
-          binding.facets({ dimension: 'type', filters }, scope),
-          binding.search({ since, limit: 10 }, scope),
-        ])
-        const data: Record<string, string> = {}
-        for (const f of facetResult.facets) {
-          data[`${f.value} (${formatCount(f.count)})`] = `${base}/events/${encodeURIComponent(f.value)}`
+        const cached = await cache.match(cacheKey)
+        if (cached) {
+          const parsed = await cached.json() as { search: typeof searchResult; facets: typeof facetResult }
+          searchResult = parsed.search
+          facetResult = parsed.facets
+          const elapsed = Math.round(performance.now() - t0)
+          console.log(`[events] discovery (cached): ${searchResult!.data.length} events, ${facetResult!.facets.length} types, ${elapsed}ms`)
+        } else {
+          const filters: Record<string, unknown> = { since, limit }
+          ;[searchResult, facetResult] = await Promise.all([
+            binding.search(filters, scope),
+            binding.facets({ dimension: 'type', filters: { since } }, scope),
+          ])
+          const elapsed = Math.round(performance.now() - t0)
+          console.log(`[events] discovery: ${searchResult.data.length} events, ${facetResult.facets.length} types, ${elapsed}ms`)
+          // Cache for 5 minutes
+          c.executionCtx.waitUntil(
+            cache.put(cacheKey, new Response(JSON.stringify({ search: searchResult, facets: facetResult }), {
+              headers: { 'Cache-Control': 'max-age=300' },
+            })),
+          )
         }
+
+        const types: Record<string, string> = {}
+        for (const f of facetResult!.facets) {
+          types[`${f.value} (${formatCount(f.count)})`] = `${base}/events/${encodeURIComponent(f.value)}`
+        }
+
+        const cursors = extractCursors(searchResult!.data)
+        const pagination = buildCursorPagination({
+          url, limit: searchResult!.limit, hasMore: searchResult!.hasMore,
+          nextCursor: searchResult!.hasMore ? cursors.nextCursor : undefined,
+        })
+
         return c.var.respond({
-          data,
-          key: 'discover',
-          total: facetResult.total,
-          recent: searchResult.data,
-          links: { self: url.toString() },
+          types,
+          data: searchResult!.data,
+          key: 'events',
+          total: searchResult!.total,
+          limit: pagination.limit,
+          hasMore: searchResult!.hasMore,
+          links: { ...pagination.links },
           options: {
             'Last Hour': `${base}/events?since=1h`,
             'Last 24 Hours': `${base}/events?since=24h`,
@@ -218,45 +278,49 @@ export function eventsConvention(config: EventsConfig = {}): ConventionResult {
         })
       }
 
-      // Filters applied → return actual event data
+      // Filters or cursor applied → return actual event data with cursor pagination
+      const filters: Record<string, unknown> = {
+        type, event, source, ns, limit, cursor: 0,
+        since: before || since,
+        ...(after && { until: after }),
+      }
+
       const [searchResult, facetResult] = await Promise.all([
         binding.search(filters, scope),
         binding.facets({ dimension: type ? 'event' : 'type', filters: { type, event, source, since, ns } }, scope),
       ])
+      const elapsed = Math.round(performance.now() - t0)
+      console.log(`[events] filtered: ${searchResult.data.length} events, ${facetResult.facets.length} facets, ${elapsed}ms`)
 
       const discover: Record<string, string> = {}
       for (const f of facetResult.facets) {
         if (type) {
-          // Drilling into a type — show sub-events as query param filter
           discover[`${f.value} (${formatCount(f.count)})`] = `${base}/events/${encodeURIComponent(type)}?event=${encodeURIComponent(f.value)}`
         } else {
-          // No type filter — link to path-based type routes
           discover[`${f.value} (${formatCount(f.count)})`] = `${base}/events/${encodeURIComponent(f.value)}`
         }
       }
 
-      const qs = new URLSearchParams()
-      if (type) qs.set('type', type)
-      if (event) qs.set('event', event)
-      if (source) qs.set('source', source)
-      if (ns) qs.set('ns', ns)
-      const qsStr = qs.toString()
-      const qsSuffix = qsStr ? `?${qsStr}&` : '?'
+      const cursors = extractCursors(searchResult.data)
+      const pagination = buildCursorPagination({
+        url, limit: searchResult.limit, hasMore: searchResult.hasMore,
+        nextCursor: searchResult.hasMore ? cursors.nextCursor : undefined,
+        prevCursor: after ? cursors.prevCursor : undefined,
+      })
 
       return c.var.respond({
         data: searchResult.data,
         key: 'events',
         total: searchResult.total,
-        limit: searchResult.limit,
-        offset: searchResult.offset,
+        limit: pagination.limit,
         hasMore: searchResult.hasMore,
         discover,
-        links: { self: url.toString(), parent: `${base}/events` },
+        links: { ...pagination.links, parent: `${base}/events` },
         options: {
-          'Last Hour': `${base}/events${qsSuffix}since=1h`,
-          'Last 24 Hours': `${base}/events${qsSuffix}since=24h`,
-          'Last Week': `${base}/events${qsSuffix}since=7d`,
-          'Last 30 Days': `${base}/events${qsSuffix}since=30d`,
+          'Last Hour': `${base}/events?since=1h`,
+          'Last 24 Hours': `${base}/events?since=24h`,
+          'Last Week': `${base}/events?since=7d`,
+          'Last 30 Days': `${base}/events?since=30d`,
         },
       })
     } catch (err) {
@@ -288,14 +352,20 @@ export function eventsConvention(config: EventsConfig = {}): ConventionResult {
 
     try {
       const scope = getScope(c)
+      if (scope === false) return c.json({ error: 'Authentication required' }, 401)
       const since = c.req.query('since') || defaultSince
       const event = c.req.query('event')
       const source = c.req.query('source')
       const ns = c.req.query('ns')
       const limit = safeInt(c.req.query('limit'), 20, 1, 1000)
-      const offset = safeInt(c.req.query('offset'), 0, 0, 1_000_000)
+      const after = c.req.query('after')
+      const before = c.req.query('before')
 
-      const filters: Record<string, unknown> = { type: eventType, event, source, ns, since, limit, offset }
+      const filters: Record<string, unknown> = {
+        type: eventType, event, source, ns, limit, cursor: 0,
+        since: before || since,
+        ...(after && { until: after }),
+      }
 
       const [searchResult, facetResult] = await Promise.all([
         binding.search(filters, scope),
@@ -307,15 +377,21 @@ export function eventsConvention(config: EventsConfig = {}): ConventionResult {
         discover[`${f.value} (${formatCount(f.count)})`] = `${base}/events/${encodeURIComponent(eventType)}?event=${encodeURIComponent(f.value)}`
       }
 
+      const cursors = extractCursors(searchResult.data)
+      const pagination = buildCursorPagination({
+        url, limit: searchResult.limit, hasMore: searchResult.hasMore,
+        nextCursor: searchResult.hasMore ? cursors.nextCursor : undefined,
+        prevCursor: after ? cursors.prevCursor : undefined,
+      })
+
       return c.var.respond({
         data: searchResult.data,
         key: 'events',
         total: searchResult.total,
-        limit: searchResult.limit,
-        offset: searchResult.offset,
+        limit: pagination.limit,
         hasMore: searchResult.hasMore,
         discover,
-        links: { self: url.toString(), parent: `${base}/events` },
+        links: { ...pagination.links, parent: `${base}/events` },
         options: {
           'Last Hour': `${base}/events/${eventType}?since=1h`,
           'Last 24 Hours': `${base}/events/${eventType}?since=24h`,

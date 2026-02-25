@@ -37,7 +37,10 @@ export function authMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv> {
     const tokenSource = authHeader || (cookieToken ? `Bearer ${cookieToken}` : undefined)
 
     if (tokenSource) {
+      const t0 = performance.now()
       const result = await verifyToken(tokenSource, config, c.env as Record<string, unknown>)
+      const ms = Math.round(performance.now() - t0)
+      if (ms > 5) console.log(`[timing] verifyToken: ${ms}ms (verified: ${result.verified})`)
       if (result.user) {
         c.set('user', result.user)
         await next()
@@ -62,15 +65,13 @@ interface VerifyResult {
   verified: boolean
 }
 
-async function verifyToken(authHeader: string, config: ApiConfig, env?: Record<string, unknown>): Promise<VerifyResult> {
+async function verifyToken(authHeader: string, _config: ApiConfig, env?: Record<string, unknown>): Promise<VerifyResult> {
   const token = authHeader.replace(/^Bearer\s+/i, '')
   if (!token) return { user: null, verified: false }
 
-  const authConfig = config.auth || { mode: 'none' }
-
   try {
-    // 1. Try AUTH service binding (id.org.ai AuthService via Workers RPC)
-    // This is the primary auth path — verifies ses_*, oai_*/hly_sk_*, and WorkOS JWTs.
+    // AUTH service binding (id.org.ai AuthService via Workers RPC)
+    // Single source of truth — verifies ses_*, oai_*/hly_sk_*, and WorkOS JWTs.
     const authBinding = env?.AUTH as { verifyToken?: (token: string) => Promise<{ valid: boolean; user?: UserInfo; error?: string }> } | undefined
     if (authBinding && typeof authBinding.verifyToken === 'function') {
       const result = await authBinding.verifyToken(token)
@@ -78,32 +79,8 @@ async function verifyToken(authHeader: string, config: ApiConfig, env?: Record<s
         return { user: result.user, verified: true }
       }
     }
-
-    // 2. Last resort: decode JWT without verification if explicitly enabled.
-    // SECURITY: This is INSECURE and should only be used in controlled environments
-    // where tokens have been verified upstream (e.g., by a CDN snippet or trusted edge layer).
-    if (authConfig.trustUnverified === true) {
-      console.warn(
-        'SECURITY WARNING: Using trustUnverified fallback to decode JWT without signature verification. ' +
-          'This is INSECURE and should only be used when tokens are verified by an upstream layer.'
-      )
-
-      const parts = token.split('.')
-      const payloadPart = parts[1]
-      if (parts.length === 3 && payloadPart) {
-        const payload = JSON.parse(atob(payloadPart.replace(/-/g, '+').replace(/_/g, '/')))
-        return {
-          user: {
-            id: payload.sub,
-            email: payload.email,
-            name: payload.name,
-          },
-          verified: false,
-        }
-      }
-    }
   } catch {
-    // Token verification/decode failed
+    // AUTH binding call failed
   }
 
   return { user: null, verified: false }

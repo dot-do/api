@@ -78,7 +78,7 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
 // L0 — Anonymous (no token)
 // L1 — API key (agent identity)
 // L2 — Authenticated user (valid JWT with sub)
-// L3 — Org admin (admin/owner role within their org/tenant)
+// L3 — Org admin (admin/owner role within their org)
 // L4 — Superadmin (platformRole: 'superadmin' — .do org only, minted by AUTH worker)
 //
 
@@ -151,11 +151,11 @@ function detectAuth(c: Context): DetectedAuth {
 const DEFAULT_IDENTITY_URL = 'https://id.org.ai'
 const DEFAULT_BILLING_URL = 'https://billing.do'
 
-/** Extract org/tenant ID from JWT claims (supports multiple formats) */
-function extractTenant(claims: Record<string, unknown> | null): string | undefined {
+/** Extract org ID from JWT claims (supports multiple formats) */
+function extractOrg(claims: Record<string, unknown> | null): string | undefined {
   if (!claims) return undefined
   const org = claims.org as { id?: string } | undefined
-  return (claims.tenant as string) || org?.id || (claims.org_id as string) || (claims.orgId as string) || undefined
+  return org?.id || (claims.orgId as string) || (claims.org_id as string) || (claims.tenant as string) || undefined
 }
 
 export function buildUserContext(
@@ -183,6 +183,7 @@ export function buildUserContext(
       return {
         authenticated: true,
         level: 'L1',
+        role: 'agent',
         agent: { id: agentId, name: agentName },
         plan: 'free',
         links: {
@@ -193,58 +194,61 @@ export function buildUserContext(
     }
 
     case 'L2': {
-      const tenant = extractTenant(claims)
-      const tenantSuffix = tenant ? `/~${tenant}` : ''
+      const org = extractOrg(claims)
+      const orgSuffix = org ? `/~${org}` : ''
       return {
         authenticated: true,
         level: 'L2',
         id: claims?.sub as string | undefined,
         name: claims?.name as string | undefined,
         email: claims?.email as string | undefined,
-        tenant,
+        org,
+        role: 'member',
         plan: (claims?.plan as string) || 'free',
         links: {
-          billing: `${billingUrl}${tenantSuffix}`,
-          settings: `${identityUrl}${tenantSuffix}/settings`,
+          billing: `${billingUrl}${orgSuffix}`,
+          settings: `${identityUrl}${orgSuffix}/settings`,
         },
       }
     }
 
     case 'L3': {
-      const tenant = extractTenant(claims)
-      const tenantSuffix = tenant ? `/~${tenant}` : ''
+      const org = extractOrg(claims)
+      const orgSuffix = org ? `/~${org}` : ''
       return {
         authenticated: true,
         level: 'L3',
         id: claims?.sub as string | undefined,
         name: claims?.name as string | undefined,
         email: claims?.email as string | undefined,
-        tenant,
+        org,
+        role: 'admin',
         plan: (claims?.plan as string) || 'pro',
         links: {
-          billing: `${billingUrl}${tenantSuffix}`,
-          settings: `${identityUrl}${tenantSuffix}/settings`,
-          team: `${identityUrl}${tenantSuffix}/team`,
+          billing: `${billingUrl}${orgSuffix}`,
+          settings: `${identityUrl}${orgSuffix}/settings`,
+          team: `${identityUrl}${orgSuffix}/team`,
         },
       }
     }
 
     case 'L4': {
-      const tenant = extractTenant(claims)
-      const tenantSuffix = tenant ? `/~${tenant}` : ''
+      const org = extractOrg(claims)
+      const orgSuffix = org ? `/~${org}` : ''
       return {
         authenticated: true,
         level: 'L4',
         id: claims?.sub as string | undefined,
         name: claims?.name as string | undefined,
         email: claims?.email as string | undefined,
-        tenant,
+        org,
+        role: 'superadmin',
         plan: 'enterprise',
         links: {
-          billing: `${billingUrl}${tenantSuffix}`,
-          settings: `${identityUrl}${tenantSuffix}/settings`,
-          team: `${identityUrl}${tenantSuffix}/team`,
-          sso: `${identityUrl}${tenantSuffix}/sso`,
+          billing: `${billingUrl}${orgSuffix}`,
+          settings: `${identityUrl}${orgSuffix}/settings`,
+          team: `${identityUrl}${orgSuffix}/team`,
+          sso: `${identityUrl}${orgSuffix}/sso`,
           admin: `${identityUrl}/admin`,
         },
       }

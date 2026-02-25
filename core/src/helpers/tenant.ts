@@ -138,10 +138,10 @@ export function resolveTenant(
     return { tenant: subdomainTenant, source: 'subdomain' }
   }
 
-  // 4. Auth token tenant claim (from user info set by auth middleware)
-  const user = c.get('user' as never) as { tenant?: string } | undefined
-  if (user?.tenant) {
-    return { tenant: user.tenant, source: 'token' }
+  // 4. Auth token org claim (from user info set by auth middleware)
+  const user = c.get('user' as never) as { org?: string } | undefined
+  if (user?.org) {
+    return { tenant: user.org, source: 'token' }
   }
 
   // 5. Default fallback

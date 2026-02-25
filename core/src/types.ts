@@ -21,6 +21,8 @@ export interface ApiMeta {
   version?: string
   login?: string
   signup?: string
+  manage?: string
+  upgrade?: string
   from?: string
 }
 
@@ -53,10 +55,11 @@ export interface UserContext {
   id?: string
   name?: string
   email?: string
-  tenant?: string
+  org?: string
+  role?: 'superadmin' | 'admin' | 'member' | 'agent'
   agent?: { id: string; name: string }
   plan?: string
-  usage?: Record<string, { used: number; limit: number; period?: string }>
+  usage?: Record<string, unknown>
   links?: Record<string, string>
 }
 

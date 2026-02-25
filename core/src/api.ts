@@ -70,6 +70,13 @@ export function API(input?: ApiInput): Hono<ApiEnv> {
   app.use('*', contextMiddleware())
   app.use('*', responseMiddleware(config))
 
+  // Timing middleware — tracks per-phase latency, logged in Server-Timing header
+  app.use('*', async (c, next) => {
+    const t0 = performance.now()
+    c.set('_timingStart' as never, t0 as never)
+    await next()
+  })
+
   // Auth middleware — verifies tokens via AUTH RPC binding
   if (config.auth && config.auth.mode !== 'none') {
     app.use('*', authMiddleware(config))

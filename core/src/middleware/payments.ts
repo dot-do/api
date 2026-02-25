@@ -290,8 +290,8 @@ export function paymentsMiddleware(config: PaymentConfig): MiddlewareHandler {
 
     // Build upgrade links for subscription plans
     const billingUrl = config.billingUrl || 'https://billing.do'
-    const tenant = user?.tenant
-    const tenantSuffix = tenant ? `/~${tenant}` : ''
+    const org = user?.org
+    const orgSuffix = org ? `/~${org}` : ''
 
     const paymentRequiredHeader = btoa(JSON.stringify(paymentBlock))
 
@@ -304,8 +304,8 @@ export function paymentsMiddleware(config: PaymentConfig): MiddlewareHandler {
         },
         payment: paymentBlock,
         links: {
-          upgrade: `${billingUrl}${tenantSuffix}/upgrade`,
-          pricing: `${billingUrl}${tenantSuffix}/pricing`,
+          upgrade: `${billingUrl}${orgSuffix}/upgrade`,
+          pricing: `${billingUrl}${orgSuffix}/pricing`,
           ...(config.facilitatorUrl && { facilitator: config.facilitatorUrl }),
         },
       },
