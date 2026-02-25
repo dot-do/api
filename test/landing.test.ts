@@ -36,10 +36,9 @@ describe('Landing Page', () => {
     // Domain has no .do domain — uses apis.do path
     expect(body.core.Domain).toBe('https://apis.do/domains')
 
-    // Links
-    expect(body.links.mcp).toBe('https://apis.do/mcp')
-    expect(body.links.rpc).toBe('https://apis.do/rpc')
-    expect(body.links.sdk).toBe('https://apis.do/sdk')
+    // Only auto-generated links (home, self)
+    expect(body.links.home).toBe('https://apis.do')
+    expect(body.links.self).toBe('https://apis.do/')
 
     // Old discover key should NOT exist
     expect(body.discover).toBeUndefined()

@@ -70,14 +70,6 @@ const app = API({
     const nav = buildNavigator(base, useLocal)
     return c.var.respond({
       ...nav,
-      links: {
-        mcp: `${base}/mcp`,
-        rpc: `${base}/rpc`,
-        sdk: `${base}/sdk`,
-        search: `${base}/search`,
-        services: `${base}/services`,
-        categories: `${base}/categories`,
-      },
       actions: {
         [useLocal ? 'Show .do Domains' : 'Show Local Paths']: useLocal ? `${base}/` : `${base}/?domains`,
       },
