@@ -19,6 +19,7 @@ export default defineWorkersConfig({
                 headers: { 'Content-Type': 'application/json' },
               })
             },
+            EVENTS: () => new Response(JSON.stringify({ data: [] }), { status: 200 }),
           },
         },
       },

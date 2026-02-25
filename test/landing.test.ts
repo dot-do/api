@@ -2,31 +2,58 @@ import { describe, it, expect } from 'vitest'
 import app from '../src/index'
 
 describe('Landing Page', () => {
-  it('returns discovery links at root with discover key', async () => {
+  it('returns primitive-ordered navigator at root', async () => {
     const res = await app.request('https://apis.do/')
     expect(res.ok).toBe(true)
 
     const body = await res.json()
     expect(body.api.name).toBe('apis.do')
-    expect(body.discover).toBeDefined()
-    expect(body.discover['Search APIs']).toBe('https://apis.do/search?q=database')
-    expect(body.discover['Event Streams']).toBe('https://apis.do/events')
-    expect(body.discover['Functions']).toBe('https://apis.do/functions')
-    expect(body.discover['Database']).toBe('https://apis.do/database')
 
-    // No emojis in keys
-    for (const key of Object.keys(body.discover)) {
-      if (key === '---') continue
-      expect(key).not.toMatch(/[\u{1F000}-\u{1FFFF}]/u)
-    }
+    // Verify primitive categories exist
+    expect(body.core).toBeDefined()
+    expect(body.intelligence).toBeDefined()
+    expect(body.execution).toBeDefined()
+    expect(body.actors).toBeDefined()
+    expect(body.outputs).toBeDefined()
+    expect(body.interfaces).toBeDefined()
+    expect(body.lifecycle).toBeDefined()
+
+    // Verify ordering: core keys should come before lifecycle in JSON
+    const keys = Object.keys(body)
+    const coreIdx = keys.indexOf('core')
+    const lifecycleIdx = keys.indexOf('lifecycle')
+    expect(coreIdx).toBeLessThan(lifecycleIdx)
+
+    // Verify Domain is first in core
+    const coreKeys = Object.keys(body.core)
+    expect(coreKeys[0]).toBe('Domain')
+
+    // Default uses .do domains
+    expect(body.core.Noun).toBe('https://nouns.do')
+    expect(body.core.Event).toBe('https://events.do')
+    expect(body.intelligence.Database).toBe('https://database.do')
+
+    // Domain has no .do domain — uses apis.do path
+    expect(body.core.Domain).toBe('https://apis.do/domains')
 
     // Links
     expect(body.links.mcp).toBe('https://apis.do/mcp')
     expect(body.links.rpc).toBe('https://apis.do/rpc')
     expect(body.links.sdk).toBe('https://apis.do/sdk')
 
-    // Actions
-    expect(body.actions['Toggle Link Domains']).toBe('https://apis.do/?domains=true')
+    // Old discover key should NOT exist
+    expect(body.discover).toBeUndefined()
+  })
+
+  it('toggles to local paths with ?domains', async () => {
+    const res = await app.request('https://apis.do/?domains')
+    expect(res.ok).toBe(true)
+
+    const body = await res.json()
+    expect(body.core.Noun).toBe('https://apis.do/nouns')
+    expect(body.core.Event).toBe('https://apis.do/events')
+    expect(body.intelligence.Database).toBe('https://apis.do/database')
+    expect(body.actions['Show .do Domains']).toBe('https://apis.do/')
   })
 })
 
@@ -174,14 +201,14 @@ describe('Entity Proxy', () => {
 })
 
 describe('Static Discovery Routes', () => {
-  it('returns database discovery without emojis', async () => {
+  it('returns database collections without emojis', async () => {
     const res = await app.request('https://apis.do/database')
     expect(res.ok).toBe(true)
 
     const body = await res.json()
-    expect(body.discover).toBeDefined()
-    expect(body.discover['Schemas']).toBe('https://apis.do/database/schemas')
-    for (const key of Object.keys(body.discover)) {
+    expect(body.collections).toBeDefined()
+    expect(body.collections['Users']).toBe('https://apis.do/users')
+    for (const key of Object.keys(body.collections)) {
       expect(key).not.toMatch(/[\u{1F000}-\u{1FFFF}]/u)
     }
   })

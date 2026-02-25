@@ -1,6 +1,7 @@
 import { API, parseEntityId } from '@dotdo/api'
 import { buildRegistry, searchServices, getService, getCategory, listCategories } from './registry'
 import { formatCount } from './clickhouse'
+import { buildNavigator } from './primitives'
 
 declare module '@dotdo/api' {
   interface Bindings extends Cloudflare.Env {
@@ -64,28 +65,20 @@ const app = API({
     auth: 'superadmin',
   },
   landing: (c) => {
+    const useLocal = c.req.query('domains') !== undefined
+    const nav = buildNavigator(base, useLocal)
     return c.var.respond({
-      data: {
-        'Search APIs': `${base}/search?q=database`,
-        [`All Services (${registry.services.length})`]: `${base}/services`,
-        'Browse Categories': `${base}/categories`,
-        'Event Streams': `${base}/events`,
-        'Functions': `${base}/functions`,
-        'Workflows': `${base}/workflows`,
-        'Agents': `${base}/agents`,
-        'Database': `${base}/database`,
-        'Payments': `${base}/payments`,
-        'Integrations': `${base}/integrations`,
-        'Identity & Auth': `${base}/oauth`,
-      },
-      key: 'discover',
+      ...nav,
       links: {
         mcp: `${base}/mcp`,
         rpc: `${base}/rpc`,
         sdk: `${base}/sdk`,
+        search: `${base}/search`,
+        services: `${base}/services`,
+        categories: `${base}/categories`,
       },
       actions: {
-        'Toggle Link Domains': `${base}/?domains=true`,
+        [useLocal ? 'Show .do Domains' : 'Show Local Paths']: useLocal ? `${base}/` : `${base}/?domains`,
       },
     })
   },
@@ -465,30 +458,51 @@ const app = API({
         const rawRay = id.slice('request_'.length) // e.g. '9d2ed000983652a6-ORD' or '9d2ed000983652a6'
         const cfRay = rawRay.includes('-') ? rawRay.split('-')[0] : rawRay // strip colo suffix — ClickHouse stores ray without colo
 
+        // Check cache first (cf-ray lookups are expensive — full table scan on JSON column)
+        const rayCacheKey = `${base}/_cache/ray/${cfRay}`
         try {
-          // Query headlessly.events — data is a String column with full headers
-          // (platform.events uses JSON type which prunes headers)
+          const cached = await caches.default.match(new Request(rayCacheKey))
+          if (cached) {
+            const data = await cached.json()
+            return c.var.respond(data as Record<string, unknown>)
+          }
+        } catch { /* fall through */ }
+
+        try {
           const result = await c.env.EVENTS.sql(
             `SELECT id, ns, ts, type, event, source, data
-             FROM headlessly.events
-             WHERE JSONExtractString(data, 'event', 'request', 'headers', 'cf-ray') = {cfRay:String}
-             ORDER BY ts DESC
+             FROM platform.events
+             WHERE source = 'tail'
+               AND data.event.request.headers.\`cf-ray\`::String = {cfRay:String}
+             ORDER BY id DESC
              LIMIT 50`,
             { cfRay },
           )
           if (result.data.length) {
-            // Parse the data string into JSON for each row
-            const events = result.data.map((r) => {
-              try { return { ...r, data: JSON.parse(r.data as string) } } catch { return r }
+            // Deduplicate (ReplacingMergeTree may not have merged yet)
+            const seen = new Set<string>()
+            const unique = result.data.filter((r) => {
+              const rid = (r as Record<string, unknown>).id as string
+              if (seen.has(rid)) return false
+              seen.add(rid)
+              return true
             })
-            return c.var.respond({
-              $type: 'Request',
+            const body = {
+              $type: 'Request' as const,
               $id: id,
-              data: events.length === 1 ? events[0] : events,
-              key: events.length === 1 ? 'request' : 'trace',
-              total: events.length,
+              data: unique.length === 1 ? unique[0] : unique,
+              key: unique.length === 1 ? 'request' : 'trace',
+              total: unique.length,
               links: { events: `${base}/events` },
-            })
+            }
+            // Cache for 1 hour
+            try {
+              await caches.default.put(
+                new Request(rayCacheKey),
+                new Response(JSON.stringify(body), { headers: { 'Cache-Control': 'max-age=3600' } }),
+              )
+            } catch { /* non-fatal */ }
+            return c.var.respond(body)
           }
         } catch (err) {
           console.error('[request] EVENTS trace lookup failed:', err)
@@ -503,9 +517,27 @@ const app = API({
         })
       }
 
-      // 2. Entity ID (type_sqid format — e.g. contact_abc, deal_kRziM)
+      // 2. Entity ID (type_sqid format — e.g. contact_abc, deal_kRziM, org_xxx)
       const parsed = parseEntityId(id)
       if (parsed) {
+        // 2a. org_* → resolve from WorkOS via AUTH RPC (source of truth)
+        if (parsed.type === 'org' && c.env.AUTH) {
+          try {
+            const org = await (c.env.AUTH as unknown as { getOrganization: (id: string) => Promise<Record<string, unknown> | null> }).getOrganization(parsed.id)
+            if (org) {
+              return c.var.respond({
+                $type: 'Organization',
+                $id: parsed.id,
+                data: org,
+                key: 'organization',
+              })
+            }
+          } catch (err) {
+            console.error(`[entity] AUTH.getOrganization failed for ${parsed.id}:`, err)
+          }
+        }
+
+        // 2b. General entity lookup via EVENTS data table
         try {
           const result = await c.env.EVENTS.sql(
             `SELECT id, type, name, data, ns, updatedAt, updatedBy, v
@@ -529,6 +561,16 @@ const app = API({
           }
         } catch (err) {
           console.error(`[entity] EVENTS lookup failed for ${parsed.id}:`, err)
+        }
+
+        // Fallback: proxy to HEADLESSLY via collection path
+        if (c.env?.HEADLESSLY) {
+          const url = new URL(c.req.url)
+          url.pathname = `/api/${parsed.collection}/${parsed.id}`
+          const headers = new Headers(c.req.raw.headers)
+          if (!headers.has('x-tenant')) headers.set('x-tenant', 'default')
+          const resp = await c.env.HEADLESSLY.fetch(new Request(url.toString(), { method: 'GET', headers }))
+          if (resp.ok) return resp
         }
         return c.notFound()
       }
