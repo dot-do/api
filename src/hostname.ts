@@ -2,6 +2,7 @@ export interface HostnameContext {
   mode: 'root' | 'service' | 'agent' | 'customer'
   service?: string
   domain?: string
+  primitive?: string
 }
 
 const NAMED_AGENTS = new Set([
@@ -35,6 +36,33 @@ const NAMED_AGENTS = new Set([
 
 const CSUITE = new Set(['cfo', 'cmo', 'coo', 'cpo', 'cro', 'cto'])
 
+/** .do hostnames that map to platform primitives */
+const HOSTNAME_PRIMITIVES: Record<string, string> = {
+  database: 'database',
+  events: 'events',
+  functions: 'functions',
+  workflows: 'workflows',
+  agents: 'agents',
+  nouns: 'nouns',
+  verbs: 'verbs',
+  objects: 'objects',
+  actions: 'actions',
+  goals: 'goals',
+  plans: 'plans',
+  projects: 'projects',
+  tasks: 'tasks',
+  products: 'products',
+  businesses: 'businesses',
+  humans: 'humans',
+  experiments: 'experiments',
+  apis: 'apis',
+  sdk: 'sdk',
+  cli: 'cli',
+  mcp: 'mcp',
+  mdx: 'mdx',
+  services: 'services',
+}
+
 export function isNamedAgent(name: string): boolean {
   return NAMED_AGENTS.has(name) || CSUITE.has(name)
 }
@@ -51,7 +79,11 @@ export function resolveHostname(hostname: string): HostnameContext {
     if (NAMED_AGENTS.has(name) || CSUITE.has(name)) {
       return { mode: 'agent', service: name }
     }
-    return { mode: 'service', service: name }
+    return {
+      mode: 'service',
+      service: name,
+      primitive: HOSTNAME_PRIMITIVES[name],
+    }
   }
 
   return { mode: 'customer', domain: host }

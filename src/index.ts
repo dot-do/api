@@ -1,71 +1,52 @@
-import { API, parseEntityId } from '@dotdo/api'
+import { API, parseEntityId, authLevelMiddleware, requireAuth } from '@dotdo/api'
+import type { ApiEnv } from '@dotdo/api'
+import type { Context, Hono, Next } from 'hono'
+
+/** EventsService RPC stub — wrangler types only see generic Service, but the real binding exposes sql() */
+type EventsRPC = { sql: (query: string, params?: Record<string, unknown>) => Promise<{ data: Record<string, unknown>[] }> }
+import { getAllNouns } from 'digital-objects'
 import { buildRegistry, searchServices, getService, getCategory, listCategories } from './registry'
 import { formatCount } from './clickhouse'
 import { buildNavigator } from './primitives'
 import { resolve } from './aliases'
+import { resolveType, STRIPE_PREFIXES } from './type-synonyms'
+
+// Side-effect: register all 35 nouns in the global noun registry
+import '@headlessly/sdk'
 
 declare module '@dotdo/api' {
-  interface Bindings extends Cloudflare.Env {
-    HEADLESSLY?: Fetcher
-  }
+  interface Bindings extends Cloudflare.Env {}
 }
 
 const registry = buildRegistry()
 const base = 'https://apis.do'
 
-// ── Entity types for proxy to headlessly-api ──────────────────────────────────
-const ENTITY_PLURALS = new Set([
-  'users',
-  'api-keys',
-  'organizations',
-  'contacts',
-  'leads',
-  'deals',
-  'activities',
-  'pipelines',
-  'customers',
-  'products',
-  'plans',
-  'prices',
-  'subscriptions',
-  'invoices',
-  'payments',
-  'projects',
-  'issues',
-  'comments',
-  'content',
-  'assets',
-  'sites',
-  'tickets',
-  // 'events' — handled by eventsConvention via EVENTS service binding, not entity proxy
-  'metrics',
-  'funnels',
-  'goals',
-  'campaigns',
-  'segments',
-  'forms',
-  'experiments',
-  'feature-flags',
-  'workflows',
-  'integrations',
-  'agents',
-  'messages',
-])
+/** Extract tenant from request context */
+const extractTenant = (c: { req: { header: (name: string) => string | undefined } }) => c.req.header('x-tenant') ?? 'default'
 
 // ── App ───────────────────────────────────────────────────────────────────────
 
 const app = API({
   name: 'apis.do',
   description: 'Managed API Gateway for the .do ecosystem',
-  version: '0.4.0',
+  version: '0.5.0',
   auth: { mode: 'optional' },
-  mcp: { name: 'apis.do', version: '0.4.0' },
+  mcp: { name: 'apis.do', version: '0.5.0' },
+  database: {
+    nounRegistry: getAllNouns,
+    objects: 'OBJECTS',
+    database: 'DATABASE',
+    namespace: extractTenant,
+    idFormat: 'sqid',
+    mcp: true,
+    rest: { basePath: '/api' },
+  },
   events: {
     scope: '*',
     topLevelRoutes: false,
     auth: 'superadmin',
   },
-  landing: (c) => {
+  landing: (c: Context<ApiEnv>) => {
     const useDomains = c.req.query('domains') !== undefined
     const nav = buildNavigator(base, !useDomains)
     return c.var.respond({
@@ -81,17 +62,17 @@ const app = API({
         name: 'search',
         description: 'Search .do APIs by name or category',
         input: { type: 'object', properties: { q: { type: 'string' } } },
-        handler: async (input) => {
+        handler: async (input: unknown) => {
           const q = (input as { q?: string })?.q?.toLowerCase() || ''
           return q ? searchServices(registry, q) : registry.services
         },
       },
     ],
   },
-  routes: (app) => {
+  routes: (app: Hono<ApiEnv>) => {
     // ==================== Alias Resolution ====================
     // Redirect abbreviated paths to canonical names (e.g., /db → /database, /fn → /functions)
-    app.use('/:name{[a-z][a-z0-9-]*}', async (c, next) => {
+    app.use('/:name{[a-z][a-z0-9-]*}', async (c: Context<ApiEnv>, next: Next) => {
       const name = c.req.param('name')
       const canonical = resolve(name)
       if (canonical !== name) {
@@ -102,10 +83,17 @@ const app = API({
       await next()
     })
 
+    // ==================== Auth-Gating for /api/* (database convention routes) ====================
+
+    app.use('/api/*', authLevelMiddleware())
+    app.post('/api/*', requireAuth())
+    app.put('/api/*', requireAuth())
+    app.delete('/api/*', requireAuth())
+
     // ==================== Identity / Debug ====================
 
-    app.get('/me', (c) => {
-      const user = c.get('user' as never)
+    app.get('/me', (c: Context<ApiEnv>) => {
+      const user = c.get('user' as never) as { authenticated: boolean } | undefined
       if (!user?.authenticated) {
         return c.var.respond({
           error: { message: 'Not authenticated', code: 'UNAUTHORIZED', status: 401 },
@@ -118,7 +106,7 @@ const app = API({
 
     // ==================== Search ====================
 
-    app.get('/search', (c) => {
+    app.get('/search', (c: Context<ApiEnv>) => {
       const q = c.req.query('q')?.toLowerCase() || ''
       if (!q) {
         return c.var.respond({
@@ -145,7 +133,7 @@ const app = API({
 
     // ==================== Service Registry ====================
 
-    app.get('/services', (c) => {
+    app.get('/services', (c: Context<ApiEnv>) => {
       const q = c.req.query('q')?.toLowerCase()
       const cat = c.req.query('category')
       let results = registry.services
@@ -166,7 +154,7 @@ const app = API({
       })
     })
 
-    app.get('/services/:name', (c) => {
+    app.get('/services/:name', (c: Context<ApiEnv>) => {
       const svc = getService(registry, c.req.param('name'))
       if (!svc) return c.notFound()
       return c.var.respond({
@@ -181,7 +169,7 @@ const app = API({
       })
     })
 
-    app.get('/categories', (c) => {
+    app.get('/categories', (c: Context<ApiEnv>) => {
       const cats = listCategories(registry).map((cat) => ({
         name: cat.name,
         slug: cat.slug,
@@ -192,7 +180,7 @@ const app = API({
       return c.var.respond({ data: cats, key: 'categories', total: cats.length })
     })
 
-    app.get('/categories/:slug', (c) => {
+    app.get('/categories/:slug', (c: Context<ApiEnv>) => {
       const cat = getCategory(registry, c.req.param('slug'))
       if (!cat) return c.notFound()
       return c.var.respond({
@@ -208,135 +196,18 @@ const app = API({
       })
     })
 
-    app.get('/apis', (c) => {
+    app.get('/apis', (c: Context<ApiEnv>) => {
       const q = c.req.query('q')?.toLowerCase()
       const results = q ? searchServices(registry, q) : registry.services
       return c.var.respond({ data: results, key: 'apis', total: results.length })
     })
 
-    // ==================== Static Discovery Routes ====================
-
-    const databaseHandler = (c: any) => {
-      return c.var.respond({
-        data: {
-          // Identity
-          'Users': `${base}/users`,
-          'API Keys': `${base}/api-keys`,
-          // CRM
-          'Organizations': `${base}/organizations`,
-          'Contacts': `${base}/contacts`,
-          'Leads': `${base}/leads`,
-          'Deals': `${base}/deals`,
-          'Activities': `${base}/activities`,
-          'Pipelines': `${base}/pipelines`,
-          // Billing
-          'Customers': `${base}/customers`,
-          'Products': `${base}/products`,
-          'Plans': `${base}/plans`,
-          'Prices': `${base}/prices`,
-          'Subscriptions': `${base}/subscriptions`,
-          'Invoices': `${base}/invoices`,
-          'Payments': `${base}/payments`,
-          // Projects
-          'Projects': `${base}/projects`,
-          'Issues': `${base}/issues`,
-          'Comments': `${base}/comments`,
-          // Content
-          'Content': `${base}/content`,
-          'Assets': `${base}/assets`,
-          'Sites': `${base}/sites`,
-          // Support
-          'Tickets': `${base}/tickets`,
-          // Analytics
-          'Events': `${base}/events`,
-          'Metrics': `${base}/metrics`,
-          'Funnels': `${base}/funnels`,
-          'Goals': `${base}/goals`,
-          // Marketing
-          'Campaigns': `${base}/campaigns`,
-          'Segments': `${base}/segments`,
-          'Forms': `${base}/forms`,
-          // Experiments
-          'Experiments': `${base}/experiments`,
-          'Feature Flags': `${base}/feature-flags`,
-          // Platform
-          'Workflows': `${base}/workflows`,
-          'Integrations': `${base}/integrations`,
-          'Agents': `${base}/agents`,
-          // Communication
-          'Messages': `${base}/messages`,
-        },
-        key: 'collections',
-        total: 35,
-        links: { also: 'https://database.do/api', docs: 'https://docs.headless.ly/database' },
-        actions: {
-          'Run Query': `POST ${base}/database/queries`,
-        },
-      })
-    }
-    app.get('/database', databaseHandler)
-
-    app.get('/functions', (c) => {
-      return c.var.respond({
-        data: {
-          'Code Functions': `${base}/functions/code`,
-          'Generative (AI)': `${base}/functions/generative`,
-          'Agentic Functions': `${base}/functions/agentic`,
-          'Human-in-the-Loop': `${base}/functions/human`,
-        },
-        key: 'discover',
-        links: { also: 'https://functions.do/api', docs: 'https://docs.headless.ly/functions' },
-        actions: { 'Execute Function': `POST ${base}/functions/{name}` },
-      })
-    })
-
-    app.get('/workflows', (c) => {
-      return c.var.respond({
-        data: {
-          'All Workflows': `${base}/workflows/all`,
-          'Triggers': `${base}/workflows/triggers`,
-          'Recent Runs': `${base}/workflows/runs`,
-        },
-        key: 'discover',
-        links: { also: 'https://workflows.do/api', docs: 'https://docs.headless.ly/workflows' },
-        actions: { 'Execute Workflow': `POST ${base}/workflows/{name}` },
-      })
-    })
-
-    app.get('/agents', (c) => {
-      return c.var.respond({
-        data: {
-          'All Agents': `${base}/agents/all`,
-          'Priya (Sales)': 'https://priya.do/api',
-          'Tom (Engineering)': 'https://tom.do/api',
-          'Ralph (Research)': 'https://ralph.do/api',
-        },
-        key: 'discover',
-        links: { also: 'https://agents.do/api', docs: 'https://docs.headless.ly/agents', events: `${base}/events/agent` },
-        actions: { 'Create Agent': `POST ${base}/agents` },
-      })
-    })
-
-    app.get('/integrations', (c) => {
-      return c.var.respond({
-        data: {
-          'Stripe': `${base}/stripe`,
-          'GitHub': `${base}/github`,
-          'ClickHouse': `${base}/clickhouse`,
-          'Slack': `${base}/slack`,
-          'Email': `${base}/emails`,
-        },
-        key: 'discover',
-        links: { also: 'https://integrations.do/api', docs: 'https://docs.headless.ly/integrations', events: `${base}/events/integration` },
-      })
-    })
-
     // ==================== Integration Namespaces ====================
 
-    app.get('/stripe', async (c) => {
+    app.get('/stripe', async (c: Context<ApiEnv>) => {
       let eventFacets: Record<string, string> = {}
       try {
-        const result = await c.env.EVENTS.sql(
+        const result = await (c.env.EVENTS as unknown as EventsRPC).sql(
           "SELECT event, count() AS cnt FROM events WHERE type = 'webhook' AND event LIKE 'stripe.%' AND ts >= now() - INTERVAL 7 DAY GROUP BY event ORDER BY cnt DESC LIMIT 10",
         )
         for (const row of result.data) {
@@ -361,10 +232,10 @@ const app = API({
       })
     })
 
-    app.get('/github', async (c) => {
+    app.get('/github', async (c: Context<ApiEnv>) => {
       let eventFacets: Record<string, string> = {}
       try {
-        const result = await c.env.EVENTS.sql(
+        const result = await (c.env.EVENTS as unknown as EventsRPC).sql(
           "SELECT event, count() AS cnt FROM events WHERE type = 'webhook' AND event LIKE 'github.%' AND ts >= now() - INTERVAL 7 DAY GROUP BY event ORDER BY cnt DESC LIMIT 10",
         )
         for (const row of result.data) {
@@ -388,79 +259,31 @@ const app = API({
       })
     })
 
-    app.get('/payments', (c) => {
-      return c.var.respond({
-        data: {
-          'Payment Methods': `${base}/payments/methods`,
-          'Invoices': `${base}/payments/invoices`,
-          'Subscriptions': `${base}/payments/subscriptions`,
-          'Revenue': `${base}/payments/revenue`,
-          'Pricing Plans': `${base}/payments/plans`,
-        },
-        key: 'discover',
-        links: { also: 'https://payments.do/api', stripe: `${base}/stripe`, docs: 'https://docs.headless.ly/payments' },
-      })
-    })
-
-    // ==================== Entity Proxy (HEADLESSLY service binding) ====================
-
-    for (const plural of ENTITY_PLURALS) {
-      // GET /contacts, GET /contacts/:id etc.
-      app.get(`/${plural}`, async (c) => {
-        if (!c.env?.HEADLESSLY) return c.json({ error: 'Entity service unavailable' }, 503)
-        const url = new URL(c.req.url)
-        url.pathname = `/api${url.pathname}`
-        const headers = new Headers(c.req.raw.headers)
-        if (!headers.has('x-tenant')) headers.set('x-tenant', 'default')
-        return c.env?.HEADLESSLY.fetch(new Request(url.toString(), { method: 'GET', headers }))
-      })
-
-      app.get(`/${plural}/:id`, async (c) => {
-        if (!c.env?.HEADLESSLY) return c.json({ error: 'Entity service unavailable' }, 503)
-        const url = new URL(c.req.url)
-        url.pathname = `/api${url.pathname}`
-        const headers = new Headers(c.req.raw.headers)
-        if (!headers.has('x-tenant')) headers.set('x-tenant', 'default')
-        return c.env?.HEADLESSLY.fetch(new Request(url.toString(), { method: 'GET', headers }))
-      })
-
-      // POST/PUT/DELETE proxy
-      for (const method of ['POST', 'PUT', 'DELETE'] as const) {
-        app.on(method, [`/${plural}`, `/${plural}/:id`], async (c) => {
-          if (!c.env?.HEADLESSLY) return c.json({ error: 'Entity service unavailable' }, 503)
-          const url = new URL(c.req.url)
-          url.pathname = `/api${url.pathname}`
-          const headers = new Headers(c.req.raw.headers)
-          if (!headers.has('x-tenant')) headers.set('x-tenant', 'default')
-          return c.env?.HEADLESSLY.fetch(new Request(url.toString(), { method, headers, body: c.req.raw.body }))
-        })
-      }
-    }
-
     // ==================== Auth Proxy ====================
 
-    app.all('/login', (c) => c.env.AUTH_HTTP.fetch(c.req.raw))
-    app.all('/callback', (c) => c.env.AUTH_HTTP.fetch(c.req.raw))
-    app.all('/logout', (c) => c.env.AUTH_HTTP.fetch(c.req.raw))
-    app.all('/.well-known/*', (c) => c.env.AUTH_HTTP.fetch(c.req.raw))
-    app.all('/oauth/*', (c) => c.env.AUTH_HTTP.fetch(c.req.raw))
-    app.all('/verify', (c) => c.env.AUTH_HTTP.fetch(c.req.raw))
-    app.all('/claim/*', (c) => c.env.AUTH_HTTP.fetch(c.req.raw))
-    app.all('/device', (c) => c.env.AUTH_HTTP.fetch(c.req.raw))
-    app.all('/admin-portal', (c) => c.env.AUTH_HTTP.fetch(c.req.raw))
+    app.all('/login', (c: Context<ApiEnv>) => c.env.OAUTH.fetch(c.req.raw))
+    app.all('/callback', (c: Context<ApiEnv>) => c.env.OAUTH.fetch(c.req.raw))
+    app.all('/logout', (c: Context<ApiEnv>) => c.env.OAUTH.fetch(c.req.raw))
+    app.all('/.well-known/*', (c: Context<ApiEnv>) => c.env.OAUTH.fetch(c.req.raw))
+    app.all('/oauth/*', (c: Context<ApiEnv>) => c.env.OAUTH.fetch(c.req.raw))
+    app.all('/verify', (c: Context<ApiEnv>) => c.env.OAUTH.fetch(c.req.raw))
+    app.all('/claim/*', (c: Context<ApiEnv>) => c.env.OAUTH.fetch(c.req.raw))
+    app.all('/device', (c: Context<ApiEnv>) => c.env.OAUTH.fetch(c.req.raw))
+    app.all('/admin-portal', (c: Context<ApiEnv>) => c.env.OAUTH.fetch(c.req.raw))
 
     // ==================== Self-Describing ID + Service Catch-All ====================
     // Handles three patterns:
-    //   1. request_<ray>-<colo>  → Request trace lookup (ClickHouse)
-    //   2. <type>_<sqid>         → Entity lookup (HEADLESSLY proxy)
-    //   3. <name>                → Service registry lookup
+    //   1. request_<ray>-<colo> / req_<ray>  → Request trace lookup (ClickHouse)
+    //   2. <type>_<sqid>                      → Entity lookup (type-specific routing)
+    //   3. <name>                             → Service registry lookup
 
-    app.get('/:id', async (c) => {
+    app.get('/:id', async (c: Context<ApiEnv>) => {
       const id = c.req.param('id')
 
-      // 1. Request trace (request_* — contains hyphens so doesn't match isEntityId)
-      if (id.startsWith('request_')) {
-        const rawRay = id.slice('request_'.length) // e.g. '9d2ed000983652a6-ORD' or '9d2ed000983652a6'
+      // 1. Request trace (request_* or req_* — contains hyphens so doesn't match isEntityId)
+      if (id.startsWith('request_') || id.startsWith('req_')) {
+        const prefix = id.startsWith('request_') ? 'request_' : 'req_'
+        const rawRay = id.slice(prefix.length) // e.g. '9d2ed000983652a6-ORD' or '9d2ed000983652a6'
         const cfRay = rawRay.includes('-') ? rawRay.split('-')[0] : rawRay // strip colo suffix — ClickHouse stores ray without colo
 
         // Check cache first (cf-ray lookups are expensive — full table scan on JSON column)
@@ -471,10 +294,12 @@ const app = API({
             const data = await cached.json()
             return c.var.respond(data as Record<string, unknown>)
           }
-        } catch { /* fall through */ }
+        } catch {
+          /* fall through */
+        }
 
         try {
-          const result = await c.env.EVENTS.sql(
+          const result = await (c.env.EVENTS as unknown as EventsRPC).sql(
             `SELECT id, ns, ts, type, event, source, data
              FROM platform.events
              WHERE source = 'tail'
@@ -486,7 +311,7 @@ const app = API({
           if (result.data.length) {
             // Deduplicate (ReplacingMergeTree may not have merged yet)
             const seen = new Set<string>()
-            const unique = result.data.filter((r) => {
+            const unique = result.data.filter((r: Record<string, unknown>) => {
               const rid = (r as Record<string, unknown>).id as string
               if (seen.has(rid)) return false
               seen.add(rid)
@@ -506,7 +331,9 @@ const app = API({
                 new Request(rayCacheKey),
                 new Response(JSON.stringify(body), { headers: { 'Cache-Control': 'max-age=3600' } }),
               )
-            } catch { /* non-fatal */ }
+            } catch {
+              /* non-fatal */
+            }
             return c.var.respond(body)
           }
         } catch (err) {
@@ -525,104 +352,62 @@ const app = API({
       // 2. Entity ID (type_sqid format — e.g. contact_abc, deal_kRziM, org_xxx)
       const parsed = parseEntityId(id)
       if (parsed) {
-        // 2a. org_* → resolve from WorkOS via AUTH RPC (source of truth)
-        if (parsed.type === 'org' && c.env.AUTH) {
+        const canonicalType = resolveType(parsed.type)
+
+        // 2a. org_* / user_* → resolve from AUTH RPC (source of truth for identity)
+        if ((canonicalType === 'organization' || canonicalType === 'user') && c.env.AUTH) {
           try {
-            const org = await (c.env.AUTH as unknown as { getOrganization: (id: string) => Promise<Record<string, unknown> | null> }).getOrganization(parsed.id)
-            if (org) {
-              return c.var.respond({
-                $type: 'Organization',
-                $id: parsed.id,
-                data: org,
-                key: 'organization',
-              })
+            if (canonicalType === 'organization') {
+              const org = await (c.env.AUTH as unknown as { getOrganization: (id: string) => Promise<Record<string, unknown> | null> }).getOrganization(
+                parsed.id,
+              )
+              if (org) {
+                return c.var.respond({
+                  $type: 'Organization',
+                  $id: parsed.id,
+                  data: org,
+                  key: 'organization',
+                })
+              }
             }
           } catch (err) {
-            console.error(`[entity] AUTH.getOrganization failed for ${parsed.id}:`, err)
+            console.error(`[entity] AUTH RPC failed for ${parsed.id}:`, err)
           }
         }
 
-        // 2b. General entity lookup via EVENTS data table
-        try {
-          const result = await c.env.EVENTS.sql(
-            `SELECT id, type, name, data, ns, updatedAt, updatedBy, v
-             FROM data
-             WHERE id = {id:String}
-             ORDER BY v DESC
-             LIMIT 1`,
-            { id: parsed.id },
-          )
-          if (result.data.length) {
-            const row = result.data[0]!
-            return c.var.respond({
-              $type: parsed.type,
-              $id: parsed.id,
-              data: row.data ?? row,
-              key: parsed.type,
-              links: {
-                collection: `${base}/${parsed.collection}`,
-              },
-            })
+        // 2b. Stripe-native IDs → route to PAYMENTS
+        if (STRIPE_PREFIXES.has(parsed.type) && c.env.PAYMENTS) {
+          try {
+            const url = new URL(c.req.url)
+            url.pathname = `/api/${id}`
+            return c.env.PAYMENTS.fetch(new Request(url.toString(), { method: 'GET', headers: c.req.raw.headers }))
+          } catch (err) {
+            console.error(`[entity] PAYMENTS fetch failed for ${id}:`, err)
           }
-        } catch (err) {
-          console.error(`[entity] EVENTS lookup failed for ${parsed.id}:`, err)
         }
 
-        // Fallback: proxy to HEADLESSLY via collection path
-        if (c.env?.HEADLESSLY) {
-          const url = new URL(c.req.url)
-          url.pathname = `/api/${parsed.collection}/${parsed.id}`
-          const headers = new Headers(c.req.raw.headers)
-          if (!headers.has('x-tenant')) headers.set('x-tenant', 'default')
-          const resp = await c.env.HEADLESSLY.fetch(new Request(url.toString(), { method: 'GET', headers }))
-          if (resp.ok) return resp
-        }
-        return c.notFound()
+        // 2c. Everything else → internal redirect to /api/:collection/:id (database convention)
+        const url = new URL(c.req.url)
+        url.pathname = `/api/${parsed.collection}/${parsed.id}`
+        return app.fetch(new Request(url.toString(), c.req.raw))
       }
 
-      // 3. Known service → try data sources: HEADLESSLY (data), EVENTS (events), then 404
+      // 3. Known service name → service detail
       const svc = getService(registry, id)
-      if (!svc) return c.notFound()
-
-      // 3a. Try HEADLESSLY — it may be a Payload collection
-      if (c.env?.HEADLESSLY) {
-        try {
-          const proxyUrl = new URL(c.req.url)
-          proxyUrl.pathname = `/api/${id}`
-          const headers = new Headers(c.req.raw.headers)
-          if (!headers.has('x-tenant')) headers.set('x-tenant', 'default')
-          const resp = await c.env.HEADLESSLY.fetch(new Request(proxyUrl.toString(), { method: 'GET', headers }))
-          if (resp.ok) return resp
-        } catch { /* fall through */ }
+      if (svc) {
+        return c.var.respond({
+          data: svc,
+          key: 'service',
+          links: {
+            api: `${base}/${svc.name}`,
+            also: `https://${svc.domain}/api`,
+            events: `${base}/${svc.name}/events`,
+            category: `${base}/categories/${svc.category}`,
+          },
+        })
       }
 
-      // 3b. Try EVENTS — recent events for this service
-      if (c.env?.EVENTS) {
-        try {
-          const result = await c.env.EVENTS.sql(
-            `SELECT id, ns, ts, type, event, source, data
-             FROM platform.events
-             WHERE source = {source:String}
-                OR event LIKE {eventPrefix:String}
-             ORDER BY ts DESC
-             LIMIT 25`,
-            { source: id, eventPrefix: `${id}.%` },
-          )
-          if (result.data.length) {
-            return c.var.respond({
-              data: result.data,
-              key: 'events',
-              total: result.data.length,
-              links: {
-                also: `https://${svc.domain}`,
-                events: `${base}/events`,
-              },
-            })
-          }
-        } catch { /* fall through */ }
-      }
-
-      // 3c. No data found
+      // 4. Unknown → 404
       return c.notFound()
     })
   },

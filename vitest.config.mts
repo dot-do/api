@@ -10,16 +10,15 @@ export default defineWorkersConfig({
         miniflare: {
           serviceBindings: {
             AUTH: () => new Response('{}', { status: 200 }),
-            AUTH_HTTP: () => new Response('{}', { status: 200 }),
-            HEADLESSLY: (req: Request) => {
-              const url = new URL(req.url)
-              // Mock entity responses
-              return new Response(JSON.stringify({ data: [], total: 0, path: url.pathname }), {
-                status: 200,
-                headers: { 'Content-Type': 'application/json' },
-              })
-            },
+            OAUTH: () => new Response('{}', { status: 200 }),
             EVENTS: () => new Response(JSON.stringify({ data: [] }), { status: 200 }),
+            DATABASE: () => new Response('{}', { status: 200 }),
+            OBJECTS: () => new Response('{}', { status: 200 }),
+            CODE: () => new Response('{}', { status: 200 }),
+            AGENTS: () => new Response('{}', { status: 200 }),
+            PAYMENTS: () => new Response('{}', { status: 200 }),
+            MCP_SERVER: () => new Response('{}', { status: 200 }),
+            TAIL: () => new Response('{}', { status: 200 }),
           },
         },
       },

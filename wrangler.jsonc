@@ -26,9 +26,15 @@
   ],
   "services": [
     { "binding": "AUTH", "service": "auth", "entrypoint": "AuthRPC" },
-    { "binding": "AUTH_HTTP", "service": "oauth" },
-    { "binding": "HEADLESSLY", "service": "headlessly-api" },
-    { "binding": "EVENTS", "service": "events", "entrypoint": "EventsService" }
+    { "binding": "OAUTH", "service": "oauth" },
+    { "binding": "EVENTS", "service": "events", "entrypoint": "EventsService" },
+    { "binding": "DATABASE", "service": "db-headless-ly", "entrypoint": "DatabaseDO" },
+    { "binding": "OBJECTS", "service": "objects-do", "entrypoint": "ObjectsService" },
+    { "binding": "CODE", "service": "code-headless-ly", "entrypoint": "CodeService" },
+    { "binding": "AGENTS", "service": "agents-headless-ly", "entrypoint": "AgentsService" },
+    { "binding": "PAYMENTS", "service": "payments-do" },
+    { "binding": "MCP_SERVER", "service": "mcp" },
+    { "binding": "TAIL", "service": "tail" }
   ],
   "migrations": [
     { "tag": "v1", "new_sqlite_classes": ["BatchStreamManager", "EventStreamManager", "SearchStreamManager"] },
