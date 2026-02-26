@@ -34,6 +34,7 @@
     { "binding": "AGENTS", "service": "agents-headless-ly", "entrypoint": "AgentsService" },
     { "binding": "PAYMENTS", "service": "payments-do" },
     { "binding": "GITHUB", "service": "github-do", "entrypoint": "GitHubService" },
+    { "binding": "CLOUDFLARE", "service": "cloudflare-do", "entrypoint": "CloudflareService" },
     { "binding": "MCP_SERVER", "service": "mcp" },
     { "binding": "TAIL", "service": "tail" }
   ],

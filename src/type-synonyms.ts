@@ -35,4 +35,8 @@ export const SOURCE_ROUTES: Record<string, string> = {
   issue: 'GITHUB',
   pr: 'GITHUB',
   pull_request: 'GITHUB',
+  domain: 'CLOUDFLARE',
+  custom_hostname: 'CLOUDFLARE',
+  worker: 'CLOUDFLARE',
+  dns_record: 'CLOUDFLARE',
 }

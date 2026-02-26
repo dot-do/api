@@ -18,6 +18,7 @@ export default defineWorkersConfig({
             AGENTS: () => new Response('{}', { status: 200 }),
             PAYMENTS: () => new Response('{}', { status: 200 }),
             GITHUB: () => new Response('{}', { status: 200 }),
+            CLOUDFLARE: () => new Response('{}', { status: 200 }),
             MCP_SERVER: () => new Response('{}', { status: 200 }),
             TAIL: () => new Response('{}', { status: 200 }),
           },
