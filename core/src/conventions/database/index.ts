@@ -201,6 +201,19 @@ export function databaseConvention(config: DatabaseConfig): {
   sqids?: Sqids
 } {
   // ---------------------------------------------------------------------------
+  // Noun registry path — synchronous schema from bundled SDK nouns.
+  // Preferred when available: generates MCP tools at init time instead of
+  // returning mcpTools: [] like the lazy discovery path.
+  // ---------------------------------------------------------------------------
+  if (config.nounRegistry) {
+    const registryNouns = config.nounRegistry()
+    if (registryNouns && registryNouns.size > 0) {
+      const schema = discoverSchemaFromRegistry(registryNouns as never)
+      return databaseConventionWithSchema(config, schema)
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // Schema discovery via objects.do — lazy initialization path
   // ---------------------------------------------------------------------------
   if (config.objects) {
