@@ -72,10 +72,12 @@ export function responseMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv>
         }
       }
 
-      // Payload or error
+      // Payload or error — always include success indicator
       if (error) {
+        ;(envelope as Record<string, unknown>).success = false
         envelope.error = error
       } else {
+        ;(envelope as Record<string, unknown>).success = true
         const payloadKey = key || 'data'
         ;(envelope as Record<string, unknown>)[payloadKey] = data
       }
