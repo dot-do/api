@@ -101,9 +101,15 @@ function detectAuth(c: Context): DetectedAuth {
     }
   }
 
-  // 1. Check x-api-key header — if no verifiedUser was set, this is unverified → L0
+  // 1. Check x-api-key header
   const apiKey = c.req.header('x-api-key')
   if (apiKey) {
+    // If authMiddleware already verified this token, trust it as L1 with org
+    const verifiedOrg = extractOrgFromExistingUser(c)
+    if (verifiedOrg.orgId) {
+      return { level: 'L1', claims: { agentId: apiKey, agentName: stripKeyPrefix(apiKey), ...verifiedOrg } }
+    }
+    // Unverified API key → L0
     return { level: 'L0', claims: null }
   }
 
@@ -115,8 +121,12 @@ function detectAuth(c: Context): DetectedAuth {
 
   const token = rawToken
 
-  // 2a. API key in Authorization header — unverified → L0
+  // 2a. API key in Authorization header
   if (isApiKey(token)) {
+    const verifiedOrg = extractOrgFromExistingUser(c)
+    if (verifiedOrg.orgId) {
+      return { level: 'L1', claims: { agentId: token, agentName: stripKeyPrefix(token), ...verifiedOrg } }
+    }
     return { level: 'L0', claims: null }
   }
 
@@ -150,7 +160,25 @@ const DEFAULT_BILLING_URL = 'https://billing.do'
 function extractOrg(claims: Record<string, unknown> | null): string | undefined {
   if (!claims) return undefined
   const org = claims.org as { id?: string } | undefined
-  return org?.id || (claims.orgId as string) || (claims.org_id as string) || (claims.tenant as string) || undefined
+  return org?.id || (claims.orgId as string) || (claims.org_id as string) || (claims.organizationId as string) || (claims.tenant as string) || undefined
+}
+
+/**
+ * Extract org from the user already set by authMiddleware (which calls AUTH.verifyToken).
+ * For L1 session tokens, AUTH returns organizationId = identity.name (the tenant).
+ * This bridges that org info into the claims used by buildUserContext.
+ */
+function extractOrgFromExistingUser(c: Context): { orgId?: string } {
+  const existingUser = c.get('user' as never) as Record<string, unknown> | undefined
+  if (existingUser) {
+    const orgId = (existingUser.organizationId as string) || (existingUser.orgId as string) || (existingUser.org_id as string) || (existingUser.org as string)
+    if (orgId) return { orgId }
+  }
+  // Fallback: trust x-tenant header from the fetch() wrapper.
+  // This header is identity-derived (set by resolveTenantFromIdentity),
+  // NOT raw client input — safe to use as org context for L1 tokens.
+  const tenant = c.req.header('x-tenant')
+  return tenant ? { orgId: tenant } : {}
 }
 
 export function buildUserContext(
@@ -175,9 +203,11 @@ export function buildUserContext(
     case 'L1': {
       const agentId = (claims?.agentId as string) || 'unknown'
       const agentName = (claims?.agentName as string) || agentId
+      const org = extractOrg(claims)
       return {
         authenticated: true,
         level: 'L1',
+        org,
         role: 'agent',
         agent: { id: agentId, name: agentName },
         plan: 'free',
