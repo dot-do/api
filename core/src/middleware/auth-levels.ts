@@ -50,6 +50,7 @@ function isApiKey(token: string): boolean {
   return !token.includes('.')
 }
 
+
 /** Known API key prefixes — stripped to derive a human-friendly agent name. */
 const API_KEY_PREFIXES = /^(agent_|sk_live_|sk_test_|oai_|hly_sk_|sk_|ses_)/
 
@@ -282,7 +283,9 @@ function classifyVerifiedUser(user: Record<string, unknown>): DetectedAuth {
   }
 
   // L1 — verified but no org (anonymous agent with valid session)
-  return { level: 'L1', claims: { agentId: id || 'unknown', agentName: name || id || 'unknown' } }
+  const agentId = id || 'unknown'
+  const agentName = name || (id ? stripKeyPrefix(id) : 'unknown')
+  return { level: 'L1', claims: { agentId, agentName } }
 }
 
 // ---------------------------------------------------------------------------
