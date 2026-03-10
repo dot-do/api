@@ -3,7 +3,7 @@ import type { ApiConfig, ApiEnv } from './types'
 import type { ApiInput } from './config'
 import { resolveConfig } from './config'
 import { responseMiddleware } from './response'
-import { contextMiddleware, corsMiddleware, authMiddleware, authLevelMiddleware, rateLimitMiddleware, createErrorHandler } from './middleware'
+import { contextMiddleware, corsMiddleware, authMiddleware, authLevelMiddleware, requireAuth, rateLimitMiddleware, createErrorHandler } from './middleware'
 import { crudConvention, proxyConvention, rpcConvention, mcpConvention, analyticsMiddleware, analyticsRoutes, analyticsBufferRoutes, testingConvention, databaseConvention, functionsConvention, eventsConvention } from './conventions'
 import { McpToolRegistry } from './mcp-registry'
 import type { FunctionsConfig, FunctionDef } from './conventions/functions/types'
@@ -85,6 +85,15 @@ export function API(input?: ApiInput): Hono<ApiEnv> {
   // Auth level middleware — classifies auth level (L0-L3) from token/cookie
   // Must run after authMiddleware and BEFORE any requireAuth() guards
   app.use('*', authLevelMiddleware())
+
+  // Mutation auth guards — require at least L1 (authenticated) for writes.
+  // Registered here (before convention mounts) so sub-router routes are covered.
+  if (config.auth && config.auth.mode !== 'none') {
+    const mutationPaths = config.database?.rest?.basePath ? `${config.database.rest.basePath}/*` : '/api/*'
+    app.post(mutationPaths, requireAuth())
+    app.put(mutationPaths, requireAuth())
+    app.delete(mutationPaths, requireAuth())
+  }
 
   // Rate limiting
   if (config.rateLimit) {
