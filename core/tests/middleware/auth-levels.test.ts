@@ -72,71 +72,143 @@ describe('authLevelMiddleware', () => {
   })
 
   // -------------------------------------------------------------------------
-  // L1 — Agent (API key)
+  // L0 — Unverified API key (no authMiddleware / no verifiedUser)
   // -------------------------------------------------------------------------
-  describe('L1 — Agent (API key)', () => {
-    it('should set L1 for x-api-key with agent_ prefix', async () => {
+  describe('L0 — Unverified API key (no authMiddleware)', () => {
+    it('should set L0 for unverified x-api-key (no verifiedUser)', async () => {
       const app = buildApp()
       const res = await app.request('/test', {
         headers: { 'x-api-key': 'agent_abc123' },
       })
       expect(res.status).toBe(200)
       const body = await res.json()
-      expect(body.user.authenticated).toBe(true)
-      expect(body.user.level).toBe('L1')
-      expect(body.user.agent).toBeDefined()
-      expect(body.user.agent.id).toBe('agent_abc123')
-      expect(body.user.plan).toBe('free')
-      expect(body.user.links.claim).toContain('claim')
-      expect(body.user.links.upgrade).toContain('upgrade')
+      expect(body.user.authenticated).toBe(false)
+      expect(body.user.level).toBe('L0')
     })
 
-    it('should set L1 for sk_live_ API key in Authorization header', async () => {
+    it('should set L0 for unverified sk_live_ API key in Authorization header', async () => {
       const app = buildApp()
       const res = await app.request('/test', {
         headers: { Authorization: 'Bearer sk_live_test123' },
       })
       expect(res.status).toBe(200)
       const body = await res.json()
-      expect(body.user.authenticated).toBe(true)
-      expect(body.user.level).toBe('L1')
-      expect(body.user.agent).toBeDefined()
-      expect(body.user.agent.id).toBe('sk_live_test123')
+      expect(body.user.authenticated).toBe(false)
+      expect(body.user.level).toBe('L0')
     })
 
-    it('should set L1 for sk_test_ API key in Authorization header', async () => {
-      const app = buildApp()
-      const res = await app.request('/test', {
-        headers: { Authorization: 'Bearer sk_test_xyz789' },
-      })
-      expect(res.status).toBe(200)
-      const body = await res.json()
-      expect(body.user.authenticated).toBe(true)
-      expect(body.user.level).toBe('L1')
-    })
-
-    it('should set L1 for agent_ prefix in Authorization header', async () => {
+    it('should set L0 for unverified agent_ prefix in Authorization header', async () => {
       const app = buildApp()
       const res = await app.request('/test', {
         headers: { Authorization: 'Bearer agent_my-bot' },
       })
       expect(res.status).toBe(200)
       const body = await res.json()
-      expect(body.user.authenticated).toBe(true)
-      expect(body.user.level).toBe('L1')
-      expect(body.user.agent.id).toBe('agent_my-bot')
+      expect(body.user.authenticated).toBe(false)
+      expect(body.user.level).toBe('L0')
     })
+  })
 
-    it('should include usage info at L1', async () => {
-      const app = buildApp()
+  // -------------------------------------------------------------------------
+  // Verified-first classification (authMiddleware sets verifiedUser)
+  // -------------------------------------------------------------------------
+  describe('Verified-first classification', () => {
+    /** Build an app where verifiedUser is pre-set (simulating authMiddleware ran first). */
+    function buildVerifiedApp(verifiedUser: Record<string, unknown>, config?: AuthLevelConfig) {
+      const app = new Hono()
+      app.use('*', async (c, next) => {
+        c.set('verifiedUser' as never, verifiedUser as never)
+        await next()
+      })
+      app.use('*', authLevelMiddleware(config))
+      app.get('/test', (c) => {
+        const user = c.get('user' as never)
+        return c.json({ user })
+      })
+      return app
+    }
+
+    it('should classify verified WorkOS sk_* key with org as L2', async () => {
+      const app = buildVerifiedApp({
+        id: 'api_key_01ABC',
+        name: 'My Key',
+        organizationId: 'org_123',
+        permissions: ['read', 'write'],
+      })
       const res = await app.request('/test', {
-        headers: { 'x-api-key': 'agent_bot1' },
+        headers: { 'x-api-key': 'sk_test_abc' },
       })
       const body = await res.json()
-      expect(body.user.usage).toBeDefined()
-      expect(body.user.usage.requests).toBeDefined()
-      expect(typeof body.user.usage.requests.used).toBe('number')
-      expect(typeof body.user.usage.requests.limit).toBe('number')
+      expect(body.user.level).toBe('L2')
+      expect(body.user.authenticated).toBe(true)
+      expect(body.user.org).toBe('org_123')
+      expect(body.user.id).toBe('api_key_01ABC')
+      expect(body.user.name).toBe('My Key')
+    })
+
+    it('should classify verified session token with identity as L2', async () => {
+      const app = buildVerifiedApp({
+        id: 'identity_xyz',
+        name: 'Anonymous Agent',
+        permissions: ['read', 'write', 'delete'],
+      })
+      const res = await app.request('/test', {
+        headers: { Authorization: 'Bearer ses_abc123' },
+      })
+      const body = await res.json()
+      // Has an id → identified → L2
+      expect(body.user.level).toBe('L2')
+      expect(body.user.authenticated).toBe(true)
+      expect(body.user.id).toBe('identity_xyz')
+    })
+
+    it('should classify verified token with no id or org as L1', async () => {
+      const app = buildVerifiedApp({
+        permissions: ['read'],
+      })
+      const res = await app.request('/test')
+      const body = await res.json()
+      expect(body.user.level).toBe('L1')
+      expect(body.user.authenticated).toBe(true)
+    })
+
+    it('should classify verified user with admin role as L3', async () => {
+      const app = buildVerifiedApp({
+        id: 'user_admin',
+        name: 'Admin User',
+        email: 'admin@acme.com',
+        organizationId: 'org_acme',
+        roles: ['admin'],
+      })
+      const res = await app.request('/test')
+      const body = await res.json()
+      expect(body.user.level).toBe('L3')
+      expect(body.user.role).toBe('admin')
+    })
+
+    it('should classify verified user with superadmin as L4', async () => {
+      const app = buildVerifiedApp({
+        id: 'user_super',
+        name: 'Platform Admin',
+        email: 'super@do.com',
+        organizationId: 'org_do',
+        platformRole: 'superadmin',
+      })
+      const res = await app.request('/test')
+      const body = await res.json()
+      expect(body.user.level).toBe('L4')
+      expect(body.user.role).toBe('superadmin')
+    })
+
+    it('should use custom URLs for verified user context', async () => {
+      const app = buildVerifiedApp(
+        { id: 'user_1', organizationId: 'org_1' },
+        { billingUrl: 'https://pay.custom.com' },
+      )
+      const res = await app.request('/test')
+      const body = await res.json()
+      expect(body.user.level).toBe('L2')
+      expect(body.user.links.billing).toContain('pay.custom.com')
     })
   })
 
@@ -252,13 +324,14 @@ describe('authLevelMiddleware', () => {
       expect(body.user.links.login).toBe('https://auth.custom.com/login')
     })
 
-    it('should use custom billingUrl in L1 links', async () => {
+    it('should use custom billingUrl in L1 links (unverified x-api-key is now L0)', async () => {
       const app = buildApp({ billingUrl: 'https://pay.custom.com' })
       const res = await app.request('/test', {
         headers: { 'x-api-key': 'agent_bot' },
       })
       const body = await res.json()
-      expect(body.user.links.upgrade).toBe('https://pay.custom.com/upgrade')
+      // Without verifiedUser, x-api-key is L0 — no upgrade link
+      expect(body.user.level).toBe('L0')
     })
   })
 })
@@ -284,12 +357,12 @@ describe('requireAuth', () => {
       expect(body.links.login).toBeDefined()
     })
 
-    it('should allow L1', async () => {
+    it('should block unverified API key (L0) with 401', async () => {
       const app = buildGuardedApp()
       const res = await app.request('/protected', {
         headers: { 'x-api-key': 'agent_test' },
       })
-      expect(res.status).toBe(200)
+      expect(res.status).toBe(401)
     })
 
     it('should allow L2', async () => {
@@ -323,16 +396,14 @@ describe('requireAuth', () => {
       expect(body.error.code).toBe('UNAUTHORIZED')
     })
 
-    it('should block L1 with 403', async () => {
+    it('should block unverified API key (L0) with 401', async () => {
       const app = buildGuardedApp('claimed')
       const res = await app.request('/protected', {
         headers: { 'x-api-key': 'agent_test' },
       })
-      expect(res.status).toBe(403)
+      expect(res.status).toBe(401)
       const body = await res.json()
-      expect(body.error.code).toBe('FORBIDDEN')
-      expect(body.links).toBeDefined()
-      expect(body.links.claim).toBeDefined()
+      expect(body.error.code).toBe('UNAUTHORIZED')
     })
 
     it('should allow L2', async () => {
@@ -364,14 +435,12 @@ describe('requireAuth', () => {
       expect(res.status).toBe(401)
     })
 
-    it('should block L1 with 403', async () => {
+    it('should block unverified API key (L0) with 401', async () => {
       const app = buildGuardedApp('verified')
       const res = await app.request('/protected', {
         headers: { 'x-api-key': 'agent_test' },
       })
-      expect(res.status).toBe(403)
-      const body = await res.json()
-      expect(body.error.code).toBe('FORBIDDEN')
+      expect(res.status).toBe(401)
     })
 
     it('should block L2 with 403', async () => {
@@ -409,14 +478,14 @@ describe('requireAuth', () => {
       expect(body.links.login).toBeDefined()
     })
 
-    it('should include claim link in 403 for L1 needing L2', async () => {
+    it('should include login link in 401 for unverified API key needing L2', async () => {
       const app = buildGuardedApp('claimed')
       const res = await app.request('/protected', {
         headers: { 'x-api-key': 'agent_test' },
       })
       const body = await res.json()
-      expect(res.status).toBe(403)
-      expect(body.links.claim).toBeDefined()
+      expect(res.status).toBe(401)
+      expect(body.links.login).toBeDefined()
     })
 
     it('should include upgrade link in 403 for L2 needing L3', async () => {

@@ -100,13 +100,10 @@ function detectAuth(c: Context): DetectedAuth {
     }
   }
 
-  // 1. Check x-api-key header first — intent is unambiguous, any value is an API key
+  // 1. Check x-api-key header — if no verifiedUser was set, this is unverified → L0
   const apiKey = c.req.header('x-api-key')
   if (apiKey) {
-    return {
-      level: 'L1',
-      claims: { agentId: apiKey, agentName: stripKeyPrefix(apiKey) },
-    }
+    return { level: 'L0', claims: null }
   }
 
   // 2. Check Authorization header, then auth cookie
@@ -117,12 +114,9 @@ function detectAuth(c: Context): DetectedAuth {
 
   const token = rawToken
 
-  // 2a. API key in Authorization header (any non-JWT token)
+  // 2a. API key in Authorization header — unverified → L0
   if (isApiKey(token)) {
-    return {
-      level: 'L1',
-      claims: { agentId: token, agentName: stripKeyPrefix(token) },
-    }
+    return { level: 'L0', claims: null }
   }
 
   // 2b. JWT
@@ -257,11 +251,57 @@ export function buildUserContext(
 }
 
 // ---------------------------------------------------------------------------
+// classifyVerifiedUser — classify level from a verified user (set by authMiddleware)
+// ---------------------------------------------------------------------------
+
+/**
+ * Classify auth level from a verified user object (set by authMiddleware).
+ * This is the trusted path — the token has already been cryptographically verified.
+ */
+function classifyVerifiedUser(user: Record<string, unknown>): DetectedAuth {
+  const id = (user.id as string) || (user.sub as string) || undefined
+  const name = user.name as string | undefined
+  const email = user.email as string | undefined
+  const orgId = (user.organizationId as string) || (user.orgId as string) || (user.org_id as string) || undefined
+  const roles = user.roles as string[] | undefined
+  const platformRole = user.platformRole as string | undefined
+
+  // L4 — superadmin
+  if (platformRole === 'superadmin') {
+    return { level: 'L4', claims: { sub: id, name, email, orgId, platformRole } }
+  }
+
+  // L3 — org admin
+  if (Array.isArray(roles) && roles.some((r) => /admin|owner/i.test(r))) {
+    return { level: 'L3', claims: { sub: id, name, email, orgId } }
+  }
+
+  // L2 — identified (has org or identity)
+  if (orgId || id) {
+    return { level: 'L2', claims: { sub: id, name, email, orgId } }
+  }
+
+  // L1 — verified but no org (anonymous agent with valid session)
+  return { level: 'L1', claims: { agentId: id || 'unknown', agentName: name || id || 'unknown' } }
+}
+
+// ---------------------------------------------------------------------------
 // authLevelMiddleware — sets `user` on context for every request
 // ---------------------------------------------------------------------------
 
 export function authLevelMiddleware(config?: AuthLevelConfig): MiddlewareHandler {
   return async (c, next) => {
+    // 1. Check if authMiddleware already verified the token
+    const verifiedUser = c.get('verifiedUser' as never) as Record<string, unknown> | undefined
+    if (verifiedUser) {
+      const { level, claims } = classifyVerifiedUser(verifiedUser)
+      const user = buildUserContext(claims, level, config)
+      c.set('user' as never, user as never)
+      await next()
+      return
+    }
+
+    // 2. Fall back to detectAuth (handles cf.actor fast path + anonymous)
     const { level, claims } = detectAuth(c)
     const user = buildUserContext(claims, level, config)
     c.set('user' as never, user as never)

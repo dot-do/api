@@ -530,7 +530,7 @@ describe('Billing Middleware', () => {
       expect(res.status).toBe(200)
     })
 
-    it('should handle API key (L1) auth with billing', async () => {
+    it('should handle unverified API key (L0) — no billing context', async () => {
       const app = createTestApp({ plans: samplePlans, features: sampleFeatures })
 
       app.get('/check', (c) => {
@@ -538,14 +538,15 @@ describe('Billing Middleware', () => {
         return c.json({ user })
       })
 
+      // Unverified x-api-key (no authMiddleware) → L0, no plan/usage
       const res = await app.request('/check', {
         headers: { 'x-api-key': 'agent_test123' },
       })
 
       expect(res.status).toBe(200)
       const body = await res.json()
-      expect(body.user.plan).toBe('free')
-      expect(body.user.usage.requests.limit).toBe(1000)
+      expect(body.user.authenticated).toBe(false)
+      expect(body.user.level).toBe('L0')
     })
 
     it('should not modify context for unauthenticated requests', async () => {

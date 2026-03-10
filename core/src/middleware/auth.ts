@@ -27,14 +27,16 @@ export function authMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv> {
         orgId: cf.actor.orgId,
       }
       c.set('user', user)
+      c.set('verifiedUser' as never, user as never)
       await next()
       return
     }
 
-    // Try Authorization header, then auth cookie
+    // Try x-api-key header first, then Authorization header, then auth cookie
+    const apiKeyHeader = c.req.header('x-api-key')
     const authHeader = c.req.header('authorization')
-    const cookieToken = !authHeader ? extractCookieToken(c.req.header('cookie')) : undefined
-    const tokenSource = authHeader || (cookieToken ? `Bearer ${cookieToken}` : undefined)
+    const cookieToken = !authHeader && !apiKeyHeader ? extractCookieToken(c.req.header('cookie')) : undefined
+    const tokenSource = apiKeyHeader ? `Bearer ${apiKeyHeader}` : authHeader || (cookieToken ? `Bearer ${cookieToken}` : undefined)
 
     if (tokenSource) {
       const t0 = performance.now()
@@ -43,6 +45,7 @@ export function authMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv> {
       if (ms > 5) console.log(`[timing] verifyToken: ${ms}ms (verified: ${result.verified})`)
       if (result.user) {
         c.set('user', result.user)
+        c.set('verifiedUser' as never, result.user as never)
         await next()
         return
       }
