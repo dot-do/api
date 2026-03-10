@@ -56,7 +56,9 @@ export interface UserContext {
   name?: string
   email?: string
   org?: string
-  role?: 'superadmin' | 'admin' | 'member' | 'agent'
+  role?: 'superadmin' | 'owner' | 'admin' | 'member' | 'agent' | 'viewer' | 'guest'
+  roles?: string[]
+  permissions?: string[]
   agent?: { id: string; name: string }
   plan?: string
   usage?: Record<string, unknown>
