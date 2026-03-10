@@ -12,6 +12,11 @@ import type { ApiEnv, UserContext } from '../../src/types'
 // Helpers
 // ---------------------------------------------------------------------------
 
+const defaultApiConfig = {
+  name: 'payments-test-api',
+  description: 'Test API for payments middleware',
+}
+
 function createFakeJwt(payload: Record<string, unknown>): string {
   const header = { alg: 'HS256', typ: 'JWT' }
   const base64Header = btoa(JSON.stringify(header)).replace(/=/g, '')
@@ -23,9 +28,23 @@ function createPaymentSignature(payload: PaymentPayload): string {
   return btoa(JSON.stringify(payload))
 }
 
-const defaultApiConfig = {
-  name: 'payments-test-api',
-  description: 'Test API for payments middleware',
+/**
+ * Build a test app with a pre-verified user set directly on context.
+ * Used for tests that require authenticated behavior (plan bypass, etc.)
+ * since detectAuth() no longer decodes unverified JWT payloads.
+ */
+function buildUserApp(user: UserContext, paymentConfig: PaymentConfig, billingConfig?: BillingConfig) {
+  const app = new Hono<ApiEnv>()
+  app.use('*', responseMiddleware(defaultApiConfig))
+  app.use('*', async (c, next) => {
+    c.set('user' as never, user as never)
+    await next()
+  })
+  if (billingConfig) {
+    app.use('*', billingMiddleware(billingConfig))
+  }
+  app.use('*', paymentsMiddleware(paymentConfig))
+  return app
 }
 
 const samplePlans: Record<string, PlanConfig> = {
@@ -77,17 +96,11 @@ const samplePaymentConfig: PaymentConfig = {
   billingUrl: 'https://billing.do',
 }
 
-function createTestApp(paymentConfig: PaymentConfig, billingConfig?: BillingConfig, verifiedUser?: Record<string, unknown>) {
+function createTestApp(paymentConfig: PaymentConfig, billingConfig?: BillingConfig) {
   const app = new Hono<ApiEnv>()
 
   // Minimal middleware stack matching the real API factory order
   app.use('*', responseMiddleware(defaultApiConfig))
-  if (verifiedUser) {
-    app.use('*', async (c, next) => {
-      c.set('verifiedUser' as never, verifiedUser as never)
-      await next()
-    })
-  }
   app.use('*', authLevelMiddleware())
   if (billingConfig) {
     app.use('*', billingMiddleware(billingConfig))
@@ -441,8 +454,11 @@ describe('Payments Middleware (x402)', () => {
   // ==========================================================================
   describe('Subscription plan bypass', () => {
     it('should bypass payment for users on a paid subscription plan', async () => {
-      // L3 admin gets 'pro' plan which should bypass per-call payments
-      const app = createTestApp(samplePaymentConfig, sampleBillingConfig, { id: 'user-1', organizationId: 'org_1', roles: ['admin'] })
+      const app = buildUserApp(
+        { authenticated: true, level: 'L2', id: 'user-1', plan: 'starter' },
+        samplePaymentConfig,
+        sampleBillingConfig,
+      )
 
       app.get('/contacts', (c) => c.json({ data: ['contact1'] }))
 
@@ -454,8 +470,11 @@ describe('Payments Middleware (x402)', () => {
     })
 
     it('should bypass payment for pro plan users', async () => {
-      // L3 admin gets 'pro' plan
-      const app = createTestApp(samplePaymentConfig, sampleBillingConfig, { id: 'user-2', organizationId: 'org_1', roles: ['admin'] })
+      const app = buildUserApp(
+        { authenticated: true, level: 'L2', id: 'user-2', plan: 'pro' },
+        samplePaymentConfig,
+        sampleBillingConfig,
+      )
 
       app.get('/contacts', (c) => c.json({ data: ['contact1'] }))
 

@@ -81,20 +81,20 @@ describe('Rate Limit Middleware', () => {
   // Key derivation
   // ============================================================================
   describe('Key derivation', () => {
-    it('should use user ID when authenticated', async () => {
+    it('should fall back to anonymous key when token is unverified (no AUTH binding)', async () => {
       const limitCalls: Array<{ key: string }> = []
       const mockRateLimiter = createMockRateLimiter({ limitCalls })
 
       const app = API({
         name: 'rate-limited-api',
-        auth: { mode: 'optional', trustUnverified: true },
+        auth: { mode: 'optional' },
         rateLimit: { binding: 'RATE_LIMITER' },
         routes: (a) => {
           a.get('/endpoint', (c) => c.var.respond({ data: { message: 'success' } }))
         },
       })
 
-      // Create a fake JWT with user ID
+      // Create a fake JWT — without AUTH binding, verification fails, no user set
       const header = { alg: 'HS256', typ: 'JWT' }
       const payload = { sub: 'user-123', email: 'test@example.com' }
       const fakeToken = `${btoa(JSON.stringify(header)).replace(/=/g, '')}.${btoa(JSON.stringify(payload)).replace(/=/g, '')}.fake_signature`
@@ -107,7 +107,8 @@ describe('Rate Limit Middleware', () => {
 
       expect(res.status).toBe(200)
       expect(limitCalls).toHaveLength(1)
-      expect(limitCalls[0].key).toBe('user-123')
+      // No verified user → falls back to anonymous
+      expect(limitCalls[0].key).toBe('anonymous')
     })
 
     it('should use CF-Connecting-IP when not authenticated', async () => {
@@ -153,20 +154,20 @@ describe('Rate Limit Middleware', () => {
       expect(limitCalls[0].key).toBe('anonymous')
     })
 
-    it('should prefer user ID over IP when both are available', async () => {
+    it('should use IP when token is unverified even with cf-connecting-ip', async () => {
       const limitCalls: Array<{ key: string }> = []
       const mockRateLimiter = createMockRateLimiter({ limitCalls })
 
       const app = API({
         name: 'rate-limited-api',
-        auth: { mode: 'optional', trustUnverified: true },
+        auth: { mode: 'optional' },
         rateLimit: { binding: 'RATE_LIMITER' },
         routes: (a) => {
           a.get('/endpoint', (c) => c.var.respond({ data: { message: 'success' } }))
         },
       })
 
-      // Create a fake JWT with user ID
+      // Create a fake JWT — without AUTH binding, no user set
       const header = { alg: 'HS256', typ: 'JWT' }
       const payload = { sub: 'user-456' }
       const fakeToken = `${btoa(JSON.stringify(header)).replace(/=/g, '')}.${btoa(JSON.stringify(payload)).replace(/=/g, '')}.fake_signature`
@@ -184,8 +185,8 @@ describe('Rate Limit Middleware', () => {
 
       expect(res.status).toBe(200)
       expect(limitCalls).toHaveLength(1)
-      // User ID should take precedence over IP
-      expect(limitCalls[0].key).toBe('user-456')
+      // No verified user → falls back to IP
+      expect(limitCalls[0].key).toBe('10.0.0.1')
     })
   })
 

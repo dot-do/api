@@ -164,19 +164,6 @@ export interface RespondOptions<T = unknown> {
 // Auth configuration
 export interface AuthConfig {
   mode: 'required' | 'optional' | 'none'
-  /**
-   * SECURITY WARNING: When set to true, allows JWT tokens to be decoded without
-   * cryptographic signature verification. This is INSECURE and should only be used
-   * in controlled environments where tokens have already been verified upstream
-   * (e.g., by a CDN snippet or edge layer).
-   *
-   * Enabling this flag means ANY attacker who can craft a JWT-like string can
-   * impersonate any user. Only enable this if you fully understand the security
-   * implications and have other verification mechanisms in place.
-   *
-   * @default false
-   */
-  trustUnverified?: boolean
 }
 
 // Rate limit configuration

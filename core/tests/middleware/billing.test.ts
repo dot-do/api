@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { Hono } from 'hono'
 import { responseMiddleware } from '../../src/response'
 import { authLevelMiddleware } from '../../src/middleware/auth-levels'
@@ -10,11 +10,9 @@ import type { ApiEnv, UserContext } from '../../src/types'
 // Helpers
 // ---------------------------------------------------------------------------
 
-function createFakeJwt(payload: Record<string, unknown>): string {
-  const header = { alg: 'HS256', typ: 'JWT' }
-  const base64Header = btoa(JSON.stringify(header)).replace(/=/g, '')
-  const base64Payload = btoa(JSON.stringify(payload)).replace(/=/g, '')
-  return `${base64Header}.${base64Payload}.fake_signature`
+/** Return raw claims object — used to inject as verifiedUser instead of encoding as a JWT. */
+function createUserClaims(claims: Record<string, unknown>): Record<string, unknown> {
+  return claims
 }
 
 const defaultApiConfig = {
@@ -22,21 +20,25 @@ const defaultApiConfig = {
   description: 'Test API for billing middleware',
 }
 
-function createTestApp(billingConfig: BillingConfig, verifiedUser?: Record<string, unknown>) {
+/** Build an app with verifiedUser pre-set (simulating authMiddleware) before authLevelMiddleware. */
+function buildVerifiedApp(verifiedUser: Record<string, unknown>, billingConfig: BillingConfig) {
   const app = new Hono<ApiEnv>()
-
-  // Minimal middleware stack matching the real API factory order
+  app.use('*', async (c, next) => {
+    c.set('verifiedUser' as never, verifiedUser as never)
+    await next()
+  })
   app.use('*', responseMiddleware(defaultApiConfig))
-  // Simulate authMiddleware setting verifiedUser (so authLevelMiddleware classifies correctly)
-  if (verifiedUser) {
-    app.use('*', async (c, next) => {
-      c.set('verifiedUser' as never, verifiedUser as never)
-      await next()
-    })
-  }
   app.use('*', authLevelMiddleware())
   app.use('*', billingMiddleware(billingConfig))
+  return app
+}
 
+/** Build an anonymous app (no verifiedUser) — for unauthenticated / L0 tests. */
+function buildAnonApp(billingConfig: BillingConfig) {
+  const app = new Hono<ApiEnv>()
+  app.use('*', responseMiddleware(defaultApiConfig))
+  app.use('*', authLevelMiddleware())
+  app.use('*', billingMiddleware(billingConfig))
   return app
 }
 
@@ -76,7 +78,8 @@ describe('Billing Middleware', () => {
   // ==========================================================================
   describe('billingMiddleware', () => {
     it('should enrich user context with plan limits from config', async () => {
-      const app = createTestApp({ plans: samplePlans, features: sampleFeatures }, { id: 'user-1', email: 'u@test.com' })
+      const claims = createUserClaims({ sub: 'user-1', email: 'u@test.com' })
+      const app = buildVerifiedApp(claims, { plans: samplePlans, features: sampleFeatures })
 
       app.get('/check', (c) => {
         const user = c.get('user' as never) as UserContext
@@ -95,9 +98,9 @@ describe('Billing Middleware', () => {
     })
 
     it('should use plan-specific quota limits from config', async () => {
-      // Verified admin — classifyVerifiedUser sees roles: ['admin'] → L3, buildUserContext defaults plan to 'pro'
-      // But billingMiddleware should use the plan from user context
-      const app = createTestApp({ plans: samplePlans, features: sampleFeatures }, { id: 'user-2', organizationId: 'org_1', roles: ['admin'] })
+      // L3 user has enterprise plan by default from auth-levels
+      const claims = createUserClaims({ sub: 'user-2', plan: 'starter', org_verified: true })
+      const app = buildVerifiedApp(claims, { plans: samplePlans, features: sampleFeatures })
 
       app.get('/check', (c) => {
         const user = c.get('user' as never) as UserContext
@@ -108,12 +111,12 @@ describe('Billing Middleware', () => {
 
       expect(res.status).toBe(200)
       const body = await res.json()
-      expect(body.user.plan).toBe('pro') // L3 admin defaults to 'pro'
-      expect(body.user.usage.requests.limit).toBe(500000)
+      expect(body.user.plan).toBe('starter')
+      expect(body.user.usage.requests.limit).toBe(50000)
     })
 
     it('should pass through unauthenticated requests without error', async () => {
-      const app = createTestApp({ plans: samplePlans, features: sampleFeatures })
+      const app = buildAnonApp({ plans: samplePlans, features: sampleFeatures })
 
       app.get('/public', (c) => {
         return c.json({ message: 'ok' })
@@ -126,14 +129,14 @@ describe('Billing Middleware', () => {
     })
 
     it('should fall back to free plan limits for unknown plans', async () => {
-      const app = createTestApp({ plans: samplePlans, features: sampleFeatures }, { id: 'user-3' })
+      const claims = createUserClaims({ sub: 'user-3', plan: 'nonexistent' })
+      const app = buildVerifiedApp(claims, { plans: samplePlans, features: sampleFeatures })
 
       app.get('/check', (c) => {
         const user = c.get('user' as never) as UserContext
         return c.json({ user })
       })
 
-      // L2 user defaults to 'free' plan, which isn't a known plan name → fallback
       const res = await app.request('/check')
 
       expect(res.status).toBe(200)
@@ -148,7 +151,8 @@ describe('Billing Middleware', () => {
         features: sampleFeatures,
         billingUrl: 'https://billing.do',
       }
-      const app = createTestApp(billingConfig, { id: 'user-4', email: 'u@test.com' })
+      const claims = createUserClaims({ sub: 'user-4', email: 'u@test.com' })
+      const app = buildVerifiedApp(claims, billingConfig)
 
       app.get('/check', (c) => {
         const user = c.get('user' as never) as UserContext
@@ -170,7 +174,8 @@ describe('Billing Middleware', () => {
   // ==========================================================================
   describe('requirePlan', () => {
     it('should allow access when user has the required plan', async () => {
-      const app = createTestApp({ plans: samplePlans, features: sampleFeatures }, { id: 'user-1', email: 'u@test.com' })
+      const claims = createUserClaims({ sub: 'user-1', email: 'u@test.com' })
+      const app = buildVerifiedApp(claims, { plans: samplePlans, features: sampleFeatures })
 
       app.get('/free-route', requirePlan('free', samplePlans), (c) => {
         return c.json({ data: 'ok' })
@@ -184,8 +189,9 @@ describe('Billing Middleware', () => {
     })
 
     it('should allow access when user has a higher-tier plan', async () => {
-      // L3 admin defaults to 'pro' plan, which is higher than 'starter'
-      const app = createTestApp({ plans: samplePlans, features: sampleFeatures }, { id: 'user-5', organizationId: 'org_1', roles: ['admin'] })
+      // L3 user gets "enterprise" by default, but let's set plan to "pro"
+      const claims = createUserClaims({ sub: 'user-5', plan: 'pro' })
+      const app = buildVerifiedApp(claims, { plans: samplePlans, features: sampleFeatures })
 
       app.get('/starter-route', requirePlan('starter', samplePlans), (c) => {
         return c.json({ data: 'ok' })
@@ -204,8 +210,9 @@ describe('Billing Middleware', () => {
         features: sampleFeatures,
         billingUrl: 'https://billing.do',
       }
-      // Free user (L2 defaults to 'free' plan)
-      const app = createTestApp(billingConfig, { id: 'user-6', email: 'u@test.com' })
+      // Free user
+      const claims = createUserClaims({ sub: 'user-6', email: 'u@test.com' })
+      const app = buildVerifiedApp(claims, billingConfig)
 
       app.get('/pro-route', requirePlan('pro', samplePlans, 'https://billing.do'), (c) => {
         return c.json({ data: 'ok' })
@@ -224,7 +231,7 @@ describe('Billing Middleware', () => {
     })
 
     it('should return 401 when user is not authenticated', async () => {
-      const app = createTestApp({ plans: samplePlans, features: sampleFeatures })
+      const app = buildAnonApp({ plans: samplePlans, features: sampleFeatures })
 
       app.get('/paid-route', requirePlan('starter', samplePlans), (c) => {
         return c.json({ data: 'ok' })
@@ -244,7 +251,8 @@ describe('Billing Middleware', () => {
   // ==========================================================================
   describe('requireFeature', () => {
     it('should allow access when user plan has the required feature', async () => {
-      const app = createTestApp({ plans: samplePlans, features: sampleFeatures }, { id: 'user-1', email: 'u@test.com' })
+      const claims = createUserClaims({ sub: 'user-1', email: 'u@test.com' })
+      const app = buildVerifiedApp(claims, { plans: samplePlans, features: sampleFeatures })
 
       app.get('/read-route', requireFeature('read', sampleFeatures, samplePlans), (c) => {
         return c.json({ data: 'ok' })
@@ -258,13 +266,14 @@ describe('Billing Middleware', () => {
     })
 
     it('should return 403 when user plan does not include the feature', async () => {
-      const app = createTestApp({ plans: samplePlans, features: sampleFeatures }, { id: 'user-7', email: 'u@test.com' })
+      // Free user doesn't have 'bulk'
+      const claims = createUserClaims({ sub: 'user-7', email: 'u@test.com' })
+      const app = buildVerifiedApp(claims, { plans: samplePlans, features: sampleFeatures })
 
       app.get('/bulk-route', requireFeature('bulk', sampleFeatures, samplePlans, 'https://billing.do'), (c) => {
         return c.json({ data: 'ok' })
       })
 
-      // Free user doesn't have 'bulk'
       const res = await app.request('/bulk-route')
 
       expect(res.status).toBe(403)
@@ -277,8 +286,8 @@ describe('Billing Middleware', () => {
     })
 
     it('should allow access to a feature available on higher plans', async () => {
-      // Need a user whose plan includes 'export'. L3 admin gets 'pro' which has 'export'.
-      const app = createTestApp({ plans: samplePlans, features: sampleFeatures }, { id: 'user-8', organizationId: 'org_1', roles: ['admin'] })
+      const claims = createUserClaims({ sub: 'user-8', plan: 'starter' })
+      const app = buildVerifiedApp(claims, { plans: samplePlans, features: sampleFeatures })
 
       app.get('/export-route', requireFeature('export', sampleFeatures, samplePlans), (c) => {
         return c.json({ data: 'ok' })
@@ -292,7 +301,7 @@ describe('Billing Middleware', () => {
     })
 
     it('should return 401 when user is not authenticated', async () => {
-      const app = createTestApp({ plans: samplePlans, features: sampleFeatures })
+      const app = buildAnonApp({ plans: samplePlans, features: sampleFeatures })
 
       app.get('/feature-route', requireFeature('write', sampleFeatures, samplePlans), (c) => {
         return c.json({ data: 'ok' })
@@ -307,8 +316,9 @@ describe('Billing Middleware', () => {
     })
 
     it('should tell the user which plan they need for the feature', async () => {
-      // L2 user with 'free' plan doesn't have 'webhooks' (only pro does)
-      const app = createTestApp({ plans: samplePlans, features: sampleFeatures }, { id: 'user-9' })
+      // Starter user doesn't have webhooks (only pro)
+      const claims = createUserClaims({ sub: 'user-9', plan: 'starter' })
+      const app = buildVerifiedApp(claims, { plans: samplePlans, features: sampleFeatures })
 
       app.get('/webhook-route', requireFeature('webhooks', sampleFeatures, samplePlans, 'https://billing.do'), (c) => {
         return c.json({ data: 'ok' })
@@ -329,22 +339,38 @@ describe('Billing Middleware', () => {
   // ==========================================================================
   describe('Plan ordering', () => {
     it('should respect plan order based on config key order', async () => {
-      // Free user should be blocked from starter-only route
-      const freeApp = createTestApp({ plans: samplePlans, features: sampleFeatures }, { id: 'free-user', email: 'u@test.com' })
-      freeApp.get('/starter-only', requirePlan('starter', samplePlans), (c) => c.json({ data: 'ok' }))
+      // Free user should be blocked
+      const freeClaims = createUserClaims({ sub: 'free-user', email: 'u@test.com' })
+      const freeApp = buildVerifiedApp(freeClaims, { plans: samplePlans, features: sampleFeatures })
+      freeApp.get('/starter-only', requirePlan('starter', samplePlans), (c) => {
+        return c.json({ data: 'ok' })
+      })
       const freeRes = await freeApp.request('/starter-only')
       expect(freeRes.status).toBe(403)
 
-      // Pro user (L3 admin) should pass starter-only route
-      const proApp = createTestApp({ plans: samplePlans, features: sampleFeatures }, { id: 'pro-user', organizationId: 'org_1', roles: ['admin'] })
-      proApp.get('/starter-only', requirePlan('starter', samplePlans), (c) => c.json({ data: 'ok' }))
+      // Starter user should pass
+      const starterClaims = createUserClaims({ sub: 'starter-user', plan: 'starter' })
+      const starterApp = buildVerifiedApp(starterClaims, { plans: samplePlans, features: sampleFeatures })
+      starterApp.get('/starter-only', requirePlan('starter', samplePlans), (c) => {
+        return c.json({ data: 'ok' })
+      })
+      const starterRes = await starterApp.request('/starter-only')
+      expect(starterRes.status).toBe(200)
+
+      // Pro user should also pass (higher tier)
+      const proClaims = createUserClaims({ sub: 'pro-user', plan: 'pro' })
+      const proApp = buildVerifiedApp(proClaims, { plans: samplePlans, features: sampleFeatures })
+      proApp.get('/starter-only', requirePlan('starter', samplePlans), (c) => {
+        return c.json({ data: 'ok' })
+      })
       const proRes = await proApp.request('/starter-only')
       expect(proRes.status).toBe(200)
     })
 
     it('should handle enterprise plan (not in config) as highest tier', async () => {
-      // L4 superadmin gets 'enterprise' plan
-      const app = createTestApp({ plans: samplePlans, features: sampleFeatures }, { id: 'ent-user', organizationId: 'org_do', platformRole: 'superadmin' })
+      // L3 user with enterprise plan (assigned by auth-levels)
+      const claims = createUserClaims({ sub: 'ent-user', plan: 'enterprise', org_verified: true })
+      const app = buildVerifiedApp(claims, { plans: samplePlans, features: sampleFeatures })
 
       app.get('/pro-only', requirePlan('pro', samplePlans), (c) => {
         return c.json({ data: 'ok' })
@@ -361,7 +387,8 @@ describe('Billing Middleware', () => {
   // ==========================================================================
   describe('Entity access', () => {
     it('should expose allowed entities for the user plan', async () => {
-      const app = createTestApp({ plans: samplePlans, features: sampleFeatures }, { id: 'user-10', email: 'u@test.com' })
+      const claims = createUserClaims({ sub: 'user-10', email: 'u@test.com' })
+      const app = buildVerifiedApp(claims, { plans: samplePlans, features: sampleFeatures })
 
       app.get('/check-entities', (c) => {
         const user = c.get('user' as never) as UserContext & { allowedEntities?: string[] | '*' }
@@ -376,8 +403,8 @@ describe('Billing Middleware', () => {
     })
 
     it('should allow all entities for pro plan', async () => {
-      // L3 admin defaults to 'pro' plan
-      const app = createTestApp({ plans: samplePlans, features: sampleFeatures }, { id: 'user-11', organizationId: 'org_1', roles: ['admin'] })
+      const claims = createUserClaims({ sub: 'user-11', plan: 'pro' })
+      const app = buildVerifiedApp(claims, { plans: samplePlans, features: sampleFeatures })
 
       app.get('/check-entities', (c) => {
         const user = c.get('user' as never) as UserContext & { allowedEntities?: string[] | '*' }
@@ -407,7 +434,8 @@ describe('Billing Middleware', () => {
           return current + 1
         },
       }
-      const app = createTestApp(billingConfig, { id: 'user-12', email: 'u@test.com' })
+      const claims = createUserClaims({ sub: 'user-12', email: 'u@test.com' })
+      const app = buildVerifiedApp(claims, billingConfig)
 
       app.get('/tracked', (c) => {
         const user = c.get('user' as never) as UserContext
@@ -438,7 +466,8 @@ describe('Billing Middleware', () => {
         trackUsage: (_userId, _plan) => 3, // Already over limit
         billingUrl: 'https://billing.do',
       }
-      const app = createTestApp(billingConfig, { id: 'user-13', email: 'u@test.com' })
+      const claims = createUserClaims({ sub: 'user-13', email: 'u@test.com' })
+      const app = buildVerifiedApp(claims, billingConfig)
 
       app.get('/limited', (c) => {
         return c.json({ data: 'ok' })
@@ -460,7 +489,8 @@ describe('Billing Middleware', () => {
   // ==========================================================================
   describe('Edge cases', () => {
     it('should handle empty plans config gracefully', async () => {
-      const app = createTestApp({ plans: {}, features: {} }, { id: 'user-14', email: 'u@test.com' })
+      const claims = createUserClaims({ sub: 'user-14', email: 'u@test.com' })
+      const app = buildVerifiedApp(claims, { plans: {}, features: {} })
 
       app.get('/endpoint', (c) => {
         return c.json({ data: 'ok' })
@@ -472,7 +502,7 @@ describe('Billing Middleware', () => {
     })
 
     it('should handle unverified API key (L0) — no billing context', async () => {
-      const app = createTestApp({ plans: samplePlans, features: sampleFeatures })
+      const app = buildAnonApp({ plans: samplePlans, features: sampleFeatures })
 
       app.get('/check', (c) => {
         const user = c.get('user' as never) as UserContext
@@ -491,7 +521,7 @@ describe('Billing Middleware', () => {
     })
 
     it('should not modify context for unauthenticated requests', async () => {
-      const app = createTestApp({ plans: samplePlans, features: sampleFeatures })
+      const app = buildAnonApp({ plans: samplePlans, features: sampleFeatures })
 
       app.get('/anon', (c) => {
         const user = c.get('user' as never) as UserContext
@@ -513,8 +543,8 @@ describe('Billing Middleware', () => {
         },
       }
 
-      // L4 superadmin gets 'enterprise' plan
-      const app = createTestApp({ plans: plansWithUnlimited, features: {} }, { id: 'user-15', organizationId: 'org_do', platformRole: 'superadmin' })
+      const claims = createUserClaims({ sub: 'user-15', plan: 'enterprise', org_verified: true })
+      const app = buildVerifiedApp(claims, { plans: plansWithUnlimited, features: {} })
 
       app.get('/check', (c) => {
         const user = c.get('user' as never) as UserContext

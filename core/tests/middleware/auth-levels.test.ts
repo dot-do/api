@@ -26,7 +26,19 @@ function buildApp(config?: AuthLevelConfig) {
   return app
 }
 
-/** Build an app where verifiedUser is pre-set (simulating authMiddleware ran first). */
+/** Build a Hono app with auth-level + requireAuth guard on a protected route. */
+function buildGuardedApp(level?: AuthLevel, config?: AuthLevelConfig) {
+  const app = new Hono()
+  app.use('*', authLevelMiddleware(config))
+  app.get('/protected', requireAuth(level), (c) => {
+    const user = c.get('user' as never)
+    return c.json({ user })
+  })
+  app.get('/open', (c) => c.json({ ok: true }))
+  return app
+}
+
+/** Build a minimal Hono app with verifiedUser pre-set (simulating authMiddleware) and auth-level middleware. */
 function buildVerifiedApp(verifiedUser: Record<string, unknown>, config?: AuthLevelConfig) {
   const app = new Hono()
   app.use('*', async (c, next) => {
@@ -41,20 +53,8 @@ function buildVerifiedApp(verifiedUser: Record<string, unknown>, config?: AuthLe
   return app
 }
 
-/** Build a Hono app with auth-level + requireAuth guard on a protected route. */
-function buildGuardedApp(level?: AuthLevel, config?: AuthLevelConfig) {
-  const app = new Hono()
-  app.use('*', authLevelMiddleware(config))
-  app.get('/protected', requireAuth(level), (c) => {
-    const user = c.get('user' as never)
-    return c.json({ user })
-  })
-  app.get('/open', (c) => c.json({ ok: true }))
-  return app
-}
-
-/** Build a guarded app with verifiedUser pre-set (simulating authMiddleware). */
-function buildGuardedVerifiedApp(verifiedUser: Record<string, unknown>, level?: AuthLevel, config?: AuthLevelConfig) {
+/** Build a guarded app with verifiedUser pre-set (simulating authMiddleware) and a requireAuth guard. */
+function buildVerifiedGuardedApp(verifiedUser: Record<string, unknown>, level?: AuthLevel, config?: AuthLevelConfig) {
   const app = new Hono()
   app.use('*', async (c, next) => {
     c.set('verifiedUser' as never, verifiedUser as never)
@@ -229,15 +229,15 @@ describe('authLevelMiddleware', () => {
   })
 
   // -------------------------------------------------------------------------
-  // L2 — Claimed (JWT with user claims)
+  // L2 — Claimed (verified user with identity claims, no org SSO)
   // -------------------------------------------------------------------------
-  describe('L2 — Claimed (verified user with claims)', () => {
-    it('should set L2 for verified user with identity and org', async () => {
+  describe('L2 — Claimed (verified user with identity claims)', () => {
+    it('should set L2 for verified user with identity claims', async () => {
       const app = buildVerifiedApp({
         id: 'user_alice',
         name: 'Alice Johnson',
         email: 'alice@acme.com',
-        organizationId: 'acme',
+        tenant: 'acme',
       })
       const res = await app.request('/test')
       expect(res.status).toBe(200)
@@ -246,12 +246,11 @@ describe('authLevelMiddleware', () => {
       expect(body.user.level).toBe('L2')
       expect(body.user.name).toBe('Alice Johnson')
       expect(body.user.email).toBe('alice@acme.com')
-      expect(body.user.org).toBe('acme')
       expect(body.user.links.billing).toBeDefined()
       expect(body.user.links.settings).toBeDefined()
     })
 
-    it('should set L2 for verified user with sub but no admin role', async () => {
+    it('should set L2 for verified user with id but no admin/SSO role', async () => {
       const app = buildVerifiedApp({
         id: 'user_bob',
         name: 'Bob Smith',
@@ -272,25 +271,37 @@ describe('authLevelMiddleware', () => {
       })
       const res = await app.request('/test')
       const body = await res.json()
-      // Plan comes from claims, but classifyVerifiedUser doesn't pass plan through
-      // buildUserContext defaults to 'free' for L2
-      expect(body.user.plan).toBe('free')
+      expect(body.user.plan).toBe('starter')
+    })
+
+    it('should set L0 for unverified JWT (fake JWT without verifiedUser)', async () => {
+      const token = createFakeJwt({
+        sub: 'user_alice',
+        name: 'Alice Johnson',
+        email: 'alice@acme.com',
+      })
+      const app = buildApp()
+      const res = await app.request('/test', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const body = await res.json()
+      expect(body.user.level).toBe('L0')
+      expect(body.user.authenticated).toBe(false)
     })
   })
 
   // -------------------------------------------------------------------------
-  // L3 — Verified (JWT with verified org SSO)
+  // L3 — Verified (verified user with org SSO / admin role)
   // -------------------------------------------------------------------------
-  // NOTE: Future L3 paths may include org_verified and sso_connection claims
-  // from WorkOS Organizations. Currently L3 requires roles: ['admin'|'owner'].
-  describe('L3 — Admin (verified user with admin role)', () => {
-    it('should set L3 for verified user with admin role', async () => {
+  describe('L3 — Verified (verified user with org SSO / admin role)', () => {
+    it('should set L3 for verified user with admin role and org', async () => {
       const app = buildVerifiedApp({
         id: 'user_dave',
         name: 'Dave Manager',
         email: 'dave@bigcorp.com',
-        organizationId: 'bigcorp',
+        organizationId: 'org_bigcorp',
         roles: ['admin'],
+        plan: 'enterprise',
       })
       const res = await app.request('/test')
       expect(res.status).toBe(200)
@@ -298,17 +309,17 @@ describe('authLevelMiddleware', () => {
       expect(body.user.authenticated).toBe(true)
       expect(body.user.level).toBe('L3')
       expect(body.user.name).toBe('Dave Manager')
-      expect(body.user.org).toBe('bigcorp')
-      expect(body.user.plan).toBe('pro')
+      expect(body.user.plan).toBe('enterprise')
     })
 
-    it('should set L3 for verified user with owner role', async () => {
+    it('should set L3 for verified user with sso connection', async () => {
       const app = buildVerifiedApp({
         id: 'user_eve',
-        name: 'Eve Owner',
+        name: 'Eve Admin',
         email: 'eve@enterprise.io',
-        organizationId: 'enterprise',
-        roles: ['owner'],
+        organizationId: 'org_enterprise',
+        roles: ['admin'],
+        sso_connection: 'conn_saml_xyz',
       })
       const res = await app.request('/test')
       const body = await res.json()
@@ -369,14 +380,14 @@ describe('requireAuth', () => {
       expect(res.status).toBe(401)
     })
 
-    it('should allow L2 (verified user)', async () => {
-      const app = buildGuardedVerifiedApp({ id: 'user_1', name: 'User', email: 'u@test.com' })
+    it('should allow L2', async () => {
+      const app = buildVerifiedGuardedApp({ id: 'user_1', name: 'User', email: 'u@test.com' })
       const res = await app.request('/protected')
       expect(res.status).toBe(200)
     })
 
-    it('should allow L3 (verified admin)', async () => {
-      const app = buildGuardedVerifiedApp({ id: 'user_2', name: 'Admin', email: 'a@test.com', organizationId: 'org_1', roles: ['admin'] })
+    it('should allow L3', async () => {
+      const app = buildVerifiedGuardedApp({ id: 'user_2', name: 'Admin', email: 'a@test.com', roles: ['admin'], organizationId: 'org_1' })
       const res = await app.request('/protected')
       expect(res.status).toBe(200)
     })
@@ -404,23 +415,23 @@ describe('requireAuth', () => {
       expect(body.error.code).toBe('UNAUTHORIZED')
     })
 
-    it('should allow L2 (verified user)', async () => {
-      const app = buildGuardedVerifiedApp({ id: 'user_1', name: 'User', email: 'u@test.com' }, 'claimed')
+    it('should allow L2', async () => {
+      const app = buildVerifiedGuardedApp({ id: 'user_1', name: 'User', email: 'u@test.com' }, 'claimed')
       const res = await app.request('/protected')
       expect(res.status).toBe(200)
     })
 
-    it('should allow L3 (verified admin)', async () => {
-      const app = buildGuardedVerifiedApp({ id: 'user_2', name: 'Admin', email: 'a@test.com', organizationId: 'org_1', roles: ['admin'] }, 'claimed')
+    it('should allow L3', async () => {
+      const app = buildVerifiedGuardedApp({ id: 'user_2', name: 'Admin', email: 'a@test.com', roles: ['admin'], organizationId: 'org_1' }, 'claimed')
       const res = await app.request('/protected')
       expect(res.status).toBe(200)
     })
   })
 
   // -------------------------------------------------------------------------
-  // requireAuth('verified') — L2+ (same as claimed)
+  // requireAuth('verified') — L3 only
   // -------------------------------------------------------------------------
-  describe("requireAuth('verified') — L2+", () => {
+  describe("requireAuth('verified') — L3 only", () => {
     it('should block L0 with 401', async () => {
       const app = buildGuardedApp('verified')
       const res = await app.request('/protected')
@@ -435,14 +446,17 @@ describe('requireAuth', () => {
       expect(res.status).toBe(401)
     })
 
-    it('should allow L2 (verified user)', async () => {
-      const app = buildGuardedVerifiedApp({ id: 'user_1', name: 'User', email: 'u@test.com' }, 'verified')
+    it('should block L2 with 403', async () => {
+      const app = buildVerifiedGuardedApp({ id: 'user_1', name: 'User', email: 'u@test.com' }, 'verified')
       const res = await app.request('/protected')
-      expect(res.status).toBe(200)
+      expect(res.status).toBe(403)
+      const body = await res.json()
+      expect(body.error.code).toBe('FORBIDDEN')
+      expect(body.links).toBeDefined()
     })
 
-    it('should allow L3 (verified admin)', async () => {
-      const app = buildGuardedVerifiedApp({ id: 'user_2', name: 'Admin', email: 'a@test.com', organizationId: 'bigcorp', roles: ['admin'] }, 'verified')
+    it('should allow L3', async () => {
+      const app = buildVerifiedGuardedApp({ id: 'user_2', name: 'Admin', email: 'a@test.com', roles: ['admin'], organizationId: 'org_bigcorp' }, 'verified')
       const res = await app.request('/protected')
       expect(res.status).toBe(200)
     })
@@ -471,13 +485,12 @@ describe('requireAuth', () => {
       expect(body.links.login).toBeDefined()
     })
 
-    it('should include upgrade link in 403 for L1 needing L2', async () => {
-      // L1 user (verified but no id/org) trying to access 'claimed' (L2+) route
-      const app = buildGuardedVerifiedApp({ permissions: ['read'] }, 'claimed')
+    it('should include upgrade link in 403 for L2 needing L3', async () => {
+      const app = buildVerifiedGuardedApp({ id: 'user_1', name: 'User', email: 'u@test.com' }, 'verified')
       const res = await app.request('/protected')
       const body = await res.json()
       expect(res.status).toBe(403)
-      expect(body.links.claim).toBeDefined()
+      expect(body.links.upgrade).toBeDefined()
     })
 
     it('should use custom URLs in error response links', async () => {
@@ -529,6 +542,7 @@ describe('buildUserContext', () => {
     expect(ctx.agent?.id).toBe('agent_bot')
     expect(ctx.agent?.name).toBe('my-bot')
     expect(ctx.plan).toBe('free')
+    expect(ctx.usage).toBeDefined()
     expect(ctx.links?.claim).toBeDefined()
     expect(ctx.links?.upgrade).toBeDefined()
   })
@@ -543,13 +557,13 @@ describe('buildUserContext', () => {
     expect(ctx.id).toBe('user_alice')
     expect(ctx.name).toBe('Alice Johnson')
     expect(ctx.email).toBe('alice@acme.com')
-    expect(ctx.org).toBe('acme') // extractOrg reads tenant claim
+    expect(ctx.tenant).toBe('acme')
     expect(ctx.plan).toBe('starter')
     expect(ctx.links?.billing).toBeDefined()
     expect(ctx.links?.settings).toBeDefined()
   })
 
-  it('should build L3 context with admin claims', () => {
+  it('should build L3 context with verified org claims', () => {
     const ctx = buildUserContext(
       { sub: 'user_dave', name: 'Dave Manager', email: 'dave@bigcorp.com', tenant: 'bigcorp', plan: 'enterprise' },
       'L3',
@@ -557,12 +571,12 @@ describe('buildUserContext', () => {
     expect(ctx.authenticated).toBe(true)
     expect(ctx.level).toBe('L3')
     expect(ctx.id).toBe('user_dave')
-    expect(ctx.org).toBe('bigcorp') // extractOrg reads tenant claim
+    expect(ctx.tenant).toBe('bigcorp')
     expect(ctx.plan).toBe('enterprise')
     expect(ctx.links?.billing).toBeDefined()
     expect(ctx.links?.settings).toBeDefined()
     expect(ctx.links?.team).toBeDefined()
-    // sso link is L4 only
+    expect(ctx.links?.sso).toBeDefined()
   })
 
   it('should use custom identity/billing URLs', () => {
