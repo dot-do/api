@@ -80,7 +80,7 @@ describe('Auth Middleware', () => {
       expect(res.status).toBe(200)
     })
 
-    it('should not set user info when mode is none', async () => {
+    it('should set anonymous L0 user when mode is none', async () => {
       const app = API({
         name: 'public-api',
         auth: { mode: 'none' },
@@ -92,7 +92,10 @@ describe('Auth Middleware', () => {
       const res = await app.request('/check-user')
       expect(res.status).toBe(200)
       const body = await res.json()
-      expect(body.data.user).toBeUndefined()
+      // authLevelMiddleware always sets user — L0 anonymous when no auth
+      expect(body.data.user).toBeDefined()
+      expect(body.data.user.authenticated).toBe(false)
+      expect(body.data.user.level).toBe('L0')
     })
 
     it('should default to mode none when auth config is not provided', async () => {
@@ -191,7 +194,7 @@ describe('Auth Middleware', () => {
   // mode: 'optional' - allows requests without token, sets user if present
   // ============================================================================
   describe('mode: optional', () => {
-    it('should allow requests without authorization header', async () => {
+    it('should set anonymous L0 user when no authorization header', async () => {
       const app = API({
         name: 'optional-api',
         auth: { mode: 'optional' },
@@ -203,10 +206,13 @@ describe('Auth Middleware', () => {
       const res = await app.request('/maybe-auth')
       expect(res.status).toBe(200)
       const body = await res.json()
-      expect(body.data.user).toBeUndefined()
+      // authLevelMiddleware always sets user — L0 anonymous when no token
+      expect(body.data.user).toBeDefined()
+      expect(body.data.user.authenticated).toBe(false)
+      expect(body.data.user.level).toBe('L0')
     })
 
-    it('should NOT set user when invalid token is provided', async () => {
+    it('should set anonymous L0 user when invalid token is provided (no trustUnverified)', async () => {
       const fakeToken = createFakeJwt({
         sub: 'attacker-id',
         email: 'attacker@evil.com',
@@ -225,10 +231,12 @@ describe('Auth Middleware', () => {
         headers: { Authorization: `Bearer ${fakeToken}` },
       })
 
-      // Request should succeed but user should not be set
+      // Request succeeds but attacker claims are NOT trusted — L0 anonymous
       expect(res.status).toBe(200)
       const body = await res.json()
-      expect(body.data.user).toBeUndefined()
+      expect(body.data.user).toBeDefined()
+      expect(body.data.user.authenticated).toBe(false)
+      expect(body.data.user.level).toBe('L0')
     })
 
     it('should set user when valid token is provided with trustUnverified', async () => {
@@ -350,7 +358,7 @@ describe('Auth Middleware', () => {
       expect(body.error.code).toBe('INVALID_TOKEN')
     })
 
-    it('should silently ignore invalid token in optional mode', async () => {
+    it('should not trust invalid token in optional mode (L0 anonymous)', async () => {
       const fakeToken = createFakeJwt({
         sub: 'attacker-id',
         email: 'attacker@evil.com',
@@ -360,7 +368,10 @@ describe('Auth Middleware', () => {
         name: 'optional-api',
         auth: { mode: 'optional' },
         routes: (a) => {
-          a.get('/endpoint', (c) => c.var.respond({ data: { hasUser: !!c.var.user } }))
+          a.get('/endpoint', (c) => {
+            const user = c.var.user as Record<string, unknown> | undefined
+            return c.var.respond({ data: { authenticated: user?.authenticated } })
+          })
         },
       })
 
@@ -370,7 +381,7 @@ describe('Auth Middleware', () => {
 
       expect(res.status).toBe(200)
       const body = await res.json()
-      expect(body.data.hasUser).toBe(false)
+      expect(body.data.authenticated).toBe(false)
     })
   })
 
@@ -582,8 +593,9 @@ describe('Auth Middleware', () => {
         expect(res.status).toBe(200)
         const body = await res.json()
         expect(body.data.user).toBeDefined()
-        expect(body.data.user.id).toBeUndefined()
-        expect(body.data.user.email).toBe('user@example.com')
+        // No sub claim + no org → classified as L1 (agent) by authLevelMiddleware
+        expect(body.data.user.authenticated).toBe(true)
+        expect(body.data.user.level).toBe('L1')
       })
 
       it('should handle token with empty payload object', async () => {

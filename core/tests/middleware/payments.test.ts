@@ -77,11 +77,17 @@ const samplePaymentConfig: PaymentConfig = {
   billingUrl: 'https://billing.do',
 }
 
-function createTestApp(paymentConfig: PaymentConfig, billingConfig?: BillingConfig) {
+function createTestApp(paymentConfig: PaymentConfig, billingConfig?: BillingConfig, verifiedUser?: Record<string, unknown>) {
   const app = new Hono<ApiEnv>()
 
   // Minimal middleware stack matching the real API factory order
   app.use('*', responseMiddleware(defaultApiConfig))
+  if (verifiedUser) {
+    app.use('*', async (c, next) => {
+      c.set('verifiedUser' as never, verifiedUser as never)
+      await next()
+    })
+  }
   app.use('*', authLevelMiddleware())
   if (billingConfig) {
     app.use('*', billingMiddleware(billingConfig))
@@ -435,15 +441,12 @@ describe('Payments Middleware (x402)', () => {
   // ==========================================================================
   describe('Subscription plan bypass', () => {
     it('should bypass payment for users on a paid subscription plan', async () => {
-      const app = createTestApp(samplePaymentConfig, sampleBillingConfig)
+      // L3 admin gets 'pro' plan which should bypass per-call payments
+      const app = createTestApp(samplePaymentConfig, sampleBillingConfig, { id: 'user-1', organizationId: 'org_1', roles: ['admin'] })
 
       app.get('/contacts', (c) => c.json({ data: ['contact1'] }))
 
-      // Starter plan user should bypass per-call payments
-      const token = createFakeJwt({ sub: 'user-1', plan: 'starter' })
-      const res = await app.request('/contacts', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const res = await app.request('/contacts')
 
       expect(res.status).toBe(200)
       const body = await res.json()
@@ -451,14 +454,12 @@ describe('Payments Middleware (x402)', () => {
     })
 
     it('should bypass payment for pro plan users', async () => {
-      const app = createTestApp(samplePaymentConfig, sampleBillingConfig)
+      // L3 admin gets 'pro' plan
+      const app = createTestApp(samplePaymentConfig, sampleBillingConfig, { id: 'user-2', organizationId: 'org_1', roles: ['admin'] })
 
       app.get('/contacts', (c) => c.json({ data: ['contact1'] }))
 
-      const token = createFakeJwt({ sub: 'user-2', plan: 'pro' })
-      const res = await app.request('/contacts', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const res = await app.request('/contacts')
 
       expect(res.status).toBe(200)
     })

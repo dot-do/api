@@ -50,6 +50,20 @@ export function authMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv> {
         return
       }
 
+      // trustUnverified fallback — decode JWT claims without verification.
+      // SECURITY WARNING: Only use when tokens are verified upstream (CDN/edge).
+      if (authConfig.trustUnverified && !result.verified) {
+        const token = tokenSource.replace(/^Bearer\s+/i, '').trim()
+        const user = decodeJwtToUser(token)
+        if (user) {
+          console.warn(`SECURITY WARNING: trustUnverified — accepting unverified token for ${user.id || 'unknown'}`)
+          c.set('user', user)
+          c.set('verifiedUser' as never, user as never)
+          await next()
+          return
+        }
+      }
+
       // If token was provided but couldn't be verified
       if (authConfig.mode === 'required') {
         return c.json({ error: { message: 'Invalid authentication token', code: 'INVALID_TOKEN', status: 401 } }, 401)
@@ -66,6 +80,27 @@ export function authMiddleware(config: ApiConfig): MiddlewareHandler<ApiEnv> {
 interface VerifyResult {
   user: UserInfo | null
   verified: boolean
+}
+
+/** Decode a JWT payload to UserInfo without any signature verification. */
+function decodeJwtToUser(token: string): UserInfo | null {
+  try {
+    const parts = token.split('.')
+    if (parts.length !== 3 || !parts[1]) return null
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+    const json = atob(base64)
+    const payload = JSON.parse(json) as Record<string, unknown>
+    if (!payload.sub && !payload.email) return null
+    return {
+      id: payload.sub as string | undefined,
+      email: payload.email as string | undefined,
+      name: payload.name as string | undefined,
+      ...(payload.orgId ? { orgId: payload.orgId as string } : {}),
+      ...(payload.organizationId ? { organizationId: payload.organizationId as string } : {}),
+    }
+  } catch {
+    return null
+  }
 }
 
 async function verifyToken(authHeader: string, _config: ApiConfig, env?: Record<string, unknown>): Promise<VerifyResult> {

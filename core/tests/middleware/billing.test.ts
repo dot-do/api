@@ -22,11 +22,18 @@ const defaultApiConfig = {
   description: 'Test API for billing middleware',
 }
 
-function createTestApp(billingConfig: BillingConfig) {
+function createTestApp(billingConfig: BillingConfig, verifiedUser?: Record<string, unknown>) {
   const app = new Hono<ApiEnv>()
 
   // Minimal middleware stack matching the real API factory order
   app.use('*', responseMiddleware(defaultApiConfig))
+  // Simulate authMiddleware setting verifiedUser (so authLevelMiddleware classifies correctly)
+  if (verifiedUser) {
+    app.use('*', async (c, next) => {
+      c.set('verifiedUser' as never, verifiedUser as never)
+      await next()
+    })
+  }
   app.use('*', authLevelMiddleware())
   app.use('*', billingMiddleware(billingConfig))
 
@@ -69,7 +76,7 @@ describe('Billing Middleware', () => {
   // ==========================================================================
   describe('billingMiddleware', () => {
     it('should enrich user context with plan limits from config', async () => {
-      const app = createTestApp({ plans: samplePlans, features: sampleFeatures })
+      const app = createTestApp({ plans: samplePlans, features: sampleFeatures }, { id: 'user-1', email: 'u@test.com' })
 
       app.get('/check', (c) => {
         const user = c.get('user' as never) as UserContext
@@ -77,10 +84,7 @@ describe('Billing Middleware', () => {
       })
 
       // L2 user with "free" plan (default from auth-levels)
-      const token = createFakeJwt({ sub: 'user-1', email: 'u@test.com' })
-      const res = await app.request('/check', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const res = await app.request('/check')
 
       expect(res.status).toBe(200)
       const body = await res.json()
@@ -91,23 +95,21 @@ describe('Billing Middleware', () => {
     })
 
     it('should use plan-specific quota limits from config', async () => {
-      const app = createTestApp({ plans: samplePlans, features: sampleFeatures })
+      // Verified admin — classifyVerifiedUser sees roles: ['admin'] → L3, buildUserContext defaults plan to 'pro'
+      // But billingMiddleware should use the plan from user context
+      const app = createTestApp({ plans: samplePlans, features: sampleFeatures }, { id: 'user-2', organizationId: 'org_1', roles: ['admin'] })
 
       app.get('/check', (c) => {
         const user = c.get('user' as never) as UserContext
         return c.json({ user })
       })
 
-      // L3 user has enterprise plan by default from auth-levels
-      const token = createFakeJwt({ sub: 'user-2', plan: 'starter', org_verified: true })
-      const res = await app.request('/check', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const res = await app.request('/check')
 
       expect(res.status).toBe(200)
       const body = await res.json()
-      expect(body.user.plan).toBe('starter')
-      expect(body.user.usage.requests.limit).toBe(50000)
+      expect(body.user.plan).toBe('pro') // L3 admin defaults to 'pro'
+      expect(body.user.usage.requests.limit).toBe(500000)
     })
 
     it('should pass through unauthenticated requests without error', async () => {
@@ -124,17 +126,15 @@ describe('Billing Middleware', () => {
     })
 
     it('should fall back to free plan limits for unknown plans', async () => {
-      const app = createTestApp({ plans: samplePlans, features: sampleFeatures })
+      const app = createTestApp({ plans: samplePlans, features: sampleFeatures }, { id: 'user-3' })
 
       app.get('/check', (c) => {
         const user = c.get('user' as never) as UserContext
         return c.json({ user })
       })
 
-      const token = createFakeJwt({ sub: 'user-3', plan: 'nonexistent' })
-      const res = await app.request('/check', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      // L2 user defaults to 'free' plan, which isn't a known plan name → fallback
+      const res = await app.request('/check')
 
       expect(res.status).toBe(200)
       const body = await res.json()
@@ -148,17 +148,14 @@ describe('Billing Middleware', () => {
         features: sampleFeatures,
         billingUrl: 'https://billing.do',
       }
-      const app = createTestApp(billingConfig)
+      const app = createTestApp(billingConfig, { id: 'user-4', email: 'u@test.com' })
 
       app.get('/check', (c) => {
         const user = c.get('user' as never) as UserContext
         return c.json({ user })
       })
 
-      const token = createFakeJwt({ sub: 'user-4', email: 'u@test.com' })
-      const res = await app.request('/check', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const res = await app.request('/check')
 
       expect(res.status).toBe(200)
       const body = await res.json()
@@ -173,16 +170,13 @@ describe('Billing Middleware', () => {
   // ==========================================================================
   describe('requirePlan', () => {
     it('should allow access when user has the required plan', async () => {
-      const app = createTestApp({ plans: samplePlans, features: sampleFeatures })
+      const app = createTestApp({ plans: samplePlans, features: sampleFeatures }, { id: 'user-1', email: 'u@test.com' })
 
       app.get('/free-route', requirePlan('free', samplePlans), (c) => {
         return c.json({ data: 'ok' })
       })
 
-      const token = createFakeJwt({ sub: 'user-1', email: 'u@test.com' })
-      const res = await app.request('/free-route', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const res = await app.request('/free-route')
 
       expect(res.status).toBe(200)
       const body = await res.json()
@@ -190,17 +184,14 @@ describe('Billing Middleware', () => {
     })
 
     it('should allow access when user has a higher-tier plan', async () => {
-      const app = createTestApp({ plans: samplePlans, features: sampleFeatures })
+      // L3 admin defaults to 'pro' plan, which is higher than 'starter'
+      const app = createTestApp({ plans: samplePlans, features: sampleFeatures }, { id: 'user-5', organizationId: 'org_1', roles: ['admin'] })
 
       app.get('/starter-route', requirePlan('starter', samplePlans), (c) => {
         return c.json({ data: 'ok' })
       })
 
-      // L3 user gets "enterprise" by default, but let's set plan to "pro"
-      const token = createFakeJwt({ sub: 'user-5', plan: 'pro' })
-      const res = await app.request('/starter-route', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const res = await app.request('/starter-route')
 
       expect(res.status).toBe(200)
       const body = await res.json()
@@ -213,17 +204,14 @@ describe('Billing Middleware', () => {
         features: sampleFeatures,
         billingUrl: 'https://billing.do',
       }
-      const app = createTestApp(billingConfig)
+      // Free user (L2 defaults to 'free' plan)
+      const app = createTestApp(billingConfig, { id: 'user-6', email: 'u@test.com' })
 
       app.get('/pro-route', requirePlan('pro', samplePlans, 'https://billing.do'), (c) => {
         return c.json({ data: 'ok' })
       })
 
-      // Free user
-      const token = createFakeJwt({ sub: 'user-6', email: 'u@test.com' })
-      const res = await app.request('/pro-route', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const res = await app.request('/pro-route')
 
       expect(res.status).toBe(403)
       const body = await res.json()
@@ -256,16 +244,13 @@ describe('Billing Middleware', () => {
   // ==========================================================================
   describe('requireFeature', () => {
     it('should allow access when user plan has the required feature', async () => {
-      const app = createTestApp({ plans: samplePlans, features: sampleFeatures })
+      const app = createTestApp({ plans: samplePlans, features: sampleFeatures }, { id: 'user-1', email: 'u@test.com' })
 
       app.get('/read-route', requireFeature('read', sampleFeatures, samplePlans), (c) => {
         return c.json({ data: 'ok' })
       })
 
-      const token = createFakeJwt({ sub: 'user-1', email: 'u@test.com' })
-      const res = await app.request('/read-route', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const res = await app.request('/read-route')
 
       expect(res.status).toBe(200)
       const body = await res.json()
@@ -273,17 +258,14 @@ describe('Billing Middleware', () => {
     })
 
     it('should return 403 when user plan does not include the feature', async () => {
-      const app = createTestApp({ plans: samplePlans, features: sampleFeatures })
+      const app = createTestApp({ plans: samplePlans, features: sampleFeatures }, { id: 'user-7', email: 'u@test.com' })
 
       app.get('/bulk-route', requireFeature('bulk', sampleFeatures, samplePlans, 'https://billing.do'), (c) => {
         return c.json({ data: 'ok' })
       })
 
       // Free user doesn't have 'bulk'
-      const token = createFakeJwt({ sub: 'user-7', email: 'u@test.com' })
-      const res = await app.request('/bulk-route', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const res = await app.request('/bulk-route')
 
       expect(res.status).toBe(403)
       const body = await res.json()
@@ -295,16 +277,14 @@ describe('Billing Middleware', () => {
     })
 
     it('should allow access to a feature available on higher plans', async () => {
-      const app = createTestApp({ plans: samplePlans, features: sampleFeatures })
+      // Need a user whose plan includes 'export'. L3 admin gets 'pro' which has 'export'.
+      const app = createTestApp({ plans: samplePlans, features: sampleFeatures }, { id: 'user-8', organizationId: 'org_1', roles: ['admin'] })
 
       app.get('/export-route', requireFeature('export', sampleFeatures, samplePlans), (c) => {
         return c.json({ data: 'ok' })
       })
 
-      const token = createFakeJwt({ sub: 'user-8', plan: 'starter' })
-      const res = await app.request('/export-route', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const res = await app.request('/export-route')
 
       expect(res.status).toBe(200)
       const body = await res.json()
@@ -327,17 +307,14 @@ describe('Billing Middleware', () => {
     })
 
     it('should tell the user which plan they need for the feature', async () => {
-      const app = createTestApp({ plans: samplePlans, features: sampleFeatures })
+      // L2 user with 'free' plan doesn't have 'webhooks' (only pro does)
+      const app = createTestApp({ plans: samplePlans, features: sampleFeatures }, { id: 'user-9' })
 
       app.get('/webhook-route', requireFeature('webhooks', sampleFeatures, samplePlans, 'https://billing.do'), (c) => {
         return c.json({ data: 'ok' })
       })
 
-      // Starter user doesn't have webhooks (only pro)
-      const token = createFakeJwt({ sub: 'user-9', plan: 'starter' })
-      const res = await app.request('/webhook-route', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const res = await app.request('/webhook-route')
 
       expect(res.status).toBe(403)
       const body = await res.json()
@@ -352,47 +329,28 @@ describe('Billing Middleware', () => {
   // ==========================================================================
   describe('Plan ordering', () => {
     it('should respect plan order based on config key order', async () => {
-      const app = createTestApp({ plans: samplePlans, features: sampleFeatures })
-
-      // starter-only route
-      app.get('/starter-only', requirePlan('starter', samplePlans), (c) => {
-        return c.json({ data: 'ok' })
-      })
-
-      // Free user should be blocked
-      const freeToken = createFakeJwt({ sub: 'free-user', email: 'u@test.com' })
-      const freeRes = await app.request('/starter-only', {
-        headers: { Authorization: `Bearer ${freeToken}` },
-      })
+      // Free user should be blocked from starter-only route
+      const freeApp = createTestApp({ plans: samplePlans, features: sampleFeatures }, { id: 'free-user', email: 'u@test.com' })
+      freeApp.get('/starter-only', requirePlan('starter', samplePlans), (c) => c.json({ data: 'ok' }))
+      const freeRes = await freeApp.request('/starter-only')
       expect(freeRes.status).toBe(403)
 
-      // Starter user should pass
-      const starterToken = createFakeJwt({ sub: 'starter-user', plan: 'starter' })
-      const starterRes = await app.request('/starter-only', {
-        headers: { Authorization: `Bearer ${starterToken}` },
-      })
-      expect(starterRes.status).toBe(200)
-
-      // Pro user should also pass (higher tier)
-      const proToken = createFakeJwt({ sub: 'pro-user', plan: 'pro' })
-      const proRes = await app.request('/starter-only', {
-        headers: { Authorization: `Bearer ${proToken}` },
-      })
+      // Pro user (L3 admin) should pass starter-only route
+      const proApp = createTestApp({ plans: samplePlans, features: sampleFeatures }, { id: 'pro-user', organizationId: 'org_1', roles: ['admin'] })
+      proApp.get('/starter-only', requirePlan('starter', samplePlans), (c) => c.json({ data: 'ok' }))
+      const proRes = await proApp.request('/starter-only')
       expect(proRes.status).toBe(200)
     })
 
     it('should handle enterprise plan (not in config) as highest tier', async () => {
-      const app = createTestApp({ plans: samplePlans, features: sampleFeatures })
+      // L4 superadmin gets 'enterprise' plan
+      const app = createTestApp({ plans: samplePlans, features: sampleFeatures }, { id: 'ent-user', organizationId: 'org_do', platformRole: 'superadmin' })
 
       app.get('/pro-only', requirePlan('pro', samplePlans), (c) => {
         return c.json({ data: 'ok' })
       })
 
-      // L3 user with enterprise plan (assigned by auth-levels)
-      const token = createFakeJwt({ sub: 'ent-user', plan: 'enterprise', org_verified: true })
-      const res = await app.request('/pro-only', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const res = await app.request('/pro-only')
 
       expect(res.status).toBe(200)
     })
@@ -403,17 +361,14 @@ describe('Billing Middleware', () => {
   // ==========================================================================
   describe('Entity access', () => {
     it('should expose allowed entities for the user plan', async () => {
-      const app = createTestApp({ plans: samplePlans, features: sampleFeatures })
+      const app = createTestApp({ plans: samplePlans, features: sampleFeatures }, { id: 'user-10', email: 'u@test.com' })
 
       app.get('/check-entities', (c) => {
         const user = c.get('user' as never) as UserContext & { allowedEntities?: string[] | '*' }
         return c.json({ allowedEntities: user.allowedEntities })
       })
 
-      const token = createFakeJwt({ sub: 'user-10', email: 'u@test.com' })
-      const res = await app.request('/check-entities', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const res = await app.request('/check-entities')
 
       expect(res.status).toBe(200)
       const body = await res.json()
@@ -421,17 +376,15 @@ describe('Billing Middleware', () => {
     })
 
     it('should allow all entities for pro plan', async () => {
-      const app = createTestApp({ plans: samplePlans, features: sampleFeatures })
+      // L3 admin defaults to 'pro' plan
+      const app = createTestApp({ plans: samplePlans, features: sampleFeatures }, { id: 'user-11', organizationId: 'org_1', roles: ['admin'] })
 
       app.get('/check-entities', (c) => {
         const user = c.get('user' as never) as UserContext & { allowedEntities?: string[] | '*' }
         return c.json({ allowedEntities: user.allowedEntities })
       })
 
-      const token = createFakeJwt({ sub: 'user-11', plan: 'pro' })
-      const res = await app.request('/check-entities', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const res = await app.request('/check-entities')
 
       expect(res.status).toBe(200)
       const body = await res.json()
@@ -454,26 +407,20 @@ describe('Billing Middleware', () => {
           return current + 1
         },
       }
-      const app = createTestApp(billingConfig)
+      const app = createTestApp(billingConfig, { id: 'user-12', email: 'u@test.com' })
 
       app.get('/tracked', (c) => {
         const user = c.get('user' as never) as UserContext
         return c.json({ usage: user.usage })
       })
 
-      const token = createFakeJwt({ sub: 'user-12', email: 'u@test.com' })
-
       // First request
-      const res1 = await app.request('/tracked', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const res1 = await app.request('/tracked')
       const body1 = await res1.json()
       expect(body1.usage.requests.used).toBe(1)
 
       // Second request
-      const res2 = await app.request('/tracked', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const res2 = await app.request('/tracked')
       const body2 = await res2.json()
       expect(body2.usage.requests.used).toBe(2)
     })
@@ -491,16 +438,13 @@ describe('Billing Middleware', () => {
         trackUsage: (_userId, _plan) => 3, // Already over limit
         billingUrl: 'https://billing.do',
       }
-      const app = createTestApp(billingConfig)
+      const app = createTestApp(billingConfig, { id: 'user-13', email: 'u@test.com' })
 
       app.get('/limited', (c) => {
         return c.json({ data: 'ok' })
       })
 
-      const token = createFakeJwt({ sub: 'user-13', email: 'u@test.com' })
-      const res = await app.request('/limited', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const res = await app.request('/limited')
 
       expect(res.status).toBe(429)
       const body = await res.json()
@@ -516,16 +460,13 @@ describe('Billing Middleware', () => {
   // ==========================================================================
   describe('Edge cases', () => {
     it('should handle empty plans config gracefully', async () => {
-      const app = createTestApp({ plans: {}, features: {} })
+      const app = createTestApp({ plans: {}, features: {} }, { id: 'user-14', email: 'u@test.com' })
 
       app.get('/endpoint', (c) => {
         return c.json({ data: 'ok' })
       })
 
-      const token = createFakeJwt({ sub: 'user-14', email: 'u@test.com' })
-      const res = await app.request('/endpoint', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const res = await app.request('/endpoint')
 
       expect(res.status).toBe(200)
     })
@@ -572,17 +513,15 @@ describe('Billing Middleware', () => {
         },
       }
 
-      const app = createTestApp({ plans: plansWithUnlimited, features: {} })
+      // L4 superadmin gets 'enterprise' plan
+      const app = createTestApp({ plans: plansWithUnlimited, features: {} }, { id: 'user-15', organizationId: 'org_do', platformRole: 'superadmin' })
 
       app.get('/check', (c) => {
         const user = c.get('user' as never) as UserContext
         return c.json({ user })
       })
 
-      const token = createFakeJwt({ sub: 'user-15', plan: 'enterprise', org_verified: true })
-      const res = await app.request('/check', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const res = await app.request('/check')
 
       expect(res.status).toBe(200)
       const body = await res.json()

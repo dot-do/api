@@ -1,12 +1,12 @@
 import type { MiddlewareHandler, Context } from 'hono'
 import type { UserContext } from '../types'
-import { extractCookieToken } from '../helpers/cookies'
 
 // SECURITY NOTE: This middleware performs NO cryptographic verification.
-// It inspects token format to classify auth level (L0-L4).
-// It MUST be used after authMiddleware (which verifies via AUTH RPC)
-// or behind the auth-identity snippet (which verifies at CDN edge).
-// Using this middleware standalone provides NO authentication guarantee.
+// It classifies auth level (L0-L4) from pre-verified sources only:
+//   1. verifiedUser (set by authMiddleware after AUTH RPC verification)
+//   2. cf.actor (set by auth-identity snippet at CDN edge, tamper-proof)
+// Without either, all requests are classified as L0 (anonymous).
+// It MUST be used after authMiddleware or behind the auth-identity snippet.
 
 // ---------------------------------------------------------------------------
 // Types
@@ -39,17 +39,8 @@ const AUTH_LEVEL_MAP: Record<string, Level> = {
 }
 
 // ---------------------------------------------------------------------------
-// Token parsing helpers (no crypto — simple string inspection)
+// Token parsing helpers
 // ---------------------------------------------------------------------------
-
-/**
- * Check whether a raw token string is an API key (vs JWT).
- * Simple heuristic: JWTs contain dots (header.payload.signature), API keys don't.
- */
-function isApiKey(token: string): boolean {
-  return !token.includes('.')
-}
-
 
 /** Known API key prefixes — stripped to derive a human-friendly agent name. */
 const API_KEY_PREFIXES = /^(agent_|sk_live_|sk_test_|oai_|hly_sk_|sk_|ses_)/
@@ -57,19 +48,6 @@ const API_KEY_PREFIXES = /^(agent_|sk_live_|sk_test_|oai_|hly_sk_|sk_|ses_)/
 /** Strip known API key prefix to derive a short agent name for display. */
 function stripKeyPrefix(key: string): string {
   return key.replace(API_KEY_PREFIXES, '')
-}
-
-/** Decode a JWT payload segment (base64url → JSON). Returns null on any failure. */
-function decodeJwtPayload(token: string): Record<string, unknown> | null {
-  try {
-    const parts = token.split('.')
-    if (parts.length !== 3 || !parts[1]) return null
-    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
-    const json = atob(base64)
-    return JSON.parse(json) as Record<string, unknown>
-  } catch {
-    return null
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -101,52 +79,10 @@ function detectAuth(c: Context): DetectedAuth {
     }
   }
 
-  // 1. Check x-api-key header
-  const apiKey = c.req.header('x-api-key')
-  if (apiKey) {
-    // If authMiddleware already verified this token, trust it as L1 with org
-    const verifiedOrg = extractOrgFromExistingUser(c)
-    if (verifiedOrg.orgId) {
-      return { level: 'L1', claims: { agentId: apiKey, agentName: stripKeyPrefix(apiKey), ...verifiedOrg } }
-    }
-    // Unverified API key → L0
-    return { level: 'L0', claims: null }
-  }
-
-  // 2. Check Authorization header, then auth cookie
-  const authHeader = c.req.header('authorization')
-  const cookieToken = !authHeader ? extractCookieToken(c.req.header('cookie')) : undefined
-  const rawToken = authHeader?.replace(/^Bearer\s+/i, '').trim() || cookieToken
-  if (!rawToken) return { level: 'L0', claims: null }
-
-  const token = rawToken
-
-  // 2a. API key in Authorization header
-  if (isApiKey(token)) {
-    const verifiedOrg = extractOrgFromExistingUser(c)
-    if (verifiedOrg.orgId) {
-      return { level: 'L1', claims: { agentId: token, agentName: stripKeyPrefix(token), ...verifiedOrg } }
-    }
-    return { level: 'L0', claims: null }
-  }
-
-  // 2b. JWT
-  const payload = decodeJwtPayload(token)
-  if (!payload || !payload.sub) return { level: 'L0', claims: null }
-
-  // L4 — platform superadmin (AUTH worker mints platformRole: 'superadmin' for .do org)
-  if (payload.platformRole === 'superadmin') {
-    return { level: 'L4', claims: payload }
-  }
-
-  // L3 — org admin (admin/owner role in their tenant)
-  const roles = payload.roles as string[] | undefined
-  if (Array.isArray(roles) && roles.some((r) => /admin|owner/i.test(r))) {
-    return { level: 'L3', claims: payload }
-  }
-
-  // L2 — authenticated user
-  return { level: 'L2', claims: payload }
+  // 1. No verifiedUser and no cf.actor → L0 anonymous.
+  // We do NOT format-sniff tokens here. All classification must come from
+  // either cf.actor (tamper-proof) or verifiedUser (set by authMiddleware).
+  return { level: 'L0', claims: null }
 }
 
 // ---------------------------------------------------------------------------
@@ -161,24 +97,6 @@ function extractOrg(claims: Record<string, unknown> | null): string | undefined 
   if (!claims) return undefined
   const org = claims.org as { id?: string } | undefined
   return org?.id || (claims.orgId as string) || (claims.org_id as string) || (claims.organizationId as string) || (claims.tenant as string) || undefined
-}
-
-/**
- * Extract org from the user already set by authMiddleware (which calls AUTH.verifyToken).
- * For L1 session tokens, AUTH returns organizationId = identity.name (the tenant).
- * This bridges that org info into the claims used by buildUserContext.
- */
-function extractOrgFromExistingUser(c: Context): { orgId?: string } {
-  const existingUser = c.get('user' as never) as Record<string, unknown> | undefined
-  if (existingUser) {
-    const orgId = (existingUser.organizationId as string) || (existingUser.orgId as string) || (existingUser.org_id as string) || (existingUser.org as string)
-    if (orgId) return { orgId }
-  }
-  // Fallback: trust x-tenant header from the fetch() wrapper.
-  // This header is identity-derived (set by resolveTenantFromIdentity),
-  // NOT raw client input — safe to use as org context for L1 tokens.
-  const tenant = c.req.header('x-tenant')
-  return tenant ? { orgId: tenant } : {}
 }
 
 export function buildUserContext(
