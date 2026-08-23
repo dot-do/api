@@ -140,3 +140,6 @@ vite.config.ts.timestamp-*
 
 # Wrangler build artifacts
 _worker.js
+
+# Wrangler local dev state
+.wrangler/
