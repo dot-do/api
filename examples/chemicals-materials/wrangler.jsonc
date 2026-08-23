@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // PLACEHOLDER worker name — GAP register row (no G4 name held for NAICS
+  // 325); no route/custom-domain is configured until a name is ruled.
+  "name": "chemicals-materials-wave0",
+  "main": "worker.js",
+  "compatibility_date": "2026-01-24",
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
+}

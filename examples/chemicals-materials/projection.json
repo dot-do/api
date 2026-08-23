@@ -1,0 +1,48 @@
+{
+  "$comment": "Stratum-B G4 projection config (template spec §2). GAP register row: no brand/domain is held for NAICS 325 — api.chemicals / apis.chemicals availability [UNVERIFIED]; chemicals.dev is the register's gap-fill .dev CANDIDATE (availability [UNVERIFIED], no purchase implied) — so this projection runs under a placeholder org.ai address per spec §0; the brand fields attach when a name is ruled. Nothing here implies acquisition of any name. Repo config, not a served surface.",
+  "substrate": "chemicals-materials",
+  "brand": null,
+  "brandStatus": "GAP — nothing held at any ladder step, no acquisition candidate named in any estate doc (register row, 2026-08-23); placeholder address chemicals-materials.org.ai until ruled. Row is a single-lens candidate (VC #25 only) marked [H] with an explicit probe-before-build flag — the [UNVERIFIED] anchor tag is the operative fact, carried on every claim in this build.",
+  "domains": ["chemicals-materials.org.ai (placeholder)"],
+  "icp": {
+    "companyTypes": ["chemical manufacturer", "chemical distributor", "downstream receiving establishment"],
+    "jobTypes": ["EHS manager", "hazmat shipping coordinator", "compliance officer"]
+  },
+  "personas": [
+    { "id": "operator", "description": "EHS/compliance manager maintaining SDS access and chemical inventory under HazCom" },
+    { "id": "developer", "description": "developer at an EHS/chemical-inventory or freight-systems vendor" },
+    { "id": "agent", "description": "autonomous agent assembling per-shipment hazmat documentation on a transaction edge" }
+  ],
+  "motion": "B2A",
+  "offer": [
+    { "shape": "anon-sandbox", "price": "free", "gate": "none — keyless; auto-minted ephemeral workspace, disclosed retention" },
+    { "shape": "earned-credits", "price": "earned", "gate": "proof-of-work ladder rung 1 — STUB: declared in the 402 alternatives; credit ledger not yet live" },
+    { "shape": "human-claimed", "price": "free/earned", "gate": "rung 2 — STUB: claim door not yet live" },
+    { "shape": "paid", "price": "metered (402, machine identity)", "gate": "rung 3 — STUB: test-mode, no live settlement" }
+  ],
+  "pricing": {
+    "pattern": "402-metered-per-call + per-outcome on issued shipping declarations",
+    "rateCardRef": "/pricing",
+    "binding": false
+  },
+  "positioning": "GHS 16-section SDS records and hazmat shipping declarations for chemicals & materials — the SDS instance of the insurance-document pattern (own the mandatory document layer under whoever transacts) [register hypothesis, single-lens, probe-before-build]. Agent-default claim WITHHELD (worthiness bar §4.6 not attempted: no ruled domain, no hosted verdict).",
+  "mdx": null,
+  "experiment": {
+    "pattern": "402-metered",
+    "motion": "B2A",
+    "shapes": ["anon-sandbox", "earned-credits", "human-claimed", "paid"],
+    "rateCardRef": "/pricing",
+    "startDate": "2026-08-23",
+    "hypothesis": "wave-zero registration only — sandbox-floor traffic shape on a placeholder address; pattern comparison begins when a G4 name attaches AND the row's probe-before-build flag is resolved (incumbency probe + SDS-corpus route probe, neither run)"
+  },
+  "counterpartBrandGap": {
+    "recorded": true,
+    "reason": "the row's demand shape is agents assembling mandatory compliance artifacts (SDS handoffs, shipping papers) on behalf of EHS managers and shippers who do not know what an API is (B2A2B); no human-vocabulary counterpart name exists in this cell — the register row itself is a GAP. Surfaced per spec §9.3; naming is #3's job, never this build's."
+  },
+  "sourceRouteStatus": {
+    "route": "public/supplier-published SDS corpora as ingest [VC #25 logic; corpus route UNVERIFIED — no probe in any estate doc]",
+    "classA": false,
+    "waveZeroConsequence": "seed is §5.2 labeled synthetic — REAL data only rides a class-A reachable route, and this row has none ruled",
+    "inSessionReachabilityNote": "one reachability probe run during this build: PubChem PUG REST answered 200 in-session (a substance-property corpus, NOT the row's SDS-corpus route; recorded as a data point for the future probe ticket, not an ingest authorization)"
+  }
+}

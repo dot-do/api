@@ -1,0 +1,906 @@
+{
+  "$context": "https://schema.org.ai",
+  "substrate": "chemicals-materials",
+  "generated": "deterministic (mulberry32, keyed on substrate id) — reseed via scripts/generate-seed.mjs",
+  "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the chemicals-materials substrate; not a real substance, SDS, shipment, supplier, or facility. Substance ids are CAS-shaped synthetic (never real registry numbers); UN ids are UN-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy.",
+  "fixtureLaw": {
+    "realNames": false,
+    "syntheticIdentifiers": "CAS-EX-* CAS-shaped ids (never real registry numbers); UN-EX-* UN-shaped ids; 00-prefixed EIN pattern; *-ex-* record ids",
+    "secretScan": "no credentials present by construction"
+  },
+  "suppliers": [
+    {
+      "id": "sup-ex-1",
+      "name": "Thornmere Solvents LLC [example]",
+      "kind": "chemical-manufacturer",
+      "naics": "325199",
+      "ein": "00-3250001",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the chemicals-materials substrate; not a real substance, SDS, shipment, supplier, or facility. Substance ids are CAS-shaped synthetic (never real registry numbers); UN ids are UN-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "sup-ex-2",
+      "name": "Gribbleflask Chemical Works Inc. [example]",
+      "kind": "chemical-manufacturer",
+      "naics": "325180",
+      "ein": "00-3250002",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the chemicals-materials substrate; not a real substance, SDS, shipment, supplier, or facility. Substance ids are CAS-shaped synthetic (never real registry numbers); UN ids are UN-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "sup-ex-3",
+      "name": "Marlpit Polymer Supply Co. [example]",
+      "kind": "chemical-distributor",
+      "naics": "424690",
+      "ein": "00-3250003",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the chemicals-materials substrate; not a real substance, SDS, shipment, supplier, or facility. Substance ids are CAS-shaped synthetic (never real registry numbers); UN ids are UN-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "substances": [
+    {
+      "id": "sub-ex-1",
+      "name": "Exemplene 40 (synthetic solvent blend) [example]",
+      "casShapedId": "CAS-EX-1000000-00",
+      "casNote": "CAS-shaped SYNTHETIC id — not a real CAS registry number (register anchor [UNVERIFIED]; fixture law)",
+      "physicalState": "liquid",
+      "hazardClass": "flammable-liquid",
+      "unShapedId": "UN-EX-3000",
+      "supplierId": "sup-ex-1",
+      "naics": "325",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the chemicals-materials substrate; not a real substance, SDS, shipment, supplier, or facility. Substance ids are CAS-shaped synthetic (never real registry numbers); UN ids are UN-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "sub-ex-2",
+      "name": "Bramblewick Etchant B [example]",
+      "casShapedId": "CAS-EX-1000137-01",
+      "casNote": "CAS-shaped SYNTHETIC id — not a real CAS registry number (register anchor [UNVERIFIED]; fixture law)",
+      "physicalState": "liquid",
+      "hazardClass": "corrosive-to-metals",
+      "unShapedId": "UN-EX-3001",
+      "supplierId": "sup-ex-2",
+      "naics": "325",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the chemicals-materials substrate; not a real substance, SDS, shipment, supplier, or facility. Substance ids are CAS-shaped synthetic (never real registry numbers); UN ids are UN-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "sub-ex-3",
+      "name": "Quarrelstone Oxidizer QX-7 [example]",
+      "casShapedId": "CAS-EX-1000274-02",
+      "casNote": "CAS-shaped SYNTHETIC id — not a real CAS registry number (register anchor [UNVERIFIED]; fixture law)",
+      "physicalState": "solid",
+      "hazardClass": "oxidizing-solid",
+      "unShapedId": "UN-EX-3002",
+      "supplierId": "sup-ex-3",
+      "naics": "325",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the chemicals-materials substrate; not a real substance, SDS, shipment, supplier, or facility. Substance ids are CAS-shaped synthetic (never real registry numbers); UN ids are UN-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "sub-ex-4",
+      "name": "Fennelmoor Resin Catalyst FR-2 [example]",
+      "casShapedId": "CAS-EX-1000411-03",
+      "casNote": "CAS-shaped SYNTHETIC id — not a real CAS registry number (register anchor [UNVERIFIED]; fixture law)",
+      "physicalState": "liquid",
+      "hazardClass": "skin-sensitizer",
+      "unShapedId": "UN-EX-3003",
+      "supplierId": "sup-ex-1",
+      "naics": "325",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the chemicals-materials substrate; not a real substance, SDS, shipment, supplier, or facility. Substance ids are CAS-shaped synthetic (never real registry numbers); UN ids are UN-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "sub-ex-5",
+      "name": "Midgewater Buffer Salt M-12 [example]",
+      "casShapedId": "CAS-EX-1000548-04",
+      "casNote": "CAS-shaped SYNTHETIC id — not a real CAS registry number (register anchor [UNVERIFIED]; fixture law)",
+      "physicalState": "solid",
+      "hazardClass": "not-classified",
+      "unShapedId": null,
+      "supplierId": "sup-ex-2",
+      "naics": "325",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the chemicals-materials substrate; not a real substance, SDS, shipment, supplier, or facility. Substance ids are CAS-shaped synthetic (never real registry numbers); UN ids are UN-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "sub-ex-6",
+      "name": "Tarnbeck Chlorinating Granules T-9 [example]",
+      "casShapedId": "CAS-EX-1000685-05",
+      "casNote": "CAS-shaped SYNTHETIC id — not a real CAS registry number (register anchor [UNVERIFIED]; fixture law)",
+      "physicalState": "solid",
+      "hazardClass": "oxidizing-solid",
+      "unShapedId": "UN-EX-3005",
+      "supplierId": "sup-ex-3",
+      "naics": "325",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the chemicals-materials substrate; not a real substance, SDS, shipment, supplier, or facility. Substance ids are CAS-shaped synthetic (never real registry numbers); UN ids are UN-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "safetyDataSheets": [
+    {
+      "id": "sds-ex-1",
+      "substanceId": "sub-ex-1",
+      "supplier": "sup-ex-1",
+      "hazardClass": "flammable-liquid",
+      "format": "GHS 16-section (OSHA HazCom 2012) — typing anchor; all content synthetic",
+      "revision": "1.0",
+      "issued": "2026-01-10",
+      "sections": [
+        {
+          "section": 1,
+          "title": "Identification",
+          "content": "Synthetic section content for Exemplene 40 (synthetic solvent blend) [example] — identification [synthetic content, example data]"
+        },
+        {
+          "section": 2,
+          "title": "Hazard(s) identification",
+          "content": "Synthetic section content for Exemplene 40 (synthetic solvent blend) [example] — hazard(s) identification [synthetic content, example data]"
+        },
+        {
+          "section": 3,
+          "title": "Composition/information on ingredients",
+          "content": "Synthetic section content for Exemplene 40 (synthetic solvent blend) [example] — composition/information on ingredients [synthetic content, example data]"
+        },
+        {
+          "section": 4,
+          "title": "First-aid measures",
+          "content": "Synthetic section content for Exemplene 40 (synthetic solvent blend) [example] — first-aid measures [synthetic content, example data]"
+        },
+        {
+          "section": 5,
+          "title": "Fire-fighting measures",
+          "content": "Synthetic section content for Exemplene 40 (synthetic solvent blend) [example] — fire-fighting measures [synthetic content, example data]"
+        },
+        {
+          "section": 6,
+          "title": "Accidental release measures",
+          "content": "Synthetic section content for Exemplene 40 (synthetic solvent blend) [example] — accidental release measures [synthetic content, example data]"
+        },
+        {
+          "section": 7,
+          "title": "Handling and storage",
+          "content": "Synthetic section content for Exemplene 40 (synthetic solvent blend) [example] — handling and storage [synthetic content, example data]"
+        },
+        {
+          "section": 8,
+          "title": "Exposure controls/personal protection",
+          "content": "Synthetic section content for Exemplene 40 (synthetic solvent blend) [example] — exposure controls/personal protection [synthetic content, example data]"
+        },
+        {
+          "section": 9,
+          "title": "Physical and chemical properties",
+          "content": "Synthetic section content for Exemplene 40 (synthetic solvent blend) [example] — physical and chemical properties [synthetic content, example data]"
+        },
+        {
+          "section": 10,
+          "title": "Stability and reactivity",
+          "content": "Synthetic section content for Exemplene 40 (synthetic solvent blend) [example] — stability and reactivity [synthetic content, example data]"
+        },
+        {
+          "section": 11,
+          "title": "Toxicological information",
+          "content": "Synthetic section content for Exemplene 40 (synthetic solvent blend) [example] — toxicological information [synthetic content, example data]"
+        },
+        {
+          "section": 12,
+          "title": "Ecological information",
+          "content": "Synthetic section content for Exemplene 40 (synthetic solvent blend) [example] — ecological information [synthetic content, example data]"
+        },
+        {
+          "section": 13,
+          "title": "Disposal considerations",
+          "content": "Synthetic section content for Exemplene 40 (synthetic solvent blend) [example] — disposal considerations [synthetic content, example data]"
+        },
+        {
+          "section": 14,
+          "title": "Transport information",
+          "content": "Synthetic section content for Exemplene 40 (synthetic solvent blend) [example] — transport information [synthetic content, example data]"
+        },
+        {
+          "section": 15,
+          "title": "Regulatory information",
+          "content": "Synthetic section content for Exemplene 40 (synthetic solvent blend) [example] — regulatory information [synthetic content, example data]"
+        },
+        {
+          "section": 16,
+          "title": "Other information",
+          "content": "Synthetic section content for Exemplene 40 (synthetic solvent blend) [example] — other information [synthetic content, example data]"
+        }
+      ],
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the chemicals-materials substrate; not a real substance, SDS, shipment, supplier, or facility. Substance ids are CAS-shaped synthetic (never real registry numbers); UN ids are UN-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "sds-ex-2",
+      "substanceId": "sub-ex-2",
+      "supplier": "sup-ex-2",
+      "hazardClass": "corrosive-to-metals",
+      "format": "GHS 16-section (OSHA HazCom 2012) — typing anchor; all content synthetic",
+      "revision": "2.0",
+      "issued": "2026-02-11",
+      "sections": [
+        {
+          "section": 1,
+          "title": "Identification",
+          "content": "Synthetic section content for Bramblewick Etchant B [example] — identification [synthetic content, example data]"
+        },
+        {
+          "section": 2,
+          "title": "Hazard(s) identification",
+          "content": "Synthetic section content for Bramblewick Etchant B [example] — hazard(s) identification [synthetic content, example data]"
+        },
+        {
+          "section": 3,
+          "title": "Composition/information on ingredients",
+          "content": "Synthetic section content for Bramblewick Etchant B [example] — composition/information on ingredients [synthetic content, example data]"
+        },
+        {
+          "section": 4,
+          "title": "First-aid measures",
+          "content": "Synthetic section content for Bramblewick Etchant B [example] — first-aid measures [synthetic content, example data]"
+        },
+        {
+          "section": 5,
+          "title": "Fire-fighting measures",
+          "content": "Synthetic section content for Bramblewick Etchant B [example] — fire-fighting measures [synthetic content, example data]"
+        },
+        {
+          "section": 6,
+          "title": "Accidental release measures",
+          "content": "Synthetic section content for Bramblewick Etchant B [example] — accidental release measures [synthetic content, example data]"
+        },
+        {
+          "section": 7,
+          "title": "Handling and storage",
+          "content": "Synthetic section content for Bramblewick Etchant B [example] — handling and storage [synthetic content, example data]"
+        },
+        {
+          "section": 8,
+          "title": "Exposure controls/personal protection",
+          "content": "Synthetic section content for Bramblewick Etchant B [example] — exposure controls/personal protection [synthetic content, example data]"
+        },
+        {
+          "section": 9,
+          "title": "Physical and chemical properties",
+          "content": "Synthetic section content for Bramblewick Etchant B [example] — physical and chemical properties [synthetic content, example data]"
+        },
+        {
+          "section": 10,
+          "title": "Stability and reactivity",
+          "content": "Synthetic section content for Bramblewick Etchant B [example] — stability and reactivity [synthetic content, example data]"
+        },
+        {
+          "section": 11,
+          "title": "Toxicological information",
+          "content": "Synthetic section content for Bramblewick Etchant B [example] — toxicological information [synthetic content, example data]"
+        },
+        {
+          "section": 12,
+          "title": "Ecological information",
+          "content": "Synthetic section content for Bramblewick Etchant B [example] — ecological information [synthetic content, example data]"
+        },
+        {
+          "section": 13,
+          "title": "Disposal considerations",
+          "content": "Synthetic section content for Bramblewick Etchant B [example] — disposal considerations [synthetic content, example data]"
+        },
+        {
+          "section": 14,
+          "title": "Transport information",
+          "content": "Synthetic section content for Bramblewick Etchant B [example] — transport information [synthetic content, example data]"
+        },
+        {
+          "section": 15,
+          "title": "Regulatory information",
+          "content": "Synthetic section content for Bramblewick Etchant B [example] — regulatory information [synthetic content, example data]"
+        },
+        {
+          "section": 16,
+          "title": "Other information",
+          "content": "Synthetic section content for Bramblewick Etchant B [example] — other information [synthetic content, example data]"
+        }
+      ],
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the chemicals-materials substrate; not a real substance, SDS, shipment, supplier, or facility. Substance ids are CAS-shaped synthetic (never real registry numbers); UN ids are UN-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "sds-ex-3",
+      "substanceId": "sub-ex-3",
+      "supplier": "sup-ex-3",
+      "hazardClass": "oxidizing-solid",
+      "format": "GHS 16-section (OSHA HazCom 2012) — typing anchor; all content synthetic",
+      "revision": "3.0",
+      "issued": "2026-03-12",
+      "sections": [
+        {
+          "section": 1,
+          "title": "Identification",
+          "content": "Synthetic section content for Quarrelstone Oxidizer QX-7 [example] — identification [synthetic content, example data]"
+        },
+        {
+          "section": 2,
+          "title": "Hazard(s) identification",
+          "content": "Synthetic section content for Quarrelstone Oxidizer QX-7 [example] — hazard(s) identification [synthetic content, example data]"
+        },
+        {
+          "section": 3,
+          "title": "Composition/information on ingredients",
+          "content": "Synthetic section content for Quarrelstone Oxidizer QX-7 [example] — composition/information on ingredients [synthetic content, example data]"
+        },
+        {
+          "section": 4,
+          "title": "First-aid measures",
+          "content": "Synthetic section content for Quarrelstone Oxidizer QX-7 [example] — first-aid measures [synthetic content, example data]"
+        },
+        {
+          "section": 5,
+          "title": "Fire-fighting measures",
+          "content": "Synthetic section content for Quarrelstone Oxidizer QX-7 [example] — fire-fighting measures [synthetic content, example data]"
+        },
+        {
+          "section": 6,
+          "title": "Accidental release measures",
+          "content": "Synthetic section content for Quarrelstone Oxidizer QX-7 [example] — accidental release measures [synthetic content, example data]"
+        },
+        {
+          "section": 7,
+          "title": "Handling and storage",
+          "content": "Synthetic section content for Quarrelstone Oxidizer QX-7 [example] — handling and storage [synthetic content, example data]"
+        },
+        {
+          "section": 8,
+          "title": "Exposure controls/personal protection",
+          "content": "Synthetic section content for Quarrelstone Oxidizer QX-7 [example] — exposure controls/personal protection [synthetic content, example data]"
+        },
+        {
+          "section": 9,
+          "title": "Physical and chemical properties",
+          "content": "Synthetic section content for Quarrelstone Oxidizer QX-7 [example] — physical and chemical properties [synthetic content, example data]"
+        },
+        {
+          "section": 10,
+          "title": "Stability and reactivity",
+          "content": "Synthetic section content for Quarrelstone Oxidizer QX-7 [example] — stability and reactivity [synthetic content, example data]"
+        },
+        {
+          "section": 11,
+          "title": "Toxicological information",
+          "content": "Synthetic section content for Quarrelstone Oxidizer QX-7 [example] — toxicological information [synthetic content, example data]"
+        },
+        {
+          "section": 12,
+          "title": "Ecological information",
+          "content": "Synthetic section content for Quarrelstone Oxidizer QX-7 [example] — ecological information [synthetic content, example data]"
+        },
+        {
+          "section": 13,
+          "title": "Disposal considerations",
+          "content": "Synthetic section content for Quarrelstone Oxidizer QX-7 [example] — disposal considerations [synthetic content, example data]"
+        },
+        {
+          "section": 14,
+          "title": "Transport information",
+          "content": "Synthetic section content for Quarrelstone Oxidizer QX-7 [example] — transport information [synthetic content, example data]"
+        },
+        {
+          "section": 15,
+          "title": "Regulatory information",
+          "content": "Synthetic section content for Quarrelstone Oxidizer QX-7 [example] — regulatory information [synthetic content, example data]"
+        },
+        {
+          "section": 16,
+          "title": "Other information",
+          "content": "Synthetic section content for Quarrelstone Oxidizer QX-7 [example] — other information [synthetic content, example data]"
+        }
+      ],
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the chemicals-materials substrate; not a real substance, SDS, shipment, supplier, or facility. Substance ids are CAS-shaped synthetic (never real registry numbers); UN ids are UN-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "sds-ex-4",
+      "substanceId": "sub-ex-4",
+      "supplier": "sup-ex-1",
+      "hazardClass": "skin-sensitizer",
+      "format": "GHS 16-section (OSHA HazCom 2012) — typing anchor; all content synthetic",
+      "revision": "1.0",
+      "issued": "2026-04-13",
+      "sections": [
+        {
+          "section": 1,
+          "title": "Identification",
+          "content": "Synthetic section content for Fennelmoor Resin Catalyst FR-2 [example] — identification [synthetic content, example data]"
+        },
+        {
+          "section": 2,
+          "title": "Hazard(s) identification",
+          "content": "Synthetic section content for Fennelmoor Resin Catalyst FR-2 [example] — hazard(s) identification [synthetic content, example data]"
+        },
+        {
+          "section": 3,
+          "title": "Composition/information on ingredients",
+          "content": "Synthetic section content for Fennelmoor Resin Catalyst FR-2 [example] — composition/information on ingredients [synthetic content, example data]"
+        },
+        {
+          "section": 4,
+          "title": "First-aid measures",
+          "content": "Synthetic section content for Fennelmoor Resin Catalyst FR-2 [example] — first-aid measures [synthetic content, example data]"
+        },
+        {
+          "section": 5,
+          "title": "Fire-fighting measures",
+          "content": "Synthetic section content for Fennelmoor Resin Catalyst FR-2 [example] — fire-fighting measures [synthetic content, example data]"
+        },
+        {
+          "section": 6,
+          "title": "Accidental release measures",
+          "content": "Synthetic section content for Fennelmoor Resin Catalyst FR-2 [example] — accidental release measures [synthetic content, example data]"
+        },
+        {
+          "section": 7,
+          "title": "Handling and storage",
+          "content": "Synthetic section content for Fennelmoor Resin Catalyst FR-2 [example] — handling and storage [synthetic content, example data]"
+        },
+        {
+          "section": 8,
+          "title": "Exposure controls/personal protection",
+          "content": "Synthetic section content for Fennelmoor Resin Catalyst FR-2 [example] — exposure controls/personal protection [synthetic content, example data]"
+        },
+        {
+          "section": 9,
+          "title": "Physical and chemical properties",
+          "content": "Synthetic section content for Fennelmoor Resin Catalyst FR-2 [example] — physical and chemical properties [synthetic content, example data]"
+        },
+        {
+          "section": 10,
+          "title": "Stability and reactivity",
+          "content": "Synthetic section content for Fennelmoor Resin Catalyst FR-2 [example] — stability and reactivity [synthetic content, example data]"
+        },
+        {
+          "section": 11,
+          "title": "Toxicological information",
+          "content": "Synthetic section content for Fennelmoor Resin Catalyst FR-2 [example] — toxicological information [synthetic content, example data]"
+        },
+        {
+          "section": 12,
+          "title": "Ecological information",
+          "content": "Synthetic section content for Fennelmoor Resin Catalyst FR-2 [example] — ecological information [synthetic content, example data]"
+        },
+        {
+          "section": 13,
+          "title": "Disposal considerations",
+          "content": "Synthetic section content for Fennelmoor Resin Catalyst FR-2 [example] — disposal considerations [synthetic content, example data]"
+        },
+        {
+          "section": 14,
+          "title": "Transport information",
+          "content": "Synthetic section content for Fennelmoor Resin Catalyst FR-2 [example] — transport information [synthetic content, example data]"
+        },
+        {
+          "section": 15,
+          "title": "Regulatory information",
+          "content": "Synthetic section content for Fennelmoor Resin Catalyst FR-2 [example] — regulatory information [synthetic content, example data]"
+        },
+        {
+          "section": 16,
+          "title": "Other information",
+          "content": "Synthetic section content for Fennelmoor Resin Catalyst FR-2 [example] — other information [synthetic content, example data]"
+        }
+      ],
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the chemicals-materials substrate; not a real substance, SDS, shipment, supplier, or facility. Substance ids are CAS-shaped synthetic (never real registry numbers); UN ids are UN-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "sds-ex-5",
+      "substanceId": "sub-ex-5",
+      "supplier": "sup-ex-2",
+      "hazardClass": "not-classified",
+      "format": "GHS 16-section (OSHA HazCom 2012) — typing anchor; all content synthetic",
+      "revision": "2.0",
+      "issued": "2026-05-14",
+      "sections": [
+        {
+          "section": 1,
+          "title": "Identification",
+          "content": "Synthetic section content for Midgewater Buffer Salt M-12 [example] — identification [synthetic content, example data]"
+        },
+        {
+          "section": 2,
+          "title": "Hazard(s) identification",
+          "content": "Synthetic section content for Midgewater Buffer Salt M-12 [example] — hazard(s) identification [synthetic content, example data]"
+        },
+        {
+          "section": 3,
+          "title": "Composition/information on ingredients",
+          "content": "Synthetic section content for Midgewater Buffer Salt M-12 [example] — composition/information on ingredients [synthetic content, example data]"
+        },
+        {
+          "section": 4,
+          "title": "First-aid measures",
+          "content": "Synthetic section content for Midgewater Buffer Salt M-12 [example] — first-aid measures [synthetic content, example data]"
+        },
+        {
+          "section": 5,
+          "title": "Fire-fighting measures",
+          "content": "Synthetic section content for Midgewater Buffer Salt M-12 [example] — fire-fighting measures [synthetic content, example data]"
+        },
+        {
+          "section": 6,
+          "title": "Accidental release measures",
+          "content": "Synthetic section content for Midgewater Buffer Salt M-12 [example] — accidental release measures [synthetic content, example data]"
+        },
+        {
+          "section": 7,
+          "title": "Handling and storage",
+          "content": "Synthetic section content for Midgewater Buffer Salt M-12 [example] — handling and storage [synthetic content, example data]"
+        },
+        {
+          "section": 8,
+          "title": "Exposure controls/personal protection",
+          "content": "Synthetic section content for Midgewater Buffer Salt M-12 [example] — exposure controls/personal protection [synthetic content, example data]"
+        },
+        {
+          "section": 9,
+          "title": "Physical and chemical properties",
+          "content": "Synthetic section content for Midgewater Buffer Salt M-12 [example] — physical and chemical properties [synthetic content, example data]"
+        },
+        {
+          "section": 10,
+          "title": "Stability and reactivity",
+          "content": "Synthetic section content for Midgewater Buffer Salt M-12 [example] — stability and reactivity [synthetic content, example data]"
+        },
+        {
+          "section": 11,
+          "title": "Toxicological information",
+          "content": "Synthetic section content for Midgewater Buffer Salt M-12 [example] — toxicological information [synthetic content, example data]"
+        },
+        {
+          "section": 12,
+          "title": "Ecological information",
+          "content": "Synthetic section content for Midgewater Buffer Salt M-12 [example] — ecological information [synthetic content, example data]"
+        },
+        {
+          "section": 13,
+          "title": "Disposal considerations",
+          "content": "Synthetic section content for Midgewater Buffer Salt M-12 [example] — disposal considerations [synthetic content, example data]"
+        },
+        {
+          "section": 14,
+          "title": "Transport information",
+          "content": "Synthetic section content for Midgewater Buffer Salt M-12 [example] — transport information [synthetic content, example data]"
+        },
+        {
+          "section": 15,
+          "title": "Regulatory information",
+          "content": "Synthetic section content for Midgewater Buffer Salt M-12 [example] — regulatory information [synthetic content, example data]"
+        },
+        {
+          "section": 16,
+          "title": "Other information",
+          "content": "Synthetic section content for Midgewater Buffer Salt M-12 [example] — other information [synthetic content, example data]"
+        }
+      ],
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the chemicals-materials substrate; not a real substance, SDS, shipment, supplier, or facility. Substance ids are CAS-shaped synthetic (never real registry numbers); UN ids are UN-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "sds-ex-6",
+      "substanceId": "sub-ex-6",
+      "supplier": "sup-ex-3",
+      "hazardClass": "oxidizing-solid",
+      "format": "GHS 16-section (OSHA HazCom 2012) — typing anchor; all content synthetic",
+      "revision": "3.0",
+      "issued": "2026-06-15",
+      "sections": [
+        {
+          "section": 1,
+          "title": "Identification",
+          "content": "Synthetic section content for Tarnbeck Chlorinating Granules T-9 [example] — identification [synthetic content, example data]"
+        },
+        {
+          "section": 2,
+          "title": "Hazard(s) identification",
+          "content": "Synthetic section content for Tarnbeck Chlorinating Granules T-9 [example] — hazard(s) identification [synthetic content, example data]"
+        },
+        {
+          "section": 3,
+          "title": "Composition/information on ingredients",
+          "content": "Synthetic section content for Tarnbeck Chlorinating Granules T-9 [example] — composition/information on ingredients [synthetic content, example data]"
+        },
+        {
+          "section": 4,
+          "title": "First-aid measures",
+          "content": "Synthetic section content for Tarnbeck Chlorinating Granules T-9 [example] — first-aid measures [synthetic content, example data]"
+        },
+        {
+          "section": 5,
+          "title": "Fire-fighting measures",
+          "content": "Synthetic section content for Tarnbeck Chlorinating Granules T-9 [example] — fire-fighting measures [synthetic content, example data]"
+        },
+        {
+          "section": 6,
+          "title": "Accidental release measures",
+          "content": "Synthetic section content for Tarnbeck Chlorinating Granules T-9 [example] — accidental release measures [synthetic content, example data]"
+        },
+        {
+          "section": 7,
+          "title": "Handling and storage",
+          "content": "Synthetic section content for Tarnbeck Chlorinating Granules T-9 [example] — handling and storage [synthetic content, example data]"
+        },
+        {
+          "section": 8,
+          "title": "Exposure controls/personal protection",
+          "content": "Synthetic section content for Tarnbeck Chlorinating Granules T-9 [example] — exposure controls/personal protection [synthetic content, example data]"
+        },
+        {
+          "section": 9,
+          "title": "Physical and chemical properties",
+          "content": "Synthetic section content for Tarnbeck Chlorinating Granules T-9 [example] — physical and chemical properties [synthetic content, example data]"
+        },
+        {
+          "section": 10,
+          "title": "Stability and reactivity",
+          "content": "Synthetic section content for Tarnbeck Chlorinating Granules T-9 [example] — stability and reactivity [synthetic content, example data]"
+        },
+        {
+          "section": 11,
+          "title": "Toxicological information",
+          "content": "Synthetic section content for Tarnbeck Chlorinating Granules T-9 [example] — toxicological information [synthetic content, example data]"
+        },
+        {
+          "section": 12,
+          "title": "Ecological information",
+          "content": "Synthetic section content for Tarnbeck Chlorinating Granules T-9 [example] — ecological information [synthetic content, example data]"
+        },
+        {
+          "section": 13,
+          "title": "Disposal considerations",
+          "content": "Synthetic section content for Tarnbeck Chlorinating Granules T-9 [example] — disposal considerations [synthetic content, example data]"
+        },
+        {
+          "section": 14,
+          "title": "Transport information",
+          "content": "Synthetic section content for Tarnbeck Chlorinating Granules T-9 [example] — transport information [synthetic content, example data]"
+        },
+        {
+          "section": 15,
+          "title": "Regulatory information",
+          "content": "Synthetic section content for Tarnbeck Chlorinating Granules T-9 [example] — regulatory information [synthetic content, example data]"
+        },
+        {
+          "section": 16,
+          "title": "Other information",
+          "content": "Synthetic section content for Tarnbeck Chlorinating Granules T-9 [example] — other information [synthetic content, example data]"
+        }
+      ],
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the chemicals-materials substrate; not a real substance, SDS, shipment, supplier, or facility. Substance ids are CAS-shaped synthetic (never real registry numbers); UN ids are UN-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "shippingDeclarations": [
+    {
+      "id": "dec-ex-1",
+      "substanceId": "sub-ex-1",
+      "substance": "sub-ex-1",
+      "sdsId": "sds-ex-1",
+      "shipperId": "sup-ex-1",
+      "consigneeFacilityId": "fac-ex-1",
+      "grain": "49 CFR hazmat shipping papers [register anchor UNVERIFIED; grain used as typing only]",
+      "unShapedId": "UN-EX-3000",
+      "properShippingName": "Exemplene 40 (synthetic solvent blend), synthetic proper shipping name [example]",
+      "hazardClass": "flammable-liquid",
+      "packingGroup": "II",
+      "quantity": "4 x 4L [synthetic]",
+      "status": "draft",
+      "emergencyContact": "00-555-EXAMPLE (synthetic — fixture law, no real phone)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the chemicals-materials substrate; not a real substance, SDS, shipment, supplier, or facility. Substance ids are CAS-shaped synthetic (never real registry numbers); UN ids are UN-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "dec-ex-2",
+      "substanceId": "sub-ex-2",
+      "substance": "sub-ex-2",
+      "sdsId": "sds-ex-2",
+      "shipperId": "sup-ex-2",
+      "consigneeFacilityId": "fac-ex-2",
+      "grain": "49 CFR hazmat shipping papers [register anchor UNVERIFIED; grain used as typing only]",
+      "unShapedId": "UN-EX-3001",
+      "properShippingName": "Bramblewick Etchant B, synthetic proper shipping name [example]",
+      "hazardClass": "corrosive-to-metals",
+      "packingGroup": "III",
+      "quantity": "20 x 25kg [synthetic]",
+      "status": "issued",
+      "emergencyContact": "00-555-EXAMPLE (synthetic — fixture law, no real phone)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the chemicals-materials substrate; not a real substance, SDS, shipment, supplier, or facility. Substance ids are CAS-shaped synthetic (never real registry numbers); UN ids are UN-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "dec-ex-3",
+      "substanceId": "sub-ex-2",
+      "substance": "sub-ex-2",
+      "sdsId": "sds-ex-2",
+      "shipperId": "sup-ex-2",
+      "consigneeFacilityId": "fac-ex-3",
+      "grain": "49 CFR hazmat shipping papers [register anchor UNVERIFIED; grain used as typing only]",
+      "unShapedId": "UN-EX-3001",
+      "properShippingName": "Bramblewick Etchant B, synthetic proper shipping name [example]",
+      "hazardClass": "corrosive-to-metals",
+      "packingGroup": "III",
+      "quantity": "55 x 4L [synthetic]",
+      "status": "draft",
+      "emergencyContact": "00-555-EXAMPLE (synthetic — fixture law, no real phone)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the chemicals-materials substrate; not a real substance, SDS, shipment, supplier, or facility. Substance ids are CAS-shaped synthetic (never real registry numbers); UN ids are UN-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "dec-ex-4",
+      "substanceId": "sub-ex-3",
+      "substance": "sub-ex-3",
+      "sdsId": "sds-ex-3",
+      "shipperId": "sup-ex-3",
+      "consigneeFacilityId": "fac-ex-3",
+      "grain": "49 CFR hazmat shipping papers [register anchor UNVERIFIED; grain used as typing only]",
+      "unShapedId": "UN-EX-3002",
+      "properShippingName": "Quarrelstone Oxidizer QX-7, synthetic proper shipping name [example]",
+      "hazardClass": "oxidizing-solid",
+      "packingGroup": "II",
+      "quantity": "20 x 208L drum [synthetic]",
+      "status": "issued",
+      "emergencyContact": "00-555-EXAMPLE (synthetic — fixture law, no real phone)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the chemicals-materials substrate; not a real substance, SDS, shipment, supplier, or facility. Substance ids are CAS-shaped synthetic (never real registry numbers); UN ids are UN-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "dec-ex-5",
+      "substanceId": "sub-ex-4",
+      "substance": "sub-ex-4",
+      "sdsId": "sds-ex-4",
+      "shipperId": "sup-ex-1",
+      "consigneeFacilityId": "fac-ex-1",
+      "grain": "49 CFR hazmat shipping papers [register anchor UNVERIFIED; grain used as typing only]",
+      "unShapedId": "UN-EX-3003",
+      "properShippingName": "Fennelmoor Resin Catalyst FR-2, synthetic proper shipping name [example]",
+      "hazardClass": "skin-sensitizer",
+      "packingGroup": "III",
+      "quantity": "12 x 4L [synthetic]",
+      "status": "draft",
+      "emergencyContact": "00-555-EXAMPLE (synthetic — fixture law, no real phone)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the chemicals-materials substrate; not a real substance, SDS, shipment, supplier, or facility. Substance ids are CAS-shaped synthetic (never real registry numbers); UN ids are UN-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "dec-ex-6",
+      "substanceId": "sub-ex-4",
+      "substance": "sub-ex-4",
+      "sdsId": "sds-ex-4",
+      "shipperId": "sup-ex-1",
+      "consigneeFacilityId": "fac-ex-2",
+      "grain": "49 CFR hazmat shipping papers [register anchor UNVERIFIED; grain used as typing only]",
+      "unShapedId": "UN-EX-3003",
+      "properShippingName": "Fennelmoor Resin Catalyst FR-2, synthetic proper shipping name [example]",
+      "hazardClass": "skin-sensitizer",
+      "packingGroup": "III",
+      "quantity": "4 x 4L [synthetic]",
+      "status": "draft",
+      "emergencyContact": "00-555-EXAMPLE (synthetic — fixture law, no real phone)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the chemicals-materials substrate; not a real substance, SDS, shipment, supplier, or facility. Substance ids are CAS-shaped synthetic (never real registry numbers); UN ids are UN-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "dec-ex-7",
+      "substanceId": "sub-ex-6",
+      "substance": "sub-ex-6",
+      "sdsId": "sds-ex-6",
+      "shipperId": "sup-ex-3",
+      "consigneeFacilityId": "fac-ex-3",
+      "grain": "49 CFR hazmat shipping papers [register anchor UNVERIFIED; grain used as typing only]",
+      "unShapedId": "UN-EX-3005",
+      "properShippingName": "Tarnbeck Chlorinating Granules T-9, synthetic proper shipping name [example]",
+      "hazardClass": "oxidizing-solid",
+      "packingGroup": "II",
+      "quantity": "12 x 208L drum [synthetic]",
+      "status": "issued",
+      "emergencyContact": "00-555-EXAMPLE (synthetic — fixture law, no real phone)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the chemicals-materials substrate; not a real substance, SDS, shipment, supplier, or facility. Substance ids are CAS-shaped synthetic (never real registry numbers); UN ids are UN-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "dec-ex-8",
+      "substanceId": "sub-ex-6",
+      "substance": "sub-ex-6",
+      "sdsId": "sds-ex-6",
+      "shipperId": "sup-ex-3",
+      "consigneeFacilityId": "fac-ex-1",
+      "grain": "49 CFR hazmat shipping papers [register anchor UNVERIFIED; grain used as typing only]",
+      "unShapedId": "UN-EX-3005",
+      "properShippingName": "Tarnbeck Chlorinating Granules T-9, synthetic proper shipping name [example]",
+      "hazardClass": "oxidizing-solid",
+      "packingGroup": "II",
+      "quantity": "4 x 208L drum [synthetic]",
+      "status": "draft",
+      "emergencyContact": "00-555-EXAMPLE (synthetic — fixture law, no real phone)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the chemicals-materials substrate; not a real substance, SDS, shipment, supplier, or facility. Substance ids are CAS-shaped synthetic (never real registry numbers); UN ids are UN-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "facilities": [
+    {
+      "id": "fac-ex-1",
+      "name": "Osselton Fabrication Co. — Plant 2 [example]",
+      "kind": "downstream-receiving-establishment",
+      "sector": "manufacturing",
+      "inventory": [
+        {
+          "substanceId": "sub-ex-1",
+          "sdsOnFile": true,
+          "quantityOnHand": "10 cylinders [synthetic]"
+        },
+        {
+          "substanceId": "sub-ex-3",
+          "sdsOnFile": true,
+          "quantityOnHand": "6 pails [synthetic]"
+        },
+        {
+          "substanceId": "sub-ex-5",
+          "sdsOnFile": true,
+          "quantityOnHand": "6 bags [synthetic]"
+        }
+      ],
+      "rightToKnowNote": "HazCom right-to-know inventory join — synthetic example inventory; the breadth claim (every receiving establishment) is the register's [UNVERIFIED] hedge, carried",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the chemicals-materials substrate; not a real substance, SDS, shipment, supplier, or facility. Substance ids are CAS-shaped synthetic (never real registry numbers); UN ids are UN-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "fac-ex-2",
+      "name": "Larkspindle Coatings Works [example]",
+      "kind": "downstream-receiving-establishment",
+      "sector": "coatings",
+      "inventory": [
+        {
+          "substanceId": "sub-ex-2",
+          "sdsOnFile": true,
+          "quantityOnHand": "30 cylinders [synthetic]"
+        },
+        {
+          "substanceId": "sub-ex-4",
+          "sdsOnFile": true,
+          "quantityOnHand": "30 pails [synthetic]"
+        },
+        {
+          "substanceId": "sub-ex-6",
+          "sdsOnFile": true,
+          "quantityOnHand": "30 bags [synthetic]"
+        }
+      ],
+      "rightToKnowNote": "HazCom right-to-know inventory join — synthetic example inventory; the breadth claim (every receiving establishment) is the register's [UNVERIFIED] hedge, carried",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the chemicals-materials substrate; not a real substance, SDS, shipment, supplier, or facility. Substance ids are CAS-shaped synthetic (never real registry numbers); UN ids are UN-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "fac-ex-3",
+      "name": "Tarnbeck Water Treatment Cooperative [example]",
+      "kind": "downstream-receiving-establishment",
+      "sector": "utilities-energy",
+      "inventory": [
+        {
+          "substanceId": "sub-ex-1",
+          "sdsOnFile": true,
+          "quantityOnHand": "6 bags [synthetic]"
+        },
+        {
+          "substanceId": "sub-ex-3",
+          "sdsOnFile": true,
+          "quantityOnHand": "6 bags [synthetic]"
+        },
+        {
+          "substanceId": "sub-ex-5",
+          "sdsOnFile": true,
+          "quantityOnHand": "30 drums [synthetic]"
+        }
+      ],
+      "rightToKnowNote": "HazCom right-to-know inventory join — synthetic example inventory; the breadth claim (every receiving establishment) is the register's [UNVERIFIED] hedge, carried",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the chemicals-materials substrate; not a real substance, SDS, shipment, supplier, or facility. Substance ids are CAS-shaped synthetic (never real registry numbers); UN ids are UN-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ]
+}
