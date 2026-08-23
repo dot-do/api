@@ -90,6 +90,13 @@ edit it by hand.
   undeclared until digest-pinned; declaring it arms `check-capability-coverage`
   against deployed verifiers that predate the registry row). The suite still
   ships at `/verify/suite.json` and `links.verify` names it.
-- Rail-ledger registration (§9.1 final box): **blocked-on-rail-ledger** — no
-  faces-payable rail ledger exists in the ax repo at build time; the box is
-  recorded blocked, never stubbed.
+- Rail-ledger registration (§9.1 final box): **REGISTERED** — registered via
+  LEDGER.md door A — row in packages/rail-ledger/registry/faces.json @
+  draft/rail-ledger-v1 (studio #9 alignment pass 2026-08-23); readout
+  https://ledger.apis.ax/readouts/faces-payable (service built, deploy
+  pending Batch-S). Registered under the placeholder host
+  `fn-corporate-affairs.org.ai` (GAP row — no brand held). Previously
+  blocked-on-rail-ledger (no faces-payable ledger existed in the ax repo at
+  build time); the box was never stubbed — registration landed when the
+  ledger package and its door-A registry existed. The projection config
+  records the ledger address in its `railLedger` field.
