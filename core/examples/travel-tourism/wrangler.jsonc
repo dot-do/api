@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "travel-tourism",
+  // Build first: npx tsx build.ts  (bundles worker.ts → _worker.js,
+  // externalizing the framework's optional oauth.do/rpc.do imports)
+  "main": "_worker.js",
+  "no_bundle": true,
+  "compatibility_date": "2026-01-24",
+
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
+
+  // D-row placeholder (5615 apex GAP, #16): no zone/route attaches here.
+  // The held sub-vertical names with zones (apis.cruises / apis.voyage /
+  // apis.camp — see ../projections/) attach routes when their faces go
+  // live; attaching is a deploy decision, not a wave-zero requirement.
+}

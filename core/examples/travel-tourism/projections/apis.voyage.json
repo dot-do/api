@@ -1,0 +1,33 @@
+{
+  "$comment": "G4 projection config (spec §2) — sub-vertical brand config on a HELD name (zone live, dynadot/2027-07-31), per the row's ruled posture: per-sub-vertical properties on held names. RECORDED, not served by this worker. Same travel-tourism substrate, scoped to the charter/voyage sub-vertical (sailing/charter manifest grain — row flags the grain [UNVERIFIED — inferred]; carried verbatim).",
+  "substrate": "travel-tourism",
+  "brand": "apis.voyage",
+  "domains": ["apis.voyage"],
+  "served": false,
+  "scope": { "subVertical": "charter", "nouns": ["Booking", "Trip", "Sailing", "Operator"] },
+  "icp": {
+    "companyTypes": ["sailing/yacht charter operator", "expedition/group voyage operator"],
+    "jobTypes": ["charter director", "operations manager", "developer at a charter back-office vendor"]
+  },
+  "personas": [
+    { "id": "operator-charter-director", "role": "charter director managing departures and manifests" },
+    { "id": "developer-integrator", "role": "developer integrating charter back-office systems with the booking rail" }
+  ],
+  "motion": "B2D",
+  "offer": [
+    { "shape": "anon-sandbox", "gate": "none — keyless", "price": "free" },
+    { "shape": "oauth-free-tier", "gate": "GitHub OAuth (mounts when this face goes live — presence-when-true)", "price": "free quota" },
+    { "shape": "self-serve-metered", "gate": "key + card on file; 402 boundary — settlement rail not yet activated (A1 charter)", "price": "metered per rate card" }
+  ],
+  "pricing": { "pattern": "per-outcome + metered reads", "rateCardRef": "its own /pricing when served", "note": "guardrail §5.3 applies across same-shape identical calls" },
+  "positioning": "the functions a charter operator's systems call",
+  "positioningNote": "claim-free until served and the §4.6 bar attests",
+  "mdx": "per-brand MDX layer, deferred to this face's go-live",
+  "experiment": {
+    "pattern": "per-outcome",
+    "motion": "B2D",
+    "shapes": ["anon-sandbox", "oauth-free-tier", "self-serve-metered"],
+    "startDate": null,
+    "hypothesis": "registered when this face serves"
+  }
+}

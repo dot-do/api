@@ -1,0 +1,45 @@
+{
+  "$comment": "G4 projection config (spec §2) — the SERVED placeholder face of the travel-tourism substrate. D-row: the 5615 category apex holds NO api-grammar name and no category-completing TLD (register row, 2026-08-23); the ruled posture is per-sub-vertical properties on the held names (see the apis.cruises / apis.voyage / apis.camp configs beside this one), so the apex stays a recorded GAP (#16) and this substrate face runs under a placeholder org.ai address per spec §0. Nothing here implies acquisition of any apex name.",
+  "substrate": "travel-tourism",
+  "brand": null,
+  "brandStatus": "GAP at the 5615 apex — no category-completing TLD, no api.[category] held; the held apis.* set names sub-verticals only (register row). No apex candidate is named in any estate doc; if an apex name is wanted it is an acquisition-list item per the ladder terminus (#16).",
+  "domains": ["travel-tourism.org.ai (placeholder)"],
+  "served": true,
+  "icp": {
+    "companyTypes": ["travel agency", "tour operator", "charter operator", "camp operator"],
+    "jobTypes": ["agency owner", "operations manager", "charter director", "camp director"]
+  },
+  "personas": [
+    { "id": "operator-ops-manager", "role": "operations manager at a tour/charter/camp operator running bookings" },
+    { "id": "developer-booking-vendor", "role": "developer at a booking-engine or operator back-office vendor" },
+    { "id": "autonomous-agent", "role": "agent booking charters, group travel, or camp sessions on behalf of a principal" }
+  ],
+  "motion": "B2A",
+  "offer": [
+    { "shape": "anon-sandbox", "gate": "none — keyless; auto-minted ephemeral workspace, disclosed retention", "price": "free" },
+    { "shape": "earned-credits", "gate": "rung 1 — STUB, disclosed in the 402 alternatives: .ax-ledger credits earned via proof-of-work (#17); credit rail not yet live", "price": "earned" },
+    { "shape": "human-claimed", "gate": "rung 2 — STUB, disclosed: claim door not yet live", "price": "free/earned, longer tenure" },
+    { "shape": "paid", "gate": "rung 3 — 402 metering against machine identity (id.org.ai); test-mode, no live settlement", "price": "metered units" }
+  ],
+  "pricing": {
+    "pattern": "402-metered-per-call + per-outcome on booking confirmation",
+    "rateCardRef": "/pricing",
+    "note": "per-outcome on confirmBooking (a confirmed booking is the outcome, never the call); metered on record reads; fare/availability rows deliberately absent (row: crowded lane, avoid-class 5)"
+  },
+  "railLedger": "https://ledger.apis.ax/faces?face=travel-tourism.org.ai",
+  "positioning": "the booking substrate for the unserved travel sub-verticals — charters, camps, group/specialty travel — where no agent-first booking surface exists (census narrowing, CEN §3.4 #22)",
+  "positioningNote": "agent-default claim WITHHELD until the §4.6 worthiness bar passes (conformance + live anon sandbox + verified published suite with runs on record); consumer fare/availability lanes are ruled avoided, not competed for",
+  "mdx": "custom landing in this worker (spec §7.1: custom site allowed at wave zero; per-brand MDX layer on the shared renderer deferred to extraction)",
+  "experiment": {
+    "pattern": "402-metered",
+    "motion": "B2A",
+    "shapes": ["anon-sandbox", "earned-credits", "human-claimed", "paid"],
+    "rateCardRef": "/pricing",
+    "startDate": "2026-08-23",
+    "hypothesis": "wave-zero registration only — sandbox-floor traffic shape on a placeholder address; pattern comparison begins when the sub-vertical faces attach to their zones"
+  },
+  "counterpartBrandGap": {
+    "recorded": true,
+    "reason": "the row's consumer demand is agent-intermediated (B2A2C free-rider) and the ICP includes charter/camp principals who do not buy 'APIs' — they buy a booked sailing or an enrolled camp session. No human-vocabulary counterpart name is held in this cell (the held names are all apis.* developer grammar). Surfaced per spec §9.3; naming is #3's job, never this build's."
+  }
+}

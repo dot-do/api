@@ -1,0 +1,33 @@
+{
+  "$comment": "G4 projection config (spec §2) — sub-vertical brand config on a HELD name (zone live, dynadot/2027-07-31), per the row's ruled posture: per-sub-vertical properties on held names. RECORDED, not served by this worker. Same travel-tourism substrate, scoped to the camp sub-vertical (session/enrollment roster grain — row flags the grain [UNVERIFIED — inferred]; carried verbatim).",
+  "substrate": "travel-tourism",
+  "brand": "apis.camp",
+  "domains": ["apis.camp"],
+  "served": false,
+  "scope": { "subVertical": "camp", "nouns": ["Booking", "Trip", "CampSession", "Operator"] },
+  "icp": {
+    "companyTypes": ["residential/day camp operator", "specialty program operator"],
+    "jobTypes": ["camp director", "enrollment coordinator", "developer at a camp-management vendor"]
+  },
+  "personas": [
+    { "id": "operator-camp-director", "role": "camp director managing sessions, rosters, and enrollment" },
+    { "id": "developer-integrator", "role": "developer integrating camp-management systems with the enrollment rail" }
+  ],
+  "motion": "B2D",
+  "offer": [
+    { "shape": "anon-sandbox", "gate": "none — keyless", "price": "free" },
+    { "shape": "oauth-free-tier", "gate": "GitHub OAuth (mounts when this face goes live — presence-when-true)", "price": "free quota" },
+    { "shape": "self-serve-metered", "gate": "key + card on file; 402 boundary — settlement rail not yet activated (A1 charter)", "price": "metered per rate card" }
+  ],
+  "pricing": { "pattern": "per-outcome + metered reads", "rateCardRef": "its own /pricing when served", "note": "guardrail §5.3 applies across same-shape identical calls; a completed enrollment is the natural outcome grain" },
+  "positioning": "the functions a camp operator's systems call",
+  "positioningNote": "claim-free until served and the §4.6 bar attests. B2A2C note: camp enrollment principals are guardians who do not buy APIs — the counterpart-brand gap is recorded on the served placeholder config (§9.3)",
+  "mdx": "per-brand MDX layer, deferred to this face's go-live",
+  "experiment": {
+    "pattern": "per-outcome",
+    "motion": "B2D",
+    "shapes": ["anon-sandbox", "oauth-free-tier", "self-serve-metered"],
+    "startDate": null,
+    "hypothesis": "registered when this face serves"
+  }
+}
