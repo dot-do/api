@@ -11,7 +11,7 @@ import { RETENTION_NOTICE } from "./seed.js";
 
 /** Every operation the surface serves — camelCase verbs; the only things a rate card may price. */
 export const OPERATIONS = [
-  "listProducts", // served as the branching collection (openapi operationId: listCollection)
+  "listProducts", // the branching collection — named natively via collection.operationId (axp-ext-rates-g2 §1)
   "getProduct",
   "createProduct", // headless system-of-record door
   "listRequirements",
@@ -20,6 +20,7 @@ export const OPERATIONS = [
   "listRoadmapItems",
   "listBOMItems",
   "getICP",
+  "getVerify",
   "getPricing",
   "getOffer",
   "getFamilyRegistry",

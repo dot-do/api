@@ -13,7 +13,6 @@
  */
 import {
   createAxpRoutes,
-  buildPricingDocument,
   ok,
   empty,
   blocked,
@@ -44,32 +43,11 @@ function demoLabel(title) {
   return t.startsWith("[demo]") ? t : `[demo] ${t}`;
 }
 
-/* ── the extended rate card (/pricing + rates[]) ────────────────────────────
-   The vendored generator emits the AXP Pricing Document (model, hardCeiling,
-   unit, price, binding axis). The template's rate-card wire schema adds
-   rates[] (operationId-keyed, freeQuota required) — added here as DESCRIPTIVE
-   members on the same document (the binding-axis precedent: additive members
-   on an orthogonal axis; `pricing-declared` reads `model` and is untouched).
-   rates[].operation ⊆ the OpenAPI operationIds (§9.1). Carried upstream: the
-   generator should own rates[] (spec Open Question 1 — rate-card extension
-   shape); this site never forks the vendored bytes. */
-const pricingDoc = {
-  ...buildPricingDocument(manifest),
-  rates: [
-    {
-      operation: "listCollection", // the branching /products collection
-      price: 0.002,
-      unit: "usd",
-      freeQuota: 100,
-      note: "wave-zero 402-shaped stub — no live settlement; every sandbox call is free",
-    },
-  ],
-};
-const pricingFaces = {
-  json: pricingDoc,
-  md: `# ${manifest.name} — pricing\n\n\`\`\`json\n${JSON.stringify(pricingDoc, null, 2)}\n\`\`\`\n`,
-  html: `<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><title>${manifest.name} — pricing</title></head>\n<body><h1>${manifest.name} — pricing</h1><pre>${JSON.stringify(pricingDoc, null, 2).replace(/&/g, "&amp;").replace(/</g, "&lt;")}</pre></body></html>\n`,
-};
+/* rates[] rides the generated Pricing Document natively since
+   axp-ext-rates-g2@0.1.0 (manifest input pricing.rates, survey-floor
+   vocabulary at 0.2.0) — the site-side bridge that used to intercept the
+   pricing addresses to append rates[] is gone; the generated face serves
+   the ONE document, rate card included. */
 
 /* ── /verify — the published "run this" page (three faces) ──────────────── */
 const verifyMd = `# Verify this surface yourself
@@ -243,17 +221,6 @@ export default {
     const path = url.pathname;
     traffic(request);
 
-    // the extended rate card intercepts the pricing addresses (same conneg
-    // law, same faces contract) so rates[] rides the one Pricing Document
-    if (path === "/pricing" || path === "/pricing.json" || path === "/pricing.md" || path === "/pricing.html") {
-      meter("getPricing");
-      if (request.method !== "GET" && request.method !== "HEAD") {
-        return envelopeResponse(blocked(`method ${request.method} is not served at ${path} — this address answers GET and HEAD`), { status: 405, headers: { allow: "GET, HEAD" } });
-      }
-      const { face } = negotiate(request, path, {});
-      return serveFace(request, url, pricingFaces, face, { cleanPath: "/pricing" });
-    }
-
     // headless system-of-record doors (native binding) — mounted BEFORE the
     // generated face because the collection pathname is shared: GET /products
     // is the data face, POST /products is the headless door (one substrate,
@@ -312,6 +279,7 @@ export default {
     const hit = await axp(request, env);
     if (hit !== undefined) {
       if (path === manifest.collection.path) meter("listProducts");
+      if (path === "/pricing" || path === "/pricing.json" || path === "/pricing.md" || path === "/pricing.html") meter("getPricing");
       if (path === manifest.pricing.offerPath) {
         meter("getOffer");
         moneyEvent("offer-served", { operation: "getOffer", shape: "paid" });
@@ -322,6 +290,7 @@ export default {
 
     // ── the substrate's own doors (both plies, one definition) ────────────
     if (path === "/verify" && (request.method === "GET" || request.method === "HEAD")) {
+      meter("getVerify");
       const { face } = negotiate(request, path, {});
       return serveFace(request, url, verifyFaces, face, { cleanPath: "/verify" });
     }

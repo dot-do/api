@@ -84,7 +84,12 @@ describe("G3 instance + G4 placeholder (§1, §2, GAP per §0)", () => {
   });
 });
 
-describe("rate card (§9.1) — rates[] discipline over the served openapi", () => {
+describe("rate card (§9.1) — rates[] native at the ruled placement (axp-ext-rates-g2 §2)", () => {
+  it("rates[] rides the GENERATED Pricing Document top-level (manifest input pricing.rates — the site-side bridge is gone)", async () => {
+    const { body: pricing } = await json("/pricing.json");
+    expect(pricing.rates).toEqual([...manifest.pricing.rates]);
+    expect(pricing.rates.map((r) => r.operation)).toContain("listProducts");
+  });
   it("every rate row has freeQuota or zero price, and rates[].operation ⊆ operationIds", async () => {
     const { body: pricing } = await json("/pricing.json");
     expect(pricing.model).toBe("metered");
@@ -99,6 +104,13 @@ describe("rate card (§9.1) — rates[] discipline over the served openapi", () 
       expect(opIds).toContain(r.operation);
       expect(r.freeQuota !== undefined || r.price === 0).toBe(true);
     }
+  });
+  it("the canonical operationId spans the five surfaces: collection route = MCP tool = rate key (axp-ext-rates-g2 §1)", async () => {
+    const { body: openapi } = await json("/openapi.json");
+    const collectionOp = Object.values(openapi.paths[manifest.collection.path]).find((op) => op.operationId)?.operationId;
+    expect(collectionOp).toBe("listProducts");
+    expect(manifest.mcp.tools).toContain("listProducts");
+    for (const r of manifest.pricing.rates) expect(/^[a-z][A-Za-z0-9]*$/.test(r.operation)).toBe(true);
   });
   it("the 402 OFFER body advertises the whole B2A ladder (pay / work / claim)", async () => {
     const { res, body } = await json(manifest.pricing.offerPath);
@@ -184,6 +196,15 @@ describe("no ghost surfaces — everything the card declares answers", () => {
     expect(body.personas.length).toBeGreaterThan(0);
     expect(body.systems.length).toBeGreaterThan(0);
     expect(body.motion).toBe("B2A");
+  });
+  it("the card carries links.verify and the top-level g2 object at the ruled placements (axp-ext-rates-g2 §3/§4)", async () => {
+    const { body: card } = await json("/.well-known/agents.json");
+    expect(card.links.verify).toBe(`${ORIGIN}/verify`);
+    expect(card.links.icp).toBe(`${ORIGIN}/icp.json`); // links.icp stays legal beside g2
+    expect(card.g2).toBeTruthy();
+    expect(card.g2.motion).toBe("B2A");
+    expect(card.g2.icp).toEqual({ ...projection.icp });
+    expect(card.g2.personas.length).toBeGreaterThan(0);
   });
   it("the /verify export answers on all three faces", async () => {
     for (const [hdr, marker] of [

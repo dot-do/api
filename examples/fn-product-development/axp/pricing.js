@@ -47,14 +47,28 @@ function bindingMembers(p) {
   };
 }
 
+/**
+ * The operation rate card (axp-ext/rates-g2@0.2.0 §2) — a TOP-LEVEL array of
+ * the Pricing Document, the ruled placement (never nested under an offer).
+ * One row per priced operation, keyed by the canonical camelCase operationId
+ * (§1: the same identifier the route, the MCP tool, the suite reference, and
+ * the generated SDK method carry). `model` keeps answering the Appendix A.2
+ * question and the pinned `pricing-declared` requirement untouched — `rates`
+ * is descriptive and additive, the `binding` precedent exactly.
+ */
+function ratesMembers(p) {
+  return p.rates !== undefined ? { rates: p.rates } : {};
+}
+
 export function buildPricingDocument(manifest) {
   const p = manifest.pricing;
-  if (p.model === "free") return { model: "free", ...bindingMembers(p) };
+  if (p.model === "free") return { model: "free", ...ratesMembers(p), ...bindingMembers(p) };
   return {
     model: "metered",
     hardCeiling: p.hardCeiling,
     ...(p.unit !== undefined && { unit: p.unit }),
     ...(p.price !== undefined && { price: p.price }),
+    ...ratesMembers(p),
     ...bindingMembers(p),
   };
 }

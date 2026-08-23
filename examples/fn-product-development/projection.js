@@ -17,6 +17,7 @@
  *     own swarms) are the first tenant" (row ICP hint).
  */
 import { SUBSTRATE } from "./apiproduct.js";
+import { G2 } from "./manifest.js";
 
 export const projection = Object.freeze({
   substrate: SUBSTRATE,
@@ -30,20 +31,14 @@ export const projection = Object.freeze({
     note: "No held name carries the product-function meaning (full-economy register 2026-08-23). Acquisition candidate belongs on the #16 list; ply-lead if acquired: headless.[x] form fits rule 4 (system-of-record face leads). apis.dev must NOT be stretched to cover this row.",
   },
 
-  /** G2 coordinates (also served machine-readably at /icp.json). */
-  icp: {
-    coordinates: "Function = Product Development × Departments = Product / Engineering",
-    companyTypes: "all — horizontal Function row",
-    jobTypes: ["head of product", "head of engineering", "product manager", "hardware program manager"],
-  },
-  personas: [
-    { id: "agentBuilder", description: "an autonomous agent that builds products — the wave-zero first tenant (B2A)" },
-    { id: "productLead", description: "head of product across CompanyTypes" },
-    { id: "engineeringLead", description: "head of engineering / hardware program lead (PLM/CAD side)" },
-  ],
+  /** G2 coordinates — ONE truth (manifest.js G2): served machine-readably at
+   *  /icp.json AND carried as the card's top-level `g2` member at the ruled
+   *  placement (axp-ext-rates-g2 §4). */
+  icp: G2.icp,
+  personas: G2.personas,
 
   /** §2 motion — selects onboarding path and permissible shapes (§5.1). */
-  motion: "B2A",
+  motion: G2.motion,
 
   /** Offer array: shape × price × gate, drawn only from the B2A ladder.
    *  Rungs 1-3 are declared as labeled STUBS: the doors above the sandbox

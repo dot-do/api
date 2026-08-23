@@ -15,6 +15,24 @@ import { products, RETENTION_NOTICE } from "./seed.js";
 /** Placeholder origin — the unnamed-substrate address, never a brand claim. */
 export const ORIGIN = "https://fn-product-development.org.ai";
 
+/** The row's G2 coordinates — ONE truth, three faces: the card's top-level
+ *  `g2` member (axp-ext-rates-g2@0.1.0 §4, carried verbatim by the
+ *  generator), the /icp.json door (projection.js/worker.js), and the
+ *  Stratum-B projection registration (projection.js imports this). */
+export const G2 = Object.freeze({
+  icp: Object.freeze({
+    coordinates: "Function = Product Development × Departments = Product / Engineering",
+    companyTypes: "all — horizontal Function row",
+    jobTypes: Object.freeze(["head of product", "head of engineering", "product manager", "hardware program manager"]),
+  }),
+  personas: Object.freeze([
+    Object.freeze({ id: "agentBuilder", description: "an autonomous agent that builds products — the wave-zero first tenant (B2A)" }),
+    Object.freeze({ id: "productLead", description: "head of product across CompanyTypes" }),
+    Object.freeze({ id: "engineeringLead", description: "head of engineering / hardware program lead (PLM/CAD side)" }),
+  ]),
+  motion: "B2A",
+});
+
 const llmsBody = `# fn-product-development.org.ai — the Product Development substrate (wave zero, unnamed)
 
 The G3 substrate for the Product Development Function (APQC PCF category 2,
@@ -48,23 +66,38 @@ export function buildManifest() {
     version: "0.0.1",
     collection: {
       path: "/products",
+      /* axp-ext-rates-g2@0.1.0 §1: the branching collection's canonical
+         cross-face name — the same string as the MCP tool and the rate-card
+         key (previously the generator default "listCollection"; the
+         extension made the collection operation site-nameable). */
+      operationId: "listProducts",
       memberName: "products",
       summary: "The Product collection — typed OK | EMPTY | BLOCKED, branching on stage/kind; synthetic labeled demo records",
       records: products,
       filters: ["stage", "kind"],
       blockedScopes: ["admin", "internal"],
     },
+    /* axp-ext-rates-g2 §1 — operationId is a native passthrough on every
+       route: the ONE cross-face name (OpenAPI operationId = MCP tool name =
+       suite coverage reference = SDK method = rates[] key). */
     routes: [
-      { method: "GET", path: "/products/{id}", summary: "getProduct — one Product record by id (typed envelope)" },
-      { method: "POST", path: "/products", summary: "createProduct — headless system-of-record door; writes to the ephemeral demo workspace (sandbox retention disclosed at /llms.txt)" },
-      { method: "GET", path: "/requirements", summary: "listRequirements — requirement records, filterable by product/status" },
-      { method: "POST", path: "/requirements", summary: "createRequirement — headless door; ephemeral demo workspace" },
-      { method: "GET", path: "/releases", summary: "listReleases — release records, filterable by product/channel" },
-      { method: "GET", path: "/roadmap", summary: "listRoadmapItems — roadmap items, filterable by product/horizon" },
-      { method: "GET", path: "/bom-items", summary: "listBOMItems — BOM item records for physical products (GS1 demo-prefix-952 GTINs), filterable by product" },
-      { method: "GET", path: "/verify", summary: "The published public-contract verification page: how to run this surface's conformance suite yourself" },
-      { method: "GET", path: "/icp.json", summary: "getICP — the row's G2 coordinates (ICP + Persona) and 52-System coordinates, machine-readable" },
+      { method: "GET", path: "/products/{id}", operationId: "getProduct", summary: "getProduct — one Product record by id (typed envelope)" },
+      { method: "POST", path: "/products", operationId: "createProduct", summary: "createProduct — headless system-of-record door; writes to the ephemeral demo workspace (sandbox retention disclosed at /llms.txt)" },
+      { method: "GET", path: "/requirements", operationId: "listRequirements", summary: "listRequirements — requirement records, filterable by product/status" },
+      { method: "POST", path: "/requirements", operationId: "createRequirement", summary: "createRequirement — headless door; ephemeral demo workspace" },
+      { method: "GET", path: "/releases", operationId: "listReleases", summary: "listReleases — release records, filterable by product/channel" },
+      { method: "GET", path: "/roadmap", operationId: "listRoadmapItems", summary: "listRoadmapItems — roadmap items, filterable by product/horizon" },
+      { method: "GET", path: "/bom-items", operationId: "listBOMItems", summary: "listBOMItems — BOM item records for physical products (GS1 demo-prefix-952 GTINs), filterable by product" },
+      { method: "GET", path: "/verify", operationId: "getVerify", summary: "getVerify — the published public-contract verification page: how to run this surface's conformance suite yourself" },
+      { method: "GET", path: "/icp.json", operationId: "getICP", summary: "getICP — the row's G2 coordinates (ICP + Persona) and 52-System coordinates, machine-readable" },
     ],
+    /* axp-ext-rates-g2 §3 — links.verify on the card: the published
+       runnable-suite export (the "run this" door), beside links.conformance. */
+    verifyUrl: "/verify",
+    /* axp-ext-rates-g2 §4 — the G2/ICP coordinates as a TOP-LEVEL card
+       object, carried verbatim by the generator; links.icp stays legal and
+       declared beside it (icpUrl below). */
+    g2: G2,
     icpUrl: `${ORIGIN}/icp.json`,
     /** The attestation/identity ladder — ONLY the rung this deployment can
      *  honor today (presence-when-true). The higher B2A rungs (earned
@@ -86,6 +119,20 @@ export function buildManifest() {
       binding: false,
       statement:
         "Wave-zero 402-shaped stub: no billing is live on this unnamed placeholder surface. The metered shape, hard ceiling and 402 OFFER boundary are served so agents can exercise the payable contract; every call inside the sandbox is free. This is a labeled stub, not an invoice.",
+      /* axp-ext-rates-g2 §2 — the operation rate card at its RULED placement:
+         a TOP-LEVEL array of the Pricing Document, native in the generator
+         since axp-ext-rates-g2@0.1.0 (survey floor 0.2.0) — this row rode a
+         site-side bridge over the generated document while rates[] was an
+         upstream gap; the gap is closed. Keys on the canonical operationId. */
+      rates: [
+        {
+          operation: "listProducts", // the branching /products collection (collection.operationId)
+          price: 0.002,
+          unit: "usd",
+          freeQuota: 100,
+          note: "wave-zero 402-shaped stub — no live settlement; every sandbox call is free",
+        },
+      ],
       offers: [
         {
           id: "b2aLadder",
