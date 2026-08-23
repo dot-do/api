@@ -1,0 +1,51 @@
+{
+  "$comment": "Stratum-B G4 projection config (template spec §2) for the automotive register row — the estate's only class A LIVE-REVENUE row. Brand = auto.dev, the naming doctrine's own exemplar ('a category-completing name that can BE the category to an agent outranks grammatical composition' — register verbatim). The production rail serves at api.auto.dev on the Drivly, Inc. stack (entity boundary per the restructuring); THIS config describes the wave-zero machine-face instantiation built in dot-do/api examples per the agriculture-food home precedent, with the founder flag on home placement carried below. Repo config, not a served surface.",
+  "substrate": "automotive",
+  "brand": "auto.dev",
+  "brandStatus": "LIVE-REVENUE — the estate's only live rail ($70-80k MRR [INV §2 via coverage doc]); HARVEST/HOLD posture [SC #1]. The domain, keys, plans, and 2.1M-listing corpus are the production stack's (Drivly, Inc.). This wave-zero face is an adoptable AXP artifact, not a replacement of anything that serves.",
+  "domains": ["auto.dev (live, production rail at the Drivly stack; this face is the AXP machine-face instantiation of the row)"],
+  "railLedger": "https://ledger.apis.ax/faces?face=auto.dev",
+  "icp": {
+    "companyTypes": ["franchise dealer", "dealer group", "independent repair operator", "automotive software vendor"],
+    "jobTypes": ["developer at a dealer-systems or automotive-data vendor", "dealer principal / GM", "service & recon manager", "automotive service technician [O*NET 49-3023 — register: UNVERIFIED code]"]
+  },
+  "personas": [
+    { "id": "developer", "description": "developer at an automotive software vendor or dealer group integrating VIN-keyed vehicle, listing, and parts records — the auto.dev B2D motion, the row's proven wedge" },
+    { "id": "operator", "description": "service/recon manager at a dealer or independent repair operator running work orders on the 8111 FSM grain" },
+    { "id": "agent", "description": "autonomous agent decoding VINs, pulling listings, or preparing work orders on a principal's behalf — the row's B2A generalization frontier (apis.ax face, not built at wave zero)" }
+  ],
+  "motion": "B2D",
+  "offer": [
+    { "shape": "anon-sandbox", "price": "free", "gate": "none — keyless; auto-minted ephemeral workspace, disclosed retention. THE ONLY MOUNTED SHAPE on this face at wave zero (mounted-rungs rule: unmounted shapes are never advertised as live doors)." },
+    { "shape": "oauth-free", "price": "free quota", "gate": "GitHub OAuth (B2D onboarding) — STUB, NOT MOUNTED on this face: no OAuth flow is wired here (mounted:false in the 402 alternatives). The production rail's free plan onboards with keys at the Drivly stack." },
+    { "shape": "self-serve-metered", "price": "metered (key + card on file, 402 boundary — the auto.dev 402 pattern)", "gate": "STUB, NOT MOUNTED on this face: test-mode, no settlement wired here (mounted:false). The pattern is the production rail's own; this face restates the shape, never its plans." },
+    { "shape": "subscription", "price": "committed monthly, cheaper units", "gate": "STUB, NOT MOUNTED on this face: no checkout exists here (mounted:false in the 402 alternatives)." }
+  ],
+  "pricing": {
+    "pattern": "402-metered-per-call + per-outcome on completed work-order deliverables",
+    "rateCardRef": "/pricing (rates[] top-level in the Pricing Document — the ruled axp-ext/rates-g2 placement; no separate rates address)",
+    "binding": false
+  },
+  "positioning": "the vehicle record, VIN-keyed — the functions automotive systems call (NAICS 441/8111). The register phrases its positioning term ('the agent default') ON this property, and the worthiness bar (§4.6) is exactly what this face exists to pass — but the claim is WITHHELD here until the bar is attested (conformance verdict + live anon sandbox + verified published suite). Earned, never asserted.",
+  "mdx": null,
+  "experiment": {
+    "pattern": "402-metered-per-call",
+    "motion": "B2D",
+    "shapes": ["anon-sandbox", "oauth-free", "self-serve-metered", "subscription"],
+    "rateCardRef": "/pricing",
+    "startDate": "2026-08-23",
+    "hypothesis": "wave-zero registration: the anon-sandbox floor on the AXP face feeds the live rail's B2D funnel (sandbox → keyed free plan → metered) without cannibalizing keyed traffic. Row-specific sub-hypothesis: per-outcome pricing on the completed 8111 work-order deliverable vs per-call metering on decode/reads — testable once this face is adopted at the production rail (founder flag below)."
+  },
+  "counterpartBrand": {
+    "recorded": true,
+    "name": "vin.company",
+    "reason": "NOT a gap — the row already differentiates motions by brand: vin.company is the human-vocabulary counterpart (B2B/B2C: dealers, consumers) and is the spec's own §5.1 exemplar (dealers/consumers were signing up for auto.dev because their agent told them to — the vin.company pattern). Rule carried: zero API/agent vocabulary on vin.company surfaces (Marlow jargon-ban law). apis.autos (pitch record: 'the functions a dealer group's systems call') is the dealer-group-systems sibling face candidate; the §9.3 diagnostic on this face's seams watches for agent-referred human arrivals regardless."
+  },
+  "registerRowCaveats": {
+    "liveRail": "class A LIVE-REVENUE: auto.dev is the proven wedge and the whole cascade's source-route exemplar (owned corpus via first-party capture; the Vindex enrichment pattern originates here). HARVEST/HOLD [SC #1]. This build consumes the live lanes as corpus SHAPE only — a consumption edge, not a blocker.",
+    "entityBoundary": "the live serving repo is drivly/auto.dev (Drivly, Inc.); ~/projects/auto.dev is not a git clone. Preflight resolved home to dot-do/api examples per the agriculture-food precedent. FOUNDER FLAG (carried from dispatch): if founder precedent prefers the fn-it pattern (build in the live property repo), override home to drivly/auto.dev — the Drivly restructuring entity boundary is why preflight defaulted here.",
+    "sourceRouteProbe": "probed in-session 2026-08-23: auto.dev/api/listings → 401 keyless ('Authentication required'); api.auto.dev key-gated on every plan; www.auto.dev/llms.txt → 200 (real, agent-oriented); www.auto.dev/openapi.json → 200; /.well-known/agents.json → 308 → www → 404 (no AXP card); /pricing → 200 HTML marketing page (no machine Pricing Document). So the live rail already serves llms.txt + OpenAPI; the AXP card, typed envelopes, keyless sandbox floor, and rates[] Pricing Document are the gaps this face closes. Sandbox seed is labeled synthetic typed to the live shapes (fixture law + key-gated corpus).",
+    "unverifiedAnchors": "ISO 3779/3780 (VIN), UNSPSC segment 25 at class level, O*NET 49-3023/41-2022 — all [UNVERIFIED] in the register and carried as typing anchors with the row's own caveats, never as authority.",
+    "lensTension": "the lenses disagree on what auto.dev generalizes AS — node-identity resolution (VC) vs record ownership (SC) vs default-name positioning (DC) [matrix §5 tension 5]; the register carries all three as compatible plies and so does this face (VIN decode + owned record shapes + the doctrine-exemplar name)."
+  }
+}

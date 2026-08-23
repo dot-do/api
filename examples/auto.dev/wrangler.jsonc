@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Wave-zero machine-face instantiation of the automotive register row.
+  // NO route/custom-domain is configured: auto.dev (the ruled brand) serves
+  // the production rail from the Drivly, Inc. stack (entity boundary) — the
+  // home-placement founder flag is recorded in projection.json. This worker
+  // deploys under its own workers.dev name only, if at all, until that flag
+  // is ruled.
+  "name": "automotive-wave0",
+  "main": "worker.js",
+  "compatibility_date": "2026-01-24",
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
+}

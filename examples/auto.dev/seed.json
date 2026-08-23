@@ -1,0 +1,370 @@
+{
+  "$context": "https://schema.org.ai",
+  "substrate": "automotive",
+  "generated": "deterministic (mulberry32, keyed on substrate id) — reseed via scripts/generate-seed.mjs",
+  "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the automotive substrate; not real vehicle, listing, parts, or work-order data. VINs are VIN-shaped synthetic (EXAMPLE-prefixed, check digit not computed — never a real vehicle); GTINs use the GS1 demo prefix 952 with valid check digits; makes, models, and dealers are fictional [example]. The production corpus (api.auto.dev) is key-gated and is never reproduced here. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy.",
+  "fixtureLaw": {
+    "realNames": false,
+    "syntheticIdentifiers": "VIN-shaped synthetic (EXAMPLE prefix, check digit not computed), DLR-EX-/PRT-EX-/lst-ex-/wo-ex- ids, 00-prefixed EIN pattern; no real VINs, stock numbers, listing prices, or recall ids presented as authoritative",
+    "gtins": "GTIN grain EXISTS on this row (parts/tires) — GS1 demo prefix 952 with valid EAN-13 check digits, per fixture law",
+    "typingAnchors": "ISO 3779/3780 (VIN) and UNSPSC segment 25 carried as typing anchors only (register marks both [UNVERIFIED]); fictional makes/models/dealers throughout",
+    "sourceRoute": "live corpus key-gated (auto.dev/api/listings → 401 keyless, probed 2026-08-23); seed is synthetic, typed to the live rail's record shapes so real corpus can replace it without a schema change",
+    "secretScan": "no credentials present by construction"
+  },
+  "dealers": [
+    {
+      "id": "DLR-EX-4411",
+      "name": "Kestrelbrook Auto Group [example]",
+      "kind": "franchise-dealer-group",
+      "naics": "4411",
+      "ein": "00-4410001",
+      "state": "EX",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the automotive substrate; not real vehicle, listing, parts, or work-order data. VINs are VIN-shaped synthetic (EXAMPLE-prefixed, check digit not computed — never a real vehicle); GTINs use the GS1 demo prefix 952 with valid check digits; makes, models, and dealers are fictional [example]. The production corpus (api.auto.dev) is key-gated and is never reproduced here. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "DLR-EX-4412",
+      "name": "Marrowfield Motors [example]",
+      "kind": "independent-dealer",
+      "naics": "4411",
+      "ein": "00-4410002",
+      "state": "EX",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the automotive substrate; not real vehicle, listing, parts, or work-order data. VINs are VIN-shaped synthetic (EXAMPLE-prefixed, check digit not computed — never a real vehicle); GTINs use the GS1 demo prefix 952 with valid check digits; makes, models, and dealers are fictional [example]. The production corpus (api.auto.dev) is key-gated and is never reproduced here. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "DLR-EX-8111",
+      "name": "Tarnwick Reconditioning & Repair [example]",
+      "kind": "independent-repair-operator",
+      "naics": "8111",
+      "ein": "00-8110001",
+      "state": "EX",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the automotive substrate; not real vehicle, listing, parts, or work-order data. VINs are VIN-shaped synthetic (EXAMPLE-prefixed, check digit not computed — never a real vehicle); GTINs use the GS1 demo prefix 952 with valid check digits; makes, models, and dealers are fictional [example]. The production corpus (api.auto.dev) is key-gated and is never reproduced here. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "vehicles": [
+    {
+      "vin": "EXAMPLE7KCVFH9V1P",
+      "vinShape": "17-char VIN-shaped synthetic (EXAMPLE prefix, I/O/Q excluded, check digit not computed) — ISO 3779/3780 typing anchor only [register: UNVERIFIED]; never a real vehicle",
+      "make": "Vantorra [example]",
+      "model": "Halcyon X",
+      "year": 2021,
+      "bodyStyle": "suv",
+      "mileage": 29416,
+      "condition": "used",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the automotive substrate; not real vehicle, listing, parts, or work-order data. VINs are VIN-shaped synthetic (EXAMPLE-prefixed, check digit not computed — never a real vehicle); GTINs use the GS1 demo prefix 952 with valid check digits; makes, models, and dealers are fictional [example]. The production corpus (api.auto.dev) is key-gated and is never reproduced here. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "vin": "EXAMPLEBSMMM5W8JT",
+      "vinShape": "17-char VIN-shaped synthetic (EXAMPLE prefix, I/O/Q excluded, check digit not computed) — ISO 3779/3780 typing anchor only [register: UNVERIFIED]; never a real vehicle",
+      "make": "Kelwyn Motors [example]",
+      "model": "Ridgeline 8",
+      "year": 2022,
+      "bodyStyle": "pickup",
+      "mileage": 90875,
+      "condition": "used",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the automotive substrate; not real vehicle, listing, parts, or work-order data. VINs are VIN-shaped synthetic (EXAMPLE-prefixed, check digit not computed — never a real vehicle); GTINs use the GS1 demo prefix 952 with valid check digits; makes, models, and dealers are fictional [example]. The production corpus (api.auto.dev) is key-gated and is never reproduced here. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "vin": "EXAMPLETB4BKVW0NN",
+      "vinShape": "17-char VIN-shaped synthetic (EXAMPLE prefix, I/O/Q excluded, check digit not computed) — ISO 3779/3780 typing anchor only [register: UNVERIFIED]; never a real vehicle",
+      "make": "Meridale [example]",
+      "model": "Faring GT",
+      "year": 2023,
+      "bodyStyle": "coupe",
+      "mileage": 15950,
+      "condition": "used-recon",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the automotive substrate; not real vehicle, listing, parts, or work-order data. VINs are VIN-shaped synthetic (EXAMPLE-prefixed, check digit not computed — never a real vehicle); GTINs use the GS1 demo prefix 952 with valid check digits; makes, models, and dealers are fictional [example]. The production corpus (api.auto.dev) is key-gated and is never reproduced here. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "vin": "EXAMPLEYAM5717YXK",
+      "vinShape": "17-char VIN-shaped synthetic (EXAMPLE prefix, I/O/Q excluded, check digit not computed) — ISO 3779/3780 typing anchor only [register: UNVERIFIED]; never a real vehicle",
+      "make": "Vantorra [example]",
+      "model": "Slipstream",
+      "year": 2024,
+      "bodyStyle": "sedan",
+      "mileage": 48306,
+      "condition": "used",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the automotive substrate; not real vehicle, listing, parts, or work-order data. VINs are VIN-shaped synthetic (EXAMPLE-prefixed, check digit not computed — never a real vehicle); GTINs use the GS1 demo prefix 952 with valid check digits; makes, models, and dealers are fictional [example]. The production corpus (api.auto.dev) is key-gated and is never reproduced here. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "vin": "EXAMPLEFPD1RAMW2L",
+      "vinShape": "17-char VIN-shaped synthetic (EXAMPLE prefix, I/O/Q excluded, check digit not computed) — ISO 3779/3780 typing anchor only [register: UNVERIFIED]; never a real vehicle",
+      "make": "Kelwyn Motors [example]",
+      "model": "Pace 3",
+      "year": 2025,
+      "bodyStyle": "suv",
+      "mileage": 86652,
+      "condition": "used",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the automotive substrate; not real vehicle, listing, parts, or work-order data. VINs are VIN-shaped synthetic (EXAMPLE-prefixed, check digit not computed — never a real vehicle); GTINs use the GS1 demo prefix 952 with valid check digits; makes, models, and dealers are fictional [example]. The production corpus (api.auto.dev) is key-gated and is never reproduced here. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "vin": "EXAMPLETCBM2N2PFG",
+      "vinShape": "17-char VIN-shaped synthetic (EXAMPLE prefix, I/O/Q excluded, check digit not computed) — ISO 3779/3780 typing anchor only [register: UNVERIFIED]; never a real vehicle",
+      "make": "Meridale [example]",
+      "model": "Corsette 5",
+      "year": 2020,
+      "bodyStyle": "pickup",
+      "mileage": 10179,
+      "condition": "used-recon",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the automotive substrate; not real vehicle, listing, parts, or work-order data. VINs are VIN-shaped synthetic (EXAMPLE-prefixed, check digit not computed — never a real vehicle); GTINs use the GS1 demo prefix 952 with valid check digits; makes, models, and dealers are fictional [example]. The production corpus (api.auto.dev) is key-gated and is never reproduced here. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "vin": "EXAMPLEDM5LYGBN7S",
+      "vinShape": "17-char VIN-shaped synthetic (EXAMPLE prefix, I/O/Q excluded, check digit not computed) — ISO 3779/3780 typing anchor only [register: UNVERIFIED]; never a real vehicle",
+      "make": "Vantorra [example]",
+      "model": "Halcyon X",
+      "year": 2021,
+      "bodyStyle": "coupe",
+      "mileage": 85279,
+      "condition": "used",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the automotive substrate; not real vehicle, listing, parts, or work-order data. VINs are VIN-shaped synthetic (EXAMPLE-prefixed, check digit not computed — never a real vehicle); GTINs use the GS1 demo prefix 952 with valid check digits; makes, models, and dealers are fictional [example]. The production corpus (api.auto.dev) is key-gated and is never reproduced here. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "vin": "EXAMPLELH0GFZAU3X",
+      "vinShape": "17-char VIN-shaped synthetic (EXAMPLE prefix, I/O/Q excluded, check digit not computed) — ISO 3779/3780 typing anchor only [register: UNVERIFIED]; never a real vehicle",
+      "make": "Kelwyn Motors [example]",
+      "model": "Ridgeline 8",
+      "year": 2022,
+      "bodyStyle": "sedan",
+      "mileage": 6450,
+      "condition": "used",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the automotive substrate; not real vehicle, listing, parts, or work-order data. VINs are VIN-shaped synthetic (EXAMPLE-prefixed, check digit not computed — never a real vehicle); GTINs use the GS1 demo prefix 952 with valid check digits; makes, models, and dealers are fictional [example]. The production corpus (api.auto.dev) is key-gated and is never reproduced here. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "listings": [
+    {
+      "id": "lst-ex-1",
+      "vin": "EXAMPLE7KCVFH9V1P",
+      "dealerId": "DLR-EX-4412",
+      "priceUsd": 49574,
+      "status": "active",
+      "daysOnLot": 84,
+      "sourceShape": "retail listing record shape (live-rail listings lane; content synthetic, labeled)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the automotive substrate; not real vehicle, listing, parts, or work-order data. VINs are VIN-shaped synthetic (EXAMPLE-prefixed, check digit not computed — never a real vehicle); GTINs use the GS1 demo prefix 952 with valid check digits; makes, models, and dealers are fictional [example]. The production corpus (api.auto.dev) is key-gated and is never reproduced here. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "lst-ex-2",
+      "vin": "EXAMPLEBSMMM5W8JT",
+      "dealerId": "DLR-EX-4411",
+      "priceUsd": 31018,
+      "status": "active",
+      "daysOnLot": 103,
+      "sourceShape": "retail listing record shape (live-rail listings lane; content synthetic, labeled)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the automotive substrate; not real vehicle, listing, parts, or work-order data. VINs are VIN-shaped synthetic (EXAMPLE-prefixed, check digit not computed — never a real vehicle); GTINs use the GS1 demo prefix 952 with valid check digits; makes, models, and dealers are fictional [example]. The production corpus (api.auto.dev) is key-gated and is never reproduced here. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "lst-ex-3",
+      "vin": "EXAMPLETB4BKVW0NN",
+      "dealerId": "DLR-EX-4412",
+      "priceUsd": 23616,
+      "status": "active",
+      "daysOnLot": 83,
+      "sourceShape": "retail listing record shape (live-rail listings lane; content synthetic, labeled)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the automotive substrate; not real vehicle, listing, parts, or work-order data. VINs are VIN-shaped synthetic (EXAMPLE-prefixed, check digit not computed — never a real vehicle); GTINs use the GS1 demo prefix 952 with valid check digits; makes, models, and dealers are fictional [example]. The production corpus (api.auto.dev) is key-gated and is never reproduced here. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "lst-ex-4",
+      "vin": "EXAMPLEYAM5717YXK",
+      "dealerId": "DLR-EX-4411",
+      "priceUsd": 35143,
+      "status": "sold",
+      "daysOnLot": 27,
+      "sourceShape": "retail listing record shape (live-rail listings lane; content synthetic, labeled)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the automotive substrate; not real vehicle, listing, parts, or work-order data. VINs are VIN-shaped synthetic (EXAMPLE-prefixed, check digit not computed — never a real vehicle); GTINs use the GS1 demo prefix 952 with valid check digits; makes, models, and dealers are fictional [example]. The production corpus (api.auto.dev) is key-gated and is never reproduced here. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "lst-ex-5",
+      "vin": "EXAMPLEFPD1RAMW2L",
+      "dealerId": "DLR-EX-4412",
+      "priceUsd": 25018,
+      "status": "active",
+      "daysOnLot": 30,
+      "sourceShape": "retail listing record shape (live-rail listings lane; content synthetic, labeled)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the automotive substrate; not real vehicle, listing, parts, or work-order data. VINs are VIN-shaped synthetic (EXAMPLE-prefixed, check digit not computed — never a real vehicle); GTINs use the GS1 demo prefix 952 with valid check digits; makes, models, and dealers are fictional [example]. The production corpus (api.auto.dev) is key-gated and is never reproduced here. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "lst-ex-6",
+      "vin": "EXAMPLETCBM2N2PFG",
+      "dealerId": "DLR-EX-4411",
+      "priceUsd": 40597,
+      "status": "active",
+      "daysOnLot": 30,
+      "sourceShape": "retail listing record shape (live-rail listings lane; content synthetic, labeled)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the automotive substrate; not real vehicle, listing, parts, or work-order data. VINs are VIN-shaped synthetic (EXAMPLE-prefixed, check digit not computed — never a real vehicle); GTINs use the GS1 demo prefix 952 with valid check digits; makes, models, and dealers are fictional [example]. The production corpus (api.auto.dev) is key-gated and is never reproduced here. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "lst-ex-7",
+      "vin": "EXAMPLEDM5LYGBN7S",
+      "dealerId": "DLR-EX-4412",
+      "priceUsd": 20225,
+      "status": "active",
+      "daysOnLot": 113,
+      "sourceShape": "retail listing record shape (live-rail listings lane; content synthetic, labeled)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the automotive substrate; not real vehicle, listing, parts, or work-order data. VINs are VIN-shaped synthetic (EXAMPLE-prefixed, check digit not computed — never a real vehicle); GTINs use the GS1 demo prefix 952 with valid check digits; makes, models, and dealers are fictional [example]. The production corpus (api.auto.dev) is key-gated and is never reproduced here. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "lst-ex-8",
+      "vin": "EXAMPLELH0GFZAU3X",
+      "dealerId": "DLR-EX-4411",
+      "priceUsd": 26362,
+      "status": "sold",
+      "daysOnLot": 101,
+      "sourceShape": "retail listing record shape (live-rail listings lane; content synthetic, labeled)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the automotive substrate; not real vehicle, listing, parts, or work-order data. VINs are VIN-shaped synthetic (EXAMPLE-prefixed, check digit not computed — never a real vehicle); GTINs use the GS1 demo prefix 952 with valid check digits; makes, models, and dealers are fictional [example]. The production corpus (api.auto.dev) is key-gated and is never reproduced here. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "parts": [
+    {
+      "id": "PRT-EX-2501",
+      "gtin": "9520002501004",
+      "gtinNote": "GS1 demo prefix 952, valid EAN-13 check digit (fixture law: GTIN grain exists on this row)",
+      "unspscTypingAnchor": "UNSPSC segment 25 (vehicles) [register: UNVERIFIED at class level] — typing anchor only",
+      "name": "Brake pad set, front [example]",
+      "category": "brakes",
+      "fitsMake": "Meridale [example]",
+      "priceUsd": 21.83,
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the automotive substrate; not real vehicle, listing, parts, or work-order data. VINs are VIN-shaped synthetic (EXAMPLE-prefixed, check digit not computed — never a real vehicle); GTINs use the GS1 demo prefix 952 with valid check digits; makes, models, and dealers are fictional [example]. The production corpus (api.auto.dev) is key-gated and is never reproduced here. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "PRT-EX-2502",
+      "gtin": "9520002501011",
+      "gtinNote": "GS1 demo prefix 952, valid EAN-13 check digit (fixture law: GTIN grain exists on this row)",
+      "unspscTypingAnchor": "UNSPSC segment 25 (vehicles) [register: UNVERIFIED at class level] — typing anchor only",
+      "name": "All-season tire 225/55R18 [example]",
+      "category": "tires",
+      "fitsMake": "Vantorra [example]",
+      "priceUsd": 113.79,
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the automotive substrate; not real vehicle, listing, parts, or work-order data. VINs are VIN-shaped synthetic (EXAMPLE-prefixed, check digit not computed — never a real vehicle); GTINs use the GS1 demo prefix 952 with valid check digits; makes, models, and dealers are fictional [example]. The production corpus (api.auto.dev) is key-gated and is never reproduced here. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "PRT-EX-2503",
+      "gtin": "9520002501028",
+      "gtinNote": "GS1 demo prefix 952, valid EAN-13 check digit (fixture law: GTIN grain exists on this row)",
+      "unspscTypingAnchor": "UNSPSC segment 25 (vehicles) [register: UNVERIFIED at class level] — typing anchor only",
+      "name": "Winter tire 205/60R16 [example]",
+      "category": "tires",
+      "fitsMake": "Kelwyn Motors [example]",
+      "priceUsd": 426.41,
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the automotive substrate; not real vehicle, listing, parts, or work-order data. VINs are VIN-shaped synthetic (EXAMPLE-prefixed, check digit not computed — never a real vehicle); GTINs use the GS1 demo prefix 952 with valid check digits; makes, models, and dealers are fictional [example]. The production corpus (api.auto.dev) is key-gated and is never reproduced here. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "PRT-EX-2504",
+      "gtin": "9520002501035",
+      "gtinNote": "GS1 demo prefix 952, valid EAN-13 check digit (fixture law: GTIN grain exists on this row)",
+      "unspscTypingAnchor": "UNSPSC segment 25 (vehicles) [register: UNVERIFIED at class level] — typing anchor only",
+      "name": "Cabin air filter [example]",
+      "category": "filters",
+      "fitsMake": "Meridale [example]",
+      "priceUsd": 323.94,
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the automotive substrate; not real vehicle, listing, parts, or work-order data. VINs are VIN-shaped synthetic (EXAMPLE-prefixed, check digit not computed — never a real vehicle); GTINs use the GS1 demo prefix 952 with valid check digits; makes, models, and dealers are fictional [example]. The production corpus (api.auto.dev) is key-gated and is never reproduced here. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "PRT-EX-2505",
+      "gtin": "9520002501042",
+      "gtinNote": "GS1 demo prefix 952, valid EAN-13 check digit (fixture law: GTIN grain exists on this row)",
+      "unspscTypingAnchor": "UNSPSC segment 25 (vehicles) [register: UNVERIFIED at class level] — typing anchor only",
+      "name": "Alternator, remanufactured [example]",
+      "category": "electrical",
+      "fitsMake": "Vantorra [example]",
+      "priceUsd": 292.18,
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the automotive substrate; not real vehicle, listing, parts, or work-order data. VINs are VIN-shaped synthetic (EXAMPLE-prefixed, check digit not computed — never a real vehicle); GTINs use the GS1 demo prefix 952 with valid check digits; makes, models, and dealers are fictional [example]. The production corpus (api.auto.dev) is key-gated and is never reproduced here. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "PRT-EX-2506",
+      "gtin": "9520002501059",
+      "gtinNote": "GS1 demo prefix 952, valid EAN-13 check digit (fixture law: GTIN grain exists on this row)",
+      "unspscTypingAnchor": "UNSPSC segment 25 (vehicles) [register: UNVERIFIED at class level] — typing anchor only",
+      "name": "Timing chain kit [example]",
+      "category": "engine",
+      "fitsMake": "Kelwyn Motors [example]",
+      "priceUsd": 350.96,
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the automotive substrate; not real vehicle, listing, parts, or work-order data. VINs are VIN-shaped synthetic (EXAMPLE-prefixed, check digit not computed — never a real vehicle); GTINs use the GS1 demo prefix 952 with valid check digits; makes, models, and dealers are fictional [example]. The production corpus (api.auto.dev) is key-gated and is never reproduced here. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "workOrders": [
+    {
+      "id": "wo-ex-1",
+      "kind": "recon",
+      "vin": "EXAMPLEBSMMM5W8JT",
+      "operatorId": "DLR-EX-8111",
+      "status": "draft",
+      "lineItems": [
+        {
+          "description": "recon labor [example]",
+          "hours": 5
+        },
+        {
+          "description": "parts per estimate [example]",
+          "partId": "PRT-EX-2502"
+        }
+      ],
+      "workspace": null,
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the automotive substrate; not real vehicle, listing, parts, or work-order data. VINs are VIN-shaped synthetic (EXAMPLE-prefixed, check digit not computed — never a real vehicle); GTINs use the GS1 demo prefix 952 with valid check digits; makes, models, and dealers are fictional [example]. The production corpus (api.auto.dev) is key-gated and is never reproduced here. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "wo-ex-2",
+      "kind": "inspection",
+      "vin": "EXAMPLETB4BKVW0NN",
+      "operatorId": "DLR-EX-8111",
+      "status": "in-progress",
+      "lineItems": [
+        {
+          "description": "inspection labor [example]",
+          "hours": 2.4
+        },
+        {
+          "description": "parts per estimate [example]",
+          "partId": "PRT-EX-2503"
+        }
+      ],
+      "workspace": null,
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the automotive substrate; not real vehicle, listing, parts, or work-order data. VINs are VIN-shaped synthetic (EXAMPLE-prefixed, check digit not computed — never a real vehicle); GTINs use the GS1 demo prefix 952 with valid check digits; makes, models, and dealers are fictional [example]. The production corpus (api.auto.dev) is key-gated and is never reproduced here. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "wo-ex-3",
+      "kind": "maintenance",
+      "vin": "EXAMPLEYAM5717YXK",
+      "operatorId": "DLR-EX-8111",
+      "status": "completed",
+      "lineItems": [
+        {
+          "description": "maintenance labor [example]",
+          "hours": 1.4
+        },
+        {
+          "description": "parts per estimate [example]",
+          "partId": "PRT-EX-2504"
+        }
+      ],
+      "workspace": null,
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the automotive substrate; not real vehicle, listing, parts, or work-order data. VINs are VIN-shaped synthetic (EXAMPLE-prefixed, check digit not computed — never a real vehicle); GTINs use the GS1 demo prefix 952 with valid check digits; makes, models, and dealers are fictional [example]. The production corpus (api.auto.dev) is key-gated and is never reproduced here. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ]
+}
