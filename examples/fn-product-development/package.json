@@ -1,0 +1,14 @@
+{
+  "name": "fn-product-development-example",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "description": "Wave-zero payable machine face for the fn-product-development register row (GAP — no product-function name held; served under a placeholder org.ai address). Template: studio docs/plans/2026-08-23-property-template-spec.md.",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "autonomous-qa": "link:../../../api.qa",
+    "vitest": "^3.0.0"
+  }
+}
