@@ -41,6 +41,6 @@ pnpm test        # 27 tests: fail-closed digest-pinned conformance gate + §9.1 
 | 13 | Seams emitted with full §6.4 tags + identity class + referral | pass |
 | 14 | Conneg matrix spot-checked; demo data labeled | pass (tested) |
 | 15 | No ghost surfaces (presence-when-true) | pass (tested) |
-| 16 | Face registered in the rail ledger | **blocked-on-rail-ledger** — no ledger exists in `~/projects/ax` at build time (batch-2 watch list: never stub a fake ledger) |
+| 16 | Face registered in the rail ledger | **REGISTERED** — registered via LEDGER.md door A — row in packages/rail-ledger/registry/faces.json @ draft/rail-ledger-v1 (studio #9 alignment pass 2026-08-23); readout https://ledger.apis.ax/readouts/faces-payable (service built, deploy pending Batch-S). Registered under the row-key placeholder host `fn-supply-chain.org.ai` (apis.supply is the shared face owned by the wholesale-distribution build). Previously blocked-on-rail-ledger; no fake ledger was ever stubbed (batch-2 watch list honored) |
 
 Deferred per §7.3 MAY: workers.do serving lane, shared developer dashboard, per-brand MDX layer, unified analytics plane, live settlement (test-mode counts as face-payable), `interfaces.testSuite` declaration.
