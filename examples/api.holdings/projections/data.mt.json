@@ -1,0 +1,24 @@
+{
+  "$comment": "G4 projection config (spec §2) — Projection 3 of the holdings-corporate-mgmt substrate: the bulk-data face (public-registry mirror rows are the natural bulk product). RECORDED here; served by the data.mt property, not by this worker.",
+  "substrate": "holdings-corporate-mgmt",
+  "brand": "data.mt",
+  "domains": ["data.mt"],
+  "served": false,
+  "icp": { "companyTypes": ["data buyers"], "jobTypes": ["developer", "analyst"] },
+  "personas": [{ "id": "data-buyer", "role": "human developer or analyst purchasing bulk registration/entity data" }],
+  "motion": "B2D",
+  "offer": [
+    { "shape": "anon-sandbox", "gate": "none — keyless", "price": "free" },
+    { "shape": "credit-packs", "gate": "purchased credit packs (card)", "price": "prepaid credits" }
+  ],
+  "pricing": { "pattern": "credit-packs-purchased", "rateCardRef": "data.mt rate card (its own /pricing)" },
+  "positioning": "bulk-data face",
+  "mdx": "data.mt surface",
+  "experiment": {
+    "pattern": "credit-packs",
+    "motion": "B2D",
+    "shapes": ["anon-sandbox", "credit-packs"],
+    "startDate": "2026-08-23",
+    "hypothesis": "prepaid packs beat per-call metering for bulk-read buyers"
+  }
+}
