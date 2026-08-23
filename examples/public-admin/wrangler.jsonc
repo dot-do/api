@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "public-admin",
+  "main": "worker.js",
+  "compatibility_date": "2026-01-24",
+  // GAP AT APEX: no brand zone exists for this row yet, so no routes are
+  // declared (a route on a name we do not serve would be a ghost surface).
+  // The placeholder address public-admin.org.ai attaches under the org.ai
+  // zone when the deploy is authorized; the G4 brand route lands with the
+  // name acquisition (register #16).
+  // §7.4 seams — bind the analytics plane when it exists; the worker's seam
+  // emitters no-op without it (presence-when-true, the seam is still emitted
+  // in code so the unified plane attaches without touching the property).
+  "analytics_engine_datasets": [
+    { "binding": "SEAMS", "dataset": "public-admin-seams" }
+  ]
+}

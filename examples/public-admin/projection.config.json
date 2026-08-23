@@ -1,0 +1,54 @@
+{
+  "$type": "G4Projection",
+  "spec": "docs/plans/2026-08-23-property-template-spec.md §2 (studio repo)",
+  "substrate": "public-admin",
+  "brand": null,
+  "brandStatus": "GAP AT APEX (register row public-admin): no api./apis./headless./data. name is held for NAICS 92. Per spec §0 this projection instantiates everything except the brand; the G3 work is not blocked on the name. Serving placeholder: public-admin.org.ai (row-key placeholder, open question #4 route). api.procurement is ruled hold-don't-build and is not used.",
+  "domains": ["public-admin.org.ai (placeholder — replaced at brand attach, register #16)"],
+  "ownedArtifactDoors": {
+    "doors": ["permits.works", "permits.casa", "permitti.ng", "filings.click", "bids.contractors", "dmv.vin"],
+    "status": "owned, nothing serving — none is advertised on this surface (presence-when-true). They are the human-vocabulary counterpart-brand candidates for the B2A2B/B2A2C legs of this cell; the §9.3 diagnostic (agent-referred human traffic on this machine face) is the trigger to stand one up."
+  },
+  "icp": {
+    "companyTypes": [
+      "every CompanyType that must register or renew (SAM/UEI, BOI, state SoS) — the universal back-office ICP; the buyer is never the government",
+      "contractors and property owners at the permit grain",
+      "government sellers needing public opportunity and award data"
+    ],
+    "jobTypes": ["ops/compliance seat at the registrant", "bidding contractor", "permit expediter"]
+  },
+  "personas": [
+    { "name": "compliance ops lead", "kind": "human" },
+    { "name": "bidding contractor", "kind": "human" },
+    { "name": "back-office agent", "kind": "machine" }
+  ],
+  "motion": "B2A",
+  "motionNotes": "Agent-first at wave zero: the machine face is the only serving surface and its buyer is an autonomous agent (no OAuth, no CC — id.org.ai machine identity + 402 metering when settlement activates). The cell's principals (ops/compliance seats, property owners) do not know what an API is, so the mature motion is B2A2B/B2A2C — and the human-vocabulary counterpart brands ALREADY EXIST as the owned artifact doors recorded above (no counterpart-brand naming gap; a counterpart-SERVING gap, tracked by the §9.3 diagnostic). Zero API/agent vocabulary is the law on those doors when they stand up (Marlow jargon-ban).",
+  "offer": [
+    { "shape": "anon-sandbox", "gate": "none — keyless", "price": "free", "notes": "universal floor; labeled synthetic back-office seed (§5.2) plus REAL provenance-labeled USAspending award data; stateless at wave zero. MOUNTED." },
+    { "shape": "paid-402", "gate": "402 metering against machine identity (id.org.ai grain)", "price": "metered; per-outcome on orderRenewal", "notes": "MOUNTED as a labeled 402-shaped stub — no live settlement; test-mode counts as face-payable. The only rung advertised above the floor." }
+  ],
+  "offerNotes": "Batch-2 ruling: only MOUNTED ladder rungs are advertised. The earned-credits and human-claimed rungs of the #17 ladder are neither mounted nor advertised; they enter the offer array and the 402 alternatives when their rails mount.",
+  "pricing": {
+    "pattern": "per-outcome",
+    "rateCard": "/pricing (rates[] top-level in the Pricing Document — batch-2 ruled placement)",
+    "pricingDocument": "/pricing",
+    "guardrailNote": "No agent-default claim is carried, so the §5.3 same-shape price guardrail imposes no obligation on siblings yet; the harness comparison arms if the claim is ever earned and taken."
+  },
+  "positioning": "The registrant's back office — every registry a company must stand in, as one typed, verifiable surface. (The 'agent default' claim is WITHHELD: the §4.6 worthiness bar — hosted conformance verdict + live anon sandbox + continuously verified published suite — has not been attested by api.qa yet.)",
+  "mdx": null,
+  "mdxNotes": "Custom minimal HTML landing at wave zero (§7.1 prove-then-extract); per-brand MDX layer deferred to the shared-renderer extraction and to the brand attach.",
+  "railLedger": {
+    "status": "blocked-on-rail-ledger",
+    "checkedAt": "2026-08-23",
+    "note": "§9.1 final box (face registered in the rail ledger / faces-payable-per-week denominator): no rail-ledger address exists in the ax repo as of this build (checked ~/projects/ax — no faces-payable or rail-ledger document). Recorded blocked rather than stubbed, per the batch-2 ruling: never stub a fake ledger. Register this face when the ledger lands."
+  },
+  "experiment": {
+    "pattern": "per-outcome",
+    "motion": "B2A",
+    "shapes": ["anon-sandbox", "paid-402"],
+    "rateCardRef": "/pricing#rates",
+    "startDate": "2026-08-23",
+    "hypothesis": "Outcome-priced renewal filings beat per-call metering on revenue per substrate call for the entity back-office; real public award data at a free floor is the acquisition surface for the bidding-contractor persona."
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "public-admin.example",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "public-admin — the NAICS 92 register row's wave-zero property (GAP at apex, row-key placeholder): registrations, filings, permits, and real USAspending award data behind an AXP machine face",
+  "scripts": {
+    "test": "vitest run",
+    "verify": "node scripts/selfverify.mjs",
+    "ingest": "node scripts/ingest-awards.mjs"
+  },
+  "devDependencies": {
+    "autonomous-qa": "link:../../../api.qa",
+    "vitest": "^3.0.0"
+  }
+}
