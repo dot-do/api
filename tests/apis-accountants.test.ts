@@ -74,7 +74,7 @@ describe('the quartet', () => {
     expect(body.probes.overCeiling).toBeDefined() // metered
   })
 
-  it('serves the rate card at /pricing: metered, hardCeiling, binding axis, rates[]', async () => {
+  it('serves the rate card at /pricing: metered, hardCeiling, binding axis, TOP-LEVEL rates[] (axp-ext-rates-g2 §2)', async () => {
     const res = await fetchApp('/pricing')
     expect(res.status).toBe(200)
     const body = await res.json()
@@ -82,11 +82,19 @@ describe('the quartet', () => {
     expect(body.hardCeiling).toBeGreaterThan(0)
     expect(body.binding).toBe(false)
     expect(typeof body.statement).toBe('string')
+    // rates[] at the RULED placement — top-level in the Pricing Document,
+    // emitted by the generator from pricing.rates (no site-side patching)
     expect(body.rates.length).toBe(RATES.length)
-    expect(body.offers.length).toBeGreaterThan(0)
+    expect(body.rates.map((r: { operation: string }) => r.operation)).toEqual(RATES.map((r) => r.operation))
+    // offers were never part of the ratified §2 placement: the pricing doc
+    // carries rates[] top-level; offers live on the card (monetization) and
+    // answer at the /offer door
+    const offerRes = await fetchApp('/offer')
+    expect(offerRes.status).toBe(402)
+    expect((await offerRes.json()).type).toBe('OFFER')
   })
 
-  it('rate-card law: every rates[].operation ⊆ OpenAPI operationIds; every row names freeQuota or prices from zero', async () => {
+  it('rate-card law (axp-ext-rates-g2 §1/§2): every rates[].operation ⊆ declared operationIds; price >= 0; freeQuota, when present, strictly > 0', async () => {
     const res = await fetchApp('/openapi.json')
     const doc = await res.json()
     const opIds = new Set<string>()
@@ -95,8 +103,16 @@ describe('the quartet', () => {
     }
     for (const rate of RATES) {
       expect(opIds, `rate row '${rate.operation}' must price a declared operationId`).toContain(rate.operation)
-      const named = rate.freeQuota !== undefined || rate.price === 0
-      expect(named, `rate row '${rate.operation}' must name its free quota or price from zero`).toBe(true)
+      expect(rate.price, `rate row '${rate.operation}' must carry a finite price >= 0`).toBeGreaterThanOrEqual(0)
+      const fq = (rate as { freeQuota?: unknown }).freeQuota
+      if (fq !== undefined) {
+        // §2: a zero (or "unlimited") quota is the row WITHOUT freeQuota —
+        // a zero-price row is free without quota by construction
+        expect(typeof fq).toBe('number')
+        expect(fq as number).toBeGreaterThan(0)
+      }
+      // the camelCase verb form — the ONE cross-face operation name
+      expect(rate.operation).toMatch(/^[a-z][A-Za-z0-9]*$/)
     }
     // every substrate operation is declared in the contract
     for (const o of OPERATIONS) expect(opIds).toContain(o.operation)

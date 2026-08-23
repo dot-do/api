@@ -51,7 +51,7 @@ const VERIFY_DOC = {
   ],
   covers: [
     'AXP conformance at the pinned digest (fail-closed, in-memory dispatch — the same requirement implementations the hosted verifier runs)',
-    'rate-card law: every rates[].operation ⊆ OpenAPI operationIds; every rate row names its free quota or prices from zero',
+    'rate-card law (axp-ext-rates-g2 §1/§2): every rates[].operation ⊆ declared operationIds; price >= 0; freeQuota, when present, strictly > 0',
     'envelope typing on every data route; the 402 OFFER boundary on the per-outcome verb',
     'seed fixture law: every record labeled example data; synthetic 00-prefix EINs; no real names',
   ],

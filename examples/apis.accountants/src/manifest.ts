@@ -4,40 +4,47 @@
  * (./substrate.ts), the §5.2 seed corpus (./seed.ts), and the served G4
  * projection (../projections/apis.accountants.json).
  *
- * Estate extensions the vendored generator does not carry yet (rate-card
- * `rates[]`, `links.verify`, per-route operationIds, G2 card exposure) are
- * applied as wrappers in ./axp.ts — never by editing the vendored files.
+ * The four estate extensions this example once bridged site-side (rate-card
+ * `rates[]`, `links.verify`, per-route operationIds, the G2 card object) are
+ * NATIVE generator inputs since axp-faces 0.2.0 (axp-ext-rates-g2@0.1.0,
+ * ratified 2026-08-23) — declared here, validated fail-closed at
+ * `defineSiteManifest`, emitted at the ruled placements. No wrappers remain.
  */
 
 // @ts-ignore vendored plain-ESM JS (byte-identical, PINS.json-digested)
 import { defineSiteManifest } from '../axp/manifest.js'
 import { CLOSE_DELIVERABLES, RETENTION_NOTE } from './seed'
-import { OPERATIONS } from './substrate'
+import { OPERATIONS, substrate } from './substrate'
+import icp from './icp'
 
 export const ORIGIN = 'https://apis.accountants'
 
 /**
- * The rate card rows (DRAFT §2 estate extension, spec §10.3): every row names
- * its free quota or prices from zero; operations ⊆ OpenAPI operationIds
- * (enforced by tests/apis-accountants.test.ts).
+ * The rate card rows (axp-ext-rates-g2@0.1.0 §2, native in the vendored
+ * generator): TOP-LEVEL `rates[]` in the Pricing Document, one row per priced
+ * operation, keyed by the canonical operationId (§1). Row law, enforced
+ * fail-closed at defineSiteManifest: price is a finite number >= 0;
+ * `freeQuota`, when present, is a number strictly > 0 (a zero or unlimited
+ * quota is the row without it — a zero-price row IS the unlimited quota);
+ * every operation ⊆ the operationIds this same manifest declares.
  */
 export const RATES = [
-  { operation: 'listCloseDeliverables', price: 0, unit: 'usd-per-call', freeQuota: 'unlimited' },
+  { operation: 'listCloseDeliverables', price: 0, unit: 'usd-per-call' },
   { operation: 'getCloseDeliverable', price: 0.002, unit: 'usd-per-call', freeQuota: 100 },
-  { operation: 'orderCloseDeliverable', price: 49, unit: 'usd-per-verified-deliverable', freeQuota: 0, note: 'per-outcome row: price per completed, VERIFIED close deliverable — never per call. Settlement rail not yet activated; the 402 boundary is served, no charge can occur (test-mode).' },
-  { operation: 'listLedgers', price: 0, unit: 'usd-per-call', freeQuota: 'unlimited' },
-  { operation: 'getLedger', price: 0, unit: 'usd-per-call', freeQuota: 'unlimited' },
-  { operation: 'postEntry', price: 0, unit: 'usd-per-call', freeQuota: 'unlimited' },
-  { operation: 'listReturns', price: 0, unit: 'usd-per-call', freeQuota: 'unlimited' },
-  { operation: 'getReturn', price: 0, unit: 'usd-per-call', freeQuota: 'unlimited' },
-  { operation: 'listClients', price: 0, unit: 'usd-per-call', freeQuota: 'unlimited' },
-  { operation: 'listEngagements', price: 0, unit: 'usd-per-call', freeQuota: 'unlimited' },
-  { operation: 'createEngagement', price: 0, unit: 'usd-per-call', freeQuota: 'unlimited' },
+  { operation: 'orderCloseDeliverable', price: 49, unit: 'usd-per-verified-deliverable', note: 'per-outcome row: price per completed, VERIFIED close deliverable — never per call; no free quota. Settlement rail not yet activated; the 402 boundary is served, no charge can occur (test-mode).' },
+  { operation: 'listLedgers', price: 0, unit: 'usd-per-call' },
+  { operation: 'getLedger', price: 0, unit: 'usd-per-call' },
+  { operation: 'postEntry', price: 0, unit: 'usd-per-call' },
+  { operation: 'listReturns', price: 0, unit: 'usd-per-call' },
+  { operation: 'getReturn', price: 0, unit: 'usd-per-call' },
+  { operation: 'listClients', price: 0, unit: 'usd-per-call' },
+  { operation: 'listEngagements', price: 0, unit: 'usd-per-call' },
+  { operation: 'createEngagement', price: 0, unit: 'usd-per-call' },
 ] as const
 
 /** The words the human page uses too (the binding:false statement rule). */
 export const PRICING_STATEMENT =
-  'Introductory metered pricing, not yet bound by published terms: budget against it; do not contract on it. Every free quota is declared per operation in the rates table.'
+  'Introductory metered pricing, not yet bound by published terms: budget against it; do not contract on it. Every per-operation rate — and any free quota — is declared in the rates table; a zero-price row is free without quota.'
 
 const llmsBody = `# apis.accountants — the functions an accounting firm's systems call
 
@@ -83,6 +90,9 @@ export function buildManifest() {
     version: '0.1.0',
     collection: {
       path: '/close-deliverables',
+      // axp-ext-rates-g2 §1: the branching collection's canonical operationId
+      // — the same string the MCP tool and the rate row carry.
+      operationId: 'listCloseDeliverables',
       memberName: 'deliverables',
       summary: 'The close-deliverable collection — typed OK | EMPTY | BLOCKED, branching on status and period',
       records: CLOSE_DELIVERABLES,
@@ -99,6 +109,9 @@ export function buildManifest() {
       hardCeiling: 100,
       unit: 'usd-per-month',
       price: 0.002,
+      // axp-ext-rates-g2 §2 — native input: TOP-LEVEL rates[] in the served
+      // Pricing Document (the ruled placement), validated fail-closed.
+      rates: RATES as unknown as Record<string, unknown>[],
       binding: false,
       statement: PRICING_STATEMENT,
       offers: [
@@ -126,16 +139,20 @@ export function buildManifest() {
       offerPath: '/offer',
       spendParam: 'spend',
     },
+    // axp-ext-rates-g2 §1 — native input: every route carries its canonical
+    // camelCase operationId (route = MCP tool = suite reference = rate key),
+    // passthrough into the OpenAPI contract, uniqueness enforced.
     routes: OPERATIONS.filter((o) => o.path !== '/close-deliverables')
       .map((o) => ({
         method: o.method,
         path: o.path,
+        operationId: o.operation,
         summary: o.summary,
       }))
       .concat([
-        { method: 'GET', path: '/icp.json', summary: 'G2 coordinates: ICP (CompanyType × JobTypes), personas, and the System coordinate this substrate serves' },
-        { method: 'GET', path: '/verify', summary: 'Run our tests — the published public-contract suite for this surface' },
-        { method: 'GET', path: '/checkout', summary: 'The checkout seam — a labeled stub until the settlement rail is activated (no charge can occur)' },
+        { method: 'GET', path: '/icp.json', operationId: 'getIcp', summary: 'G2 coordinates: ICP (CompanyType × JobTypes), personas, and the System coordinate this substrate serves' },
+        { method: 'GET', path: '/verify', operationId: 'getVerify', summary: 'Run our tests — the published public-contract suite for this surface' },
+        { method: 'GET', path: '/checkout', operationId: 'getCheckout', summary: 'The checkout seam — a labeled stub until the settlement rail is activated (no charge can occur)' },
         // /login and /callback are served (labeled demo mode) but deliberately
         // not declared as contract routes: a redirect door is a flow, not a
         // probeable 200-OK endpoint (the card's http entries may be probed).
@@ -149,6 +166,17 @@ export function buildManifest() {
       tools: OPERATIONS.map((o) => o.operation),
     },
     icpUrl: `${ORIGIN}/icp.json`,
+    // axp-ext-rates-g2 §3 — native input: links.verify on the card, beside
+    // links.conformance (the verdict) and links.icp (independent, kept).
+    verifyUrl: `${ORIGIN}/verify`,
+    // axp-ext-rates-g2 §4 — native input: the row's G2/ICP coordinates as a
+    // TOP-LEVEL card object, carried verbatim (stake #6); /icp.json remains
+    // the full document.
+    g2: {
+      icp: icp.icp,
+      personas: icp.personas,
+      systems: substrate.systems,
+    },
     conformanceUrl: 'https://api.qa/apis.accountants',
     family: [
       {

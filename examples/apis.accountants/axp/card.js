@@ -47,7 +47,7 @@ export function httpInterfaces(manifest) {
 
 /** The normative AXP capability card. */
 export function buildCard(manifest) {
-  const { origin, name, description, mcp, digitalLink, testSuite, docsUrl, conformanceUrl, icpUrl, family, familyPath, attestationLadder, pricing } = manifest;
+  const { origin, name, description, mcp, digitalLink, testSuite, docsUrl, conformanceUrl, icpUrl, verifyUrl, g2, family, familyPath, attestationLadder, pricing } = manifest;
   return {
     name,
     description,
@@ -66,8 +66,14 @@ export function buildCard(manifest) {
       ...(docsUrl !== undefined && { docs: docsUrl }),
       ...(icpUrl !== undefined && { icp: icpUrl }),
       ...(family.length > 0 && { family: `${origin}${familyPath}` }),
+      /* axp-ext/rates-g2 §3 — the ruled placement: the published runnable-suite
+         export rides links.verify, beside links.conformance (the verdict). */
+      ...(verifyUrl !== undefined && { verify: verifyUrl }),
       conformance: conformanceUrl,
     },
+    /* axp-ext/rates-g2 §4 — the ruled placement: G2/ICP coordinates as a
+       TOP-LEVEL card object, carried verbatim from the manifest. */
+    ...(g2 !== undefined && { g2 }),
     ...(attestationLadder !== undefined && { attestationLadder }),
     ...(pricing.model === "metered" && {
       monetization: {

@@ -61,16 +61,25 @@ cannot take payment, and no money event is ever fabricated. Metering, money,
 receipt, and traffic **seams** are emitted as structured logs tagged
 `{substrate, projection, motion, operation, shape, pattern}` (spec §6.4/§7.4).
 
-## Generator gaps (recorded, to fix in axp.org.ai and re-vendor — never patched here)
+## Generator gaps — CLOSED (axp-ext-rates-g2, native since axp-faces 0.2.0)
 
-The vendored generator output is extended by site-level wrappers in
-`src/axp.ts` for four things the spec requires that `axp-faces` does not
-carry yet:
+The four members this example once bridged site-side are native
+`defineSiteManifest` inputs since the ratified generator extension
+`axp-ext-rates-g2` landed (vendored here at axp-faces 0.3.0 / extension
+0.2.0 — the survey floor), each emitted at its RULED placement, validated
+fail-closed:
 
-1. `/pricing` `rates[]` (the DRAFT §2 rate-card extension) + mirrored `offers`
-2. card `links.verify` → the published suite page
-3. card `g2` member — the row's G2 coordinates (ICP + Persona + System) per stake #6
-4. per-route `operationId`s in the OpenAPI doc (the rate card may only price declared operationIds)
+1. `pricing.rates` → TOP-LEVEL `rates[]` in the served Pricing Document
+   (rows key on the canonical operationId; the DRAFT-era `offers` mirror is
+   gone — offers live on the card's `monetization` and answer at `/offer`)
+2. `verifyUrl` → card `links.verify` (the published suite page)
+3. `g2` → TOP-LEVEL card object — the row's G2 coordinates (ICP + Persona +
+   System) per stake #6; `links.icp` / `/icp.json` stays beside it
+4. `routes[].operationId` + `collection.operationId` → OpenAPI passthrough;
+   one camelCase identifier per operation across route = MCP tool = suite
+   reference = rate key, uniqueness enforced
+
+No site-level wrappers remain; `src/axp.ts` is pure generator output.
 
 ## Deliberately absent (presence-when-true)
 
