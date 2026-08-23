@@ -55,6 +55,52 @@ const ENVELOPE_SCHEMAS = {
       hardCeiling: { type: "number", exclusiveMinimum: 0 },
       unit: { type: "string" },
       price: { type: "number" },
+      rates: {
+        type: "array",
+        items: {
+          type: "object",
+          required: ["operation"],
+          properties: {
+            operation: {
+              type: "string",
+              description:
+                "The canonical camelCase-verb operationId this rate keys on (axp-ext/rates-g2 §1) — the ONE cross-face operation name: OpenAPI operationId = MCP tool name = suite coverage reference = SDK method name = this key.",
+            },
+            price: {
+              description:
+                "Scalar amount >= 0, or a §2 price object: compound {fixed?, percent?, basis, cap?, floor?, min_fee?} (A1, ad-valorem), {passthrough: {provider, reference?, markup?}} (A2, third-party-owned price plus markup), or {discovery: 'market', reference?, buyer_cap?} (A2, auction/spot). Absent or null ONLY under a non-published `disclosure` (A8).",
+              oneOf: [{ type: "number", minimum: 0 }, { type: "object" }, { type: "null" }],
+            },
+            unit: { type: "string" },
+            included: {
+              description:
+                'A5 — the allowance: quantity, "unlimited", or {qty, period: "day"|"month"|"once", rollover?, at_limit?}. `freeQuota` is the legacy shorthand for {qty, period: "month"} — never both.',
+            },
+            freeQuota: { type: "number", exclusiveMinimum: 0 },
+            modifiers: {
+              type: "array",
+              description: "A3 — relative/derived pricing: [{op: 'multiply'|'add', value, scope?: 'rate'|'offer'|'card', condition?: {attribute, op?, value?}, stacking_order?}]. See also `derived_from`.",
+            },
+            derived_from: { type: "string", description: "A3 — the rate-card row this row's price derives from (an operationId on this same card)." },
+            meter: {
+              type: "object",
+              description: "G3 lite — {aggregation: 'sum'|'distinct'|'high-watermark'|'gauge'|'peak', basis?: 'consumed'|'provisioned'|'standing', reset_period?, definition_url?}: how the billable unit aggregates, so identical-looking rows cannot mean bills 10x apart.",
+            },
+            volume_breaks: {
+              type: "object",
+              description: "A7 — {mode: 'graduated'|'retroactive'|'reprice-offer' (REQUIRED), basis?: 'units'|'spend'|'instantaneous-rate', breaks: [{from, price|discount_percent}], formula_url?, approximate?}.",
+            },
+            disclosure: {
+              enum: ["published", "calculator-only", "quote-only", "undisclosed"],
+              description: "A8 — a meter may exist with its price withheld; 'priced on request' is distinguishable from 'no such meter'. Price may be absent/null only when this is present and not 'published'.",
+            },
+            estimate: { type: "object", description: "A8 — {low, high, provenance?}: third-party estimate, legal only under a withheld disclosure." },
+            note: { type: "string" },
+          },
+        },
+        description:
+          "axp-ext/rates-g2 §2 — the operationId-keyed operation rate card, TOP-LEVEL in the Pricing Document. Additive and descriptive: `model` and `hardCeiling` keep answering Appendix A.2; every row names an operation this origin's own contract declares. Offer-level A4/A5 members (spend_cap, pooled allowances[]) ride monetization.offers. Deferred-amendment names (credits, base_fee, minimum, relations, entitlements, keys, payment, direction, recurrence, effective, eligibility, currencies) are RESERVED.",
+      },
       binding: {
         type: "boolean",
         description:
@@ -113,7 +159,7 @@ export function buildOpenapi(manifest) {
   const paths = {
     [collection.path]: {
       get: {
-        operationId: "listCollection",
+        operationId: collection.operationId || "listCollection",
         summary: collection.summary,
         description:
           `The keyless, branching collection (AXP Clauses 4 + 7): plain GET answers 200 OK with substantive typed content to an anonymous caller; ` +
@@ -177,6 +223,9 @@ export function buildOpenapi(manifest) {
     const method = r.method.toLowerCase();
     paths[r.path] = paths[r.path] || {};
     paths[r.path][method] = {
+      /* axp-ext/rates-g2 §1 — operationId passthrough on every route: the
+         canonical cross-face operation name lands on the contract verbatim. */
+      ...(r.operationId !== undefined && { operationId: r.operationId }),
       summary: r.summary,
       ...(r.description !== undefined && { description: r.description }),
       ...(r.params.length > 0 && { parameters: r.params.map((p) => ({ in: "query", required: false, schema: { type: "string" }, ...p })) }),

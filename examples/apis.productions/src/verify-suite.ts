@@ -4,7 +4,9 @@
  *
  * SUITE_TEXT is the EXACT byte payload served at /verify/suite.json — the
  * digest over these bytes is the pin a runner asserts with --expect-digest.
- * Rows carry [openapi:…] coverage tags so the day interfaces.testSuite is
+ * Rows carry [openapi:<operationId>] coverage tags keyed by the canonical
+ * cross-face operationId (axp-ext-rates-g2 §1 — the same string as the route,
+ * the MCP tool, and the rates[] key), so the day interfaces.testSuite is
  * declared (see src/manifest.ts), the coverage map is already honest for the
  * GET surface.
  *
@@ -23,7 +25,7 @@ const suiteDoc = {
   },
   requirements: [
     {
-      id: 'productions-keyless-ok [openapi:listCollection]',
+      id: 'productions-keyless-ok [openapi:listProductions]',
       kind: 'endpoint',
       method: 'GET',
       path: '/productions',
@@ -34,14 +36,14 @@ const suiteDoc = {
       },
     },
     {
-      id: 'productions-branch-empty [openapi:listCollection]',
+      id: 'productions-branch-empty [openapi:listProductions]',
       kind: 'endpoint',
       method: 'GET',
       path: '/productions?kind=none',
       expect: { status: 200, paths: [{ path: 'type', equals: 'EMPTY' }] },
     },
     {
-      id: 'production-by-id [openapi:GET /productions/{id}]',
+      id: 'production-by-id [openapi:getProduction]',
       kind: 'endpoint',
       method: 'GET',
       path: '/productions/prod_0001',
@@ -55,21 +57,21 @@ const suiteDoc = {
       },
     },
     {
-      id: 'assets-list [openapi:GET /assets]',
+      id: 'assets-list [openapi:listAssets]',
       kind: 'endpoint',
       method: 'GET',
       path: '/assets',
       expect: { status: 200, paths: [{ path: 'type', equals: 'OK' }] },
     },
     {
-      id: 'pages-list [openapi:GET /pages]',
+      id: 'pages-list [openapi:listPages]',
       kind: 'endpoint',
       method: 'GET',
       path: '/pages',
       expect: { status: 200, paths: [{ path: 'type', equals: 'OK' }] },
     },
     {
-      id: 'audience-signals-list [openapi:GET /audience-signals]',
+      id: 'audience-signals-list [openapi:listAudienceSignals]',
       kind: 'endpoint',
       method: 'GET',
       path: '/audience-signals',
@@ -83,14 +85,14 @@ const suiteDoc = {
       expect: { status: 200, paths: [{ path: 'model', equals: 'free' }] },
     },
     {
-      id: 'icp-served [openapi:GET /icp.json]',
+      id: 'icp-served [openapi:getIcp]',
       kind: 'endpoint',
       method: 'GET',
       path: '/icp.json',
       expect: { status: 200, contentTypeIncludes: 'application/json' },
     },
     {
-      id: 'offer-is-a-labeled-stub [openapi:GET /offer]',
+      id: 'offer-is-a-labeled-stub [openapi:getOffer]',
       kind: 'endpoint',
       method: 'GET',
       path: '/offer',

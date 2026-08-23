@@ -18,7 +18,7 @@ anywhere on the surface. Every served record is labeled example data.
 | `src/substrate.ts` | A (G3) | The `APIProduct` instance: Nouns (Production, MediaAsset, Page, AudienceSignal) with schema + binding + verbs; the CMS System coordinate; the §5.2 labeled synthetic sandbox seed |
 | `projection.apis.productions.json` | B (G4) | The projection config: brand, ICP + personas, motion **B2A**, offer (anon sandbox only), pricing pattern, experiment registration, counterpart-brand record |
 | `src/manifest.ts` | face | The ONE site manifest — every machine face generates from it |
-| `src/axp-faces/` | face | The shared generator, vendored byte-identical (PINS.json pins `apis-ax-axp@2.6.0`, digest `a9a1197c…`); never edited here |
+| `src/axp-faces/` | face | The shared generator, vendored byte-identical (PINS.json pins `apis-ax-axp@2.6.0`, digest `a9a1197c…`, plus extension `axp-ext-rates-g2@0.2.0`); never edited here |
 | `src/worker.ts` | serving | Both plies from the one definition: data face (GET collections), headless face (POST /pages — the CMS system-of-record door, ephemeral + disclosed), the MCP door at `/mcp`, the labeled 402 stub at `/offer`, and the §7.4 seams (meter/money/receipt events as structured logs) |
 | `src/verify-suite.ts` | proof | The published `api.qa/suite@1` suite served byte-exact at `/verify/suite.json`; `/verify` prints the digest and the run command |
 | `spec/` | pin | The ratified spec copy + digest the local gate asserts against |

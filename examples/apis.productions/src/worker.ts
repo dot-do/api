@@ -16,7 +16,7 @@
  */
 
 import { createAxpRoutes, envelopeResponse, ok, empty, blocked, offer } from './axp-faces/index.js'
-import { manifest } from './manifest.ts'
+import { manifest, G2 } from './manifest.ts'
 import {
   SUBSTRATE,
   ORIGIN,
@@ -275,9 +275,11 @@ export default {
     const url = new URL(request.url)
     const path = url.pathname
 
-    // Metering seam for the generator-served collection door.
+    // Metering seam for the generator-served collection door — metered by
+    // its canonical operationId (axp-ext-rates-g2 §1: collection.operationId,
+    // the same string as the MCP tool and the rates[] key).
     if (path === '/productions' && (request.method === 'GET' || request.method === 'HEAD')) {
-      emitMeter('listCollection', request)
+      emitMeter('listProductions', request)
     }
 
     const hit = await axp(request, undefined)
@@ -331,28 +333,10 @@ export default {
         return listResponse(audienceSignals as unknown as Record<string, unknown>[], url, ['productionId', 'period'], 'audience signals', head)
 
       case '/icp.json':
-        // G2 coordinates (template §2; stake #6): facts about who this
-        // projection serves — no positioning, no claims.
-        return json(
-          {
-            $context: 'https://schema.org.ai',
-            $type: 'ICP',
-            substrate: SUBSTRATE,
-            projection: 'apis.productions',
-            motion: 'B2A',
-            icp: {
-              companyType: 'first-party content operation (the studio itself)',
-              jobTypes: ['producer', 'content lead', 'brand operator'],
-            },
-            personas: [
-              { id: 'film-program-agent', class: 'machine', description: 'an agent operating a launch-film program against these records' },
-              { id: 'deck-factory-agent', class: 'machine', description: 'an agent producing and releasing deck suites' },
-              { id: 'content-operator', class: 'human', description: 'a producer or content lead reading the same records in a browser' },
-            ],
-          },
-          200,
-          head,
-        )
+        // G2 coordinates (template §2; stake #6): the SAME object the card
+        // carries natively as its top-level `g2` member (axp-ext-rates-g2 §4)
+        // — one truth, two placements; links.icp stays legal beside g2.
+        return json(G2, 200, head)
 
       case '/verify': {
         const digest = await suiteDigest()
