@@ -22,6 +22,7 @@
   ],
   "offerGap": "#17 ladder rungs 1 (earned credits) and 2 (human-claimed) are NOT mounted and therefore NOT advertised in the 402 OFFER alternatives — declaring an unmounted rung would be a ghost surface (presence-when-true beats §9.1 box 8 until the rungs exist).",
   "pricing": { "pattern": "402 metered per-call (stub)", "rateCardRef": "/pricing (top-level rates[], axp-ext-rates-g2 §2)" },
+  "railLedger": "https://ledger.apis.ax/faces?face=fn-customer-service.example.com.ai",
   "positioning": null,
   "positioningNote": "Withheld: a GAP row has no brand to position, and the agent-default claim is gated by the worthiness bar (§4.6) regardless.",
   "mdx": null,

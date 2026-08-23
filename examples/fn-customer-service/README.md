@@ -69,3 +69,14 @@ Current state: **all gates green** — 24/24 pinned requirements pass in-process
 at the ratified digest, fixture law passes. The hosted api.qa verdict
 (`links.conformance`) and the worthiness bar (§4.6) can only be attested after
 the property serves at a real, acquired address.
+
+## Rail ledger (§9.1 final box)
+
+Face registered in the rail ledger (faces-payable/week denominator):
+registered via LEDGER.md door A — row in
+`packages/rail-ledger/registry/faces.json` @ `draft/rail-ledger-v1`
+(studio #9 alignment pass 2026-08-23); readout
+https://ledger.apis.ax/readouts/faces-payable (service built, deploy pending
+Batch-S). The GAP row registers under its placeholder host
+(fn-customer-service.example.com.ai — not a brand); the served projection
+config records the address in its `railLedger` field.
