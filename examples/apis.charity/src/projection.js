@@ -24,6 +24,13 @@ export const projection = {
   brand: BRAND,
   domains: [BRAND],
 
+  /** §9.1 final box (face registered in the rail ledger): registered via
+   *  LEDGER.md door A — row in packages/rail-ledger/registry/faces.json @
+   *  draft/rail-ledger-v1 (studio #9 alignment pass 2026-08-23); readout
+   *  https://ledger.apis.ax/readouts/faces-payable (service built, deploy
+   *  pending Batch-S). */
+  railLedger: `https://ledger.apis.ax/faces?face=${BRAND}`,
+
   /** G2 coordinates (exposed on the machine face at /icp.json and as the
    *  card's top-level g2 member — ruled placement). */
   icp: {
