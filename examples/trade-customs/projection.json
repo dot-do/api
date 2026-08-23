@@ -1,0 +1,46 @@
+{
+  "$comment": "Stratum-B G4 projection config (template spec §2). GAP register row: no brand/domain is held for cross-border trade & customs (NAICS 481-483 + customs) — the candidates on record (api.trade, api.customs, tradedocs; surface-register gap-fill candidates customs.dev / tradedocs.dev) are ALL availability-UNVERIFIED — so this projection runs under a placeholder org.ai address per spec §0; the brand fields attach when a name is ruled (#16). Nothing here implies acquisition of any name. Repo config, not a served surface.",
+  "substrate": "trade-customs",
+  "brand": null,
+  "brandStatus": "GAP — no api-grammar or category-completing name held (register row, 2026-08-23); placeholder address trade-customs.org.ai until ruled; SC #4 posture 'Class E, claim-now-build-later' — the document-layer vacancy claim is staged, not acted on; the standing incumbency-probe prerequisite (matrix §5 tension 7) is unmet and stands",
+  "domains": ["trade-customs.org.ai (placeholder)"],
+  "icp": {
+    "companyTypes": ["freight forwarder", "exporter / importer (trade-compliance and documentation ops)", "customs broker (licensed operator on the headless layer)"],
+    "jobTypes": ["trade compliance manager", "documentation specialist", "freight forwarder operations", "customs broker"]
+  },
+  "personas": [
+    { "id": "operator", "description": "documentation lead at a freight forwarder assembling the cross-border packet per shipment" },
+    { "id": "developer", "description": "developer at a forwarder-TMS or trade-documentation vendor" },
+    { "id": "agent", "description": "autonomous agent assembling and verifying trade-document packets on behalf of shippers" }
+  ],
+  "motion": "B2A",
+  "offer": [
+    { "shape": "anon-sandbox", "price": "free", "gate": "none — keyless; auto-minted ephemeral workspace, disclosed retention" },
+    { "shape": "earned-credits", "price": "earned", "gate": "proof-of-work ladder rung 1 — STUB: declared in the 402 alternatives; credit ledger not yet live" },
+    { "shape": "human-claimed", "price": "free/earned", "gate": "rung 2 — STUB: claim door not yet live" },
+    { "shape": "paid", "price": "metered (402, machine identity)", "gate": "rung 3 — STUB: test-mode, no live settlement" }
+  ],
+  "pricing": {
+    "pattern": "402-metered-per-call + per-outcome on packet assembly",
+    "rateCardRef": "/pricing",
+    "binding": false
+  },
+  "positioning": "the typed cross-border trade-document layer — eBL, certificate of origin, phytosanitary certificate, commercial invoice, HTS-keyed entries — with the regulated brokerage act (19 CFR 111) left to licensed operators; agent-default claim WITHHELD (worthiness bar §4.6 not attempted: no ruled domain, no hosted verdict)",
+  "mdx": null,
+  "experiment": {
+    "pattern": "402-metered",
+    "motion": "B2A",
+    "shapes": ["anon-sandbox", "earned-credits", "human-claimed", "paid"],
+    "rateCardRef": "/pricing",
+    "startDate": "2026-08-23",
+    "hypothesis": "wave-zero registration only — sandbox-floor traffic shape on a placeholder address; pattern comparison begins when a G4 name attaches"
+  },
+  "counterpartBrandGap": {
+    "recorded": true,
+    "reason": "the row's demand includes exporters/importers and their brokers transacting through agents (B2A2B): principals in trade-compliance ops do not buy 'APIs', they buy completed, verified document packets. No human-vocabulary counterpart name exists in this cell — the register row itself is a GAP with every candidate availability-unverified. Surfaced per spec §9.3; naming is #3's job, never this build's."
+  },
+  "regulatedActSeparation": {
+    "act": "customs brokerage (19 CFR 111 licensure)",
+    "ruling": "the operator brings the license (#22 regulation unlock) — this property serves the buildable document layer only; broker-side scopes answer BLOCKED on the branching collection and no brokerage act is performed or implied"
+  }
+}

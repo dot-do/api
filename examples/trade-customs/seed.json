@@ -1,0 +1,552 @@
+{
+  "$context": "https://schema.org.ai",
+  "substrate": "trade-customs",
+  "generated": "deterministic (mulberry32, keyed on substrate id) — reseed via scripts/generate-seed.mjs",
+  "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy.",
+  "fixtureLaw": {
+    "realNames": false,
+    "syntheticIdentifiers": "00-prefixed EIN pattern; *-ex-* record ids; CONT-EX-* container refs (not ISO 6346 units); EXnn.nn.nnnn HTS-shaped codes (not real classifications)",
+    "secretScan": "no credentials present by construction"
+  },
+  "forwarders": [
+    {
+      "id": "fwd-ex-1",
+      "name": "Tarnwick Forwarding Group LLC [example]",
+      "role": "freight-forwarder",
+      "ein": "00-2200001",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "fwd-ex-2",
+      "name": "Bryneside Global Logistics Ltd [example]",
+      "role": "freight-forwarder",
+      "ein": "00-2200002",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "carriers": [
+    {
+      "id": "car-ex-1",
+      "name": "Sablemoor Ocean Lines [example]",
+      "mode": "ocean",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "car-ex-2",
+      "name": "Quillhaven Air Cargo [example]",
+      "mode": "air",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "car-ex-3",
+      "name": "Fennelmoor Rail Freight Co. [example]",
+      "mode": "rail",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "parties": [
+    {
+      "id": "pty-ex-1",
+      "name": "Osselbrook Machinery Works GmbH [example]",
+      "role": "exporter",
+      "country": "DE",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "pty-ex-2",
+      "name": "Larkfen Botanicals S.A. [example]",
+      "role": "exporter",
+      "country": "CL",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "pty-ex-3",
+      "name": "Midgewater Provisions Import Co. [example]",
+      "role": "importer",
+      "country": "US",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "pty-ex-4",
+      "name": "Tarnbeck Components KK [example]",
+      "role": "importer",
+      "country": "JP",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "shipments": [
+    {
+      "id": "shp-ex-1",
+      "reference": "REF-EX-1001 [synthetic]",
+      "mode": "ocean",
+      "originCountry": "DE",
+      "destinationCountry": "US",
+      "status": "in-transit",
+      "forwarderId": "fwd-ex-2",
+      "carrierId": "car-ex-1",
+      "exporterId": "pty-ex-1",
+      "importerId": "pty-ex-3",
+      "goodsDescription": "Machined drivetrain components [example goods]",
+      "packetDocumentIds": [
+        "ebl-ex-1",
+        "coo-ex-1",
+        "inv-ex-1"
+      ],
+      "packet_note": "the document packet is mandatory on every cross-border edge — refs above are this shipment's typed packet",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "shp-ex-2",
+      "reference": "REF-EX-1002 [synthetic]",
+      "mode": "ocean",
+      "originCountry": "CL",
+      "destinationCountry": "US",
+      "status": "in-transit",
+      "forwarderId": "fwd-ex-1",
+      "carrierId": "car-ex-1",
+      "exporterId": "pty-ex-2",
+      "importerId": "pty-ex-3",
+      "goodsDescription": "Packaged specialty foodstuffs [example goods]",
+      "packetDocumentIds": [
+        "ebl-ex-2",
+        "coo-ex-2",
+        "phy-ex-1",
+        "inv-ex-2"
+      ],
+      "packet_note": "the document packet is mandatory on every cross-border edge — refs above are this shipment's typed packet",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "shp-ex-3",
+      "reference": "REF-EX-1003 [synthetic]",
+      "mode": "air",
+      "originCountry": "DE",
+      "destinationCountry": "JP",
+      "status": "in-transit",
+      "forwarderId": "fwd-ex-2",
+      "carrierId": "car-ex-2",
+      "exporterId": "pty-ex-1",
+      "importerId": "pty-ex-3",
+      "goodsDescription": "Industrial pump assemblies [example goods]",
+      "packetDocumentIds": [
+        "coo-ex-3",
+        "inv-ex-3"
+      ],
+      "packet_note": "the document packet is mandatory on every cross-border edge — refs above are this shipment's typed packet",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "shp-ex-4",
+      "reference": "REF-EX-1004 [synthetic]",
+      "mode": "air",
+      "originCountry": "US",
+      "destinationCountry": "JP",
+      "status": "in-transit",
+      "forwarderId": "fwd-ex-1",
+      "carrierId": "car-ex-2",
+      "exporterId": "pty-ex-1",
+      "importerId": "pty-ex-3",
+      "goodsDescription": "Machined drivetrain components [example goods]",
+      "packetDocumentIds": [
+        "coo-ex-4",
+        "inv-ex-4"
+      ],
+      "packet_note": "the document packet is mandatory on every cross-border edge — refs above are this shipment's typed packet",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "shp-ex-5",
+      "reference": "REF-EX-1005 [synthetic]",
+      "mode": "ocean",
+      "originCountry": "CL",
+      "destinationCountry": "DE",
+      "status": "in-transit",
+      "forwarderId": "fwd-ex-2",
+      "carrierId": "car-ex-1",
+      "exporterId": "pty-ex-2",
+      "importerId": "pty-ex-3",
+      "goodsDescription": "Dried botanical extracts [example goods]",
+      "packetDocumentIds": [
+        "ebl-ex-3",
+        "coo-ex-5",
+        "phy-ex-2",
+        "inv-ex-5"
+      ],
+      "packet_note": "the document packet is mandatory on every cross-border edge — refs above are this shipment's typed packet",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "shp-ex-6",
+      "reference": "REF-EX-1006 [synthetic]",
+      "mode": "rail",
+      "originCountry": "DE",
+      "destinationCountry": "US",
+      "status": "cleared",
+      "forwarderId": "fwd-ex-1",
+      "carrierId": "car-ex-3",
+      "exporterId": "pty-ex-1",
+      "importerId": "pty-ex-3",
+      "goodsDescription": "Industrial pump assemblies [example goods]",
+      "packetDocumentIds": [
+        "ebl-ex-4",
+        "coo-ex-6",
+        "inv-ex-6"
+      ],
+      "packet_note": "the document packet is mandatory on every cross-border edge — refs above are this shipment's typed packet",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "billsOfLading": [
+    {
+      "id": "ebl-ex-1",
+      "shipmentId": "shp-ex-1",
+      "typingAnchor": "DCSA eBL (field shapes only — values synthetic)",
+      "status": "issued",
+      "transferableRecord": true,
+      "mletr_note": "typed as an electronic transferable record; legal equivalence follows MLETR/ETDA adoption per jurisdiction (the register row's statutory clock)",
+      "carrierId": "car-ex-1",
+      "shipperId": "pty-ex-1",
+      "consigneeId": "pty-ex-3",
+      "containerRef": "CONT-EX-00001 [synthetic — not an ISO 6346 unit]",
+      "vessel": "MV Sablemoor Wanderer [example]",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ebl-ex-2",
+      "shipmentId": "shp-ex-2",
+      "typingAnchor": "DCSA eBL (field shapes only — values synthetic)",
+      "status": "issued",
+      "transferableRecord": true,
+      "mletr_note": "typed as an electronic transferable record; legal equivalence follows MLETR/ETDA adoption per jurisdiction (the register row's statutory clock)",
+      "carrierId": "car-ex-1",
+      "shipperId": "pty-ex-2",
+      "consigneeId": "pty-ex-3",
+      "containerRef": "CONT-EX-00002 [synthetic — not an ISO 6346 unit]",
+      "vessel": "MV Sablemoor Wanderer [example]",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ebl-ex-3",
+      "shipmentId": "shp-ex-5",
+      "typingAnchor": "DCSA eBL (field shapes only — values synthetic)",
+      "status": "issued",
+      "transferableRecord": true,
+      "mletr_note": "typed as an electronic transferable record; legal equivalence follows MLETR/ETDA adoption per jurisdiction (the register row's statutory clock)",
+      "carrierId": "car-ex-1",
+      "shipperId": "pty-ex-2",
+      "consigneeId": "pty-ex-3",
+      "containerRef": "CONT-EX-00005 [synthetic — not an ISO 6346 unit]",
+      "vessel": "MV Sablemoor Wanderer [example]",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ebl-ex-4",
+      "shipmentId": "shp-ex-6",
+      "typingAnchor": "DCSA eBL (field shapes only — values synthetic)",
+      "status": "issued",
+      "transferableRecord": true,
+      "mletr_note": "typed as an electronic transferable record; legal equivalence follows MLETR/ETDA adoption per jurisdiction (the register row's statutory clock)",
+      "carrierId": "car-ex-3",
+      "shipperId": "pty-ex-1",
+      "consigneeId": "pty-ex-3",
+      "containerRef": "CONT-EX-00006 [synthetic — not an ISO 6346 unit]",
+      "vessel": null,
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "certificatesOfOrigin": [
+    {
+      "id": "coo-ex-1",
+      "shipmentId": "shp-ex-1",
+      "typingAnchor": "UN/CEFACT CoO grain (field shapes only — values synthetic)",
+      "originCountry": "DE",
+      "goodsDescription": "Machined drivetrain components [example goods]",
+      "issuedBy": "Chamber of Commerce of DE [synthetic issuer reference]",
+      "status": "issued",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "coo-ex-2",
+      "shipmentId": "shp-ex-2",
+      "typingAnchor": "UN/CEFACT CoO grain (field shapes only — values synthetic)",
+      "originCountry": "CL",
+      "goodsDescription": "Packaged specialty foodstuffs [example goods]",
+      "issuedBy": "Chamber of Commerce of CL [synthetic issuer reference]",
+      "status": "issued",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "coo-ex-3",
+      "shipmentId": "shp-ex-3",
+      "typingAnchor": "UN/CEFACT CoO grain (field shapes only — values synthetic)",
+      "originCountry": "DE",
+      "goodsDescription": "Industrial pump assemblies [example goods]",
+      "issuedBy": "Chamber of Commerce of DE [synthetic issuer reference]",
+      "status": "issued",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "coo-ex-4",
+      "shipmentId": "shp-ex-4",
+      "typingAnchor": "UN/CEFACT CoO grain (field shapes only — values synthetic)",
+      "originCountry": "US",
+      "goodsDescription": "Machined drivetrain components [example goods]",
+      "issuedBy": "Chamber of Commerce of US [synthetic issuer reference]",
+      "status": "issued",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "coo-ex-5",
+      "shipmentId": "shp-ex-5",
+      "typingAnchor": "UN/CEFACT CoO grain (field shapes only — values synthetic)",
+      "originCountry": "CL",
+      "goodsDescription": "Dried botanical extracts [example goods]",
+      "issuedBy": "Chamber of Commerce of CL [synthetic issuer reference]",
+      "status": "issued",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "coo-ex-6",
+      "shipmentId": "shp-ex-6",
+      "typingAnchor": "UN/CEFACT CoO grain (field shapes only — values synthetic)",
+      "originCountry": "DE",
+      "goodsDescription": "Industrial pump assemblies [example goods]",
+      "issuedBy": "Chamber of Commerce of DE [synthetic issuer reference]",
+      "status": "issued",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "phytosanitaryCertificates": [
+    {
+      "id": "phy-ex-1",
+      "shipmentId": "shp-ex-2",
+      "typingAnchor": "ePhyto-adjacent grain [UNVERIFIED anchor per register row] — values synthetic",
+      "originCountry": "CL",
+      "commodity": "Packaged specialty foodstuffs [example goods]",
+      "inspection": "passed [synthetic inspection record]",
+      "status": "issued",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "phy-ex-2",
+      "shipmentId": "shp-ex-5",
+      "typingAnchor": "ePhyto-adjacent grain [UNVERIFIED anchor per register row] — values synthetic",
+      "originCountry": "CL",
+      "commodity": "Dried botanical extracts [example goods]",
+      "inspection": "passed [synthetic inspection record]",
+      "status": "issued",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "commercialInvoices": [
+    {
+      "id": "inv-ex-1",
+      "shipmentId": "shp-ex-1",
+      "typingAnchor": "UN/CEFACT commercial-invoice grain (field shapes only — values synthetic)",
+      "sellerId": "pty-ex-1",
+      "buyerId": "pty-ex-3",
+      "incoterm": "EXW",
+      "currency": "USD",
+      "totalValue": 4630,
+      "lines": [
+        {
+          "description": "Machined drivetrain components [example goods]",
+          "quantity": 10,
+          "unitPrice": 101
+        }
+      ],
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "inv-ex-2",
+      "shipmentId": "shp-ex-2",
+      "typingAnchor": "UN/CEFACT commercial-invoice grain (field shapes only — values synthetic)",
+      "sellerId": "pty-ex-2",
+      "buyerId": "pty-ex-3",
+      "incoterm": "FOB",
+      "currency": "USD",
+      "totalValue": 5740,
+      "lines": [
+        {
+          "description": "Packaged specialty foodstuffs [example goods]",
+          "quantity": 20,
+          "unitPrice": 102
+        }
+      ],
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "inv-ex-3",
+      "shipmentId": "shp-ex-3",
+      "typingAnchor": "UN/CEFACT commercial-invoice grain (field shapes only — values synthetic)",
+      "sellerId": "pty-ex-1",
+      "buyerId": "pty-ex-3",
+      "incoterm": "FOB",
+      "currency": "USD",
+      "totalValue": 6030,
+      "lines": [
+        {
+          "description": "Industrial pump assemblies [example goods]",
+          "quantity": 30,
+          "unitPrice": 103
+        }
+      ],
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "inv-ex-4",
+      "shipmentId": "shp-ex-4",
+      "typingAnchor": "UN/CEFACT commercial-invoice grain (field shapes only — values synthetic)",
+      "sellerId": "pty-ex-1",
+      "buyerId": "pty-ex-3",
+      "incoterm": "DAP",
+      "currency": "USD",
+      "totalValue": 7533,
+      "lines": [
+        {
+          "description": "Machined drivetrain components [example goods]",
+          "quantity": 40,
+          "unitPrice": 104
+        }
+      ],
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "inv-ex-5",
+      "shipmentId": "shp-ex-5",
+      "typingAnchor": "UN/CEFACT commercial-invoice grain (field shapes only — values synthetic)",
+      "sellerId": "pty-ex-2",
+      "buyerId": "pty-ex-3",
+      "incoterm": "EXW",
+      "currency": "USD",
+      "totalValue": 8803,
+      "lines": [
+        {
+          "description": "Dried botanical extracts [example goods]",
+          "quantity": 50,
+          "unitPrice": 105
+        }
+      ],
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "inv-ex-6",
+      "shipmentId": "shp-ex-6",
+      "typingAnchor": "UN/CEFACT commercial-invoice grain (field shapes only — values synthetic)",
+      "sellerId": "pty-ex-1",
+      "buyerId": "pty-ex-3",
+      "incoterm": "FOB",
+      "currency": "USD",
+      "totalValue": 9644,
+      "lines": [
+        {
+          "description": "Industrial pump assemblies [example goods]",
+          "quantity": 60,
+          "unitPrice": 106
+        }
+      ],
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "customsEntries": [
+    {
+      "id": "ent-ex-1",
+      "shipmentId": "shp-ex-1",
+      "htsShaped": "EX11.01.0010 [synthetic HTS-shaped code — not a real classification; the register row flags this grain UNVERIFIED]",
+      "destinationCountry": "US",
+      "declaredValue": 4630,
+      "status": "filed",
+      "broker_note": "brokerage is a licensed act (19 CFR 111) performed by the operator, never by this layer — this record is the typed document trail only",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ent-ex-2",
+      "shipmentId": "shp-ex-2",
+      "htsShaped": "EX12.02.0020 [synthetic HTS-shaped code — not a real classification; the register row flags this grain UNVERIFIED]",
+      "destinationCountry": "US",
+      "declaredValue": 5740,
+      "status": "filed",
+      "broker_note": "brokerage is a licensed act (19 CFR 111) performed by the operator, never by this layer — this record is the typed document trail only",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ent-ex-3",
+      "shipmentId": "shp-ex-3",
+      "htsShaped": "EX13.03.0030 [synthetic HTS-shaped code — not a real classification; the register row flags this grain UNVERIFIED]",
+      "destinationCountry": "JP",
+      "declaredValue": 6030,
+      "status": "filed",
+      "broker_note": "brokerage is a licensed act (19 CFR 111) performed by the operator, never by this layer — this record is the typed document trail only",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ent-ex-4",
+      "shipmentId": "shp-ex-4",
+      "htsShaped": "EX14.04.0040 [synthetic HTS-shaped code — not a real classification; the register row flags this grain UNVERIFIED]",
+      "destinationCountry": "JP",
+      "declaredValue": 7533,
+      "status": "filed",
+      "broker_note": "brokerage is a licensed act (19 CFR 111) performed by the operator, never by this layer — this record is the typed document trail only",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ent-ex-5",
+      "shipmentId": "shp-ex-5",
+      "htsShaped": "EX15.05.0050 [synthetic HTS-shaped code — not a real classification; the register row flags this grain UNVERIFIED]",
+      "destinationCountry": "DE",
+      "declaredValue": 8803,
+      "status": "filed",
+      "broker_note": "brokerage is a licensed act (19 CFR 111) performed by the operator, never by this layer — this record is the typed document trail only",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ent-ex-6",
+      "shipmentId": "shp-ex-6",
+      "htsShaped": "EX16.06.0060 [synthetic HTS-shaped code — not a real classification; the register row flags this grain UNVERIFIED]",
+      "destinationCountry": "US",
+      "declaredValue": 9644,
+      "status": "released",
+      "broker_note": "brokerage is a licensed act (19 CFR 111) performed by the operator, never by this layer — this record is the typed document trail only",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the trade-customs substrate; not real shipment, party, document, or customs data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ]
+}
