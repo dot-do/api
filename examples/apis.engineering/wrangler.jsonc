@@ -1,0 +1,28 @@
+{
+  // apis.engineering — wave zero of register row engineering-architecture
+  // Deploy: wrangler deploy (from this directory)
+  //
+  // DNS PREREQUISITE (deploy-time act, not done by this build): NO Cloudflare
+  // zone exists for apis.engineering today (surface register 2026-08-23:
+  // cf_zone = n; the domain is held at Dynadot, name-only, nothing serving).
+  // Zone creation + nameserver cutover are founder acts; until then this
+  // worker is reachable only on its workers.dev address. The route below is
+  // therefore commented out — declaring it against a zone that does not
+  // exist would be a ghost surface.
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "apis-engineering",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-01-24",
+
+  // "routes": [{ "pattern": "apis.engineering/*", "zone_name": "apis.engineering" }],
+
+  "vars": {
+    "API_NAME": "apis.engineering"
+  }
+
+  // Metering seam transport (§7.4) — bind when the dataset exists; the seam
+  // logs structured events regardless.
+  // "analytics_engine_datasets": [
+  //   { "binding": "METERS", "dataset": "apis_engineering_meters" }
+  // ]
+}
