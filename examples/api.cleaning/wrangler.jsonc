@@ -1,0 +1,20 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "api-cleaning",
+  // Build first: npx tsx build.ts  (bundles worker.ts → _worker.js,
+  // externalizing the framework's optional oauth.do/rpc.do imports)
+  "main": "_worker.js",
+  "no_bundle": true,
+  "compatibility_date": "2026-01-24",
+
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
+
+  // api.cleaning is HELD but ZONELESS (porkbun, no CF zone — register state
+  // name-only; Batch-S zone provisioning is the gating action). Zonelessness
+  // blocks SERVING at the domain only, never this build. Route attachment is
+  // a deploy decision — uncomment after the zone exists:
+  // "routes": [{ "pattern": "api.cleaning/*", "zone_name": "api.cleaning" }]
+}

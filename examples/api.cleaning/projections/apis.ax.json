@@ -1,0 +1,26 @@
+{
+  "$comment": "G4 projection config (spec §2) — Projection 2 of the facilities-services substrate: the universal agent-first register entry. RECORDED, not served by this worker (non-exclusivity is the pricing-experiment mechanism; apis.ax lists every substrate).",
+  "substrate": "facilities-services",
+  "brand": "apis.ax",
+  "domains": ["apis.ax"],
+  "served": false,
+  "icp": { "companyTypes": ["autonomous agents (B2A universal)"], "jobTypes": ["agent"] },
+  "personas": [{ "id": "agent", "role": "autonomous agent; machine identity via id.org.ai" }],
+  "motion": "B2A",
+  "offer": [
+    { "shape": "anon-sandbox", "gate": "none — keyless (rung 0)", "price": "free" },
+    { "shape": "earned-credits", "gate": ".ax-ledger credits earned via proof-of-work (rung 1)", "price": "earned" },
+    { "shape": "human-claimed", "gate": "human claims the agent workspace (rung 2)", "price": "free/earned, longer tenure" },
+    { "shape": "paid-402", "gate": "402 metering against machine identity (rung 3)", "price": "metered" }
+  ],
+  "pricing": { "pattern": "402-metered-per-call", "rateCardRef": "/pricing", "note": "same operations, same rate-card operationIds as api.cleaning — the §5.3 guardrail compares same-shape identical-call prices across the two faces; at wave zero the rate cards are identical, so no divergence exists to check" },
+  "positioning": "agent-default CANDIDATE for the category — claim withheld until the §4.6 worthiness bar attests; carries the §5.3 guardrail obligation when claimed",
+  "experiment": {
+    "pattern": "402-metered-per-call",
+    "motion": "B2A",
+    "shapes": ["anon-sandbox", "earned-credits", "human-claimed", "paid-402"],
+    "rateCardRef": "/pricing",
+    "startDate": "2026-08-23",
+    "hypothesis": "the universal register face converts returning agent identities better than the vertical rail name"
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "$comment": "G4 projection config (spec §2) — Projection 1 of the facilities-services substrate. Content, not code. SERVED by this example worker.",
+  "substrate": "facilities-services",
+  "brand": "api.cleaning",
+  "domains": ["api.cleaning"],
+  "served": true,
+  "servingNote": "api.cleaning is held but ZONELESS (porkbun, no CF zone; Batch-S zone provisioning is the gating action) — this blocks serving at the domain only, never the build. The worker serves the full face today under wrangler dev / workers.dev.",
+  "icp": {
+    "companyTypes": ["janitorial company", "landscaping company", "pest-control operator", "facility-management function (demand side, every company)"],
+    "jobTypes": ["owner-operator", "ops scheduler", "facility manager"]
+  },
+  "personas": [
+    { "id": "supply-owner-operator", "role": "owner-operator of a building-services company (supply side)" },
+    { "id": "supply-ops-scheduler", "role": "ops scheduler dispatching recurring crews (supply side)" },
+    { "id": "demand-facility-manager", "role": "facility manager buying the service (demand side)" }
+  ],
+  "motion": "B2A",
+  "offer": [
+    { "shape": "anon-sandbox", "gate": "none — keyless (rung 0, the universal floor)", "price": "free; labeled synthetic seed; disclosed ephemeral retention" },
+    { "shape": "earned-credits", "gate": ".ax-ledger credits earned via proof-of-work (#17: tasks, object generations); machine identity via id.org.ai — never OAuth, never a card (rung 1)", "price": "earned" },
+    { "shape": "human-claimed", "gate": "a human claims the agent's workspace — attribution → tenure (rung 2)", "price": "free/earned, longer tenure" },
+    { "shape": "paid-402", "gate": "402 metering against machine identity (rung 3) — settlement rail not yet activated (A1 charter); the 402 OFFER + checkout seam is served as a labeled stub", "price": "metered per rate card" }
+  ],
+  "pricing": {
+    "pattern": "402-metered-per-call",
+    "rateCardRef": "/pricing",
+    "note": "metered record reads (getWorkOrder $0.002, freeQuota 100) + a per-dispatched-work-order row on dispatchWorkOrder ($19/dispatch — labeled stub: dispatch rail not built, settlement not activated); every other operation prices from zero"
+  },
+  "railLedger": "https://ledger.apis.ax/faces?face=api.cleaning",
+  "positioning": "the rail an agent calls to get cleaning",
+  "positioningNote": "agent-default claim WITHHELD until the §4.6 worthiness bar passes (conformance + live anon sandbox + verified published suite with runs on record)",
+  "mdx": "custom landing in this worker (spec §7.1: custom site allowed at wave zero; per-brand MDX layer on the shared renderer deferred to extraction)",
+  "experiment": {
+    "pattern": "402-metered-per-call",
+    "motion": "B2A",
+    "shapes": ["anon-sandbox", "earned-credits", "human-claimed", "paid-402"],
+    "rateCardRef": "/pricing",
+    "startDate": "2026-08-23",
+    "hypothesis": "metered record reads plus a per-dispatch row beat a pure freemium floor on revenue per substrate call once the dispatch rail exists"
+  },
+  "recordTypeCollision": {
+    "type": "WorkOrder / ServiceVisit (the (811, 5617) FSM span's THE WORK ORDER grain)",
+    "adjacentRows": ["repair-field-services", "fn-facilities-assets"],
+    "primacyRuling": "NONE found in the register as of 2026-08-23",
+    "resolution": "built under THIS row's key: row-scoped schema addresses (https://schema.org.ai/facilities-services/WorkOrder, …/ServiceVisit); nothing shared is claimed; a future primacy ruling reconciles the row-scoped types into the shared address"
+  },
+  "counterpartBrand": {
+    "state": "gap-recorded",
+    "gap": "the cell's ICP includes non-technical principals (facility managers demand-side; owner-operators supply-side) and the register row names NO human-vocabulary demand brand — a counterpart-brand gap per spec §5.1 B2A2B. gigs.cleaning is the supply DOOR (out of register naming scope, pairing only), not a demand counterpart.",
+    "trigger": "the §9.3 diagnostic — agent-referred human traffic arriving on this agent-first rail (traffic seam already emits identity class × referral source)",
+    "note": "recorded as a gap, not a candidate name; naming per #3 when triggered, filed against the register row"
+  }
+}
