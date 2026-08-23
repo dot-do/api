@@ -1,0 +1,129 @@
+/**
+ * ingest-numbering.mjs — the Class-A ingest step for the NumberingResource
+ * noun (register row telecom, source route: public-licensable ingest first —
+ * FCC/NANPA-class registers).
+ *
+ * Fetches the REAL public NANPA NPA (area code) report — keyless CSV,
+ * probed reachable in-session (reports.nanpa.com, 200 OK) — and writes
+ * seed-numbering.js: a versioned module with full provenance on the corpus
+ * and on every record. Re-running is the reseed build step (§5.2.5).
+ *
+ * This is the only REAL-data noun at wave zero. The other FCC-class feeds
+ * probed in-session were NOT reachable (License View 301→403 Access Denied,
+ * broadband map API 401) and stay on the enrichment ladder — recorded
+ * honestly, never faked. PortOrder / CoverageRecord / UsageRecord stay
+ * synthetic: LNP port data and CDRs are carrier-confidential by nature.
+ *
+ * Run: node scripts/ingest-numbering.mjs
+ */
+
+import { writeFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+
+const OUT = join(dirname(fileURLToPath(import.meta.url)), "..", "seed-numbering.js");
+const ENDPOINT = "https://reports.nanpa.com/public/npa_report.csv";
+
+/** Minimal CSV parser (quoted fields, embedded commas). */
+function parseCsv(text) {
+  const rows = [];
+  let row = [], field = "", inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; }
+        else inQuotes = false;
+      } else field += ch;
+    } else if (ch === '"') inQuotes = true;
+    else if (ch === ",") { row.push(field); field = ""; }
+    else if (ch === "\n" || ch === "\r") {
+      if (ch === "\r" && text[i + 1] === "\n") i++;
+      row.push(field); field = "";
+      if (row.length > 1 || row[0] !== "") rows.push(row);
+      row = [];
+    } else field += ch;
+  }
+  if (field !== "" || row.length > 0) { row.push(field); rows.push(row); }
+  return rows;
+}
+
+const res = await fetch(ENDPOINT);
+if (!res.ok) throw new Error(`NANPA answered ${res.status} — ingest aborted, seed-numbering.js left unchanged`);
+const csv = await res.text();
+const retrievedAt = new Date().toISOString();
+
+const rows = parseCsv(csv);
+// Row 0: "File Date,MM/DD/YYYY" — the publisher's own as-of stamp.
+const fileDate = rows[0]?.[0] === "File Date" ? rows[0][1] : undefined;
+const header = rows[1];
+const col = (name) => header.indexOf(name);
+const iNpa = col("NPA_ID"), iType = col("type_of_code"), iAssigned = col("ASSIGNED"), iAssignDt = col("ASSIGNMENT_DT"),
+  iUse = col("USE"), iLocation = col("LOCATION"), iCountry = col("COUNTRY"), iInService = col("IN_SERVICE"),
+  iInServiceDt = col("IN_SERVICE_DT"), iOverlay = col("OVERLAY"), iOverlayComplex = col("OVERLAY_COMPLEX"),
+  iTz = col("TIME_ZONE"), iJeopardy = col("IN_JEOPARDY"), iRelief = col("RELIEF_PLANNING_IN_PROGRESS");
+for (const [n, i] of Object.entries({ NPA_ID: iNpa, type_of_code: iType, ASSIGNED: iAssigned, IN_SERVICE: iInService })) {
+  if (i < 0) throw new Error(`NANPA report header is missing ${n} — the report shape changed; ingest aborted`);
+}
+
+// The ingest filter — recorded verbatim in the corpus provenance:
+// assigned, in-service, geographic (US + Canada) general-purpose codes.
+const FILTER = "type_of_code=General Purpose Code AND ASSIGNED=Yes AND IN_SERVICE=Y AND COUNTRY in (US, CANADA)";
+const resources = rows
+  .slice(2)
+  .filter((r) => r[iType] === "General Purpose Code" && r[iAssigned] === "Yes" && r[iInService] === "Y" && (r[iCountry] === "US" || r[iCountry] === "CANADA"))
+  .map((r) => ({
+    $type: "NumberingResource",
+    id: `npa_${r[iNpa]}`,
+    npa: r[iNpa],
+    kind: "general-purpose",
+    use: r[iUse],
+    location: r[iLocation],
+    country: r[iCountry],
+    assigned: true,
+    assignmentDate: r[iAssignDt] || undefined,
+    inService: true,
+    inServiceDate: r[iInServiceDt] || undefined,
+    overlay: r[iOverlay] === "Yes",
+    overlayComplex: r[iOverlayComplex] || undefined,
+    timeZone: r[iTz] || undefined,
+    inJeopardy: r[iJeopardy] === "Yes",
+    reliefPlanningInProgress: r[iRelief] === "Yes",
+    source: "NANPA",
+    real: true,
+  }));
+
+if (resources.length === 0) throw new Error("ingest returned zero numbering resources — refusing to write an empty corpus");
+
+const provenance = {
+  kind: "ingested",
+  source: ENDPOINT,
+  publisher: "North American Numbering Plan Administrator (NANPA)",
+  reportFileDate: fileDate,
+  filter: FILTER,
+  retrievedAt,
+  records: resources.length,
+  license:
+    "Public numbering-administration report served keylessly by NANPA at the source URL; factual registry data reproduced as published at retrievedAt. Refresh via scripts/ingest-numbering.mjs.",
+  note: "REAL public NANPA area-code (NPA) registry data. Not synthetic. Values are as published by the source at retrievedAt.",
+};
+
+const moduleText = `/**
+ * seed-numbering.js — GENERATED by scripts/ingest-numbering.mjs (do not
+ * hand-edit; re-run the script to refresh). REAL public data, ingested —
+ * the NumberingResource noun's Class-A corpus (the NANPA NPA report).
+ * The corpus carries its provenance; nothing here is synthetic and nothing
+ * is labeled example.
+ */
+
+export const NUMBERING_PROVENANCE = Object.freeze(${JSON.stringify(provenance, null, 2)});
+
+export const numberingResources = ${JSON.stringify(resources, null, 2)};
+
+export function getNumberingResource(id) {
+  return numberingResources.find((r) => r.id === id || r.npa === id);
+}
+`;
+
+writeFileSync(OUT, moduleText);
+console.log(`wrote ${OUT} — ${resources.length} real numbering resources (file date ${fileDate}), retrieved ${retrievedAt}`);

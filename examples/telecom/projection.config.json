@@ -1,0 +1,63 @@
+{
+  "$type": "G4Projection",
+  "spec": "docs/plans/2026-08-23-property-template-spec.md §2 (studio repo)",
+  "substrate": "telecom",
+  "brand": null,
+  "brandStatus": "TRUE-ZERO GAP (register row telecom, NAICS 517): zero names held AND zero named acquisition candidates — one of the register's true zero rows. Per spec §0 this projection instantiates everything except the brand; the G3 work is not blocked on the name. Serving placeholder: telecom.org.ai (row-key placeholder, open question #4 route, per the D-row precedent). G4 brand attachment held pending #16; the register's grammar proposals for the acquisition list (api.telecom / apis.telecom, availability UNVERIFIED) are recorded there, not asserted here.",
+  "domains": ["telecom.org.ai (placeholder — replaced at brand attach, register #16)"],
+  "icp": {
+    "companyTypes": [
+      "MVNOs and connectivity resellers [register ICP marked UNVERIFIED — carried verbatim]",
+      "IT-ops connectivity buyers managing numbers, coverage, and usage across carriers"
+    ],
+    "jobTypes": ["network/IT operations seat", "reseller back-office operator", "provisioning coordinator"]
+  },
+  "personas": [
+    { "name": "reseller operations lead", "kind": "human" },
+    { "name": "IT-ops connectivity buyer", "kind": "human" },
+    { "name": "provisioning agent", "kind": "machine" }
+  ],
+  "motion": "B2A",
+  "motionNotes": "Agent-first at wave zero: the machine face is the only serving surface and its buyer is an autonomous agent (no OAuth, no CC — id.org.ai machine identity + 402 metering when settlement activates). The cell's principals (reseller operators, IT-ops seats) largely do not speak API, so the mature motion includes B2A2B — and this row is a RECORDED COUNTERPART-BRAND GAP: unlike public-admin (owned artifact doors) the telecom row holds NO human-vocabulary name at all. The §9.3 diagnostic (agent-referred human traffic on this machine face) triggers a counterpart-brand proposal against the register row, named per #3 — never API-vocabulary patches on this surface.",
+  "offer": [
+    { "shape": "anon-sandbox", "gate": "none — keyless", "price": "free", "notes": "universal floor; labeled synthetic reseller back-office seed (§5.2) plus REAL provenance-labeled NANPA numbering data; stateless at wave zero. MOUNTED." },
+    { "shape": "paid-402", "gate": "402 metering against machine identity (id.org.ai grain)", "price": "metered; per-outcome on orderNumberPort", "notes": "MOUNTED as a labeled 402-shaped stub — no live settlement; test-mode counts as face-payable. The only rung advertised above the floor." }
+  ],
+  "offerNotes": "Batch ruling: only MOUNTED ladder rungs are advertised. The earned-credits and human-claimed rungs of the #17 ladder are neither mounted nor advertised; they enter the offer array and the 402 alternatives when their rails mount.",
+  "pricing": {
+    "pattern": "per-outcome",
+    "rateCard": "/pricing (rates[] top-level in the Pricing Document — NATIVE axp-ext-rates-g2@0.2.0 emission, no bridge)",
+    "pricingDocument": "/pricing",
+    "guardrailNote": "No agent-default claim is carried, so the §5.3 same-shape price guardrail imposes no obligation on siblings yet; the harness comparison arms if the claim is ever earned and taken. No sibling projection of this substrate exists at wave zero."
+  },
+  "positioning": "The reseller's telecom back office — numbering, porting, serviceability, and rated usage as one typed, verifiable surface. (The 'agent default' claim is WITHHELD: the §4.6 worthiness bar — hosted conformance verdict + live anon sandbox + continuously verified published suite — has not been attested by api.qa yet.)",
+  "mdx": null,
+  "mdxNotes": "Custom minimal HTML landing at wave zero (§7.1 prove-then-extract); per-brand MDX layer deferred to the shared-renderer extraction and to the brand attach.",
+  "sourceRouteProbes": {
+    "probedAt": "2026-08-23",
+    "reachable": [
+      { "feed": "NANPA NPA report", "url": "https://reports.nanpa.com/public/npa_report.csv", "result": "200 OK keyless — INGESTED (NumberingResource, 444 records, provenance served)" }
+    ],
+    "unreachable": [
+      { "feed": "FCC License View API", "url": "https://data.fcc.gov/api/license-view/basicSearch/getLicenses", "result": "301 → 403 Access Denied (edge block) — stays on the enrichment ladder; SpectrumLicense noun deferred" },
+      { "feed": "FCC National Broadband Map API", "url": "https://broadbandmap.fcc.gov/api/public/map/listAsOfDates", "result": "401 — requires authentication; broadband-availability records deferred" }
+    ]
+  },
+  "registerDefects": [
+    "headless ply: OSS/BSS pair marked [UNVERIFIED] in the row — not confirmed in the 52-System catalog; needs the headless.ly catalog re-run at NAICS 517 (the row's own cheapest-next-fact). Coordinate carried verbatim with the caveat attached (spec §0: filed upstream, not improvised).",
+    "ICP marked [UNVERIFIED] in the row — carried verbatim with the mark."
+  ],
+  "railLedger": {
+    "status": "blocked-on-rail-ledger",
+    "checkedAt": "2026-08-23",
+    "note": "§9.1 final box (face registered in the rail ledger / faces-payable-per-week denominator): the rail-ledger service exists only as UNCOMMITTED working-tree files in the ax repo's rail-ledger worktree (packages/rail-ledger, untracked; no LEDGER.md, no address convention on the committed draft/rail-ledger-v1 branch as of this build). Recorded blocked rather than stubbed, per the standing rule: never stub a fake ledger. Register this face when the ledger's address convention lands."
+  },
+  "experiment": {
+    "pattern": "per-outcome",
+    "motion": "B2A",
+    "shapes": ["anon-sandbox", "paid-402"],
+    "rateCardRef": "/pricing#rates",
+    "startDate": "2026-08-23",
+    "hypothesis": "Outcome-priced number ports beat per-call metering on revenue per substrate call for the reseller back office; real public numbering data at a free floor is the acquisition surface for the provisioning-agent persona."
+  }
+}

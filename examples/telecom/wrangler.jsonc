@@ -1,0 +1,8 @@
+{
+  // telecom — wave-zero property worker (row-key placeholder address).
+  // Deploys when the telecom.org.ai zone/route is provisioned; the §7.4
+  // analytics seam binds here as SEAMS when the unified plane exists.
+  "name": "telecom-org-ai",
+  "main": "worker.js",
+  "compatibility_date": "2026-08-01"
+}

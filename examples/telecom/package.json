@@ -1,0 +1,16 @@
+{
+  "name": "telecom.example",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "telecom — the NAICS 517 register row's wave-zero property (true-zero GAP, row-key placeholder): port orders, serviceability, rated usage, and real NANPA numbering data behind an AXP machine face",
+  "scripts": {
+    "test": "vitest run",
+    "verify": "node scripts/selfverify.mjs",
+    "ingest": "node scripts/ingest-numbering.mjs"
+  },
+  "devDependencies": {
+    "autonomous-qa": "link:../../../api.qa",
+    "vitest": "^3.0.0"
+  }
+}
