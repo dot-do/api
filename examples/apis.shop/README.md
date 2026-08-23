@@ -74,6 +74,8 @@ diagnostic's raw signal — gap recorded in the projection config).
 
 - **apis.shop renewal due 2026-12-12** — Batch-S dated admin, not a build gate.
 - CF zone exists (zone-only state); route attachment is a deploy decision.
-- Rail-ledger registration (§9.1 final box): **blocked-on-rail-ledger** — no
-  rail ledger exists in the ax repo at build time; the box is recorded
-  blocked, never stubbed.
+- Rail-ledger registration (§9.1 final box): **REGISTERED** — registered via
+  LEDGER.md door A — row in packages/rail-ledger/registry/faces.json @
+  draft/rail-ledger-v1 (studio #9 alignment pass 2026-08-23); readout
+  https://ledger.apis.ax/readouts/faces-payable (service built, deploy
+  pending Batch-S).

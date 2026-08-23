@@ -3,6 +3,7 @@
   "substrate": "retail-ecommerce",
   "brand": "apis.shop",
   "domains": ["apis.shop"],
+  "railLedger": "https://ledger.apis.ax/faces?face=apis.shop",
   "served": true,
   "adminNote": "apis.shop renewal due 2026-12-12 (Batch-S dated admin, not a build gate). apis.shopping is held (name-only, marginal grammar) and is NOT projected.",
   "icp": {
