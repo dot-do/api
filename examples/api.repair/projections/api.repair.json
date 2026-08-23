@@ -1,0 +1,65 @@
+{
+  "$comment": "G4 projection config (spec §2) — the served projection of the repair-field-services substrate. Content, not code. SERVED by this example worker.",
+  "substrate": "repair-field-services",
+  "brand": "api.repair",
+  "domains": ["api.repair"],
+  "served": true,
+  "domainNote": "held (netim), zone live, no record; sits in the netim 2026-09-10 expiry block — renewal is the register row's gating administrative action (dated Batch-S admin), out of this build's scope",
+  "icp": {
+    "companyTypes": ["electronics repair shop", "machinery/industrial service company", "appliance repair operator"],
+    "jobTypes": ["service manager", "dispatcher", "estimator"]
+  },
+  "personas": [
+    { "id": "operator-service-manager", "role": "service manager running the shop or field operation" },
+    { "id": "operator-dispatcher", "role": "dispatcher routing work orders — entry is the record, not the truck [SC #14]" },
+    { "id": "operator-estimator", "role": "estimator pricing repair jobs" }
+  ],
+  "motion": "B2A",
+  "offer": [
+    { "shape": "anon-sandbox", "gate": "none — keyless", "price": "free; labeled example data; every free quota declared in the rate card" },
+    { "shape": "earned-credits", "gate": ".ax-ledger credits earned via proof-of-work (#17) — the credit ledger is not wired on this deployment; advertised as a labeled stub in every 402 OFFER's alternatives", "price": "earned" },
+    { "shape": "human-claimed", "gate": "a human claims the agent's workspace (attribution → tenure) — the claim door is not wired on this deployment; advertised as a labeled stub", "price": "free/earned, longer tenure" },
+    { "shape": "paid-402", "gate": "402 metering against machine identity (id.org.ai) — settlement rail not activated (A1 charter); the 402 boundary is served as a labeled stub, no billing occurs (test-mode counts as face-payable per DRAFT §7)", "price": "metered per rate card" }
+  ],
+  "pricing": {
+    "pattern": "402-metered-per-call",
+    "rateCardRef": "/pricing",
+    "note": "metered reads of THE record above free quotas; list reads free; FSM system-of-record writes metered above smaller quotas"
+  },
+  "railLedger": "https://ledger.apis.ax/faces?face=api.repair",
+  "positioning": "the rail an agent calls to get repair",
+  "positioningNote": "agent-default claim WITHHELD until the §4.6 worthiness bar passes (conformance + live anon sandbox + verified published suite with runs on record)",
+  "mdx": "custom landing in this worker (spec §7.1: custom site allowed at wave zero; per-brand MDX layer on the shared renderer deferred to extraction)",
+  "experiment": {
+    "pattern": "402-metered-per-call",
+    "motion": "B2A",
+    "shapes": ["anon-sandbox", "earned-credits", "human-claimed", "paid-402"],
+    "rateCardRef": "/pricing",
+    "startDate": "2026-08-23",
+    "hypothesis": "the work-order record rail converts agent reads to metered record consumption without any human onboarding step"
+  },
+  "collisions": [
+    {
+      "recordType": "WorkOrder",
+      "collidesWith": "fn-service-delivery substrate (api.services, branch draft/fn-service-delivery-wave0) — its WorkOrder at O*NET task grain",
+      "ruling": "NO primacy ruling in the register at build time; per the batch watch list this substrate builds its own WorkOrder under its own row key (FSM grain, the 811 field-service work order) and claims NOTHING shared",
+      "recordedAt": "2026-08-23"
+    },
+    {
+      "recordType": "FSM (system name)",
+      "collidesWith": "facilities-services row — the cascade tree names FSM for the (811, 5617) span (one abstraction, two vertical lenses; shared-system-span rule is a HYPOTHESIS, not a ruling)",
+      "ruling": "this substrate declares only its own coordinate FSM⟨repair-field-services⟩ and claims no shared implementation",
+      "recordedAt": "2026-08-23"
+    }
+  ],
+  "counterpartBrand": {
+    "state": "gap-recorded",
+    "gap": "the row's ICP is non-technical principals (service managers, dispatchers, estimators at repair shops) and the register holds NO human-vocabulary counterpart name for this cell ('No headless.*, data.*, or category-completing names') — a counterpart-brand gap per spec §5.1 B2A2B",
+    "trigger": "the §9.3 diagnostic — agent-referred human traffic arriving on this developer/agent brand (the traffic seam already tags identity class × referral source)",
+    "note": "response is a counterpart-brand proposal filed against the register row, named per #3 — never API-vocabulary patches on this surface"
+  },
+  "sourceRoute": {
+    "class": "A (register ruling — SD axis: first-party work-order capture generalizing from the live Vin recon/inspection/maintenance lanes)",
+    "probe": "2026-08-23: the live corpus is the AUTOMOTIVE (8111) instance, carved to the automotive row by the register; no ex-8111 corpus or consumption edge exists in this build session — wave-zero seed is labeled synthetic per §5.2; the route is recorded as the enrichment source, never claimed as serving"
+  }
+}

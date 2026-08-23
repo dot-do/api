@@ -1,0 +1,45 @@
+{
+  "$comment": "G4 projection config (spec §2) — Projection 1 of the accounting-tax substrate. Content, not code. SERVED by this example worker.",
+  "substrate": "accounting-tax",
+  "brand": "apis.accountants",
+  "domains": ["apis.accountants"],
+  "served": true,
+  "icp": {
+    "companyTypes": ["CPA/accounting firm", "SMB finance function"],
+    "jobTypes": ["accountant", "bookkeeper", "controller", "fractional CFO"]
+  },
+  "personas": [
+    { "id": "operator-firm-partner", "role": "firm partner operating the practice" },
+    { "id": "customer-firm-systems-developer", "role": "developer at a firm-systems vendor integrating the functions catalog" }
+  ],
+  "motion": "B2D",
+  "offer": [
+    { "shape": "anon-sandbox", "gate": "none — keyless", "price": "free" },
+    { "shape": "oauth-free-tier", "gate": "GitHub OAuth (labeled demo mode until OAuth credentials are configured; keys unpersisted, not yet enforced)", "price": "free quota" },
+    { "shape": "self-serve-metered", "gate": "key + card on file; 402 boundary — settlement rail not yet activated (A1 charter); the 402 OFFER + checkout seam is served as a labeled stub", "price": "metered per rate card" },
+    { "shape": "committed-subscription", "gate": "self-serve signup + commitment", "price": "declared in a future rate-card revision; not served today (presence-when-true: no tier row is published until it exists)" }
+  ],
+  "pricing": {
+    "pattern": "per-outcome",
+    "rateCardRef": "/pricing",
+    "note": "per-outcome on CloseDeliverables (row selector verdict: close grain passes agent-native + outcome-priced) + metered on record reads"
+  },
+  "railLedger": "https://ledger.apis.ax/faces?face=apis.accountants",
+  "positioning": "the functions an accounting firm's systems call",
+  "positioningNote": "agent-default claim WITHHELD until the §4.6 worthiness bar passes (conformance + live anon sandbox + verified published suite with runs on record)",
+  "mdx": "custom landing in this worker (spec §7.1: custom site allowed at wave zero; per-brand MDX layer on the shared renderer deferred to extraction)",
+  "experiment": {
+    "pattern": "per-outcome",
+    "motion": "B2D",
+    "shapes": ["anon-sandbox", "oauth-free-tier", "self-serve-metered", "committed-subscription"],
+    "rateCardRef": "/pricing",
+    "startDate": "2026-08-23",
+    "hypothesis": "outcome-priced close beats per-call on revenue per substrate call"
+  },
+  "counterpartBrand": {
+    "state": "candidate-recorded",
+    "candidate": "monthend.finance family (adjacent fn-finance row; category-completing, zero API vocabulary: 'your month-end close, done')",
+    "trigger": "the §9.3 diagnostic — agent-referred human traffic arriving on this developer brand",
+    "note": "recorded as a candidate, not asserted; named per #3 when triggered"
+  }
+}

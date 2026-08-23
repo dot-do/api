@@ -1,0 +1,24 @@
+{
+  "$comment": "G4 projection config (spec §2) — RECORDED, NOT SERVED. The held same-TLD pair sibling: apis.repair is the cell's outbound function face per the pair structure (register: UNVERIFIED curation proposal). Nothing serves at this brand today; this config is the non-exclusive projection record, not a claim.",
+  "substrate": "repair-field-services",
+  "brand": "apis.repair",
+  "domains": ["apis.repair"],
+  "served": false,
+  "icp": {
+    "companyTypes": ["FSM/shop-management software vendors", "warranty and insurance platforms consuming the work-order record"],
+    "jobTypes": ["developer integrating repair records", "platform engineer"]
+  },
+  "personas": [
+    { "id": "customer-integration-developer", "role": "developer at a vendor whose systems call the repair functions outbound" }
+  ],
+  "motion": "B2D",
+  "offer": [
+    { "shape": "anon-sandbox", "gate": "none — keyless", "price": "free" },
+    { "shape": "oauth-free-tier", "gate": "GitHub OAuth", "price": "free quota" },
+    { "shape": "self-serve-metered", "gate": "key + card on file; 402 boundary", "price": "metered" }
+  ],
+  "pricing": { "pattern": "freemium-ladder", "rateCardRef": null, "note": "no rate card exists for this projection — declared when it serves (presence-when-true)" },
+  "positioning": "the repair functions a vendor's systems call (outbound function face of the same-TLD pair)",
+  "experiment": null,
+  "note": "wave-zero build serves ONLY api.repair; this record exists so non-exclusivity is explicit from day one (spec §2: same-x pairs are two projections of one cell)"
+}

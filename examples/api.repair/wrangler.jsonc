@@ -1,0 +1,20 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "api-repair",
+  // Build first: npx tsx build.ts  (bundles worker.ts → _worker.js,
+  // externalizing the framework's optional oauth.do/rpc.do imports)
+  "main": "_worker.js",
+  "no_bundle": true,
+  "compatibility_date": "2026-01-24",
+
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
+
+  // api.repair is HELD (netim; zone live, no record) and sits in the
+  // 2026-09-10 netim expiry block — the RENEWAL is the register row's gating
+  // administrative action (dated Batch-S admin), not this build. Route
+  // attachment is a deploy decision, not a wave-zero requirement:
+  // "routes": [{ "pattern": "api.repair/*", "zone_name": "api.repair" }]
+}
