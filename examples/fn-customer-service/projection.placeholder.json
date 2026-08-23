@@ -21,7 +21,7 @@
     { "shape": "paid-402", "gate": "id.org.ai machine identity [gate not mounted at the placeholder address]", "price": "metered per rate card — STUB: 402-shaped boundary, no billing occurs", "status": "STUB, labeled in /pricing" }
   ],
   "offerGap": "#17 ladder rungs 1 (earned credits) and 2 (human-claimed) are NOT mounted and therefore NOT advertised in the 402 OFFER alternatives — declaring an unmounted rung would be a ghost surface (presence-when-true beats §9.1 box 8 until the rungs exist).",
-  "pricing": { "pattern": "402 metered per-call (stub)", "rateCardRef": "/pricing (rates[] inside the offer body)" },
+  "pricing": { "pattern": "402 metered per-call (stub)", "rateCardRef": "/pricing (top-level rates[], axp-ext-rates-g2 §2)" },
   "positioning": null,
   "positioningNote": "Withheld: a GAP row has no brand to position, and the agent-default claim is gated by the worthiness bar (§4.6) regardless.",
   "mdx": null,

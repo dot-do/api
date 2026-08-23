@@ -50,11 +50,13 @@ export const substrate = Object.freeze({
    * pattern and arrives with the extraction lane, spec §7.2.) */
   transports: ["REST", "MCP"],
 
-  /** OpenAPI operations — the only things a rate card may price.
-   * `listTickets` is served as the branching collection (generator
-   * operationId `listCollection`); the rest are site routes. */
+  /** OpenAPI operations — the only things a rate card may price. One
+   * canonical camelCase operationId per operation (axp-ext-rates-g2 §1):
+   * `listTickets` IS the branching collection's operationId
+   * (collection.operationId in manifest.mjs), the MCP tool name, and the
+   * rates[] key — one operation, one identifier, everywhere. */
   operations: [
-    { operation: "listCollection", method: "GET", path: "/tickets", noun: "Ticket", verb: "list" },
+    { operation: "listTickets", method: "GET", path: "/tickets", noun: "Ticket", verb: "list" },
     { operation: "getTicket", method: "GET", path: "/tickets/{ticketId}", noun: "Ticket", verb: "get" },
     { operation: "createTicket", method: "POST", path: "/tickets", noun: "Ticket", verb: "create" },
     { operation: "resolveTicket", method: "POST", path: "/tickets/{ticketId}/resolve", noun: "Ticket", verb: "resolve" },
@@ -78,7 +80,7 @@ export const substrate = Object.freeze({
 
   /** One meter per operation (seams only at wave zero — spec §7.4). */
   meters: [
-    "listCollection",
+    "listTickets",
     "getTicket",
     "createTicket",
     "resolveTicket",

@@ -14,7 +14,7 @@
 import { createAxpRoutes } from "./axp/routes.js";
 import { ok, empty, blocked, envelopeResponse } from "./axp/envelope.js";
 import { serveNegotiated } from "./axp/conneg.js";
-import { manifest, substrate, seed, ORIGIN } from "./manifest.mjs";
+import { manifest, substrate, seed, ORIGIN, g2 } from "./manifest.mjs";
 
 const axp = createAxpRoutes(manifest);
 
@@ -76,21 +76,16 @@ function listTicketsFiltered(params) {
 }
 
 /* ── the G2 coordinates (links.icp target) ──────────────────────────────── */
+/* ONE definition: the same G2 projection the card carries top-level (the
+   axp-ext-rates-g2 §4 `g2` member, declared in manifest.mjs) is projected
+   here as the /icp.json document — links.icp and g2 cannot drift. */
 const icpDoc = {
   $context: "https://schema.org.ai",
   $type: "ICP",
-  substrate: "fn-customer-service",
-  coordinates: {
-    companyTypes: "all — the horizontal Function × Department × Process root: every CompanyType's support/CX department",
-    departments: ["support", "customer-experience"],
-    jobTypes: ["support lead", "CX manager", "customer service representative"],
-  },
-  personas: [
-    { role: "support lead", reads: "ticket queues, resolution cycles", buys: "nothing here yet — wave zero" },
-    { role: "CX manager", reads: "deflection corpus at CompanyType grain", buys: "nothing here yet — wave zero" },
-    { role: "autonomous agent", reads: "everything on this face, keyless", onboarding: "B2A — no OAuth, no card; 402-shaped boundary (stub)" },
-  ],
-  firstCustomer: "internal — the estate's own portfolio properties run the same Ticket before any external motion",
+  substrate: g2.substrate,
+  coordinates: g2.icp,
+  personas: g2.personas,
+  firstCustomer: g2.firstCustomer,
 };
 
 /* ── /verify — claims as runnable probes, three faces ───────────────────── */
@@ -204,7 +199,7 @@ async function handleMcp(request) {
       if (envelope === null) {
         return Response.json({ jsonrpc: "2.0", id: rpc.id ?? null, error: { code: -32602, message: `unknown tool ${rpc.params?.name}` } });
       }
-      meter(request, rpc.params.name === "listTickets" ? "listCollection" : rpc.params.name);
+      meter(request, rpc.params.name); // the MCP tool name IS the canonical operationId (axp-ext-rates-g2 §1)
       return reply({ content: [{ type: "text", text: JSON.stringify(envelope) }], isError: false });
     }
     default:
@@ -274,10 +269,10 @@ export default {
     const hit = await axp(request, env);
     if (hit !== undefined) {
       if (path === manifest.collection.path && (request.method === "GET" || request.method === "HEAD")) {
-        meter(request, "listCollection");
+        meter(request, "listTickets");
         if (hit.status === 402) {
-          emitMoneyEvent(request, { event: "offer-presented", operation: "listCollection", boundary: "hard-ceiling" });
-          emitReceipt(request, { event: "offer-receipt", operation: "listCollection", note: "stub — no charge occurred" });
+          emitMoneyEvent(request, { event: "offer-presented", operation: "listTickets", boundary: "hard-ceiling" });
+          emitReceipt(request, { event: "offer-receipt", operation: "listTickets", note: "stub — no charge occurred" });
         }
       }
       return hit;
