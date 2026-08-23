@@ -1,0 +1,53 @@
+{
+  "$comment": "G4 projection config (spec §2) — Projection 1 of the construction substrate. Content, not code. SERVED by this example worker.",
+  "substrate": "construction",
+  "brand": "apis.construction",
+  "domains": ["apis.construction"],
+  "served": true,
+  "adminState": "ZONELESS — name held (porkbun, exp 2027-07-26), no Cloudflare zone (Batch-S admin; blocks serving only, never the build). Held siblings in the cell: api.contractors (netim, AT-RISK expiry block 2026-09-10 — administrative, not sequencing), apis.contractors, apis.builders, apis.plumbing.",
+  "icp": {
+    "companyTypes": ["general contractor", "specialty-trade subcontractor", "owner/developer"],
+    "jobTypes": ["project accountant", "construction PM", "back-office controller"]
+  },
+  "personas": [
+    { "id": "operator-project-accountant", "role": "project accountant assembling draws and chasing lien waivers (the paperwork function, not the field)" },
+    { "id": "customer-construction-systems-developer", "role": "developer at a construction-systems vendor integrating the payment-documentation set" }
+  ],
+  "motion": "B2D",
+  "offer": [
+    { "shape": "anon-sandbox", "gate": "none — keyless", "price": "free" },
+    { "shape": "oauth-free-tier", "gate": "GitHub OAuth (labeled demo mode until OAuth credentials are configured; keys unpersisted, not yet enforced)", "price": "free quota" },
+    { "shape": "self-serve-metered", "gate": "key + card on file; 402 boundary — settlement rail not yet activated (A1 charter); the 402 OFFER + checkout seam is served as a labeled stub", "price": "metered per rate card" },
+    { "shape": "committed-subscription", "gate": "self-serve signup + commitment", "price": "declared in a future rate-card revision; not served today (presence-when-true: no tier row is published until it exists)" }
+  ],
+  "pricing": {
+    "pattern": "per-outcome",
+    "rateCardRef": "/pricing",
+    "note": "per-outcome on DrawPackages (the payable unit is the completed, verified draw-package assembly) + metered on record reads"
+  },
+  "positioning": "the functions a construction back office's systems call",
+  "positioningNote": "agent-default claim WITHHELD until the §4.6 worthiness bar passes (conformance + live anon sandbox + verified published suite with runs on record)",
+  "mdx": "custom landing in this worker (spec §7.1: custom site allowed at wave zero; per-brand MDX layer on the shared renderer deferred to extraction)",
+  "experiment": {
+    "pattern": "per-outcome",
+    "motion": "B2D",
+    "shapes": ["anon-sandbox", "oauth-free-tier", "self-serve-metered", "committed-subscription"],
+    "rateCardRef": "/pricing",
+    "startDate": "2026-08-23",
+    "hypothesis": "outcome-priced draw-package assembly beats per-call on revenue per substrate call"
+  },
+  "sharedFaces": {
+    "state": "collision-recorded",
+    "record": "LienWaiver",
+    "sharedWith": "real-estate (real-estate-closing adjacency shares the lien-waiver record type, SC #10/#13)",
+    "primacyRuling": "NONE on record — per the batch rule this build claims only its own row key (construction) and records the collision; the shared face is not claimed",
+    "note": "if the real-estate row later builds a LienWaiver noun, a projection-primacy ruling is needed before either row claims the shared face"
+  },
+  "counterpartBrand": {
+    "state": "gap-recorded",
+    "candidate": null,
+    "gap": "the row's ICP includes non-technical principals (owner/developer, subcontractor back offices) and NO human-vocabulary counterpart name is on the register for the payment-documentation motion — bids.contractors (owned) is a gov-procurement door, a different motion, not a counterpart for draw/lien paperwork",
+    "trigger": "the §9.3 diagnostic — agent-referred human traffic arriving on this developer brand",
+    "note": "counterpart-brand gap recorded per spec §5.1 B2A2B rule; naming per #3 when triggered"
+  }
+}

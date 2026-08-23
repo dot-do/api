@@ -1,0 +1,27 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "apis-construction",
+  // Build first: npx tsx build.ts  (bundles worker.ts → _worker.js,
+  // externalizing the framework's optional oauth.do/rpc.do imports)
+  "main": "_worker.js",
+  "no_bundle": true,
+  "compatibility_date": "2026-01-24",
+
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
+
+  // apis.construction is ZONELESS (name held at porkbun, NO Cloudflare zone —
+  // Batch-S admin item; blocks serving only, never the build). Route
+  // attachment is a deploy decision AFTER zone provisioning:
+  // "routes": [{ "pattern": "apis.construction/*", "zone_name": "apis.construction" }]
+  //
+  // AT-RISK admin (administrative, not sequencing): the held sibling
+  // api.contractors sits in the netim 2026-09-10 expiry block.
+
+  // Optional: set GITHUB_CLIENT_ID (+ secret GITHUB_CLIENT_SECRET) to point
+  // /login at a real GitHub OAuth app. Without it the flow runs in labeled
+  // demo mode (keys random, unpersisted, not enforced).
+  // "vars": { "GITHUB_CLIENT_ID": "" }
+}
