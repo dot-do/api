@@ -1,0 +1,19 @@
+{
+  "name": "api-careers-example",
+  "private": true,
+  "version": "0.1.0",
+  "description": "api.careers — wave-zero payable machine face for the staffing-talent substrate (shared with fn-hr-talent)",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "dev": "wrangler dev"
+  },
+  "devDependencies": {
+    "autonomous-qa": "link:../../../api.qa",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild"]
+  }
+}
