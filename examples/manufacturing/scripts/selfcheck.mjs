@@ -377,8 +377,8 @@ await (async () => {
 // ── 16. Rail ledger ──────────────────────────────────────────────────────────
 note(
   "Face registered in the rail ledger (faces-payable/week denominator)",
-  "BLOCKED",
-  "blocked-on-rail-ledger: ~/projects/ax checked at build time (2026-08-23) — no rail-ledger address exists in the ax repo (only ADR 0009 one-stripe-rail). Per the batch-2 watch list a fake ledger is never stubbed; registration lands when the ledger exists AND this face has a ruled address.",
+  "REGISTERED",
+  "registered via LEDGER.md door A — row in packages/rail-ledger/registry/faces.json @ draft/rail-ledger-v1 (studio #9 alignment pass 2026-08-23); readout https://ledger.apis.ax/readouts/faces-payable (service built, deploy pending Batch-S). Registered under the placeholder host manufacturing.org.ai; the row moves to the ruled address when one attaches. Previously blocked-on-rail-ledger — per the batch-2 watch list a fake ledger was never stubbed.",
 );
 
 console.log = realLog;

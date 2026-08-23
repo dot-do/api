@@ -4,6 +4,7 @@
   "brand": null,
   "brandStatus": "GAP — zero market-face names held (register row, 2026-08-23: 'the largest gap: zero market-face names for the biggest B2B sector'); placeholder address manufacturing.org.ai (held G2 namespace) until ruled. The surface register lists manufacturing.dev as a gap-fill dev candidate [UNVERIFIED availability, no purchase implied]; naming is #3/#16's job, never this build's.",
   "domains": ["manufacturing.org.ai (placeholder — held G2 namespace, not a market face)"],
+  "railLedger": "https://ledger.apis.ax/faces?face=manufacturing.org.ai",
   "icp": {
     "companyTypes": ["manufacturer (discrete)", "manufacturer (process)", "industrial distributor"],
     "jobTypes": ["product-data / e-commerce ops manager", "master-data specialist", "engineering document control", "procurement"]
