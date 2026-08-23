@@ -1,0 +1,48 @@
+{
+  "$comment": "Stratum-B G4 projection config (template spec §2). GAP register row — the register's largest naming vacuum: zero market-face names held for NAICS 31-33 — so this projection runs under a placeholder org.ai address per spec §0 (manufacturing.org.ai is a held G2 namespace, not a market face); the brand fields attach when a name is ruled via the #16 acquisition lane. Nothing here implies acquisition of any name. Repo config, not a served surface.",
+  "substrate": "manufacturing",
+  "brand": null,
+  "brandStatus": "GAP — zero market-face names held (register row, 2026-08-23: 'the largest gap: zero market-face names for the biggest B2B sector'); placeholder address manufacturing.org.ai (held G2 namespace) until ruled. The surface register lists manufacturing.dev as a gap-fill dev candidate [UNVERIFIED availability, no purchase implied]; naming is #3/#16's job, never this build's.",
+  "domains": ["manufacturing.org.ai (placeholder — held G2 namespace, not a market face)"],
+  "icp": {
+    "companyTypes": ["manufacturer (discrete)", "manufacturer (process)", "industrial distributor"],
+    "jobTypes": ["product-data / e-commerce ops manager", "master-data specialist", "engineering document control", "procurement"]
+  },
+  "personas": [
+    { "id": "operator", "description": "product-data operations lead at a manufacturer (master-data grain buyer)" },
+    { "id": "developer", "description": "developer at a PIM/ERP/PLM systems vendor integrating item-master records" },
+    { "id": "agent", "description": "autonomous agent validating, enriching, or syndicating product master data, or issuing RFQs on a principal's behalf" }
+  ],
+  "motion": "B2A",
+  "offer": [
+    { "shape": "anon-sandbox", "price": "free", "gate": "none — keyless; auto-minted ephemeral workspace, disclosed retention. THE ONLY MOUNTED RUNG at wave zero (mounted-rungs rule: unmounted rungs are never advertised as live doors)." },
+    { "shape": "earned-credits", "price": "earned", "gate": "proof-of-work ladder rung 1 — STUB, NOT MOUNTED: declared in the 402 alternatives for ladder-shape discovery only (mounted:false); the credit ledger is not yet live. Free-with-proof-of-work syndication is the row's structural axis (register SC #15, HYPOTHESIS)." },
+    { "shape": "human-claimed", "price": "free/earned", "gate": "rung 2 — STUB, NOT MOUNTED: claim door not yet live (mounted:false in the 402 alternatives)." },
+    { "shape": "paid", "price": "metered (402, machine identity)", "gate": "rung 3 — STUB, NOT MOUNTED: test-mode, no live settlement (mounted:false in the 402 alternatives)." }
+  ],
+  "pricing": {
+    "pattern": "402-metered-per-call + per-outcome on item syndication",
+    "rateCardRef": "/pricing (rates[] top-level in the Pricing Document — the ruled axp-ext/rates-g2 placement; no separate rates address)",
+    "binding": false
+  },
+  "positioning": "typed product master data on the GS1/UNSPSC identity spine for manufacturing — agent-default claim WITHHELD (worthiness bar §4.6 not attempted: no ruled domain, no hosted verdict)",
+  "mdx": null,
+  "experiment": {
+    "pattern": "402-metered",
+    "motion": "B2A",
+    "shapes": ["anon-sandbox", "earned-credits", "human-claimed", "paid"],
+    "rateCardRef": "/pricing",
+    "startDate": "2026-08-23",
+    "hypothesis": "wave-zero registration only — sandbox-floor traffic shape on a placeholder address; pattern comparison begins when a G4 name attaches. Row-specific sub-hypothesis to test then: free-with-proof-of-work syndication (SC #15) vs per-outcome syndication pricing on the same substrate."
+  },
+  "counterpartBrandGap": {
+    "recorded": true,
+    "reason": "the row's ICP includes product-data ops and procurement principals who do not know what an API is, and the long-run demand shape includes agents syndicating master data or issuing RFQs on their behalf (B2A2B); no human-vocabulary counterpart name exists in this cell — the register row itself is the estate's largest naming GAP. Surfaced per spec §9.3; naming is #3's job, never this build's."
+  },
+  "registerRowCaveats": {
+    "grainDispute": "embedded in the row: DC sees the largest naming gap (breadth signal); SC/VC/FP all narrow to thin doors (master data / RFQ / DPP) — every verdict carries [H]. This build serves all three thin-door grains from one substrate without ranking them.",
+    "datedDemand": "the DPP statutory clock (EU battery regulation, 2027-02-18, VC #23) is the only dated demand attached to the sector — served as the ProductPassport Noun.",
+    "incumbencyProbe": "required before any vacancy claim is spent (register note); no vacancy claim is made anywhere on this property.",
+    "adjacentHoldings": "epcis.dev / barcoding.dev belong to the warehousing-traceability row, not this one — no family edge is emitted to them."
+  }
+}

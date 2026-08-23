@@ -1,0 +1,585 @@
+{
+  "$context": "https://schema.org.ai",
+  "substrate": "manufacturing",
+  "generated": "deterministic (mulberry32, keyed on substrate id) — reseed via scripts/generate-seed.mjs",
+  "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy.",
+  "fixtureLaw": {
+    "realNames": false,
+    "gs1DemoPrefix": "952 — every GTIN is 952-prefixed with a valid GTIN-13 check digit (routine self-tested)",
+    "syntheticIdentifiers": "00-prefixed EIN pattern; UNSPSC-EX-/GPC-EX-/HTS-EX- classification codes; *-ex-* record ids",
+    "secretScan": "no credentials present by construction"
+  },
+  "manufacturers": [
+    {
+      "id": "mfr-ex-1",
+      "name": "Coppervane Industrial Works LLC [example]",
+      "kind": "electrical-components",
+      "naics": "335",
+      "ein": "00-3100001",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "mfr-ex-2",
+      "name": "Thornemill Components Inc. [example]",
+      "kind": "fabricated-metal",
+      "naics": "332",
+      "ein": "00-3100002",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "mfr-ex-3",
+      "name": "Grindlewold Fabricators LLC [example]",
+      "kind": "machinery",
+      "naics": "333",
+      "ein": "00-3100003",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "counterparties": [
+    {
+      "id": "cp-ex-1",
+      "name": "Larkspindle Distribution Inc. [example]",
+      "role": "distributor",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "cp-ex-2",
+      "name": "Osselton Assembly Co. [example]",
+      "role": "oem-buyer",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "cp-ex-3",
+      "name": "Tarnbeck Retail Supply Cooperative [example]",
+      "role": "retail-buyer",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "items": [
+    {
+      "id": "item-ex-1",
+      "gtin": "9520000000011",
+      "name": "Terminal block, 12-position [example]",
+      "manufacturerId": "mfr-ex-2",
+      "brand": "Thornemill Components Inc. [example]",
+      "status": "active",
+      "gpcSegment": "fasteners-example",
+      "gpcBrick": "GPC-EX-5201",
+      "unspsc": "UNSPSC-EX-3101",
+      "identityAnchors": "GS1 GTIN/GPC + UNSPSC (typing anchors; codes on this record are synthetic schema-shaped examples)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "item-ex-2",
+      "gtin": "9520000000028",
+      "name": "Hex flange bolt M8×30, grade-EX [example]",
+      "manufacturerId": "mfr-ex-3",
+      "brand": "Grindlewold Fabricators LLC [example]",
+      "status": "active",
+      "gpcSegment": "power-storage-example",
+      "gpcBrick": "GPC-EX-5202",
+      "unspsc": "UNSPSC-EX-3102",
+      "identityAnchors": "GS1 GTIN/GPC + UNSPSC (typing anchors; codes on this record are synthetic schema-shaped examples)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "item-ex-3",
+      "gtin": "9520000000035",
+      "name": "Cable gland, IP67-style [example]",
+      "manufacturerId": "mfr-ex-1",
+      "brand": "Coppervane Industrial Works LLC [example]",
+      "status": "active",
+      "gpcSegment": "electrical-example",
+      "gpcBrick": "GPC-EX-5203",
+      "unspsc": "UNSPSC-EX-3103",
+      "identityAnchors": "GS1 GTIN/GPC + UNSPSC (typing anchors; codes on this record are synthetic schema-shaped examples)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "item-ex-4",
+      "gtin": "9520000000042",
+      "name": "Prismatic battery cell, 100Ah-class [example]",
+      "manufacturerId": "mfr-ex-2",
+      "brand": "Thornemill Components Inc. [example]",
+      "status": "active",
+      "gpcSegment": "fasteners-example",
+      "gpcBrick": "GPC-EX-5204",
+      "unspsc": "UNSPSC-EX-3104",
+      "identityAnchors": "GS1 GTIN/GPC + UNSPSC (typing anchors; codes on this record are synthetic schema-shaped examples)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "item-ex-5",
+      "gtin": "9520000000059",
+      "name": "Battery module housing, welded [example]",
+      "manufacturerId": "mfr-ex-3",
+      "brand": "Grindlewold Fabricators LLC [example]",
+      "status": "active",
+      "gpcSegment": "power-storage-example",
+      "gpcBrick": "GPC-EX-5205",
+      "unspsc": "UNSPSC-EX-3105",
+      "identityAnchors": "GS1 GTIN/GPC + UNSPSC (typing anchors; codes on this record are synthetic schema-shaped examples)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "item-ex-6",
+      "gtin": "9520000000066",
+      "name": "Torque hinge assembly [example]",
+      "manufacturerId": "mfr-ex-1",
+      "brand": "Coppervane Industrial Works LLC [example]",
+      "status": "active",
+      "gpcSegment": "electrical-example",
+      "gpcBrick": "GPC-EX-5206",
+      "unspsc": "UNSPSC-EX-3106",
+      "identityAnchors": "GS1 GTIN/GPC + UNSPSC (typing anchors; codes on this record are synthetic schema-shaped examples)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "item-ex-7",
+      "gtin": "9520000000073",
+      "name": "DIN-rail power relay [example]",
+      "manufacturerId": "mfr-ex-2",
+      "brand": "Thornemill Components Inc. [example]",
+      "status": "active",
+      "gpcSegment": "fasteners-example",
+      "gpcBrick": "GPC-EX-5207",
+      "unspsc": "UNSPSC-EX-3107",
+      "identityAnchors": "GS1 GTIN/GPC + UNSPSC (typing anchors; codes on this record are synthetic schema-shaped examples)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "item-ex-8",
+      "gtin": "9520000000080",
+      "name": "Stainless clevis pin 10mm [example]",
+      "manufacturerId": "mfr-ex-3",
+      "brand": "Grindlewold Fabricators LLC [example]",
+      "status": "active",
+      "gpcSegment": "power-storage-example",
+      "gpcBrick": "GPC-EX-5208",
+      "unspsc": "UNSPSC-EX-3108",
+      "identityAnchors": "GS1 GTIN/GPC + UNSPSC (typing anchors; codes on this record are synthetic schema-shaped examples)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "boms": [
+    {
+      "id": "bom-ex-1",
+      "itemId": "item-ex-4",
+      "revision": "R1.0",
+      "status": "released",
+      "components": [
+        {
+          "itemId": "item-ex-2",
+          "gtin": "9520000000028",
+          "quantity": 2,
+          "unit": "each"
+        },
+        {
+          "itemId": "item-ex-3",
+          "gtin": "9520000000035",
+          "quantity": 3,
+          "unit": "each"
+        }
+      ],
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "bom-ex-2",
+      "itemId": "item-ex-5",
+      "revision": "R2.0",
+      "status": "released",
+      "components": [
+        {
+          "itemId": "item-ex-3",
+          "gtin": "9520000000035",
+          "quantity": 3,
+          "unit": "each"
+        },
+        {
+          "itemId": "item-ex-4",
+          "gtin": "9520000000042",
+          "quantity": 4,
+          "unit": "each"
+        },
+        {
+          "itemId": "item-ex-6",
+          "gtin": "9520000000066",
+          "quantity": 6,
+          "unit": "each"
+        }
+      ],
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "bom-ex-3",
+      "itemId": "item-ex-6",
+      "revision": "R3.0",
+      "status": "released",
+      "components": [
+        {
+          "itemId": "item-ex-4",
+          "gtin": "9520000000042",
+          "quantity": 4,
+          "unit": "each"
+        },
+        {
+          "itemId": "item-ex-5",
+          "gtin": "9520000000059",
+          "quantity": 5,
+          "unit": "each"
+        }
+      ],
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "bom-ex-4",
+      "itemId": "item-ex-7",
+      "revision": "R4.0",
+      "status": "draft",
+      "components": [
+        {
+          "itemId": "item-ex-5",
+          "gtin": "9520000000059",
+          "quantity": 5,
+          "unit": "each"
+        },
+        {
+          "itemId": "item-ex-6",
+          "gtin": "9520000000066",
+          "quantity": 6,
+          "unit": "each"
+        }
+      ],
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "passports": [
+    {
+      "id": "dpp-ex-1",
+      "itemId": "item-ex-4",
+      "kind": "battery-passport",
+      "statute": "EU battery-regulation Digital Product Passport, statutory date 2027-02-18 (register VC #23; record content synthetic)",
+      "carbonFootprintKgCO2e": 18.4,
+      "recycledContentPct": 12,
+      "substancesOfConcern": [
+        "synthetic-example-substance-A"
+      ],
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "dpp-ex-2",
+      "itemId": "item-ex-5",
+      "kind": "battery-passport",
+      "statute": "EU battery-regulation Digital Product Passport, statutory date 2027-02-18 (register VC #23; record content synthetic)",
+      "carbonFootprintKgCO2e": 6.1,
+      "recycledContentPct": 41,
+      "substancesOfConcern": [],
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "rfqs": [
+    {
+      "id": "rfq-ex-1",
+      "title": "RFQ — Cable gland, IP67-style, 500 units [example]",
+      "buyerId": "cp-ex-2",
+      "status": "open",
+      "lines": [
+        {
+          "itemId": "item-ex-3",
+          "gtin": "9520000000035",
+          "quantity": 500,
+          "unit": "each"
+        }
+      ],
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "rfq-ex-2",
+      "title": "RFQ — Battery module housing, welded, 1000 units [example]",
+      "buyerId": "cp-ex-3",
+      "status": "open",
+      "lines": [
+        {
+          "itemId": "item-ex-5",
+          "gtin": "9520000000059",
+          "quantity": 1000,
+          "unit": "each"
+        }
+      ],
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "rfq-ex-3",
+      "title": "RFQ — DIN-rail power relay, 1500 units [example]",
+      "buyerId": "cp-ex-1",
+      "status": "closed",
+      "lines": [
+        {
+          "itemId": "item-ex-7",
+          "gtin": "9520000000073",
+          "quantity": 1500,
+          "unit": "each"
+        }
+      ],
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "quotes": [
+    {
+      "id": "quote-ex-1",
+      "rfqId": "rfq-ex-1",
+      "supplierId": "mfr-ex-2",
+      "unitPrice": 4.75,
+      "currency": "USD",
+      "leadTimeDays": 14,
+      "status": "submitted",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "quote-ex-2",
+      "rfqId": "rfq-ex-1",
+      "supplierId": "mfr-ex-3",
+      "unitPrice": 6.49,
+      "currency": "USD",
+      "leadTimeDays": 36,
+      "status": "submitted",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "quote-ex-3",
+      "rfqId": "rfq-ex-2",
+      "supplierId": "mfr-ex-3",
+      "unitPrice": 3.15,
+      "currency": "USD",
+      "leadTimeDays": 35,
+      "status": "submitted",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "quote-ex-4",
+      "rfqId": "rfq-ex-3",
+      "supplierId": "mfr-ex-1",
+      "unitPrice": 1.01,
+      "currency": "USD",
+      "leadTimeDays": 47,
+      "status": "awarded",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "quote-ex-5",
+      "rfqId": "rfq-ex-3",
+      "supplierId": "mfr-ex-2",
+      "unitPrice": 1.83,
+      "currency": "USD",
+      "leadTimeDays": 25,
+      "status": "submitted",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "tradingDocuments": [
+    {
+      "id": "td-ex-1",
+      "kind": "850",
+      "x12TypingAnchor": "X12 850 (purchase order) — typing anchor only; document content is synthetic",
+      "buyerId": "cp-ex-2",
+      "sellerId": "mfr-ex-2",
+      "itemIds": [
+        "item-ex-2"
+      ],
+      "gtins": [
+        "9520000000028"
+      ],
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "td-ex-2",
+      "kind": "856",
+      "x12TypingAnchor": "X12 856 (ship notice) — typing anchor only; document content is synthetic",
+      "buyerId": "cp-ex-2",
+      "sellerId": "mfr-ex-2",
+      "itemIds": [
+        "item-ex-2"
+      ],
+      "gtins": [
+        "9520000000028"
+      ],
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "td-ex-3",
+      "kind": "810",
+      "x12TypingAnchor": "X12 810 (invoice) — typing anchor only; document content is synthetic",
+      "buyerId": "cp-ex-2",
+      "sellerId": "mfr-ex-2",
+      "itemIds": [
+        "item-ex-2"
+      ],
+      "gtins": [
+        "9520000000028"
+      ],
+      "total": 360.33,
+      "currency": "USD",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "td-ex-4",
+      "kind": "850",
+      "x12TypingAnchor": "X12 850 (purchase order) — typing anchor only; document content is synthetic",
+      "buyerId": "cp-ex-3",
+      "sellerId": "mfr-ex-3",
+      "itemIds": [
+        "item-ex-3"
+      ],
+      "gtins": [
+        "9520000000035"
+      ],
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "td-ex-5",
+      "kind": "856",
+      "x12TypingAnchor": "X12 856 (ship notice) — typing anchor only; document content is synthetic",
+      "buyerId": "cp-ex-3",
+      "sellerId": "mfr-ex-3",
+      "itemIds": [
+        "item-ex-3"
+      ],
+      "gtins": [
+        "9520000000035"
+      ],
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "td-ex-6",
+      "kind": "810",
+      "x12TypingAnchor": "X12 810 (invoice) — typing anchor only; document content is synthetic",
+      "buyerId": "cp-ex-3",
+      "sellerId": "mfr-ex-3",
+      "itemIds": [
+        "item-ex-3"
+      ],
+      "gtins": [
+        "9520000000035"
+      ],
+      "total": 3710.52,
+      "currency": "USD",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "crosswalk": [
+    {
+      "id": "xw-ex-1",
+      "unspsc": "UNSPSC-EX-3101",
+      "gpc": "GPC-EX-5201",
+      "hts": "HTS-EX-8501",
+      "labelText": "Terminal block, 12-position — synthetic crosswalk row [example]",
+      "spine": "UNSPSC↔GPC↔HTS identity spine (register: the crosswalk corpus this row rides); codes are schema-shaped synthetic",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "xw-ex-2",
+      "unspsc": "UNSPSC-EX-3102",
+      "gpc": "GPC-EX-5202",
+      "hts": "HTS-EX-8502",
+      "labelText": "Hex flange bolt M8×30, grade-EX — synthetic crosswalk row [example]",
+      "spine": "UNSPSC↔GPC↔HTS identity spine (register: the crosswalk corpus this row rides); codes are schema-shaped synthetic",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "xw-ex-3",
+      "unspsc": "UNSPSC-EX-3103",
+      "gpc": "GPC-EX-5203",
+      "hts": "HTS-EX-8503",
+      "labelText": "Cable gland, IP67-style — synthetic crosswalk row [example]",
+      "spine": "UNSPSC↔GPC↔HTS identity spine (register: the crosswalk corpus this row rides); codes are schema-shaped synthetic",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "xw-ex-4",
+      "unspsc": "UNSPSC-EX-3104",
+      "gpc": "GPC-EX-5204",
+      "hts": "HTS-EX-8504",
+      "labelText": "Prismatic battery cell, 100Ah-class — synthetic crosswalk row [example]",
+      "spine": "UNSPSC↔GPC↔HTS identity spine (register: the crosswalk corpus this row rides); codes are schema-shaped synthetic",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "xw-ex-5",
+      "unspsc": "UNSPSC-EX-3105",
+      "gpc": "GPC-EX-5205",
+      "hts": "HTS-EX-8505",
+      "labelText": "Battery module housing, welded — synthetic crosswalk row [example]",
+      "spine": "UNSPSC↔GPC↔HTS identity spine (register: the crosswalk corpus this row rides); codes are schema-shaped synthetic",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "xw-ex-6",
+      "unspsc": "UNSPSC-EX-3106",
+      "gpc": "GPC-EX-5206",
+      "hts": "HTS-EX-8506",
+      "labelText": "Torque hinge assembly — synthetic crosswalk row [example]",
+      "spine": "UNSPSC↔GPC↔HTS identity spine (register: the crosswalk corpus this row rides); codes are schema-shaped synthetic",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "xw-ex-7",
+      "unspsc": "UNSPSC-EX-3107",
+      "gpc": "GPC-EX-5207",
+      "hts": "HTS-EX-8507",
+      "labelText": "DIN-rail power relay — synthetic crosswalk row [example]",
+      "spine": "UNSPSC↔GPC↔HTS identity spine (register: the crosswalk corpus this row rides); codes are schema-shaped synthetic",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "xw-ex-8",
+      "unspsc": "UNSPSC-EX-3108",
+      "gpc": "GPC-EX-5208",
+      "hts": "HTS-EX-8508",
+      "labelText": "Stainless clevis pin 10mm — synthetic crosswalk row [example]",
+      "spine": "UNSPSC↔GPC↔HTS identity spine (register: the crosswalk corpus this row rides); codes are schema-shaped synthetic",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the manufacturing substrate; not real product, manufacturer, or trading data. GTINs use the GS1 demo prefix 952; classification codes are schema-shaped synthetic. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ]
+}
