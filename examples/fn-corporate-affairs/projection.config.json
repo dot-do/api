@@ -1,0 +1,60 @@
+{
+  "$comment": "Template spec §2 — the G4 projection config for register row fn-corporate-affairs. GAP row: per spec §0 everything except the G4 brand is instantiated; brand/domains stay null until a name is acquired (#16). This placeholder projection exists so the machine face, sandbox, seams, and experiment registration are real before naming.",
+  "substrate": "fn-corporate-affairs",
+  "gap": {
+    "status": "GAP — zero estate names held (register row anchor; one of the two Function rows, with Strategy, holding literally none)",
+    "acquisitionList": "#16",
+    "registerNote": "See REGISTER-NOTE.md in this directory — filed facts for the #16 acquisition list, including the decomposition finding."
+  },
+  "brand": null,
+  "domains": [],
+  "placeholderOrigin": "https://fn-corporate-affairs.org.ai",
+  "icp": {
+    "companyTypes": ["public companies", "regulated enterprises", "trade associations"],
+    "jobTypes": ["communications director", "investor-relations officer", "government-relations lead", "corporate secretary"],
+    "coordinates": ["Function=CorporateAffairs", "Department=Communications/IR/GovRelations"],
+    "note": "Row flag kept verbatim: buyer distribution skews furthest from the estate's SMB/agent-native center of mass of all 13 Function rows [UNVERIFIED — inference from the function's nature, not from atlas data]."
+  },
+  "personas": [
+    { "id": "comms-director", "description": "communications/PR lead running the press and mention register" },
+    { "id": "ir-officer", "description": "investor-relations officer running the investor stakeholder and disclosure cadence" },
+    { "id": "gov-relations-lead", "description": "government-relations/corporate-secretary role managing regulator engagements" },
+    { "id": "agent-caller", "description": "autonomous agent consuming stakeholder/engagement/mention/disclosure records over the machine face (B2A)" }
+  ],
+  "motion": "B2A",
+  "offer": [
+    { "shape": "anon-sandbox", "gate": "none — keyless", "price": "free", "status": "live", "note": "universal floor; labeled synthetic seed; the ONLY rung advertised in 402 alternatives (batch-2 mounted-rungs rule)" },
+    { "shape": "earned-credits", "gate": "credits earned via proof-of-work (ladder rung 1)", "price": "earned", "status": "unmounted — credits ledger not wired; NOT advertised in 402 alternatives until mounted" },
+    { "shape": "human-claimed", "gate": "a human claims the agent workspace (rung 2)", "price": "free/earned", "status": "unmounted — claim door not wired; NOT advertised in 402 alternatives until mounted" },
+    { "shape": "paid", "gate": "402 metering against machine identity (rung 3)", "price": "metered units", "status": "unmounted — settlement not wired; rate card served with binding: false and a plain statement" }
+  ],
+  "pricing": {
+    "pattern": "402 metered per-call",
+    "rateCardRef": "/pricing",
+    "rates": "Served ON THE WIRE as the top-level rates[] member of the Pricing Document (batch-2 ruled placement — bridge in worker.js until the upstream axp-faces re-vendor lands). operationId-keyed; every row freeQuota or zero price; rows ⊆ OpenAPI operationIds."
+  },
+  "positioning": null,
+  "positioningNote": "Claim-free by rule: a GAP row has no brand to carry a claim, and the §4.6 worthiness bar (conformance + live anon sandbox + verified published suite on record) is not attested. 'Agent default' is never asserted here (batch-2 rule: withheld everywhere until the bar is attested).",
+  "mdx": null,
+  "experiment": {
+    "pattern": "402-metered",
+    "motion": "B2A",
+    "shapes": ["anon-sandbox", "earned-credits", "human-claimed", "paid"],
+    "rateCardRef": "/pricing",
+    "startDate": "2026-08-23",
+    "hypothesis": "Wave-zero placeholder registration only: freemium floor is the sole live shape; the metered rungs are unmounted. The first real hypothesis is assigned when a brand attaches."
+  },
+  "counterpartBrandGap": {
+    "recorded": true,
+    "reason": "The row's ICP (communications, IR, government-relations, corporate-secretary departments at public companies, regulated enterprises, and trade associations) is dominated by non-technical principals; if agents transact on their behalf (B2A2B) a human-vocabulary counterpart brand is required, and none exists for this cell — the row holds zero names of any kind. Detection rides the §9.3 signal (agent-referred human traffic), read from the signup/traffic seams this worker emits."
+  },
+  "decomposition": {
+    "checked": true,
+    "findings": [
+      "Board/governance artifacts (minutes, resolutions, consents): OWNED by the entity back-office convergent (holdings-corporate-mgmt substrate / api.holdings row). No GovernanceArtifact Noun minted here.",
+      "Public filings (lobbying disclosures, proxy/IR corpora): OWNED by the public-record read-layer convergent. The Disclosure Noun here is bound `federated` — a corporate-affairs view, not a second system of record; unwired and synthetic at wave zero (source route [UNVERIFIED]).",
+      "Residual owned grain: the stakeholder relationship register + engagement log (Stakeholder, Engagement — native) and press-mention records (Mention — generated). The GAP is NOT fully benign: this residual slice is real and no other row serves it."
+    ]
+  },
+  "openQuestion": "Row note carried verbatim: the function may decompose entirely into records other properties already own, which would make the GAP benign. The wave-zero decomposition check (above) found a residual stakeholder/engagement grain that no other row owns — a founder ruling on whether that residual justifies a standalone acquisition (#16) or folds into an adjacent property is still open."
+}
