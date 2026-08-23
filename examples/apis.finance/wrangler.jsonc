@@ -1,0 +1,13 @@
+{
+  // apis.finance — wave-zero worker (custom site allowed per template §7.1
+  // prove-then-extract; CNAME → workers.do is the extraction target, not a
+  // wave-zero requirement). The domain is held with a CF zone (dynadot,
+  // exp 2027-07-21, zone y per the surface register); DNS/route cutover is
+  // a serving decision taken outside this build — `wrangler dev` runs the
+  // property locally today.
+  // Seams: bind an Analytics Engine dataset as SEAMS when the unified
+  // analytics plane attaches (§7.4) — the seam functions no-op without it.
+  "name": "apis-finance",
+  "main": "worker.js",
+  "compatibility_date": "2026-08-01"
+}

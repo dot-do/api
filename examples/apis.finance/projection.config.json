@@ -1,0 +1,56 @@
+{
+  "$type": "G4Projection",
+  "spec": "docs/plans/2026-08-23-property-template-spec.md §2 (studio repo)",
+  "substrate": "banking-payments",
+  "brand": "apis.finance",
+  "domains": ["apis.finance"],
+  "namingNotes": "Register ruling carried: apis.finance is the held-and-recorded plural (ladder verdict — no category-completing TLD held, finance.do is third-party/aftermarket-only, api.finance singular NOT held: it appears in no [REG] row despite #3/#22 text, and the ax packages/api.finance package is an internal ADR-0020 data home (markets/advisory), not this row's home). Subject-form reading: 'the functions a lending system calls.'",
+  "subRails": [
+    { "name": "apis.credit", "state": "BRAND-ONLY (pitch record)", "role": "records floor — 'Agents can't grant credit. They can pull the file.' Served here as the CreditFile Noun + POST /credit-files/pulls door until it projects separately." },
+    { "name": "apis.loans", "state": "BRAND-ONLY (pitch record)", "role": "standing door for origination via licensed Lenders. Served here as the Loan Noun + POST /originations door until it projects separately." },
+    { "name": "apis.cards", "state": "zone-only", "role": "recorded same-property name; no wave-zero surface" },
+    { "name": "apis.creditcard", "state": "zone-only", "role": "recorded same-property name; no wave-zero surface" }
+  ],
+  "icp": {
+    "companyTypes": ["banks", "credit unions", "non-bank lenders", "fintech loan servicers"],
+    "jobTypes": ["lending-operations owner", "loan-servicing systems owner", "integration developer"]
+  },
+  "personas": [
+    { "name": "lending-operations systems owner", "kind": "human" },
+    { "name": "loan-servicing systems owner", "kind": "human" },
+    { "name": "integration developer", "kind": "human" },
+    { "name": "lending agent", "kind": "machine", "note": "the B2A leg rides apis.ax (a sibling projection of this substrate), never this projection's gates" }
+  ],
+  "motion": "B2D",
+  "motionNotes": "The row's own framing is machine-first ('the functions a lending system calls') but the BUYER is the operator/developer who owns the lender's integration surface — B2D. Wave-zero mounted shapes: the keyless anon sandbox (universal floor) and the 402-metered boundary as a labeled test-mode stub. The B2D OAuth free tier and checkout are NOT yet mounted and therefore NOT advertised (mounted-rungs-only ruling); they are recorded here as the next rungs to mount. B2A callers are pointed at apis.ax; no OAuth/CC gate is imposed on machine identities here.",
+  "counterpartBrand": {
+    "gap": false,
+    "note": "ICP is operators/developers at licensed institutions — technical principals; no B2A2B/C leg at wave zero. The §9.3 agent-referred-human diagnostic is armed via the signal seam; a counterpart-brand proposal files against the register row if it trips."
+  },
+  "offer": [
+    { "shape": "anon-sandbox", "gate": "none — keyless", "price": "free", "notes": "universal floor; labeled synthetic ISO 20022 seed (§5.2); stateless at wave zero; MOUNTED" },
+    { "shape": "self-serve-metered", "gate": "402 boundary; key + CC when billing mounts", "price": "metered per the top-level rates[] in /pricing; per-outcome rows on pullCreditFile ($1.50) and submitOrigination ($25)", "notes": "wave-zero labeled stub — no live settlement (payments.do is consumed, not contained; Batch-S blocks the monetized-serving stage only); test-mode counts as face-payable. MOUNTED as stub." },
+    { "shape": "oauth-free-tier", "gate": "GitHub OAuth", "price": "free quota", "notes": "NOT MOUNTED — not advertised anywhere (mounted-rungs-only ruling); next B2D rung to mount" },
+    { "shape": "committed-subscription", "gate": "self-serve signup + commitment", "price": "cheaper units", "notes": "NOT MOUNTED — not advertised" }
+  ],
+  "pricing": {
+    "pattern": "402-metered-per-call",
+    "pricingDocument": "/pricing",
+    "ratesPlacement": "rates[] top-level in the Pricing Document (batch-2 ruled placement, bridged in bridge.js until the upstream re-vendor lands)",
+    "guardrailNote": "No agent-default claim is carried, so the §5.3 same-shape price guardrail imposes no obligation on siblings yet; the harness comparison arms if the claim is ever earned and taken."
+  },
+  "positioning": "The functions a lending system calls — the data and functions layer of banking, lending & payments, never the payment rails (rails are avoid-class 3 by register ruling). (The 'agent default' claim is WITHHELD: the §4.6 worthiness bar — hosted conformance verdict + live anon sandbox + continuously verified published suite — has not been attested by api.qa yet.)",
+  "mdx": null,
+  "mdxNotes": "Custom minimal HTML landing at wave zero (§7.1 prove-then-extract); per-brand MDX layer deferred to the shared-renderer extraction.",
+  "experiment": {
+    "pattern": "402-metered-per-call",
+    "motion": "B2D",
+    "shapes": ["anon-sandbox", "self-serve-metered"],
+    "rateCardRef": "/pricing#rates",
+    "startDate": "2026-08-23",
+    "hypothesis": "Per-call metering with per-outcome rows on the two regulated doors (credit-file pull, origination submission) converts lending-system developers from sandbox to metered better than flat tiers; the door operations, not record reads, carry the revenue."
+  },
+  "platformConsumption": {
+    "payments.do": "consumed, not contained (Batch-S) — blocks the monetized-serving stage only, never the face; every payable door is a labeled 402-shaped stub until it lands"
+  }
+}
