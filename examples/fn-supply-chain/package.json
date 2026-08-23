@@ -1,0 +1,14 @@
+{
+  "name": "fn-supply-chain-example",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "description": "Wave-zero payable machine face for the fn-supply-chain register row (Function: Supply Chain & Procurement; ruled name apis.supply is a shared face with the NAICS 42 row and zoneless — this substrate serves under the row-key placeholder address). Template: studio docs/plans/2026-08-23-property-template-spec.md.",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "autonomous-qa": "link:../../../api.qa",
+    "vitest": "^3.0.0"
+  }
+}
