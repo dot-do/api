@@ -1,0 +1,248 @@
+/**
+ * openapi.js — the OpenAPI 3.1 contract (AXP Clause 1), assembled from the
+ * SAME manifest the routes mount, so the contract cannot drift from the
+ * service. LIVE-ONLY / presence-when-true: the only paths emitted are the
+ * quartet the generator itself serves plus the manifest's own declared live
+ * routes — never an aspirational endpoint.
+ */
+
+const ENVELOPE_SCHEMAS = {
+  OkEnvelope: {
+    type: "object",
+    required: ["type"],
+    properties: {
+      type: { const: "OK" },
+    },
+    description:
+      "200 — substantive content. The collection member name (results/items/events…) is this API's own choice, documented on the operation.",
+  },
+  EmptyEnvelope: {
+    type: "object",
+    required: ["type", "message"],
+    properties: {
+      type: { const: "EMPTY" },
+      message: { type: "string" },
+    },
+    description: "200 — a truthful empty collection, never a bare [] masquerading as data.",
+  },
+  BlockedEnvelope: {
+    type: "object",
+    required: ["type", "reason"],
+    properties: {
+      type: { const: "BLOCKED" },
+      reason: { type: "string" },
+    },
+    description: "401/403 — a permission boundary with a worded reason.",
+  },
+  OfferEnvelope: {
+    type: "object",
+    required: ["type"],
+    properties: {
+      type: { const: "OFFER" },
+      id: { type: "string" },
+      title: { type: "string" },
+      price: {},
+      checkoutUrl: { type: "string" },
+      alternatives: { type: "array" },
+    },
+    description: "402 — a payment or ceiling re-authorization boundary; an offer to proceed, never a refusal.",
+  },
+  PricingDocument: {
+    type: "object",
+    required: ["model"],
+    properties: {
+      model: { enum: ["free", "metered"] },
+      hardCeiling: { type: "number", exclusiveMinimum: 0 },
+      unit: { type: "string" },
+      price: { type: "number" },
+      rates: {
+        type: "array",
+        items: {
+          type: "object",
+          required: ["operation"],
+          properties: {
+            operation: {
+              type: "string",
+              description:
+                "The canonical camelCase-verb operationId this rate keys on (axp-ext/rates-g2 §1) — the ONE cross-face operation name: OpenAPI operationId = MCP tool name = suite coverage reference = SDK method name = this key.",
+            },
+            price: {
+              description:
+                "Scalar amount >= 0, or a §2 price object: compound {fixed?, percent?, basis, cap?, floor?, min_fee?} (A1, ad-valorem), {passthrough: {provider, reference?, markup?}} (A2, third-party-owned price plus markup), or {discovery: 'market', reference?, buyer_cap?} (A2, auction/spot). Absent or null ONLY under a non-published `disclosure` (A8).",
+              oneOf: [{ type: "number", minimum: 0 }, { type: "object" }, { type: "null" }],
+            },
+            unit: { type: "string" },
+            included: {
+              description:
+                'A5 — the allowance: quantity, "unlimited", or {qty, period: "day"|"month"|"once", rollover?, at_limit?}. `freeQuota` is the legacy shorthand for {qty, period: "month"} — never both.',
+            },
+            freeQuota: { type: "number", exclusiveMinimum: 0 },
+            modifiers: {
+              type: "array",
+              description: "A3 — relative/derived pricing: [{op: 'multiply'|'add', value, scope?: 'rate'|'offer'|'card', condition?: {attribute, op?, value?}, stacking_order?}]. See also `derived_from`.",
+            },
+            derived_from: { type: "string", description: "A3 — the rate-card row this row's price derives from (an operationId on this same card)." },
+            meter: {
+              type: "object",
+              description: "G3 lite — {aggregation: 'sum'|'distinct'|'high-watermark'|'gauge'|'peak', basis?: 'consumed'|'provisioned'|'standing', reset_period?, definition_url?}: how the billable unit aggregates, so identical-looking rows cannot mean bills 10x apart.",
+            },
+            volume_breaks: {
+              type: "object",
+              description: "A7 — {mode: 'graduated'|'retroactive'|'reprice-offer' (REQUIRED), basis?: 'units'|'spend'|'instantaneous-rate', breaks: [{from, price|discount_percent}], formula_url?, approximate?}.",
+            },
+            disclosure: {
+              enum: ["published", "calculator-only", "quote-only", "undisclosed"],
+              description: "A8 — a meter may exist with its price withheld; 'priced on request' is distinguishable from 'no such meter'. Price may be absent/null only when this is present and not 'published'.",
+            },
+            estimate: { type: "object", description: "A8 — {low, high, provenance?}: third-party estimate, legal only under a withheld disclosure." },
+            note: { type: "string" },
+          },
+        },
+        description:
+          "axp-ext/rates-g2 §2 — the operationId-keyed operation rate card, TOP-LEVEL in the Pricing Document. Additive and descriptive: `model` and `hardCeiling` keep answering Appendix A.2; every row names an operation this origin's own contract declares. Offer-level A4/A5 members (spend_cap, pooled allowances[]) ride monetization.offers. Deferred-amendment names (credits, base_fee, minimum, relations, entitlements, keys, payment, direction, recurrence, effective, eligibility, currencies) are RESERVED.",
+      },
+      binding: {
+        type: "boolean",
+        description:
+          "Whether published terms bind this price. `model` answers what it costs; `binding` answers whether you can hold us to it. Absent means not declared — never assume bound.",
+      },
+      statement: {
+        type: "string",
+        description: "Present when binding is false: the stated intent, in the same words the human pages use.",
+      },
+      termsUrl: {
+        type: "string",
+        description: "Present when binding is true: the terms document that binds this price.",
+      },
+      ledgerUrl: {
+        type: "string",
+        description: "Where the open item to bind this price is tracked.",
+      },
+    },
+    description:
+      'AXP Appendix A.2 — closed model "free" | "metered"; hardCeiling required and > 0 when metered. `binding` is a descriptive member on an axis orthogonal to `model`: binding: true carries termsUrl, binding: false carries statement.',
+  },
+};
+
+const ref = (name) => ({ $ref: `#/components/schemas/${name}` });
+const jsonContent = (schema) => ({ "application/json": { schema } });
+
+export function buildOpenapi(manifest) {
+  const { origin, name, description, version, collection, pricing, routes, family, familyPath } = manifest;
+
+  const collectionParams = [
+    ...collection.filters.map((f) => ({
+      name: f,
+      in: "query",
+      required: false,
+      schema: { type: "string" },
+      description: `filter the collection by ${f}; a non-matching value answers a typed 200 EMPTY, never a fake success`,
+    })),
+    {
+      name: "scope",
+      in: "query",
+      required: false,
+      schema: { type: "string" },
+      description: `reserved scopes (${collection.blockedScopes.join(", ")}) answer a typed 403 BLOCKED`,
+    },
+  ];
+  if (pricing.model === "metered") {
+    collectionParams.push({
+      name: pricing.spendParam,
+      in: "query",
+      required: false,
+      schema: { type: "number" },
+      description: `requested spend in the same unit as hardCeiling (${pricing.hardCeiling}); above the ceiling answers a typed 402 OFFER re-authorization boundary`,
+    });
+  }
+
+  const paths = {
+    [collection.path]: {
+      get: {
+        operationId: collection.operationId || "listCollection",
+        summary: collection.summary,
+        description:
+          `The keyless, branching collection (AXP Clauses 4 + 7): plain GET answers 200 OK with substantive typed content to an anonymous caller; ` +
+          `a non-matching filter answers 200 EMPTY; a reserved scope answers 403 BLOCKED. Collection member name: "${collection.memberName}".`,
+        parameters: collectionParams,
+        responses: {
+          200: { description: "OK or EMPTY envelope", content: jsonContent({ oneOf: [ref("OkEnvelope"), ref("EmptyEnvelope")] }) },
+          403: { description: "BLOCKED envelope", content: jsonContent(ref("BlockedEnvelope")) },
+          ...(pricing.model === "metered" && {
+            402: { description: "OFFER envelope — the hard-ceiling re-authorization boundary", content: jsonContent(ref("OfferEnvelope")) },
+          }),
+        },
+      },
+    },
+    "/pricing": {
+      get: {
+        operationId: "getPricing",
+        summary: "The Pricing Document (AXP Appendix A.2)",
+        description:
+          (pricing.model === "free"
+            ? 'This API is free: {"model":"free"} — the declaration itself is the obligation (the no-ask-zone law).'
+            : `This API is metered with a hard ceiling of ${pricing.hardCeiling}${pricing.unit ? ` (${pricing.unit})` : ""}; the caller can never be metered past it without explicit re-authorization.`) +
+          (pricing.binding === false
+            ? " This price is NOT bound by published terms: it is a stated intent, and the document says so in its `binding` and `statement` members. Budget against it; do not contract on it."
+            : pricing.binding === true
+              ? ` This price IS bound by published terms at ${pricing.termsUrl}.`
+              : ""),
+        responses: {
+          200: { description: "the Pricing Document", content: jsonContent(ref("PricingDocument")) },
+        },
+      },
+    },
+  };
+
+  if (family.length > 0) {
+    paths[familyPath] = {
+      get: {
+        operationId: "getFamilyRegistry",
+        summary: "The family registry — sibling properties and their seams as typed edges",
+        description:
+          "Lists the sibling doors of this property's family so an agent at this door discovers the others as contracts, not links.",
+        responses: { 200: { description: "the family registry", content: jsonContent({ type: "object" }) } },
+      },
+    };
+  }
+
+  if (pricing.model === "metered") {
+    paths[pricing.offerPath] = {
+      get: {
+        operationId: "getOffer",
+        summary: "The offer boundary (AXP Appendix A.5)",
+        description: "Always answers 402 with a typed OFFER body — the machine-readable start of the paid conversation.",
+        responses: {
+          402: { description: "OFFER envelope", content: jsonContent(ref("OfferEnvelope")) },
+        },
+      },
+    };
+  }
+
+  for (const r of routes) {
+    const method = r.method.toLowerCase();
+    paths[r.path] = paths[r.path] || {};
+    paths[r.path][method] = {
+      /* axp-ext/rates-g2 §1 — operationId passthrough on every route: the
+         canonical cross-face operation name lands on the contract verbatim. */
+      ...(r.operationId !== undefined && { operationId: r.operationId }),
+      summary: r.summary,
+      ...(r.description !== undefined && { description: r.description }),
+      ...(r.params.length > 0 && { parameters: r.params.map((p) => ({ in: "query", required: false, schema: { type: "string" }, ...p })) }),
+      ...(r.requestBody !== undefined && { requestBody: r.requestBody }),
+      responses: r.responses || { 200: { description: "OK" } },
+    };
+  }
+
+  return {
+    openapi: "3.1.0",
+    info: {
+      title: name,
+      version,
+      description,
+    },
+    servers: [{ url: origin }],
+    paths,
+    components: { schemas: ENVELOPE_SCHEMAS },
+  };
+}

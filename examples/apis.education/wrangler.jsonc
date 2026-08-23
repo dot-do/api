@@ -1,0 +1,27 @@
+{
+  // apis.education — wave zero of register row education
+  // Deploy: wrangler deploy (from this directory)
+  //
+  // ZONE PREREQUISITE (deploy-time act, not done by this build): the
+  // apis.education name is held (porkbun, exp 2027-07-26) but has NO
+  // Cloudflare zone today (surface register: cf_zone "n", state
+  // name-only). Attaching the route below requires zone provisioning
+  // first — a founder/ops act, recorded here so the build carries no
+  // ghost claim of serving.
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "apis-education",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-01-24",
+
+  "routes": [{ "pattern": "apis.education/*", "zone_name": "apis.education" }],
+
+  "vars": {
+    "API_NAME": "apis.education"
+  }
+
+  // Metering seam transport (§7.4) — bind when the dataset exists; the seam
+  // logs structured events regardless.
+  // "analytics_engine_datasets": [
+  //   { "binding": "METERS", "dataset": "apis_education_meters" }
+  // ]
+}
