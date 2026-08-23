@@ -1,0 +1,31 @@
+{
+  // apis.mortgage — wave zero of register row `mortgage` (GAP-CLOSURE:
+  // the machine face for the live waitlist-stage property).
+  //
+  // ROUTE DELIBERATELY NOT CLAIMED: apis.mortgage serves 200 today from the
+  // live worker `apis-mortgage` (~/projects/fin/mortgage — waitlist-stage,
+  // KV-backed intake, custom_domain route). This build must not clobber that
+  // worker or its intake. Cutover of the apis.mortgage domain to this
+  // machine-face worker is a prove-then-extract decision (founder call),
+  // not a wave-zero act. Until then this worker deploys addressable but
+  // route-less (workers.dev), so the face can be probed without touching
+  // the live property.
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "apis-mortgage-face",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-01-24",
+
+  // "routes": [{ "pattern": "apis.mortgage/*", "zone_name": "apis.mortgage" }],
+  // ^ enable only at cutover; the live `apis-mortgage` waitlist worker holds
+  //   the custom domain today.
+
+  "vars": {
+    "API_NAME": "apis.mortgage"
+  }
+
+  // Metering seam transport (§7.4) — bind when the dataset exists; the seam
+  // logs structured events regardless.
+  // "analytics_engine_datasets": [
+  //   { "binding": "METERS", "dataset": "apis_mortgage_meters" }
+  // ]
+}
