@@ -1,0 +1,25 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "apis-supply",
+  // Build first: npx tsx build.ts  (bundles worker.ts → _worker.js,
+  // externalizing the framework's optional oauth.do/rpc.do imports)
+  "main": "_worker.js",
+  "no_bundle": true,
+  "compatibility_date": "2026-01-24",
+
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
+
+  // apis.supply is ZONELESS: the name is held (porkbun, expiry 2027-07-26)
+  // but NO Cloudflare zone exists (surface register: cf_zone "n"; zone
+  // provisioning is Batch-S admin). Route attachment is blocked on that
+  // provisioning — nothing to uncomment until the zone exists:
+  // "routes": [{ "pattern": "apis.supply/*", "zone_name": "apis.supply" }]
+
+  // Optional: set GITHUB_CLIENT_ID (+ secret GITHUB_CLIENT_SECRET) to point
+  // /login at a real GitHub OAuth app. Without it the flow runs in labeled
+  // demo mode (keys random, unpersisted, not enforced).
+  // "vars": { "GITHUB_CLIENT_ID": "" }
+}
