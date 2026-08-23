@@ -1,0 +1,95 @@
+{
+  "$comment": "Template spec §2 — the G4 projection config for register row fn-risk-compliance, at the FAMILY grain. The row is the structural inverse of every other row: 28 held per-statute .dev fronts (the narrowest grain) and a GAP at the property grain — no api-grammar umbrella name is held, compliance.do is convention-barred (.do = primitives, never startup brands), and no phantom umbrella is named. Per spec §0 everything except the G4 brand is instantiated; the umbrella name rides the #16 lane. Each held front attaches later as a projection config change, not a rebuild.",
+  "substrate": "fn-risk-compliance",
+  "gap": {
+    "status": "GAP at the umbrella grain — no api-grammar function-level name held (register row, coverage B.2); the per-statute .dev family is the held grain",
+    "acquisitionList": "#16",
+    "registerNote": "See REGISTER-NOTE.md in this directory — filed facts for the #16 acquisition list, the family-front inventory, and the primacy/collision record."
+  },
+  "brand": null,
+  "domains": [],
+  "familyFronts": {
+    "$comment": "The 28 held per-statute .dev fronts enumerated by the 2026-08-23 property-surface register (family .dev-instrument, substrate fn-risk-compliance). HELD, not serving — none is built or deployed by this wave-zero build; each is a future projection over this one substrate. Statute bindings exist only for the five fronts the full-economy register row recites; the rest are [UNVERIFIED] at binding level per the row's own flag.",
+    "held": [
+      "batterycheck.dev", "bottledeposit.dev", "carriercomp.dev", "ciac.dev", "cleantruck.dev",
+      "datecode.dev", "davisbacon.dev", "dirreg.dev", "edi834.dev", "emrcheck.dev",
+      "fflcheck.dev", "fifra.dev", "hospicecap.dev", "jointcheck.dev", "lawlabel.dev",
+      "ld2.dev", "mattressfee.dev", "minesafety.dev", "neshap.dev", "payonscan.dev",
+      "pilotrecords.dev", "regf.dev", "rxverify.dev", "snfcb.dev", "tankcheck.dev",
+      "taxhome.dev", "tirefee.dev", "trustnotice.dev"
+    ],
+    "boundByRegisterRow": ["davisbacon.dev", "fifra.dev", "neshap.dev", "fflcheck.dev", "edi834.dev"]
+  },
+  "placeholderOrigin": "https://fn-risk-compliance.org.ai",
+  "railLedger": "https://ledger.apis.ax/faces?face=fn-risk-compliance.org.ai",
+  "icp": {
+    "companyTypes": ["regulated CompanyTypes across the economy — per-statute micro-ICPs (government contractors for davisbacon, FFL dealers for fflcheck, benefits administrators for edi834), enumerable from the CompanyType × regulation join"],
+    "jobTypes": ["compliance officer", "operations lead"],
+    "coordinates": ["Function=Risk&Compliance", "Department=Compliance"],
+    "note": "Row hint kept verbatim in spirit: the per-statute grain means each .dev name has its own micro-ICP; agents as callers checking a step before acting (B2A)."
+  },
+  "personas": [
+    { "id": "compliance-officer", "description": "compliance officer at a regulated company tracking which obligations bind and when" },
+    { "id": "ops-lead", "description": "operations lead needing a per-statute applicability answer before committing work" },
+    { "id": "agent-caller", "description": "autonomous agent checking a step before acting — the row's named caller class (B2A)" }
+  ],
+  "motion": "B2A",
+  "offer": [
+    { "shape": "anon-sandbox", "gate": "none — keyless", "price": "free", "status": "live", "note": "universal floor; reference records cited, all results labeled synthetic" },
+    { "shape": "earned-credits", "gate": "credits earned via proof-of-work (ladder rung 1)", "price": "earned", "status": "stub — credits ledger not wired to this face; advertised as stub in the 402 alternatives" },
+    { "shape": "human-claimed", "gate": "a human claims the agent workspace (rung 2)", "price": "free/earned", "status": "stub — claim door not wired; advertised as stub in the 402 alternatives" },
+    { "shape": "paid", "gate": "402 metering against machine identity (rung 3)", "price": "metered units", "status": "stub — settlement not wired; rate card served with binding: false and a plain statement" }
+  ],
+  "pricing": {
+    "pattern": "402 metered per-call",
+    "rateCardRef": "/pricing",
+    "rates": {
+      "$comment": "Mirror of the served rows (axp-ext-rates-g2@0.2.0 native: top-level rates[] in the Pricing Document, operationId-keyed, survey-floor vocabulary — scalar price + freeQuota only). Zero-price rows are the keyless floor.",
+      "served": [
+        { "operation": "listChecks", "price": 0 },
+        { "operation": "getCheck", "price": 0.002, "unit": "usd-per-call", "freeQuota": 100 },
+        { "operation": "runCheck", "price": 0.002, "unit": "usd-per-call", "freeQuota": 100 },
+        { "operation": "listStatutes", "price": 0 },
+        { "operation": "getStatute", "price": 0.002, "unit": "usd-per-call", "freeQuota": 100 },
+        { "operation": "listCheckRuns", "price": 0 },
+        { "operation": "getCheckRun", "price": 0.002, "unit": "usd-per-call", "freeQuota": 100 },
+        { "operation": "listObligations", "price": 0 },
+        { "operation": "getObligation", "price": 0.002, "unit": "usd-per-call", "freeQuota": 100 }
+      ]
+    }
+  },
+  "positioning": null,
+  "positioningNote": "Claim-free by rule: a GAP-at-umbrella row has no brand to carry a claim, and the §4.6 worthiness bar (conformance + live anon sandbox + verified published suite on record) is not attested. 'Agent default' is never asserted here (agent-default withheld).",
+  "mdx": null,
+  "experiment": {
+    "pattern": "402-metered",
+    "motion": "B2A",
+    "shapes": ["anon-sandbox", "earned-credits", "human-claimed", "paid"],
+    "rateCardRef": "/pricing",
+    "startDate": "2026-08-23",
+    "hypothesis": "Wave-zero placeholder registration only: the anon sandbox is the sole live shape; the metered rungs are stubs. The first real hypothesis is assigned when a front or umbrella name attaches."
+  },
+  "counterpartBrandGap": {
+    "recorded": true,
+    "reason": "The row's ICP includes non-technical principals (compliance officers and ops leads at regulated SMBs — FFL dealers, contractors) who do not know what an API is; if agents transact compliance checks on their behalf (B2A2B) a human-vocabulary counterpart brand is required, and none exists for this cell. Detection rides the §9.3 signal (agent-referred human traffic), read from the signup/traffic seams this worker emits."
+  },
+  "primacyRecord": {
+    "checked": "2026-08-23 — full-economy + property-surface registers searched for primacy rulings before build (watch-list law)",
+    "ruling": "none found for this row's record types or names",
+    "collisions": [
+      {
+        "what": "Construction row (NAICS 23) owns the draw/lien-waiver/pay-app payment-documentation record set; real-estate-closing adjacency shares the LienWaiver record type per the register. This family's held fronts jointcheck.dev and trustnotice.dev are construction-payment-adjacent instruments.",
+        "action": "Built under THIS row key (fn-risk-compliance) only; no LienWaiver or payment-documentation record type is defined, served, or claimed shared here. Front-level record typing for jointcheck/trustnotice is deferred to curation with the collision recorded."
+      },
+      {
+        "what": "apis.claims appears in the row anchor as insurance-row adjacency, not this row's name.",
+        "action": "Not used, not referenced by any served surface."
+      }
+    ]
+  },
+  "attestationRail": {
+    "$comment": "Consumption edge (Batch S / fn-it): attested-check output is typed to ride the api.qa verification rail (VerificationReport abstraction, H4 — LIVE). At wave zero no run is attested (attested: false on every record) and no verdict URL is fabricated.",
+    "rail": "api.qa",
+    "status": "consumption edge declared; not attached at wave zero"
+  }
+}
