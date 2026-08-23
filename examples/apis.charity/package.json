@@ -1,0 +1,17 @@
+{
+  "name": "apis-charity-example",
+  "private": true,
+  "version": "0.1.0",
+  "description": "apis.charity — wave-zero payable machine face for the nonprofits-civic substrate (NAICS 813); brand held under a weak-confidence curation flag, surface renameable by construction",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "autonomous-qa": "link:../../../api.qa",
+    "vitest": "^3.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild"]
+  }
+}
