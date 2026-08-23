@@ -110,3 +110,11 @@ carry yet:
   52-System catalog row in the register excerpts; not declared.
 - RPC / CapnWeb / full HATEOAS transports — arrive with the workers.do lane
   (spec §7.2 extraction target); only what serves is declared.
+
+## §9.1 rail-ledger box: blocked-on-rail-ledger
+
+The checklist's final box — "face registered in the rail ledger
+(faces-payable/week denominator)" — is **blocked-on-rail-ledger**: no rail
+ledger exists in the ax repo at build time (checked 2026-08-23). The box is
+recorded as blocked, never satisfied by a stubbed or fabricated ledger entry;
+registration lands when the ledger address exists.
