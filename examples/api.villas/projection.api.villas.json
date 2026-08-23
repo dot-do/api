@@ -1,0 +1,51 @@
+{
+  "$comment": "G4 projection config (property-template spec §2) for register row `lodging` → property api.villas. One projection = one config file: content, not code. api.villas is the row's proposed primary name — ladder step 2 within what is held (no category-completing TLD; api.[x] held). The row's caveat is carried on record, not hidden: 'villas' names a lodging SUB-NICHE, not 7211 hotels — the 7211 apex GAP is recorded per the register (a register note, not a build blocker; see REGISTER-NOTE.md).",
+  "substrate": "lodging",
+  "brand": "api.villas",
+  "domains": [
+    "api.villas (held — porkbun/2027-07-26, NO Cloudflare zone yet; surface register state: name-only)",
+    "apis.villas (held face sibling — the two-faces hold pair; name-only, no zone)",
+    "apis.holiday (held, zone y — placed on this row by the register's cut, flagged there against the coverage doc's Travel placement; NOT served by this build)"
+  ],
+  "icp": {
+    "companyTypes": ["villa/vacation-rental manager", "small independent hotel"],
+    "industries": ["NAICS 721 (7211 traveler accommodation)"],
+    "jobTypes": ["property manager", "night auditor", "revenue manager"],
+    "incumbencyLine": "below the chain/OTA incumbency line (register row ICP hint, verbatim in substance)"
+  },
+  "personas": ["property manager", "night auditor", "revenue manager", "autonomous agent (B2A caller)"],
+  "motion": "B2A",
+  "motionNote": "The object rule the register applies to this name — the rail an agent calls to get villa/short-stay inventory acts — is agent-first by construction. Guest-side demand is agent-intermediated (B2A2C shape) and the row's operator ICP is non-technical, so the counterpart-brand question is recorded below rather than answered with API vocabulary.",
+  "offer": [
+    { "shape": "anon-sandbox", "gate": "none — keyless", "price": "free", "status": "LIVE (the universal floor)" },
+    { "shape": "paid-402", "gate": "id.org.ai machine identity [gate not mounted at wave zero]", "price": "metered per rate card — STUB: 402-shaped boundary, no billing occurs", "status": "STUB, labeled in /pricing" }
+  ],
+  "offerGap": "#17 ladder rungs 1 (earned credits) and 2 (human-claimed) are NOT mounted and therefore NOT advertised in the 402 OFFER alternatives — mounted-rungs-only (batch watch-list): declaring an unmounted rung would be a ghost surface (presence-when-true beats §9.1 box 8 until the rungs exist).",
+  "pricing": { "pattern": "402 metered per-call (stub)", "rateCardRef": "/pricing (top-level rates[], axp-ext-rates-g2 §2 at the 0.2.0 survey-floor vocabulary)" },
+  "positioning": "the booking and night-audit records a villa or short-stay operation runs on, served to agents keyless-first (recorded pitch grammar; no market claim)",
+  "positioningNote": "The agent-default claim is WITHHELD per the worthiness bar (§4.6, batch watch-list): no hosted api.qa verdict exists yet (the api.villas zone is not bound), and no continuously-verified published suite has runs on record. Copy stays claim-free until the bar attests.",
+  "mdx": null,
+  "mdxNote": "Custom wave-zero site: the worker serves its own conneg-routed HTML landing/docs (spec §7.1 — custom sites allowed until the shared lane is proven). A per-brand MDX layer arrives with the workers.do extraction (§7.2).",
+  "experiment": {
+    "pattern": "402-metered-stub",
+    "motion": "B2A",
+    "shapes": ["anon-sandbox", "paid-402-stub"],
+    "rateCardRef": "/pricing",
+    "startDate": "2026-08-23",
+    "hypothesis": "None claimable before the capture rail exists; this registration exists so the harness rollup key {substrate, projection, motion, operation, shape, pattern} is stable from the first emitted seam."
+  },
+  "guardrailCheck": "PASS (vacuous by construction): this projection does not carry the agent-default claim, and no sibling estate face serves the lodging substrate at wave zero, so no same-shape identical-operation price comparison exists to lose.",
+  "counterpartBrandGap": {
+    "status": "RECORDED — the row's ICP (villa/vacation-rental managers, small hotels; property manager / night auditor / revenue manager personas) is non-technical-principal shaped, and guest demand is agent-intermediated (B2A2C free-rider); no human-vocabulary counterpart brand is ruled for the cell",
+    "candidateOnRecord": "nightaudit.click — the row's artifact door (DC artifact-decomposition entry: entry-by-document where the sector front is avoided); zero API vocabulary in the name. Recorded as a candidate only, not asserted; naming per #3, triggered by the §9.3 diagnostic",
+    "trigger": "§9.3 diagnostic: agent-referred human traffic on this machine face (identity class × referral source, emitted at this worker's seams)",
+    "response": "counterpart-brand proposal filed against the register row, named per #3 — never API-vocabulary patches on this surface"
+  },
+  "recordTypeCollision": {
+    "status": "RECORDED — no primacy ruling found (batch watch-list check, 2026-08-23): grep for a projection-primacy ruling over both registers returned none for Booking/Reservation",
+    "collision": "Booking/Reservation record types are shared across batch-7 rows — travel-tourism's data ply names 'Booking/Reservation record (schema.org-typed)' and other booking-capture rows carry the same grain",
+    "resolution": "Built under THIS row's key (`lodging`) per the watch-list default: the Booking noun here is lodging-scoped (schema.org/LodgingReservation grain, stay/night semantics), claims NOTHING shared, and asserts no cross-row ownership of the Booking/Reservation type. A primacy ruling, when filed, supersedes this note."
+  },
+  "apexGap": "RECORDED per the register row: 'villas' is a sub-niche of 7211; the category-apex name (api.hotel-class) is unheld. Apex GAP is a register note carried here verbatim — not a build blocker, and this build claims only the sub-niche rail.",
+  "railLedger": "https://ledger.apis.ax/faces?face=api.villas"
+}

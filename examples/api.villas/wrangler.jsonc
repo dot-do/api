@@ -1,0 +1,11 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "api-villas",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-08-23"
+  // No routes block on purpose: api.villas is HELD (porkbun/2027-07-26)
+  // but has NO Cloudflare zone yet (surface register state: name-only;
+  // the face sibling apis.villas is also name-only). Binding the hostname
+  // is the one-line change that happens when the zone lands — nothing
+  // else in this directory moves.
+}
