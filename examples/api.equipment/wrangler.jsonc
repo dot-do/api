@@ -1,0 +1,10 @@
+{
+  // api.equipment — wave-zero worker (fn-facilities-assets substrate).
+  // No route/custom-domain binding here: attaching the api.equipment zone is
+  // a deploy decision taken outside this example. The domain sits in the
+  // netim 2026-09-10 expiry block — renewal is dated Batch-S admin (see
+  // README), not a sequencing decision for this build.
+  "name": "api-equipment",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-08-01"
+}

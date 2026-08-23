@@ -1,0 +1,14 @@
+{
+  "name": "api-equipment-wave0",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "api.equipment wave-zero machine face (fn-facilities-assets substrate): the AXP quartet from vendored axp-faces at apis-ax-axp@2.6.0 + axp-ext-rates-g2@0.2.0, two plies from one definition, anon sandbox floor, 402-shaped payable stubs (test mode).",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "autonomous-qa": "file:../../../../api.qa",
+    "vitest": "^2.1.9"
+  }
+}
