@@ -13,7 +13,7 @@
  */
 
 import { createAxpRoutes, ok, empty, envelopeResponse, offer } from "./axp/index.js";
-import { manifest, icpDoc, rateCard } from "./manifest.js";
+import { manifest, icpDoc } from "./manifest.js";
 import { ledgers, getLedger, getCloseDeliverable, EXAMPLE_NOTE } from "./seed.js";
 import { verifyRoutes } from "./verify.js";
 import { emitMeter, emitReceipt, emitSignal } from "./seams.js";
@@ -63,7 +63,8 @@ export default {
         return json({ type: "OK", deliverable }, { head });
       }
 
-      if (path === "/rates") return json(rateCard, { head });
+      // rates[] rides TOP-LEVEL in the generated /pricing document
+      // (axp-ext-rates-g2 §2) — the former sibling /rates door is gone.
       if (path === "/icp.json") return json(icpDoc, { head });
       if (path === "/healthz") return json(ok([{ status: "ok", sandbox: "anon", note: EXAMPLE_NOTE }]), { head });
 

@@ -9,8 +9,12 @@
  *     a labeled 402-shaped stub (test-mode; no live settlement);
  *   - the 402 OFFER alternatives advertise the whole B2A ladder (pay / work /
  *     claim) plus the human counterpart door, per §5.1;
- *   - G2 coordinates (ICP + persona + System coordinate) exposed at /icp.json,
- *     linked from the card (links.icp).
+ *   - axp-ext-rates-g2@0.1.0 (native since axp-faces 0.2.0) at the ruled
+ *     placements: the operationId-keyed `rates[]` TOP-LEVEL in the Pricing
+ *     Document (pricing.rates), the canonical camelCase operationId on every
+ *     route (+ collection.operationId), `links.verify` on the card
+ *     (verifyUrl), and the top-level `g2` card object — carried verbatim,
+ *     with links.icp / /icp.json serving the same truth beside it.
  */
 
 import { defineSiteManifest } from "./axp/index.js";
@@ -19,10 +23,10 @@ import { APIProduct } from "./product.js";
 
 export const ORIGIN = "https://monthend.finance";
 
-/** G2 coordinates — served at /icp.json, linked from the card. */
-export const icpDoc = {
-  $context: "https://schema.org.ai",
-  $type: "ICP",
+/** G2 coordinates — the ONE truth, carried verbatim onto the card's
+ *  top-level `g2` object (axp-ext-rates-g2 §4) AND served at /icp.json
+ *  (links.icp stays legal and independent beside g2). */
+export const g2Coordinates = {
   substrate: APIProduct.substrate,
   function: "Finance (close, AR/AP, treasury)",
   system: APIProduct.systems[0],
@@ -41,33 +45,37 @@ export const icpDoc = {
   ],
 };
 
-/** The operation-keyed rate card served at /rates.
- *  NOTE: the rate-card wire schema (rates[] inside /pricing) is Open Question
- *  #1 of the template spec; the vendored pricing builder at the ratified pin
- *  emits the Appendix A.2 document only, so the operation-keyed rows live at
- *  /rates and /pricing's statement names them. Every row names a free quota
- *  or prices from zero (§5.1 law). */
-export const rateCard = {
+export const icpDoc = {
   $context: "https://schema.org.ai",
-  $type: "RateCard",
-  pricingDocument: `${ORIGIN}/pricing`,
-  currency: "USD",
-  settlement:
-    "STUB — wave zero: 402-shaped payable doors are labeled stubs; no live billing occurs and no payment is collected. Test-mode counts as face-payable; live settlement activation is a platform charter, not this property's.",
-  rates: [
-    { operation: "GET /close-deliverables", verb: "listCloseDeliverables", price: 0, freeQuota: "unlimited" },
-    { operation: "GET /close-deliverables/{id}", verb: "getCloseDeliverable", price: 0.002, freeQuota: "100/day keyless sandbox reads" },
-    { operation: "GET /ledgers", verb: "listLedgers", price: 0, freeQuota: "unlimited" },
-    { operation: "GET /ledgers/{id}", verb: "getLedger", price: 0.002, freeQuota: "100/day keyless sandbox reads" },
-    {
-      operation: "POST /orders",
-      verb: "orderCloseDeliverable",
-      price: 49,
-      per: "completed, verified close deliverable (per-outcome)",
-      freeQuota: "0 — the sandbox serves completed example deliverables free; ordering is the payable outcome door",
-    },
-  ],
+  $type: "ICP",
+  ...g2Coordinates,
 };
+
+/** The operation rate card — rates[] TOP-LEVEL in the Pricing Document at
+ *  the ruled placement (axp-ext-rates-g2@0.1.0 §2, native since axp-faces
+ *  0.2.0; the former "Open Question #1 / sibling /rates document" bridge is
+ *  closed). Each row keys on the canonical operationId; the generator
+ *  refuses a row naming an operation this manifest does not declare.
+ *  §5.1 law: every row prices from zero or names a positive freeQuota —
+ *  except the per-outcome payable door, whose free path is the zero-priced
+ *  sandbox rows (freeQuota: 0 is refused by the schema; the note names the
+ *  free path instead). Extra members (currency, per, settlement) pass
+ *  through verbatim per the offers precedent. */
+const rates = [
+  { operation: "listCloseDeliverables", price: 0, currency: "USD", note: "unlimited keyless sandbox reads over labeled example data" },
+  { operation: "getCloseDeliverable", price: 0.002, unit: "usd-per-call", currency: "USD", freeQuota: 100, note: "free quota is per day — keyless sandbox reads" },
+  { operation: "listLedgers", price: 0, currency: "USD", note: "unlimited keyless sandbox reads over labeled example data" },
+  { operation: "getLedger", price: 0.002, unit: "usd-per-call", currency: "USD", freeQuota: 100, note: "free quota is per day — keyless sandbox reads" },
+  {
+    operation: "orderCloseDeliverable",
+    price: 49,
+    unit: "usd-per-outcome",
+    currency: "USD",
+    per: "completed, verified close deliverable (per-outcome)",
+    settlement: "stub — test-mode, no live billing",
+    note: "no free quota on the outcome door — the sandbox serves completed example deliverables free; ordering is the payable outcome door",
+  },
+];
 
 const llmsBody = `# monthend.finance
 
@@ -84,10 +92,11 @@ EMPTY; reserved scopes answer a typed BLOCKED; ordering a deliverable answers
 a typed 402 OFFER whose alternatives carry every rung of the ladder: pay
 (metered), work (earned credits), claim (human attribution).
 
-Pricing is declared, not negotiated: \`GET /pricing\` (Appendix A.2 document)
-and \`GET /rates\` (operation-keyed rows; every row names a free quota or
-prices from zero). Wave zero is test-mode: payable doors are labeled stubs
-and no billing occurs.
+Pricing is declared, not negotiated: \`GET /pricing\` is the Appendix A.2
+document carrying the operationId-keyed \`rates[]\` rate card top-level
+(axp-ext-rates-g2; the sandbox rows price from zero or name a free quota).
+Wave zero is test-mode: payable doors are labeled stubs and no billing
+occurs.
 
 Run our tests: \`GET /verify\` — the digest-pinned public-contract suite,
 runnable by anyone against the live doors.`;
@@ -102,6 +111,7 @@ export const manifest = defineSiteManifest({
   version: "0.1.0",
   collection: {
     path: "/close-deliverables",
+    operationId: "listCloseDeliverables",
     memberName: "deliverables",
     summary: "The close deliverables — one branching keyless collection over the sandbox close cycles",
     records: closeDeliverables,
@@ -120,8 +130,9 @@ export const manifest = defineSiteManifest({
     binding: false,
     statement:
       "Wave-zero pricing is stated intent, not bound terms: settlement is not live, every payable door is a " +
-      "labeled 402-shaped stub, and no billing occurs. The operation-keyed rate card at /rates names a free " +
-      "quota or a zero price on every row.",
+      "labeled 402-shaped stub, and no billing occurs. The operationId-keyed rates[] in this document prices " +
+      "every sandbox read from zero or names a free quota; the per-outcome order door is the payable exception.",
+    rates,
     offers: [
       {
         id: "close-deliverable-outcome",
@@ -140,12 +151,14 @@ export const manifest = defineSiteManifest({
     {
       method: "GET",
       path: "/ledgers",
+      operationId: "listLedgers",
       summary: "List the ledgers visible to this caller (anonymous callers see the labeled example ledger)",
       responses: { 200: { description: "OK envelope; member name 'ledgers'" } },
     },
     {
       method: "GET",
       path: "/ledgers/{id}",
+      operationId: "getLedger",
       summary: "One ledger with its full double-entry journal",
       params: [{ name: "id", in: "path", required: true }],
       responses: { 200: { description: "OK envelope" }, 404: { description: "typed EMPTY — unknown id is an honest miss, not an error page" } },
@@ -153,6 +166,7 @@ export const manifest = defineSiteManifest({
     {
       method: "GET",
       path: "/close-deliverables/{id}",
+      operationId: "getCloseDeliverable",
       summary: "One typed close deliverable with its computed content",
       params: [{ name: "id", in: "path", required: true }],
       responses: { 200: { description: "OK envelope" }, 404: { description: "typed EMPTY" } },
@@ -160,41 +174,42 @@ export const manifest = defineSiteManifest({
     {
       method: "POST",
       path: "/orders",
+      operationId: "orderCloseDeliverable",
       summary: "Order a close deliverable (the per-outcome door) — answers a typed 402 OFFER; wave-zero stub, no billing",
       responses: { 402: { description: "OFFER envelope with the full ladder in alternatives" } },
     },
     {
       method: "GET",
-      path: "/rates",
-      summary: "The operation-keyed rate card — every row names a free quota or prices from zero",
-      responses: { 200: { description: "RateCard document" } },
-    },
-    {
-      method: "GET",
       path: "/icp.json",
+      operationId: "getIcpDocument",
       summary: "G2 coordinates: ICP, personas, agent classes, and the System coordinate this surface serves",
       responses: { 200: { description: "ICP document" } },
     },
     {
       method: "GET",
       path: "/verify",
+      operationId: "getVerifyInstructions",
       summary: "Run our tests — the digest-pinned public-contract suite and how to run it",
       responses: { 200: { description: "verification instructions (three faces)" } },
     },
     {
       method: "GET",
       path: "/verify/suite.json",
+      operationId: "getVerifySuite",
       summary: "The suite document itself (api.qa/suite@1) — digest printed on /verify",
       responses: { 200: { description: "Suite document" } },
     },
     {
       method: "GET",
       path: "/healthz",
+      operationId: "getHealth",
       summary: "Typed liveness — a 200 OK envelope",
       responses: { 200: { description: "OK envelope" } },
     },
   ],
   llms: { body: llmsBody },
+  verifyUrl: "/verify",
+  g2: g2Coordinates,
   icpUrl: `${ORIGIN}/icp.json`,
   family: [
     {
@@ -229,7 +244,7 @@ Your month-end close, done: the Ledger plus ten typed close deliverables
 (trial balance through the month-end package), every month.
 
 - Example close (keyless, labeled synthetic data): /close-deliverables
-- Machine surfaces: /llms.txt · /.well-known/agents.json · /openapi.json · /pricing · /rates
+- Machine surfaces: /llms.txt · /.well-known/agents.json · /openapi.json · /pricing (rates[] top-level)
 - Run our tests: /verify
 `,
   },

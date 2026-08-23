@@ -8,8 +8,11 @@
  *      the worker in-memory;
  *   3. seed fixture law: every record labeled example, journal balanced,
  *      trial balance tied, no secret-shaped strings, no real-name leakage;
- *   4. rate-card law: every rate row names a free quota or prices from zero,
- *      and every rate operation is a served contract door.
+ *   4. rate-card law: rates[] rides TOP-LEVEL in the Pricing Document
+ *      (axp-ext-rates-g2 §2, native since axp-faces 0.3.0 / ext 0.2.0);
+ *      every row prices from zero, names a positive freeQuota, or names its
+ *      free path in a note (the per-outcome door — freeQuota: 0 is refused
+ *      by the schema); every rate keys on a declared operationId.
  *
  * Run: node scripts/selfverify.mjs
  * (resolves `autonomous-qa` from node_modules; set AUTONOMOUS_QA_PATH to the
@@ -26,7 +29,7 @@ const root = join(here, "..");
 const worker = (await import(join(root, "worker.js"))).default;
 const { suiteDocument, suiteText, suiteDigest } = await import(join(root, "verify.js"));
 const { journal, trialBalance, ledgers, closeDeliverables } = await import(join(root, "seed.js"));
-const { rateCard, manifest } = await import(join(root, "manifest.js"));
+const { manifest } = await import(join(root, "manifest.js"));
 
 const specText = readFileSync(join(root, "spec", "apis-ax-standard.spec.json"), "utf8");
 const expectedDigest = readFileSync(join(root, "spec", "apis-ax-standard.digest.txt"), "utf8").trim();
@@ -100,19 +103,32 @@ const corpus = JSON.stringify(allRecords) + JSON.stringify(journal);
 /(sk-[A-Za-z0-9]{16,}|AKIA[0-9A-Z]{16}|-----BEGIN)/.test(corpus) ? fail("secret scan", "secret-shaped string in seed") : pass("secret scan clean");
 /(fictional)/i.test(ledgers[0].company) ? pass("company name marked fictional") : fail("fixture law", "company not marked fictional");
 
-// ── 4. rate-card law ─────────────────────────────────────────────────────────
-console.log("\nRate-card law (§5.1 / §9.1)");
-for (const r of rateCard.rates) {
-  const named = r.freeQuota !== undefined || r.price === 0;
-  named ? pass(`${r.verb}: free quota or zero price named`) : fail(r.verb, "no free quota and non-zero price");
+// ── 4. rate-card law (axp-ext-rates-g2 §2 — rates[] TOP-LEVEL in /pricing) ──
+console.log("\nRate-card law (§5.1 / §9.1 / axp-ext-rates-g2 §2)");
+const rates = manifest.pricing.rates;
+Array.isArray(rates) && rates.length > 0 ? pass(`rates[] declared top-level in the Pricing Document (${rates.length} rows)`) : fail("rates[]", "missing from manifest.pricing");
+const pricingRes = await worker.fetch(new Request("https://monthend.finance/pricing"), {}, {});
+const pricingDoc = JSON.parse(await pricingRes.text());
+Array.isArray(pricingDoc.rates) && pricingDoc.rates.length === rates.length
+  ? pass("served /pricing carries the same top-level rates[]")
+  : fail("served rates[]", "the /pricing document does not carry the manifest's rates[] top-level");
+rates.some((r) => r.price === 0) ? pass("the free floor exists: at least one zero-priced row") : fail("free floor", "no zero-priced row");
+for (const r of rates) {
+  // §5.1 free-path law: zero price, positive freeQuota, or (payable outcome
+  // door) the note names the free path — freeQuota: 0 is refused by the
+  // ratified schema, so the outcome door carries its free path in the note.
+  const namedFree = r.price === 0 || (typeof r.freeQuota === "number" && r.freeQuota > 0) || (typeof r.note === "string" && /free/i.test(r.note));
+  namedFree ? pass(`${r.operation}: free path named (zero price, freeQuota, or note)`) : fail(r.operation, "no free path named");
 }
-const served = new Set([
-  `GET ${manifest.collection.path}`,
-  ...manifest.routes.map((r) => `${r.method} ${r.path}`),
+const declaredOps = new Set([
+  manifest.collection.operationId,
+  "getPricing",
+  ...(manifest.family.length > 0 ? ["getFamilyRegistry"] : []),
+  ...(manifest.pricing.model === "metered" ? ["getOffer"] : []),
+  ...manifest.routes.filter((r) => r.operationId !== undefined).map((r) => r.operationId),
 ]);
-for (const r of rateCard.rates) {
-  const wire = r.operation.replace("/close-deliverables/{id}", "/close-deliverables/{id}").replace("/ledgers/{id}", "/ledgers/{id}");
-  served.has(wire) ? pass(`${r.verb} is a served contract door (${wire})`) : fail(r.verb, `${wire} not in manifest`);
+for (const r of rates) {
+  declaredOps.has(r.operation) ? pass(`${r.operation} keys on a declared operationId`) : fail(r.operation, "not a declared operationId");
 }
 
 // ── verdict ──────────────────────────────────────────────────────────────────

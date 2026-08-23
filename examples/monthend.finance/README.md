@@ -9,10 +9,9 @@ one row of the full-economy property register per the property-template spec
 
 | Surface | Address |
 |---|---|
-| Capability card (AXP, probe manifest, G2 link) | `/.well-known/agents.json` |
-| OpenAPI 3.1 (live-only) | `/openapi.json` |
-| Pricing Document (metered, `binding: false` + statement) | `/pricing` (+ `.json/.md/.html`) |
-| Operation-keyed rate card (every row: free quota or zero price) | `/rates` |
+| Capability card (AXP, probe manifest, top-level `g2`, `links.verify` + `links.icp`) | `/.well-known/agents.json` |
+| OpenAPI 3.1 (live-only, canonical `operationId` on every operation) | `/openapi.json` |
+| Pricing Document (metered, `binding: false` + statement, operationId-keyed `rates[]` top-level — axp-ext-rates-g2) | `/pricing` (+ `.json/.md/.html`) |
 | llms.txt (H1 + family tail) | `/llms.txt` |
 | Branching keyless collection — the anon sandbox universal floor | `/close-deliverables` (`?type= ?period= ?status= ?scope= ?spend=`) |
 | One deliverable / one ledger | `/close-deliverables/{id}` · `/ledgers` · `/ledgers/{id}` |

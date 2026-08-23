@@ -25,8 +25,9 @@ const suiteDocument = {
   description:
     "The monthend.finance public-contract suite (api.qa/suite@1): declarative GET rows over the live doors — " +
     "the AXP quartet shapes, the branching /close-deliverables envelope (OK | EMPTY | BLOCKED | OFFER on one " +
-    "pathname), the metered Pricing Document with its stated-intent binding, the operation-keyed rate card, " +
-    "the G2 self-classification surface, and the labeled-example-data honesty rows. Runnable by anyone: " +
+    "pathname), the metered Pricing Document with its stated-intent binding and top-level operationId-keyed " +
+    "rates[] (axp-ext-rates-g2), the G2 self-classification surface (card g2 + /icp.json), and the " +
+    "labeled-example-data honesty rows. Runnable by anyone: " +
     "npx autonomous-qa verify https://monthend.finance, or plain curl.",
   environments: {
     live: { vars: { baseUrl: "https://monthend.finance" } },
@@ -39,6 +40,8 @@ const suiteDocument = {
         { path: "name", equals: "monthend.finance" },
         { path: "openapi", equals: "https://monthend.finance/openapi.json" },
         { path: "probes.pricing.url", equals: "/pricing" },
+        { path: "links.verify", equals: "https://monthend.finance/verify" },
+        { path: "g2.personas", exists: true },
       ] } },
     { id: "openapi-contract", kind: "endpoint", method: "GET", path: "/openapi.json",
       expect: { status: 200, contentTypeIncludes: "application/json", paths: [{ path: "openapi", equals: "3.1.0" }] } },
@@ -48,8 +51,11 @@ const suiteDocument = {
         { path: "hardCeiling", equals: 100 },
         { path: "binding", equals: false },
       ] } },
-    { id: "rate-card-served", kind: "endpoint", method: "GET", path: "/rates",
-      expect: { status: 200, paths: [{ path: "$type", equals: "RateCard" }] } },
+    { id: "pricing-rates-top-level", kind: "endpoint", method: "GET", path: "/pricing",
+      expect: { status: 200, paths: [
+        { path: "rates.0.operation", equals: "listCloseDeliverables" },
+        { path: "rates.0.price", equals: 0 },
+      ] } },
     { id: "deliverables-keyless-ok", kind: "endpoint", method: "GET", path: "/close-deliverables",
       expect: { status: 200, paths: [{ path: "type", equals: "OK" }] } },
     { id: "deliverables-typed-empty", kind: "endpoint", method: "GET", path: "/close-deliverables?type=none",
