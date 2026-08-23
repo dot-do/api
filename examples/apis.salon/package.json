@@ -1,0 +1,16 @@
+{
+  "name": "apis.salon.example",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "apis.salon — the personal-care (NAICS 812, 8121 core) register row's wave-zero property: bookings, the service menu, POS sale records, and real TDLR establishment-license data behind an AXP machine face",
+  "scripts": {
+    "test": "vitest run",
+    "verify": "node scripts/selfverify.mjs",
+    "ingest": "node scripts/ingest-licenses.mjs"
+  },
+  "devDependencies": {
+    "autonomous-qa": "link:../../../api.qa",
+    "vitest": "^3.0.0"
+  }
+}

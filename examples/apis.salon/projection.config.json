@@ -1,0 +1,75 @@
+{
+  "$type": "G4Projection",
+  "spec": "docs/plans/2026-08-23-property-template-spec.md §2 (studio repo)",
+  "substrate": "personal-care",
+  "brand": "apis.salon",
+  "brandStatus": "Ruled primary name per the register row (ladder rung 3): no category-completing TLD held, no api.* singular at category grain; apis.salon covers the 8121 core (hair/nail/skin), the bulk of the addressable cell; the 812 apex (laundry, death care) stays unnamed. Surface register: held, porkbun, exp 2027-07-26, name-only (no CF zone yet). apis.beauty is the recorded alternative and expires 2026-10-22 — a Batch-S dated admin fact, recorded, never a sequencing input here.",
+  "domains": ["apis.salon"],
+  "icp": {
+    "companyTypes": [
+      "salon/spa owner-operators (NAICS 8121 core: hair, nail, skin)",
+      "pet-grooming operators (81291 adjacency, register ICP)",
+      "booth-renters / independent practitioners"
+    ],
+    "jobTypes": ["owner-operator", "front desk", "booth-renter practitioner"]
+  },
+  "personas": [
+    { "name": "salon owner-operator", "kind": "human" },
+    { "name": "front desk", "kind": "human" },
+    { "name": "scheduling agent", "kind": "machine" }
+  ],
+  "motion": "B2A",
+  "motionNotes": "Agent-first at wave zero: the machine face is the only serving surface and its buyer is an autonomous agent (no OAuth, no CC — id.org.ai machine identity + 402 metering when settlement activates). The register's own words make the cell's NATIVE transaction shape B2A2C — 'an agent booking on a person's behalf' — and the agent-side leg of that motion runs exactly these B2A shapes. The human principals (owner-operators, front desk, clients) do not speak API, and NO human-vocabulary counterpart name is held for the cell (apis.beauty is still API-grammar; nothing consumer-vocabulary exists in the register's held names) — a RECORDED COUNTERPART-BRAND GAP. The §9.3 diagnostic (agent-referred human traffic on this developer surface, fed by the seams' identity-class + referral signals) triggers a counterpart-brand proposal against the register row, named per #3 — never API-vocabulary patches on this surface.",
+  "counterpartBrandGap": {
+    "recorded": true,
+    "motion": "B2A2C",
+    "note": "the cell's ICP includes non-technical principals (owner-operators, consumers whose agents book for them) and the register holds no human-vocabulary name for either side of the counterpart — gap recorded per spec §5.1/§9.1 box 9; proposal is the §9.3 signal's job, naming is #3's"
+  },
+  "offer": [
+    { "shape": "anon-sandbox", "gate": "none — keyless", "price": "free", "notes": "universal floor; labeled synthetic salon back-office seed (§5.2) plus REAL provenance-labeled TDLR establishment-license data; stateless at wave zero. MOUNTED." },
+    { "shape": "paid-402", "gate": "402 metering against machine identity (id.org.ai grain)", "price": "metered; per-outcome on requestBooking", "notes": "MOUNTED as a labeled 402-shaped stub — no live settlement; test-mode counts as face-payable. The only rung advertised above the floor." }
+  ],
+  "offerNotes": "Batch ruling: only MOUNTED ladder rungs are advertised. The earned-credits and human-claimed rungs of the #17 ladder are neither mounted nor advertised; they enter the offer array and the 402 alternatives when their rails mount.",
+  "pricing": {
+    "pattern": "per-outcome",
+    "rateCard": "/pricing (rates[] top-level in the Pricing Document — NATIVE axp-ext-rates-g2@0.2.0 emission, no bridge)",
+    "pricingDocument": "/pricing",
+    "guardrailNote": "No agent-default claim is carried, so the §5.3 same-shape price guardrail imposes no obligation on siblings yet; the harness comparison arms if the claim is ever earned and taken. No sibling projection of this substrate exists at wave zero."
+  },
+  "positioning": "The salon back office as one typed, verifiable surface — the book, the menu, and the day's sales tied together, with the public license registry underneath. (The 'agent default' claim is WITHHELD: the §4.6 worthiness bar — hosted conformance verdict + live anon sandbox + continuously verified published suite — has not been attested by api.qa yet.)",
+  "mdx": null,
+  "mdxNotes": "Custom minimal HTML landing at wave zero (§7.1 prove-then-extract); per-brand MDX layer deferred to the shared-renderer extraction.",
+  "recordPrimacy": {
+    "recordType": "Booking (schema.org Reservation grain)",
+    "collision": "the booking/reservation record grain is also named by register rows lodging, travel-tourism, passenger-mobility, restaurants-food-service, and arts-entertainment (the H5 Scheduler rail is the shared abstraction)",
+    "rulingChecked": "2026-08-23 — NO primacy ruling exists in either register file (grep for 'primacy': none)",
+    "resolution": "built under THIS row's key (personal-care) per the standing batch rule; nothing shared is claimed; the collision is recorded here for the register to rule on; re-base onto a ruled shared abstraction is a manifest-level change, not a wire break"
+  },
+  "sourceRouteProbes": {
+    "probedAt": "2026-08-23",
+    "reachable": [
+      { "feed": "TDLR All Licenses (Texas open data, Socrata 7358-krk7)", "url": "https://data.texas.gov/resource/7358-krk7.json", "result": "200 OK keyless — INGESTED (EstablishmentLicense: every Travis County Full Service Establishment salon license, 1387 records, provenance + disclosed withheld-fields curation served with the corpus)" }
+    ],
+    "unreachable": [
+      { "feed": "NY appearance-enhancement licensing open data (dataset id guessed)", "url": "https://data.ny.gov/resource/w6t6-dwrk.json", "result": "404 dataset.missing — the guessed resource id does not exist; the correct NY dataset id is unresolved, so no NY corpus and no claim about one; recorded, deferred" }
+    ],
+    "deferredByCuration": [
+      { "grain": "individual practitioner licenses (TDLR serves cosmetology operator/manicurist/esthetician licenses keyless — reachable Class A)", "reason": "person-named public records; deferred pending a person-anchored-records curation ruling — reachability recorded honestly, serving withheld deliberately" }
+    ]
+  },
+  "registerDefects": [
+    "headless ply: salon management's membership/rank in the ~52-System catalog marked [UNVERIFIED] in the row — carried verbatim with the caveat; needs the headless.ly catalog re-run at NAICS 812.",
+    "source route: no cascade row exists for 812 — the row's posture (booking/POS per-property capture, no founder-front) is itself marked [UNVERIFIED — posture inferred]; carried verbatim.",
+    "ICP practitioner O*NET codes marked [UNVERIFIED] in the row — not restated here."
+  ],
+  "railLedger": "https://ledger.apis.ax/faces?face=apis.salon",
+  "railLedgerNote": "Registered via door A (durable, works before deploy): one row added to packages/rail-ledger/registry/faces.json on the ax repo branch draft/rail-ledger-v1 per LEDGER.md §3; payableBasis test-mode (the 402 boundary is served, settlement not activated — test-mode counts as face-payable per DRAFT §7 / spec §7.3).",
+  "experiment": {
+    "pattern": "per-outcome",
+    "motion": "B2A",
+    "shapes": ["anon-sandbox", "paid-402"],
+    "rateCardRef": "/pricing#rates",
+    "startDate": "2026-08-23",
+    "hypothesis": "Outcome-priced confirmed bookings beat per-call metering on revenue per substrate call for the salon back office; real public license data at a free floor is the acquisition surface for the scheduling-agent persona."
+  }
+}

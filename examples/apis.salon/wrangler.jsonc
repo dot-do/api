@@ -1,0 +1,9 @@
+{
+  // apis.salon — wave-zero property worker (register row personal-care).
+  // Deploys when the apis.salon zone/route is provisioned (name-only today,
+  // porkbun exp 2027-07-26, no CF zone — surface register); the §7.4
+  // analytics seam binds here as SEAMS when the unified plane exists.
+  "name": "apis-salon",
+  "main": "worker.js",
+  "compatibility_date": "2026-08-01"
+}
