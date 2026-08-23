@@ -41,3 +41,13 @@ anywhere on the surface. Every served record is labeled example data.
   shape-compatibility with payable siblings, never fake billing.
 - **Family registry empty.** The row's sibling names (apis.photos,
   apis.photography) serve nothing today; presence-when-true keeps them out.
+
+## Rail ledger (§9.1 final box)
+
+Face registered in the rail ledger (faces-payable/week denominator):
+registered via LEDGER.md door A — row in
+`packages/rail-ledger/registry/faces.json` @ `draft/rail-ledger-v1`
+(studio #9 alignment pass 2026-08-23); readout
+https://ledger.apis.ax/readouts/faces-payable (service built, deploy pending
+Batch-S). The served projection config records the address in its
+`railLedger` field.
