@@ -28,21 +28,18 @@ import { createAxpRoutes } from './axp/routes.js'
 import { buildCard } from './axp/card.js'
 import { envelopeResponse, ok, empty } from './axp/envelope.js'
 import { negotiate, serveFace, AGENT_UA_TOKENS } from './axp/conneg.js'
-import { manifest, ORIGIN } from './manifest.js'
+import { manifest, ORIGIN, g2 } from './manifest.js'
 import { plans, objectives, analyses } from './seed.js'
 import { seamTags } from './substrate.js'
 
 const RETENTION = 'ephemeral — per-isolate memory only; no durability at wave zero'
 
-// ── the card: generator truth + links.verify (spec §4.1) ────────────────────
-// The vendored generator does not yet emit links.verify; the template spec
-// requires it. Additive extension of the GENERATED card — the quartet itself
-// stays generator-emitted, and the gap is filed as a generator issue
-// (fix-the-generator law), never patched deeper than this one link.
-const card = (() => {
-  const c = buildCard(manifest)
-  return { ...c, links: { ...c.links, verify: `${ORIGIN}/verify` } }
-})()
+// ── the card: generator truth, whole (spec §4.1) ────────────────────────────
+// links.verify and the top-level g2 object are NATIVE generator emissions
+// since axp-faces 0.3.0 (axp-ext-rates-g2@0.2.0) — the former site-side
+// links.verify bridge is gone; the manifest declares verifyUrl and g2 and the
+// generated card carries them at the ruled placements.
+const card = buildCard(manifest)
 
 const axp = createAxpRoutes(manifest)
 
@@ -91,33 +88,15 @@ function threeFaces(title, obj) {
 }
 
 // ── the ICP document: the row's G2 coordinates, exposed (stake #6) ──────────
+// ONE truth: the same g2 object manifest.js puts on the card (top-level g2,
+// axp-ext-rates-g2 §4) is served here at /icp.json (links.icp stays beside it).
 const icpDocument = {
   $context: 'https://schema.org.ai',
   property: 'fn-strategy.org.ai',
   substrate: 'fn-strategy',
-  g2: {
-    icp: {
-      companyTypes: ['all — horizontal Function row'],
-      jobTypes: ['founder', 'chief executive', 'strategy officer', 'chief of staff'],
-    },
-    coordinates: ['Function=Strategy', 'Department=Executive'],
-    personas: [
-      { id: 'founder-operator', description: 'founder/CEO steering an annual-or-episodic planning cycle' },
-      { id: 'strategy-officer', description: 'strategy/chief-of-staff role running the objective and analysis cadence' },
-      { id: 'agent-caller', description: 'autonomous agent consuming plan/objective/analysis records over this machine face (B2A)' },
-    ],
-  },
-  system: { system: 'StrategicPlanning', coordinates: ['Function=Strategy', 'Department=Executive'] },
-  agent_classes: [
-    { id: 'reader-agent', description: 'keyless reads: the quartet, /plans, /objectives, /analyses, /verify — no key, no account' },
-    {
-      id: 'sandbox-transactor',
-      description:
-        'exercises the headless doors (POST /objectives, POST /key-results/{id}/progress) against labeled synthetic state; ' +
-        'mutations are per-isolate and ephemeral at wave zero',
-    },
-    { id: 'mcp-caller', description: 'the same Nouns and verbs over the /mcp JSON-RPC door — one definition, two transports' },
-  ],
+  g2,
+  system: { system: 'StrategicPlanning', coordinates: g2.coordinates },
+  agent_classes: g2.agentClasses,
 }
 
 // ── the published suite (links.verify target) ───────────────────────────────
@@ -142,6 +121,11 @@ const suiteDocument = {
     { id: 'offer-ladder', asserts: 'the 402 OFFER at /offer carries the pay/work/claim alternatives, every rung labeled a stub' },
     { id: 'head-mirrors-get', asserts: 'HEAD answers wherever GET answers, same status and headers' },
     { id: 'typed-405', asserts: 'non-GET on a GET-only AXP address answers a typed BLOCKED envelope with Allow' },
+    {
+      id: 'rates-g2-native',
+      asserts:
+        'the axp-ext-rates-g2@0.2.0 members are generator-native at the ruled placements: top-level rates[] in the Pricing Document keyed on declared operationIds, operationId on every OpenAPI operation, links.verify on the card, top-level g2 on the card',
+    },
   ],
 }
 
@@ -237,7 +221,7 @@ export default {
       referral: request.headers.get('referer') || null,
     })
 
-    // 1. the card, extended with links.verify (see the header note)
+    // 1. the card (generator-emitted whole — links.verify and g2 are native)
     if (path === '/.well-known/agents.json' && (method === 'GET' || method === 'HEAD')) {
       return new Response(method === 'HEAD' ? null : JSON.stringify(card, null, 2), {
         status: 200,

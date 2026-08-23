@@ -16,7 +16,7 @@ config change, not a rebuild.
 
 | Face | Doors |
 |---|---|
-| Machine face (vendored axp-faces, pinned `apis-ax-axp@2.6.0`, digest `a9a1197c…`) | `/.well-known/agents.json` (+ `links.verify`), `/openapi.json`, `/pricing` (3 faces), `/llms.txt`, `/` (3 faces), `/offer` (402) |
+| Machine face (vendored axp-faces 0.3.0, pinned `apis-ax-axp@2.6.0` digest `a9a1197c…`, extension `axp-ext-rates-g2@0.2.0`) | `/.well-known/agents.json` (native `links.verify` + top-level `g2`), `/openapi.json` (canonical `operationId` on every operation), `/pricing` (3 faces, top-level `rates[]`), `/llms.txt`, `/` (3 faces), `/offer` (402) |
 | Data face | `GET /objectives` (the branching collection: OK / EMPTY / BLOCKED / OFFER), `GET /objectives/{id}`, `GET /plans`, `GET /plans/{id}`, `GET /analyses`, `GET /analyses/{id}` |
 | Headless face (strategic-planning/OKR system-of-record verbs, same collections) | `POST /objectives`, `POST /key-results/{id}/progress` |
 | MCP | `POST /mcp` — the same Nouns/verbs over JSON-RPC |
@@ -43,7 +43,7 @@ config change, not a rebuild.
 ## Run the gate
 
 ```sh
-node selfcheck.mjs            # fail-closed §9.1 self-verify, 11 checks
+node selfcheck.mjs            # fail-closed §9.1 self-verify, 12 checks
 # AQA_DIR=/path/to/api.qa node selfcheck.mjs   # if the estate layout differs
 ```
 
@@ -55,12 +55,14 @@ projection-config completeness). `axp/` is byte-identical vendored from
 
 ## Known gaps (filed, not softened)
 
-- `rates[]` (operationId-keyed rate rows, DRAFT §2) is not yet supported by the
-  axp-faces Pricing Document — a generator extension per the fix-the-generator
-  law; the intended rate table lives in `projection.config.json` until it lands.
-- `links.verify` is added additively to the generated card in `worker.js` — the
-  generator does not emit it yet (same law; one-link extension, quartet stays
-  generator-emitted).
+- ~~`rates[]` not supported by the axp-faces Pricing Document~~ — CLOSED by
+  `axp-ext-rates-g2@0.2.0` (axp-faces 0.3.0): the operationId-keyed rate card
+  is now a native generator input (`pricing.rates` in `manifest.js`) served as
+  a top-level array of the Pricing Document at the ruled placement.
+- ~~`links.verify` bridged onto the generated card in `worker.js`~~ — CLOSED by
+  the same extension: `verifyUrl` is a native manifest input and the bridge
+  code is removed; the card also carries the top-level `g2` object natively
+  (`links.icp` stays beside it).
 - `interfaces.testSuite` is deliberately not declared (api.lawyer reference
   posture): declaring it arms `check-capability-coverage` against deployed
   verifiers that predate the registry row. The suite still ships at

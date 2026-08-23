@@ -31,16 +31,16 @@
     "pattern": "402 metered per-call",
     "rateCardRef": "/pricing",
     "rates": {
-      "$comment": "BLOCKER carried, not patched: the vendored axp-faces Pricing Document does not yet support operationId-keyed rates[] (DRAFT §2 wire schema). Per the fix-the-generator law this is a generator extension, never a one-site patch. Until it lands, the intended per-operation rate table lives here as config, NOT on the wire.",
-      "intended": [
-        { "operation": "listObjectives", "price": 0, "freeQuota": "unlimited" },
-        { "operation": "getObjective", "price": 0.002, "freeQuota": 100 },
-        { "operation": "listPlans", "price": 0, "freeQuota": "unlimited" },
-        { "operation": "getPlan", "price": 0.002, "freeQuota": 100 },
-        { "operation": "createObjective", "price": 0.002, "freeQuota": 100 },
-        { "operation": "recordKeyResultProgress", "price": 0.002, "freeQuota": 100 },
-        { "operation": "listAnalyses", "price": 0, "freeQuota": "unlimited" },
-        { "operation": "getAnalysis", "price": 0.002, "freeQuota": 100 }
+      "$comment": "BLOCKER CLOSED by axp-ext-rates-g2@0.2.0 (axp-faces 0.3.0, vendored 2026-08-23): the operationId-keyed rates[] table is now served ON THE WIRE as a top-level array of the Pricing Document (manifest.js pricing.rates — the ruled placement). This block mirrors the served rows for the projection record; zero-price rows are the keyless floor (the former 'unlimited' freeQuota shorthand is expressed as price 0 with no quota, per the §2 schema).",
+      "served": [
+        { "operation": "listObjectives", "price": 0 },
+        { "operation": "getObjective", "price": 0.002, "unit": "usd-per-call", "freeQuota": 100 },
+        { "operation": "listPlans", "price": 0 },
+        { "operation": "getPlan", "price": 0.002, "unit": "usd-per-call", "freeQuota": 100 },
+        { "operation": "createObjective", "price": 0.002, "unit": "usd-per-call", "freeQuota": 100 },
+        { "operation": "recordKeyResultProgress", "price": 0.002, "unit": "usd-per-call", "freeQuota": 100 },
+        { "operation": "listAnalyses", "price": 0 },
+        { "operation": "getAnalysis", "price": 0.002, "unit": "usd-per-call", "freeQuota": 100 }
       ]
     }
   },

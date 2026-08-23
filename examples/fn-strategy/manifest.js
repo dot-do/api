@@ -1,8 +1,12 @@
 /**
  * manifest.js — the ONE site manifest every fn-strategy machine face is
- * generated from (vendored axp-faces, pinned apis-ax-axp@2.6.0, digest
- * a9a1197c…). Never hand-roll a face: the quartet, the branching collection,
- * the probes, and the conneg middleware all derive from this file.
+ * generated from (vendored axp-faces 0.3.0, pinned apis-ax-axp@2.6.0, digest
+ * a9a1197c…, extension axp-ext-rates-g2@0.2.0). Never hand-roll a face: the
+ * quartet, the branching collection, the probes, and the conneg middleware
+ * all derive from this file. The four extension members — rates[] (top-level
+ * in the Pricing Document), the canonical operationId on every route, the
+ * card's links.verify, and the top-level card g2 object — are native
+ * generator inputs here, at their ruled placements.
  *
  * PLACEHOLDER ADDRESS. Register row fn-strategy is a GAP row — no
  * api-grammar name is held. Per template spec §0 the G3 substrate is built
@@ -15,6 +19,36 @@ import { defineSiteManifest } from './axp/manifest.js'
 import { objectives } from './seed.js'
 
 export const ORIGIN = 'https://fn-strategy.org.ai'
+
+/**
+ * The row's G2/ICP coordinates — ONE object, two placements: carried verbatim
+ * onto the capability card as the top-level `g2` member (axp-ext-rates-g2 §4)
+ * and embedded in the /icp.json document worker.js serves (links.icp stays
+ * legal beside g2). GAP-row honesty: coordinates only, no brand, no claim.
+ */
+export const g2 = {
+  icp: {
+    companyTypes: ['all — horizontal Function row'],
+    jobTypes: ['founder', 'chief executive', 'strategy officer', 'chief of staff'],
+  },
+  coordinates: ['Function=Strategy', 'Department=Executive'],
+  personas: [
+    { id: 'founder-operator', description: 'founder/CEO steering an annual-or-episodic planning cycle' },
+    { id: 'strategy-officer', description: 'strategy/chief-of-staff role running the objective and analysis cadence' },
+    { id: 'agent-caller', description: 'autonomous agent consuming plan/objective/analysis records over this machine face (B2A)' },
+  ],
+  motion: 'B2A',
+  agentClasses: [
+    { id: 'reader-agent', description: 'keyless reads: the quartet, /plans, /objectives, /analyses, /verify — no key, no account' },
+    {
+      id: 'sandbox-transactor',
+      description:
+        'exercises the headless doors (POST /objectives, POST /key-results/{id}/progress) against labeled synthetic state; ' +
+        'mutations are per-isolate and ephemeral at wave zero',
+    },
+    { id: 'mcp-caller', description: 'the same Nouns and verbs over the /mcp JSON-RPC door — one definition, two transports' },
+  ],
+}
 
 const llmsBody = `# fn-strategy — wave-zero strategy-function substrate (placeholder address)
 
@@ -71,6 +105,7 @@ export const manifest = defineSiteManifest({
 
   collection: {
     path: '/objectives',
+    operationId: 'listObjectives', // the canonical name the rate row and the MCP tool share (axp-ext-rates-g2 §1)
     memberName: 'results',
     summary: 'Objectives — the branching typed collection (OK | EMPTY | BLOCKED), keyless, labeled demo seed',
     records: objectives,
@@ -87,6 +122,20 @@ export const manifest = defineSiteManifest({
     binding: false,
     statement:
       'STUB RATE CARD (wave zero, GAP register row): prices are stated intent for a placeholder projection. No live settlement is wired, no key or account exists, and no charge can occur. This document exists so the 402 OFFER boundary is real and machine-probeable before a brand attaches.',
+    /* axp-ext-rates-g2 §2 — the operationId-keyed operation rate card, served
+       as a TOP-LEVEL array of the Pricing Document (the ruled placement).
+       binding: false + the statement above govern these rows too: stated
+       intent, no settlement wired. Zero-price rows are the keyless floor. */
+    rates: [
+      { operation: 'listObjectives', price: 0, note: 'keyless floor — the branching collection is free' },
+      { operation: 'getObjective', price: 0.002, unit: 'usd-per-call', freeQuota: 100 },
+      { operation: 'listPlans', price: 0, note: 'keyless floor' },
+      { operation: 'getPlan', price: 0.002, unit: 'usd-per-call', freeQuota: 100 },
+      { operation: 'createObjective', price: 0.002, unit: 'usd-per-call', freeQuota: 100 },
+      { operation: 'recordKeyResultProgress', price: 0.002, unit: 'usd-per-call', freeQuota: 100 },
+      { operation: 'listAnalyses', price: 0, note: 'keyless floor' },
+      { operation: 'getAnalysis', price: 0.002, unit: 'usd-per-call', freeQuota: 100 },
+    ],
     offers: [
       {
         id: 'b2a-metered-stub',
@@ -119,12 +168,15 @@ export const manifest = defineSiteManifest({
   },
 
   routes: [
-    { method: 'GET', path: '/plans', summary: 'Plans — typed list of strategic plans (labeled demo seed)' },
-    { method: 'GET', path: '/plans/{planId}', summary: 'One plan by id — typed OK | EMPTY' },
-    { method: 'GET', path: '/objectives/{objectiveId}', summary: 'One objective by id, with its key results — typed OK | EMPTY' },
+    // axp-ext-rates-g2 §1: operationId is the ONE cross-face name on every
+    // route — OpenAPI operationId = MCP tool name = suite reference = rate key.
+    { method: 'GET', path: '/plans', operationId: 'listPlans', summary: 'Plans — typed list of strategic plans (labeled demo seed)' },
+    { method: 'GET', path: '/plans/{planId}', operationId: 'getPlan', summary: 'One plan by id — typed OK | EMPTY' },
+    { method: 'GET', path: '/objectives/{objectiveId}', operationId: 'getObjective', summary: 'One objective by id, with its key results — typed OK | EMPTY' },
     {
       method: 'POST',
       path: '/objectives',
+      operationId: 'createObjective',
       summary: 'Create an objective (headless system-of-record door; ephemeral per-isolate state at wave zero)',
       requestBody: {
         required: true,
@@ -143,6 +195,7 @@ export const manifest = defineSiteManifest({
     {
       method: 'POST',
       path: '/key-results/{keyResultId}/progress',
+      operationId: 'recordKeyResultProgress',
       summary: 'Record key-result progress (headless door; ephemeral per-isolate state at wave zero)',
       requestBody: {
         required: true,
@@ -154,27 +207,25 @@ export const manifest = defineSiteManifest({
       },
       responses: { 200: { description: 'OK envelope with the updated key result' } },
     },
-    { method: 'GET', path: '/analyses', summary: 'Analyses — typed list of market/competitor analysis records (labeled demo seed)' },
-    { method: 'GET', path: '/analyses/{analysisId}', summary: 'One analysis by id — typed OK | EMPTY' },
-    { method: 'GET', path: '/icp.json', summary: 'Self-classification: the G2 coordinates (ICP + personas) and agent classes this surface distinguishes' },
-    { method: 'GET', path: '/verify', summary: 'Run our tests — the published verification suite for this surface' },
-    { method: 'GET', path: '/verify/suite.json', summary: 'The published suite document (machine-readable)' },
+    { method: 'GET', path: '/analyses', operationId: 'listAnalyses', summary: 'Analyses — typed list of market/competitor analysis records (labeled demo seed)' },
+    { method: 'GET', path: '/analyses/{analysisId}', operationId: 'getAnalysis', summary: 'One analysis by id — typed OK | EMPTY' },
+    { method: 'GET', path: '/icp.json', operationId: 'getIcp', summary: 'Self-classification: the G2 coordinates (ICP + personas) and agent classes this surface distinguishes' },
+    { method: 'GET', path: '/verify', operationId: 'getVerify', summary: 'Run our tests — the published verification suite for this surface' },
+    { method: 'GET', path: '/verify/suite.json', operationId: 'getVerifySuite', summary: 'The published suite document (machine-readable)' },
   ],
 
   mcp: {
     url: `${ORIGIN}/mcp`,
     transport: 'streamable-http',
-    tools: [
-      { name: 'listPlans', description: 'List strategic plans (labeled demo seed)' },
-      { name: 'getPlan', description: 'Get one plan by id' },
-      { name: 'listObjectives', description: 'List objectives; filters: cycle, status' },
-      { name: 'getObjective', description: 'Get one objective (with key results) by id' },
-      { name: 'listAnalyses', description: 'List analysis records (labeled demo seed)' },
-      { name: 'getAnalysis', description: 'Get one analysis by id' },
-    ],
+    // axp-ext-rates-g2 §1: MCP tools are declared BY NAME — each string IS the
+    // canonical operationId; descriptions and input schemas are served live by
+    // the /mcp door's tools/list (worker.js).
+    tools: ['listPlans', 'getPlan', 'listObjectives', 'getObjective', 'listAnalyses', 'getAnalysis'],
   },
 
   llms: { body: llmsBody },
+  verifyUrl: '/verify', // → links.verify on the card (axp-ext-rates-g2 §3; absolutized by the generator)
+  g2, // → the top-level card g2 object (axp-ext-rates-g2 §4; carried verbatim)
   icpUrl: `${ORIGIN}/icp.json`,
   conformanceUrl: 'https://api.qa/fn-strategy.org.ai',
 

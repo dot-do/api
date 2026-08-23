@@ -20,6 +20,9 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 const HERE = dirname(fileURLToPath(import.meta.url))
 globalThis.__SEAM_SILENT = true // keep the gate's output legible; seams still construct
 const RATIFIED_DIGEST = 'a9a1197c439d708b4db54f606f07c9a2d019c7f2989fbcd9b599de2fcc028e0d'
+const EXTENSION_NAME = 'axp-ext-rates-g2'
+const EXTENSION_VERSION = '0.2.0'
+const EXTENSION_DIGEST = '903e414d4f1440ddf9028b66d6987a2a3263ec1e84902b9ef4f8cb715a12ccc5'
 
 const results = []
 let failed = false
@@ -41,10 +44,16 @@ const sha256 = (buf) => createHash('sha256').update(buf).digest('hex')
     if (actual !== digest) drift.push(label)
   }
   const specDigestFile = readFileSync(join(HERE, 'spec/apis-ax-standard.digest.txt'), 'utf8').trim()
+  const ext = pins.extensions?.[EXTENSION_NAME]
+  const extPinned = ext?.version === EXTENSION_VERSION && ext?.digest === EXTENSION_DIGEST
   check(
     'vendored-pins',
-    drift.length === 0 && pins.pinnedSpecDigest === RATIFIED_DIGEST && specDigestFile === RATIFIED_DIGEST,
-    drift.length ? `drift in ${drift.join(', ')}` : `12 vendored files byte-true; spec pinned at ${RATIFIED_DIGEST.slice(0, 8)}…`,
+    drift.length === 0 && pins.pinnedSpecDigest === RATIFIED_DIGEST && specDigestFile === RATIFIED_DIGEST && extPinned,
+    drift.length
+      ? `drift in ${drift.join(', ')}`
+      : !extPinned
+        ? `extension pin mismatch: expected ${EXTENSION_NAME}@${EXTENSION_VERSION} (${EXTENSION_DIGEST.slice(0, 8)}…), got ${JSON.stringify(ext)}`
+        : `12 vendored files byte-true; spec pinned at ${RATIFIED_DIGEST.slice(0, 8)}…; ${EXTENSION_NAME}@${EXTENSION_VERSION} pinned at ${EXTENSION_DIGEST.slice(0, 8)}…`,
   )
 }
 
@@ -135,7 +144,10 @@ const json = async (r) => JSON.parse(await r.text())
   }
   // the MCP door serves the same definition
   const mcpList = await json(await call('/mcp', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' }) }))
-  if (!Array.isArray(mcpList.result?.tools) || mcpList.result.tools.length !== manifest.mcp.tools.length) bad.push('mcp tools/list')
+  // manifest.mcp.tools are STRING operationIds (axp-ext-rates-g2 §1); the live
+  // tools/list door must serve exactly that set of names.
+  const servedToolNames = (mcpList.result?.tools || []).map((t) => t.name).sort()
+  if (JSON.stringify(servedToolNames) !== JSON.stringify([...manifest.mcp.tools].sort())) bad.push('mcp tools/list')
   const mcpCall = await json(
     await call('/mcp', {
       method: 'POST',
@@ -203,6 +215,43 @@ const json = async (r) => JSON.parse(await r.text())
   const verifyOk = card.links.verify === `${ORIGIN}/verify` && (await call('/verify/suite.json')).status === 200
   const mcpDeclared = card.interfaces.mcp && card.interfaces.mcp.url === `${ORIGIN}/mcp`
   check('no-ghost-surfaces', bad.length === 0 && verifyOk && mcpDeclared, bad.length ? bad.join(', ') : `${card.interfaces.http.length} declared doors answer; links.verify + mcp door live`)
+}
+
+// ── 9b. axp-ext-rates-g2@0.2.0 native at the ruled placements ───────────────
+{
+  const card = await json(await call('/.well-known/agents.json'))
+  const pricingDoc = await json(await call('/pricing'))
+  const openapi = await json(await call('/openapi.json'))
+  const problems = []
+
+  // §2 — rates[] TOP-LEVEL in the Pricing Document, keyed on declared operationIds
+  const opIds = []
+  for (const item of Object.values(openapi.paths || {})) {
+    for (const op of Object.values(item)) if (op && typeof op === 'object' && op.operationId) opIds.push(op.operationId)
+  }
+  if (new Set(opIds).size !== opIds.length) problems.push('duplicate operationId in the contract')
+  const nameable = new Set([...opIds, ...manifest.mcp.tools])
+  if (!Array.isArray(pricingDoc.rates) || pricingDoc.rates.length !== 8) problems.push(`pricing.rates: expected top-level array of 8 rows, got ${JSON.stringify(pricingDoc.rates?.length)}`)
+  for (const row of pricingDoc.rates || []) {
+    if (!nameable.has(row.operation)) problems.push(`rate row ${row.operation} names no declared operation`)
+    if (!(typeof row.price === 'number' && row.price >= 0)) problems.push(`rate row ${row.operation} price defective`)
+  }
+
+  // §1 — the canonical name on every declared route, incl. the branching collection
+  const expectedOps = ['listObjectives', 'getPricing', 'getOffer', 'listPlans', 'getPlan', 'getObjective', 'createObjective', 'recordKeyResultProgress', 'listAnalyses', 'getAnalysis', 'getIcp', 'getVerify', 'getVerifySuite']
+  for (const id of expectedOps) if (!opIds.includes(id)) problems.push(`contract missing operationId ${id}`)
+
+  // §3 + §4 — links.verify and top-level g2 on the card, generator-emitted
+  if (card.links.verify !== `${ORIGIN}/verify`) problems.push(`card.links.verify = ${JSON.stringify(card.links.verify)}`)
+  if (!card.g2 || typeof card.g2 !== 'object' || Object.keys(card.g2).length === 0) problems.push('card.g2 missing or empty')
+  if (JSON.stringify(card.g2) !== JSON.stringify(manifest.g2)) problems.push('card.g2 is not the manifest g2 carried verbatim')
+  if (card.links.icp !== `${ORIGIN}/icp.json`) problems.push('links.icp must stay beside g2')
+
+  check(
+    'rates-g2-native',
+    problems.length === 0,
+    problems.length ? problems.join('; ') : `rates[] top-level (8 rows, all declared ops), ${opIds.length} contract operationIds unique, links.verify + g2 + links.icp on the card`,
+  )
 }
 
 // ── 10. probes honest: knownEmpty / knownForbidden branch truthfully ────────
