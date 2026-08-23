@@ -6,23 +6,21 @@
   "main": "_worker.js",
   "no_bundle": true,
   "compatibility_date": "2026-01-24",
+  "account_id": "b6641681fe423910342b9ffa1364c76d",
 
   "observability": {
     "enabled": true,
     "head_sampling_rate": 1
   },
 
-  // One worker serves the apex and every tool subdomain. Uncomment at
-  // go-live. NOTE (2026-08-23): the api.ht zone is live on Cloudflare but
-  // currently returns 522 — the old worker likely still sits in the legacy
-  // "semantics dev" account. Go-live requires zone migration to the estate
-  // account (or creds to the legacy account) before these routes can be
-  // attached. Keeping them commented also means `wrangler dev` serves on
-  // localhost, so response links are clickable locally (path mode).
-  // "routes": [
-  //   { "pattern": "api.ht/*", "zone_name": "api.ht" },
-  //   { "pattern": "*.api.ht/*", "zone_name": "api.ht" }
-  // ]
+  // One worker serves the apex and every tool subdomain. Zone is ACTIVE on
+  // the estate .do account (2026-08-23); routes attached at go-live.
+  // Note: `wrangler dev` still serves on localhost, so response links stay
+  // clickable locally (path mode).
+  "routes": [
+    { "pattern": "api.ht/*", "zone_name": "api.ht" },
+    { "pattern": "*.api.ht/*", "zone_name": "api.ht" }
+  ]
 
   // Optional: set GITHUB_CLIENT_ID (+ secret GITHUB_CLIENT_SECRET) to point
   // /login at a real GitHub OAuth app. Without it the flow runs in labeled

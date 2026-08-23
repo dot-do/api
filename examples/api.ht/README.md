@@ -102,11 +102,10 @@ labeled demo mode; keys are random, unpersisted, and not yet enforced
 
 ## Deployment status (2026-08-23)
 
-The `api.ht` zone is live on Cloudflare but returns **522** — the old worker
-likely still sits in the legacy "semantics dev" account. Go-live requires
-zone migration to the estate account (or creds to the legacy account); the
-`routes` block in `wrangler.jsonc` is commented until then. Do not attach
-routes before that ops task is done.
+**Deployed.** The `api.ht` zone is ACTIVE on the estate .do Cloudflare
+account and the `api-ht` worker is attached to `api.ht/*` and `*.api.ht/*`
+(see `routes` in `wrangler.jsonc`). Redeploy: `npx tsx build.ts && npx
+wrangler deploy` from this directory.
 
 ## Expanding to hundreds of tools
 
