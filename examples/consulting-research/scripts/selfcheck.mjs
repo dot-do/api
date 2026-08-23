@@ -319,8 +319,8 @@ await (async () => {
 // ── 16. Rail ledger ──────────────────────────────────────────────────────────
 note(
   "Face registered in the rail ledger (faces-payable/week denominator)",
-  "DEFERRED",
-  "the rail ledger lives outside this repo; registration recorded as a follow-up in the build summary — a GAP-row placeholder face registers when its address is ruled.",
+  "REGISTERED",
+  "registered via LEDGER.md door A — row in packages/rail-ledger/registry/faces.json @ draft/rail-ledger-v1 (studio #9 alignment pass 2026-08-23); readout https://ledger.apis.ax/readouts/faces-payable (service built, deploy pending Batch-S). GAP-row placeholder face consulting-research.org.ai is the registered face until the address is ruled.",
 );
 
 console.log = realLog;
