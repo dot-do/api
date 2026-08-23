@@ -1,0 +1,9 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "fn-customer-service",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-08-23"
+  // No routes block on purpose: this is a GAP-row substrate under a
+  // placeholder address (no category name is held yet — #16). Binding a
+  // real hostname is the one-line change that happens when the name lands.
+}

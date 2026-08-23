@@ -1,0 +1,41 @@
+{
+  "$comment": "GAP row (property-template spec §0): register row fn-customer-service holds NO api-grammar name — this file records every name-independent G4 field so the projection is ready the day a name is acquired (#16). It is deliberately NOT a brand config: brand, domains, positioning-as-claim, and mdx stay null until the name lands. The placeholder origin serves the G3 substrate + sandbox only.",
+  "substrate": "fn-customer-service",
+  "brand": null,
+  "brandGap": {
+    "status": "GAP — api.support implied by the grammar, NOT held; availability [UNVERIFIED]",
+    "filedTo": "#16 acquisition list (per #3 rule 3 / coverage C.1)",
+    "notCandidates": ["gigs.support — a supply door (#3 rule 6), out of naming scope"],
+    "lowCostFallbackOnRecord": "support.dev (surface-register gap-fill candidate, availability [UNVERIFIED], no purchase implied)"
+  },
+  "domains": ["fn-customer-service.example.com.ai (placeholder — not a brand)"],
+  "icp": {
+    "companyTypes": "all — Function × Department × Process root: every CompanyType's support/CX department",
+    "jobTypes": ["support lead", "CX manager", "customer service representative"]
+  },
+  "personas": ["support lead", "CX manager", "autonomous agent (B2A caller)"],
+  "motion": "B2A",
+  "motionNote": "First customer is internal (the estate's own portfolio properties run the same Ticket), and the placeholder face carries no human onboarding surface — so the agent-first motion is the wave-zero declaration. A B2D projection becomes available the day a developer-facing name is acquired.",
+  "offer": [
+    { "shape": "anon-sandbox", "gate": "none — keyless", "price": "free", "status": "LIVE (the universal floor)" },
+    { "shape": "paid-402", "gate": "id.org.ai machine identity [gate not mounted at the placeholder address]", "price": "metered per rate card — STUB: 402-shaped boundary, no billing occurs", "status": "STUB, labeled in /pricing" }
+  ],
+  "offerGap": "#17 ladder rungs 1 (earned credits) and 2 (human-claimed) are NOT mounted and therefore NOT advertised in the 402 OFFER alternatives — declaring an unmounted rung would be a ghost surface (presence-when-true beats §9.1 box 8 until the rungs exist).",
+  "pricing": { "pattern": "402 metered per-call (stub)", "rateCardRef": "/pricing (rates[] inside the offer body)" },
+  "positioning": null,
+  "positioningNote": "Withheld: a GAP row has no brand to position, and the agent-default claim is gated by the worthiness bar (§4.6) regardless.",
+  "mdx": null,
+  "experiment": {
+    "pattern": "402-metered-stub",
+    "motion": "B2A",
+    "shapes": ["anon-sandbox", "paid-402-stub"],
+    "rateCardRef": "/pricing",
+    "startDate": "2026-08-23",
+    "hypothesis": "None claimable under a placeholder address; this registration exists so the harness rollup key {substrate, projection, motion, operation, shape, pattern} is stable from the first emitted seam."
+  },
+  "counterpartBrandGap": {
+    "status": "RECORDED — the row's ICP (every CompanyType's support/CX department) includes non-technical principals; no human-vocabulary counterpart name is held for the cell",
+    "trigger": "§9.3 diagnostic: agent-referred human traffic on the developer/machine face",
+    "response": "counterpart-brand proposal filed against the register row, named per #3 — never API-vocabulary patches on this surface"
+  }
+}
