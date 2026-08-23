@@ -1,11 +1,15 @@
 /**
  * worker.js — the api.services wave-zero worker: one substrate, two plies.
  *
- * Pipeline: seams → the two extended faces (/pricing with rates[],
- * /openapi.json with patched operationIds) → the site's own doors (the three
- * sibling Noun collections + system-of-record writes, /icp, /verify, /mcp)
- * → the vendored axp-faces mount (card, llms, /services, family, offer,
- * three-faced home) → typed 404 EMPTY.
+ * Pipeline: seams → the site's own doors (the three sibling Noun collections
+ * + system-of-record writes, /icp, /verify, /mcp) → the vendored axp-faces
+ * mount (card with links.verify + g2, openapi with native operationIds,
+ * /pricing with the native top-level rates[], llms, /services, family,
+ * offer, three-faced home) → typed 404 EMPTY.
+ *
+ * The rates[]/operationId bridges are GONE (axp-ext-rates-g2@0.2.0 is native
+ * in the vendored generator, axp-faces 0.3.0): the manifest declares the
+ * ruled members and the mount serves them — no site-side document patching.
  *
  * Both plies serve from ONE definition: every collection here reads the same
  * store the branching collection and the MCP tools read; the "headless" doors
@@ -13,13 +17,10 @@
  */
 
 import { createAxpRoutes } from "./axp/routes.js";
-import { buildOpenapi } from "./axp/openapi.js";
-import { buildPricingDocument } from "./axp/pricing.js";
 import { collectionDecision, envelopeResponse, offer, ok } from "./axp/envelope.js";
 import { serveFace, negotiate } from "./axp/conneg.js";
 import { manifest, ORIGIN, NAME, VERSION, LADDER_ALTERNATIVES } from "./manifest.js";
 import { projection } from "./projection.js";
-import { extendPricing, extendOpenapi, rates } from "./rates.js";
 import { records, find, create, mintWorkspace, RETENTION, SEED_VERSION } from "./store.js";
 import { handleMcp } from "./mcp.js";
 import { meter, moneyEvent, receiptSeam, trafficEvent } from "./seams.js";
@@ -27,22 +28,11 @@ import { meter, moneyEvent, receiptSeam, trafficEvent } from "./seams.js";
 const axp = createAxpRoutes(manifest);
 
 const JSON_CT = { "content-type": "application/json; charset=utf-8" };
-const jsonResponse = (obj, { head = false, status = 200 } = {}) =>
-  new Response(head ? null : JSON.stringify(obj, null, 2), { status, headers: JSON_CT });
 
 const mdOfJson = (title, obj) => `# ${title}\n\n\`\`\`json\n${JSON.stringify(obj, null, 2)}\n\`\`\`\n`;
 const htmlOfJson = (title, obj) => {
   const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   return `<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><title>${esc(title)}</title></head>\n<body><h1>${esc(title)}</h1><pre>${esc(JSON.stringify(obj, null, 2))}</pre></body></html>\n`;
-};
-
-// ── the two extended faces (additive members over the generated documents) ──
-const pricingDoc = extendPricing(buildPricingDocument(manifest));
-const openapiDoc = extendOpenapi(buildOpenapi(manifest));
-const pricingFaces = {
-  json: pricingDoc,
-  md: mdOfJson(`${NAME} — pricing`, pricingDoc),
-  html: htmlOfJson(`${NAME} — pricing`, pricingDoc),
 };
 
 // ── the G2 coordinates document (stake #6 — linked from the card as links.icp) ──
@@ -133,19 +123,9 @@ export default {
     const head = request.method === "HEAD";
     trafficEvent(request, path);
 
-    // ── the two extended faces (before the axp mount, same addresses) ──────
-    if (path === "/pricing" || path === "/pricing.json" || path === "/pricing.md" || path === "/pricing.html") {
-      if (request.method !== "GET" && !head) return methodNotAllowed(path, "GET, HEAD");
-      meter("getPricing");
-      const { face } = negotiate(request, path, {});
-      return serveFace(request, url, pricingFaces, face, { cleanPath: "/pricing" });
-    }
-    if (path === "/openapi.json") {
-      if (request.method !== "GET" && !head) return methodNotAllowed(path, "GET, HEAD");
-      return jsonResponse(openapiDoc, { head });
-    }
-
     // ── MCP door (one definition — tools read the same store) ──────────────
+    // (/pricing — native rates[] — and /openapi.json — native operationIds —
+    //  are served by the vendored axp mount below; no site-side faces.)
     if (path === "/mcp") {
       return handleMcp(request, { name: NAME, version: VERSION });
     }
@@ -173,7 +153,7 @@ export default {
       } catch {
         /* an empty order still answers the boundary — the OFFER is the contract */
       }
-      const rate = rates.find((r) => r.operation === "orderOutcome");
+      const rate = manifest.pricing.rates.find((r) => r.operation === "orderOutcome");
       meter("orderOutcome", { status: "offer-served" });
       moneyEvent("orderOutcome", { serviceId: body?.serviceId });
       receiptSeam("orderOutcome");

@@ -9,7 +9,6 @@ import worker from "../src/worker.js";
 import { manifest } from "../src/manifest.js";
 import { product, operations, nouns } from "../src/product.js";
 import { projection } from "../src/projection.js";
-import { rates } from "../src/rates.js";
 import * as seed from "../src/seed.js";
 import { tools } from "../src/mcp.js";
 
@@ -89,7 +88,7 @@ describe("anon sandbox — the universal floor", () => {
   });
 });
 
-describe("rate card (/pricing + rates[])", () => {
+describe("rate card (/pricing + native top-level rates[] — axp-ext-rates-g2@0.2.0 §2)", () => {
   it("declares model, hard ceiling, and an unbound-price statement (stubs, never fake billing)", async () => {
     const { body } = await json("/pricing");
     expect(body.model).toBe("metered");
@@ -97,18 +96,25 @@ describe("rate card (/pricing + rates[])", () => {
     expect(body.binding).toBe(false);
     expect(body.statement).toMatch(/settlement is not activated/);
     expect(Array.isArray(body.rates)).toBe(true);
+    // the SERVED rates are the manifest's own rows — generated, never patched
+    expect(body.rates).toEqual(JSON.parse(JSON.stringify(manifest.pricing.rates)));
   });
 
-  it("every rate row: operation ⊆ OpenAPI operationIds, freeQuota named or zero price", async () => {
+  it("every served rate row: operation ⊆ OpenAPI operationIds; ratified row shape (price >= 0; allowance via included or freeQuota > 0)", async () => {
     const { body: openapi } = await json("/openapi.json");
     const ids = new Set();
     for (const methods of Object.values(openapi.paths)) {
       for (const op of Object.values(methods)) if (op.operationId) ids.add(op.operationId);
     }
-    for (const r of rates) {
+    const { body: pricing } = await json("/pricing");
+    for (const r of pricing.rates) {
       expect(ids.has(r.operation), `rates[] prices ${r.operation} which openapi does not declare`).toBe(true);
-      expect(r.price === 0 || r.freeQuota !== undefined, r.operation).toBe(true);
+      expect(typeof r.price === "number" && r.price >= 0, r.operation).toBe(true);
+      if (r.freeQuota !== undefined) expect(r.freeQuota, r.operation).toBeGreaterThan(0);
+      if (r.included !== undefined && typeof r.included === "number") expect(r.included, r.operation).toBeGreaterThan(0);
     }
+    // rows key uniquely on the canonical operationId
+    expect(new Set(pricing.rates.map((r) => r.operation)).size).toBe(pricing.rates.length);
     // and the G3 operations register matches what is actually served
     for (const op of operations) expect(ids.has(op), `product.operations declares ${op} but openapi does not serve it`).toBe(true);
   });
@@ -160,13 +166,29 @@ describe("G4 projection + G2 coordinates", () => {
     expect(icp.motion).toBe("B2A");
     expect(icp.icp.companyTypes.length).toBeGreaterThan(0);
   });
+
+  it("the card carries the ruled extension members: top-level g2 (verbatim projection truth) and links.verify (axp-ext-rates-g2 §3/§4)", async () => {
+    const { body: card } = await json("/.well-known/agents.json");
+    // §4 — g2 TOP-LEVEL on the card, verbatim from the manifest, beside links.icp
+    expect(card.g2).toEqual(JSON.parse(JSON.stringify(manifest.g2)));
+    expect(card.g2.motion).toBe("B2A");
+    expect(card.g2.substrate).toBe("fn-service-delivery");
+    expect(card.links.icp).toBe(`${ORIGIN}/icp`); // icpUrl stays legal beside g2
+    // §3 — links.verify beside links.conformance, and the door answers
+    expect(card.links.verify).toBe(`${ORIGIN}/verify`);
+    expect(card.links.conformance).toBeDefined();
+    const res = await call("/verify");
+    expect(res.status).toBe(200);
+  });
 });
 
 describe("machine face", () => {
   it("card declares the mounted MCP door; tools/list serves the same tools; a tool reads the same records as HTTP", async () => {
     const { body: card } = await json("/.well-known/agents.json");
     expect(card.interfaces.mcp.url).toBe(`${ORIGIN}/mcp`);
-    expect(card.interfaces.mcp.tools.map((t) => t.name)).toEqual(tools.map((t) => t.name));
+    // axp-ext-rates-g2 §1: card tools are STRING names — each IS the
+    // canonical operationId; descriptions/schemas served live by tools/list
+    expect(card.interfaces.mcp.tools).toEqual(tools.map((t) => t.name));
     const list = await json("/mcp", { method: "POST", body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" }), headers: { "content-type": "application/json" } });
     expect(list.body.result.tools.map((t) => t.name)).toEqual(tools.map((t) => t.name));
     const callRes = await json("/mcp", {

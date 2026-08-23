@@ -2,8 +2,15 @@
  * manifest.js — the ONE site manifest: every machine face (card, openapi,
  * pricing, llms.txt, family registry, branching collection, offer boundary,
  * three-faced home) is generated from this via the vendored axp-faces at the
- * PINS.json digest (apis-ax-axp@2.6.0). Nouns/operations come from product.js
- * (G3); brand/motion/offer posture from projection.js (G4).
+ * PINS.json digest (axp-faces 0.2.0, apis-ax-axp@2.6.0 +
+ * axp-ext-rates-g2@0.1.0). Nouns/operations come from product.js (G3);
+ * brand/motion/offer posture from projection.js (G4).
+ *
+ * The four ratified extension members are NATIVE manifest inputs at their
+ * ruled placements (no site-side bridges): pricing.rates (top-level rates[]
+ * in the Pricing Document), routes[].operationId + collection.operationId
+ * (the ONE cross-face operation name), verifyUrl (card links.verify), and
+ * g2 (top-level card object, carried verbatim).
  */
 
 import { defineSiteManifest } from "./axp/index.js";
@@ -112,6 +119,9 @@ export const manifest = defineSiteManifest({
   // seed substance; ?category=none / ?tag=none → EMPTY; ?scope=admin|internal → BLOCKED.
   collection: {
     path: "/services",
+    // axp-ext-rates-g2 §1: the branching collection's canonical operationId
+    // (the generator default, declared explicitly because a rate row keys on it).
+    operationId: "listCollection",
     memberName: "results",
     summary: "Service records at the NAPCS sellable-outcome grain — typed OK | EMPTY | BLOCKED | OFFER, branching on the query",
     records: records("services"),
@@ -126,7 +136,38 @@ export const manifest = defineSiteManifest({
     price: 0.001,
     binding: false,
     statement:
-      "Wave-zero surface: every 402 boundary is served and typed, but settlement is not activated — no charge is collected today. Prices are stated intent, not bound terms; the anon sandbox floor is free.",
+      "Wave-zero surface: every 402 boundary is served and typed, but settlement is not activated — no charge is collected today. Prices are stated intent, not bound terms; the anon sandbox floor is free: every operation is exercisable keyless against labeled example data at no charge.",
+
+    // The operation rate card (axp-ext-rates-g2@0.2.0 §2) — NATIVE manifest
+    // input; the generator emits it TOP-LEVEL in the Pricing Document and
+    // validates every row (operation ⊆ declared operationIds, price >= 0,
+    // included/freeQuota per §2.5, reserved names refused). Zero-price rows
+    // carry included: "unlimited" (the §2.5 allowance form); freeQuota is the
+    // legacy monthly shorthand on the metered rows.
+    rates: [
+      { operation: "listCollection", unit: "usd-per-call", price: 0, included: "unlimited" },
+      { operation: "getService", unit: "usd-per-call", price: 0, included: "unlimited" },
+      { operation: "listEngagements", unit: "usd-per-call", price: 0.001, freeQuota: 1000 },
+      { operation: "getEngagement", unit: "usd-per-call", price: 0.001, freeQuota: 1000 },
+      { operation: "createEngagement", unit: "usd-per-call", price: 0.002, freeQuota: 100 },
+      { operation: "listWorkOrders", unit: "usd-per-call", price: 0.001, freeQuota: 1000 },
+      { operation: "getWorkOrder", unit: "usd-per-call", price: 0.001, freeQuota: 1000 },
+      { operation: "createWorkOrder", unit: "usd-per-call", price: 0.002, freeQuota: 100 },
+      { operation: "listOutcomes", unit: "usd-per-call", price: 0.001, freeQuota: 1000 },
+      { operation: "getOutcome", unit: "usd-per-call", price: 0.001, freeQuota: 1000 },
+      {
+        operation: "orderOutcome",
+        unit: "usd-per-outcome",
+        price: 25,
+        note: "per completed, verified outcome — no free quota; quoted in the 402 OFFER; stated intent (binding: false), settlement not activated at wave zero",
+      },
+      { operation: "getPricing", unit: "usd-per-call", price: 0, included: "unlimited" },
+      { operation: "getFamilyRegistry", unit: "usd-per-call", price: 0, included: "unlimited" },
+      { operation: "getOffer", unit: "usd-per-call", price: 0, included: "unlimited" },
+      { operation: "getICP", unit: "usd-per-call", price: 0, included: "unlimited" },
+      { operation: "getVerify", unit: "usd-per-call", price: 0, included: "unlimited" },
+    ],
+
     offers: [
       {
         id: "b2a-metered",
@@ -140,18 +181,23 @@ export const manifest = defineSiteManifest({
   },
 
   // Extra LIVE routes (presence-when-true — every one is served in worker.js).
+  // axp-ext-rates-g2 §1: each route carries its canonical camelCase-verb
+  // operationId NATIVELY — the generator passes it through to the OpenAPI
+  // contract and cross-checks the rate card against the declared set.
   routes: [
-    { method: "GET", path: "/services/{id}", summary: "One Service record by id" },
+    { method: "GET", path: "/services/{id}", operationId: "getService", summary: "One Service record by id" },
     {
       method: "GET",
       path: "/engagements",
+      operationId: "listEngagements",
       summary: "Engagement (SOW) records — the PSA system-of-record collection (headless ply, same substrate)",
       params: [{ name: "status", description: "filter by engagement status" }, { name: "workspace", description: "filter by sandbox workspace" }],
     },
-    { method: "GET", path: "/engagements/{id}", summary: "One Engagement record by id" },
+    { method: "GET", path: "/engagements/{id}", operationId: "getEngagement", summary: "One Engagement record by id" },
     {
       method: "POST",
       path: "/engagements",
+      operationId: "createEngagement",
       summary: "Create a sandbox Engagement (system-of-record door; anon workspace auto-minted, retention disclosed)",
       requestBody: { content: { "application/json": { schema: { type: "object", properties: { title: { type: "string" }, serviceId: { type: "string" }, workspace: { type: "string" } } } } } },
       responses: { 201: { description: "the created, labeled sandbox record" } },
@@ -159,13 +205,15 @@ export const manifest = defineSiteManifest({
     {
       method: "GET",
       path: "/work-orders",
+      operationId: "listWorkOrders",
       summary: "WorkOrder records — the FSM delivery decomposition (O*NET task grain)",
       params: [{ name: "status", description: "filter by work-order status" }, { name: "workspace", description: "filter by sandbox workspace" }],
     },
-    { method: "GET", path: "/work-orders/{id}", summary: "One WorkOrder record by id" },
+    { method: "GET", path: "/work-orders/{id}", operationId: "getWorkOrder", summary: "One WorkOrder record by id" },
     {
       method: "POST",
       path: "/work-orders",
+      operationId: "createWorkOrder",
       summary: "Create a sandbox WorkOrder (system-of-record door; anon workspace auto-minted, retention disclosed)",
       requestBody: { content: { "application/json": { schema: { type: "object", properties: { title: { type: "string" }, engagementId: { type: "string" }, tasks: { type: "array" }, workspace: { type: "string" } } } } } },
       responses: { 201: { description: "the created, labeled sandbox record" } },
@@ -173,29 +221,50 @@ export const manifest = defineSiteManifest({
     {
       method: "GET",
       path: "/outcomes",
+      operationId: "listOutcomes",
       summary: "Outcome records — completed, verified deliverables (verify-then-settle seam to the verification rail)",
       params: [{ name: "status", description: "filter by outcome status" }],
     },
-    { method: "GET", path: "/outcomes/{id}", summary: "One Outcome record by id" },
+    { method: "GET", path: "/outcomes/{id}", operationId: "getOutcome", summary: "One Outcome record by id" },
     {
       method: "POST",
       path: "/outcomes/order",
+      operationId: "orderOutcome",
       summary: "Order a completed, verified outcome — answers 402 OFFER with the whole B2A ladder (pay / work / claim). Wave zero: payable stub, settlement not activated.",
       requestBody: { content: { "application/json": { schema: { type: "object", properties: { serviceId: { type: "string" } } } } } },
       responses: { 402: { description: "OFFER envelope — the machine-readable start of the paid conversation (test mode)" } },
     },
-    { method: "GET", path: "/icp", summary: "The G2 coordinates document: ICP (CompanyType × JobTypes), personas, motion" },
-    { method: "GET", path: "/verify", summary: "The published verify export — how to run this property's public-contract tests" },
+    { method: "GET", path: "/icp", operationId: "getICP", summary: "The G2 coordinates document: ICP (CompanyType × JobTypes), personas, motion" },
+    { method: "GET", path: "/verify", operationId: "getVerify", summary: "The published verify export — how to run this property's public-contract tests" },
   ],
 
   llms: { body: llmsBody },
 
   // Mounted MCP door (same Nouns/verbs as HTTP — one definition, mcp.js reads
-  // the same store the collections serve).
+  // the same store the collections serve). axp-ext-rates-g2 §1: tools are
+  // declared BY NAME as strings — each name IS the canonical operationId;
+  // descriptions and input schemas are served live by tools/list.
   mcp: {
     url: `${ORIGIN}/mcp`,
     transport: "streamable-http",
-    tools: tools.map(({ name, description }) => ({ name, description })),
+    tools: tools.map((t) => t.name),
+  },
+
+  // axp-ext-rates-g2 §3 (links.verify): the published runnable-suite export —
+  // the /verify door this worker serves; the generator absolutizes it onto
+  // the card's links object beside links.conformance.
+  verifyUrl: "/verify",
+
+  // axp-ext-rates-g2 §4 (g2, TOP-LEVEL card object): the property's G2/ICP
+  // coordinates, carried VERBATIM from the G4 projection — the same truth
+  // /icp serves; links.icp (icpUrl) stays legal and declared beside it.
+  g2: {
+    substrate: projection.substrate,
+    brand: projection.brand,
+    motion: projection.motion,
+    icp: projection.icp,
+    personas: projection.personas,
+    positioning: projection.positioning,
   },
 
   icpUrl: `${ORIGIN}/icp`,

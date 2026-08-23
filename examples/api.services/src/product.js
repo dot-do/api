@@ -2,7 +2,7 @@
  * product.js — Stratum A: the G3 APIProduct instance for the
  * `fn-service-delivery` substrate (property template §1), authored in the
  * primitives.org.ai digital-products shape. This module is the ONE definition
- * both plies, the MCP door, the OpenAPI extension, and the rate card derive
+ * both plies, the MCP door, the OpenAPI contract, and the rate card derive
  * from — nothing else defines a Noun or an operation.
  *
  * Register row: docs/plans/registers/2026-08-23-full-economy-property-register.json
@@ -87,11 +87,14 @@ export const systems = [
 export const transports = ["REST", "MCP"];
 
 /**
- * OpenAPI operationIds — the ONLY things the rate card may price (§1).
- * `listCollection` is the generator-emitted id for the branching /services
- * collection (axp-faces openapi.js); every other id is patched onto the
- * generated document from this same list, so rates[].operation ⊆ operationIds
- * holds by construction (see rates.js / worker.js).
+ * Canonical operationIds — the ONLY things the rate card may price
+ * (axp-ext-rates-g2 §1: the ONE cross-face operation name). The generator
+ * gap this list used to be bridged around is CLOSED (axp-ext-rates-g2@0.2.0,
+ * native in vendored axp-faces 0.3.0): the manifest declares each id
+ * natively (collection.operationId / routes[].operationId) and the generator
+ * enforces shape, uniqueness, and rates[].operation ⊆ this declared set —
+ * fail-closed at defineSiteManifest. This register stays the G3 truth the
+ * manifest is written against.
  */
 export const operations = [
   "listCollection", // GET /services — the branching keyless collection (generator id)

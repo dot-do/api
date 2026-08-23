@@ -20,6 +20,13 @@ describe("vendored axp-faces", () => {
     expect(sha256(specBytes)).toBe(pins.pinnedSpecDigest);
   });
 
+  it("carries the ratified generator extension pin (axp-ext-rates-g2 — the four ruled members are native, no bridges)", () => {
+    expect(pins.extensions["axp-ext-rates-g2"]).toEqual({
+      version: "0.2.0",
+      digest: "903e414d4f1440ddf9028b66d6987a2a3263ec1e84902b9ef4f8cb715a12ccc5",
+    });
+  });
+
   it("is byte-identical with the pinned generator sources (no hand edits)", () => {
     for (const [label, digest] of Object.entries(pins.files)) {
       const file = label.replace(/^src\//, "");
