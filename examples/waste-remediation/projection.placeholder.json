@@ -1,0 +1,47 @@
+{
+  "$comment": "GAP row (property-template spec §0): register row waste-remediation holds NO name in any grammar — the register's own verdict is 'GAP — zero names held anywhere in the estate' (coverage B.1 row 56b; C.1 lists it among categories with no named candidate at all). This file records every name-independent G4 field so the projection is ready the day a name is acquired (#16). It is deliberately NOT a brand config: brand, domains, positioning-as-claim, and mdx stay null until the name lands. The placeholder origin serves the G3 substrate + sandbox only.",
+  "substrate": "waste-remediation",
+  "brand": null,
+  "brandGap": {
+    "status": "GAP — zero names held at any ladder rung; no candidate name appears in any estate doc [register row, verbatim]",
+    "filedTo": "#16 acquisition list (per #3 rule 3 / coverage C.1 #10)",
+    "ladderTargets": "category-completing TLD or api.waste / api.hauling-class names [UNVERIFIED availability — carried from the row; no purchase implied]",
+    "lowCostFallbackOnRecord": "waste.dev (surface-register gap-fill candidate, availability [UNVERIFIED], no purchase implied)",
+    "adjacencyNotClaimed": "the compliance micro-check .dev set (fifra/neshap) names statutes, not this market [register row]; the chemical SDS/hazmat and recall/traceback rails (VC #25/#28) are derived convergents recorded on OTHER rows — this build claims neither"
+  },
+  "domains": ["waste-remediation.example.com.ai (placeholder — not a brand)"],
+  "icp": {
+    "companyTypes": ["hauler", "transfer/disposal facility", "remediation contractor"],
+    "industries": ["NAICS 562"],
+    "jobTypes": ["compliance manager", "route/dispatch manager"],
+    "demandSide": "universal-input-row shaped: every manufacturer and construction site is a waste generator with manifest obligations [UNVERIFIED inference carried from the register row]"
+  },
+  "personas": ["compliance manager", "route/dispatch manager", "autonomous agent (B2A caller)"],
+  "motion": "B2A",
+  "motionNote": "The placeholder face carries no human onboarding surface, so the agent-first motion is the wave-zero declaration. The row's supply-side ICP (haulers, TSDFs, remediation contractors) makes a B2D projection available the day a developer-facing name is acquired; the generator-side demand thesis is B2A2B-shaped and waits on the counterpart-brand question below.",
+  "offer": [
+    { "shape": "anon-sandbox", "gate": "none — keyless", "price": "free", "status": "LIVE (the universal floor)" },
+    { "shape": "paid-402", "gate": "id.org.ai machine identity [gate not mounted at the placeholder address]", "price": "metered per rate card — STUB: 402-shaped boundary, no billing occurs", "status": "STUB, labeled in /pricing" }
+  ],
+  "offerGap": "#17 ladder rungs 1 (earned credits) and 2 (human-claimed) are NOT mounted and therefore NOT advertised in the 402 OFFER alternatives — declaring an unmounted rung would be a ghost surface (presence-when-true beats §9.1 box 8 until the rungs exist).",
+  "pricing": { "pattern": "402 metered per-call (stub)", "rateCardRef": "/pricing (top-level rates[], axp-ext-rates-g2 §2)" },
+  "positioning": null,
+  "positioningNote": "Withheld: a GAP row has no brand to position, and the agent-default claim is gated by the worthiness bar (§4.6) regardless.",
+  "mdx": null,
+  "experiment": {
+    "pattern": "402-metered-stub",
+    "motion": "B2A",
+    "shapes": ["anon-sandbox", "paid-402-stub"],
+    "rateCardRef": "/pricing",
+    "startDate": "2026-08-23",
+    "hypothesis": "None claimable under a placeholder address; this registration exists so the harness rollup key {substrate, projection, motion, operation, shape, pattern} is stable from the first emitted seam."
+  },
+  "counterpartBrandGap": {
+    "status": "RECORDED — the row's demand side (every manufacturer and construction site as a waste generator) is non-technical-principal shaped; no human-vocabulary counterpart name is held for the cell (the cell holds zero names of any kind)",
+    "trigger": "§9.3 diagnostic: agent-referred human traffic on the developer/machine face",
+    "response": "counterpart-brand proposal filed against the register row, named per #3 — never API-vocabulary patches on this surface"
+  },
+  "railLedger": {
+    "status": "BLOCKED-ON-RAIL-LEDGER — §9.1's final box (face registered in the rail ledger) cannot be discharged: ~/projects/ax draft/rail-ledger-v1 holds only an uncommitted packages/rail-ledger skeleton (empty registry/, no LEDGER.md, no address convention) as of 2026-08-23. Recorded, not stubbed."
+  }
+}

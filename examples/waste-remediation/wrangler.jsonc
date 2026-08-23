@@ -1,0 +1,10 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "waste-remediation",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-08-23"
+  // No routes block on purpose: this is a GAP-row substrate under a
+  // placeholder address (the category holds zero names anywhere in the
+  // estate — #16). Binding a real hostname is the one-line change that
+  // happens when a name lands.
+}
