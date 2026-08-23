@@ -11,6 +11,9 @@ export const projection = {
   brand: "api.services",
   domains: ["api.services"],
 
+  /** Rail-ledger address of record (LEDGER.md door A). */
+  railLedger: "https://ledger.apis.ax/faces?face=api.services",
+
   /** G2 coordinates (ICP + Persona) — from the register row, exposed on the
    *  machine face at /icp and linked from the card (links.icp). */
   icp: {
