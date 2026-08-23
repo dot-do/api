@@ -1,0 +1,61 @@
+{
+  "$comment": "Stratum-B G4 projection config (template spec §2). GAP register row: nothing held names arts/entertainment/recreation at the NAICS-71 category grain (no api.entertainment / apis.recreation — the held names are all sub-niche tails), so this projection runs under a placeholder org.ai address per spec §0; the brand fields attach when a name is ruled (#16). Nothing here implies acquisition of any name. Repo config, not a served surface.",
+  "substrate": "arts-entertainment",
+  "brand": null,
+  "brandStatus": "GAP — apex name unheld at the 2-digit grain (register row, 2026-08-23): the held names (apis.golf, apis.casino, apis.theater, apis.hockey + api.hockey pair, api.rodeo, api.bingo, api.fishing; apis.fitness [UNVERIFIED assignment]) are grammar-completion sub-niche tails with no thesis on record; acquisition-list candidate per #3 ladder terminus, no name proposed in any estate doc. Placeholder address arts-entertainment.org.ai until ruled.",
+  "domains": ["arts-entertainment.org.ai (placeholder)"],
+  "heldSubNicheTails": {
+    "recorded": ["apis.golf", "apis.casino", "apis.theater", "apis.hockey", "api.hockey", "api.rodeo", "api.bingo", "api.fishing"],
+    "note": "may carry sub-vertical projections of this substrate later (e.g. apis.golf = the functions a golf operation's systems call); recorded only — nothing is served on any of them, and the api.hockey/apis.hockey pair is the ratified two-faces-of-one-cell structure with no record on either side."
+  },
+  "icp": {
+    "companyTypes": ["golf course / club operator", "theater / performing-arts venue", "rink / recreation facility", "casino / amusement operator"],
+    "jobTypes": ["general manager", "box-office / booking manager"]
+  },
+  "personas": [
+    { "id": "operator-gm", "description": "venue/club/attraction general manager whose booking calendar is the system of record" },
+    { "id": "operator-booking", "description": "box-office / booking manager managing event, ticket, and reservation inventory" },
+    { "id": "agent", "description": "autonomous agent booking venue inventory on behalf of a principal — consumer demand agent-intermediated only (row's free-rider ruling)" }
+  ],
+  "motion": "B2A",
+  "offer": [
+    { "shape": "anon-sandbox", "price": "free", "gate": "none — keyless; auto-minted ephemeral workspace, disclosed retention" },
+    { "shape": "earned-credits", "price": "earned", "gate": "proof-of-work ladder rung 1 — STUB: declared in the 402 alternatives; the .ax credit ledger service is not yet deployed" },
+    { "shape": "human-claimed", "price": "free/earned", "gate": "rung 2 — STUB: claim door not yet live" },
+    { "shape": "paid", "price": "metered (402, machine identity)", "gate": "rung 3 — STUB: test-mode, no live settlement" }
+  ],
+  "pricing": {
+    "pattern": "402-metered-per-call + per-outcome on confirmed bookings",
+    "rateCardRef": "/pricing",
+    "binding": false
+  },
+  "positioning": "Typed event/venue/ticket records and a headless booking door for arts, entertainment & recreation — instantiated for register completeness; the row's recorded THESIS GAP is carried, not cured (names were bought as grammar completion, no entry thesis exists; provisioning here is an Axis-2 kit decision, not a front). Agent-default claim WITHHELD (worthiness bar §4.6 not attempted: no ruled domain, no hosted verdict).",
+  "mdx": null,
+  "experiment": {
+    "pattern": "402-metered",
+    "motion": "B2A",
+    "shapes": ["anon-sandbox", "earned-credits", "human-claimed", "paid"],
+    "rateCardRef": "/pricing",
+    "startDate": "2026-08-23",
+    "hypothesis": "wave-zero registration only — sandbox-floor traffic shape on a placeholder address; pattern comparison begins when a G4 name attaches AND the row's thesis gap is resolved (no entry thesis exists; the register itself calls provisioning an Axis-2 kit decision)"
+  },
+  "counterpartBrandGap": {
+    "recorded": true,
+    "reason": "the row rules consumer demand agent-intermediated ONLY (B2A2C free-rider posture) and every held name in the cell is developer/agent grammar — no human-vocabulary counterpart name exists for consumers booking venues, and the cell's ICP principals (GMs, box-office managers) do not know what an API is (B2A2B leg). Surfaced per spec §9.3 via the traffic seam's identity-class × referral signal; naming is #3's job, never this build's."
+  },
+  "sourceRouteStatus": {
+    "route": "register verbatim: consumer-services branch is avoid-class, B2A2C free-rider only; route IF PROVISIONED: schema.org-typed public event data + first-party booking capture on Axis-2 rails. No enrichment ladder on record for this sector.",
+    "classA": false,
+    "waveZeroConsequence": "seed is §5.2 labeled synthetic — REAL data only rides a class-A honestly-reachable route, and this row names no concrete feed to probe (the route is conditional on provisioning that has not happened); no probe was run and no real ingest is claimed",
+    "bindings": "Reservation native (first-party booking capture at the served door); Venue/Event/Ticket generated (synthetic) at wave zero — target-state ingested/native bindings wait on the route being provisioned"
+  },
+  "primacyCollisions": {
+    "ruling": "NONE found — both 2026-08-23 registers grepped for a primacy ruling on these record types (zero hits); per the batch rule this build stays under its own row key and claims nothing shared",
+    "collisions": [
+      { "type": "Reservation", "collidesWith": "booking/reservation records of lodging, passenger-mobility, travel-tourism, restaurants-food-service, personal-care rows", "resolution": "local type under arts-entertainment; schema.org/Reservation anchor only" },
+      { "type": "Ticket", "collidesWith": "THE TICKET helpdesk record (fn-customer-service, fn-it)", "resolution": "local ADMISSION-ticket type (schema.org/Ticket anchor); explicitly not the helpdesk grain" },
+      { "type": "Event", "collidesWith": "generic Event records in several rows", "resolution": "local type under arts-entertainment; schema.org/Event anchor only" }
+    ]
+  },
+  "railLedger": "https://ledger.apis.ax/faces?face=arts-entertainment.org.ai"
+}

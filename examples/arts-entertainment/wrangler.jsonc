@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // PLACEHOLDER worker name — GAP register row (nothing held names NAICS 71
+  // at the category grain); no route/custom-domain is configured until a
+  // name is ruled (#16).
+  "name": "arts-entertainment-wave0",
+  "main": "worker.js",
+  "compatibility_date": "2026-01-24",
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
+}
