@@ -1,0 +1,24 @@
+{
+  "$comment": "G4 projection config (spec §2) — Projection 3 of the restaurants-food-service substrate: the bulk-data face (anonymized par-level / count benchmarks are the natural bulk read once the first-party capture route is provisioned and consented — no enrichment ladder is on record for this row, so this stays recorded-only). RECORDED here; served by the data.mt property, not by this worker.",
+  "substrate": "restaurants-food-service",
+  "brand": "data.mt",
+  "domains": ["data.mt"],
+  "served": false,
+  "icp": { "companyTypes": ["data buyers"], "jobTypes": ["developer", "analyst"] },
+  "personas": [{ "id": "data-buyer", "role": "human developer or analyst purchasing bulk data" }],
+  "motion": "B2D",
+  "offer": [
+    { "shape": "anon-sandbox", "gate": "none — keyless", "price": "free" },
+    { "shape": "credit-packs", "gate": "purchased credit packs (card)", "price": "prepaid credits" }
+  ],
+  "pricing": { "pattern": "credit-packs-purchased", "rateCardRef": "data.mt rate card (its own /pricing)" },
+  "positioning": "bulk-data face",
+  "mdx": "data.mt surface",
+  "experiment": {
+    "pattern": "credit-packs",
+    "motion": "B2D",
+    "shapes": ["anon-sandbox", "credit-packs"],
+    "startDate": "2026-08-23",
+    "hypothesis": "prepaid packs beat per-call metering for bulk-read buyers"
+  }
+}

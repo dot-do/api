@@ -1,0 +1,29 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "apis-restaurant",
+  // Build first: npx tsx build.ts  (bundles worker.ts → _worker.js,
+  // externalizing the framework's optional oauth.do/rpc.do imports)
+  "main": "_worker.js",
+  "no_bundle": true,
+  "compatibility_date": "2026-01-24",
+
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
+
+  // apis.restaurant is ZONELESS (name held at porkbun, exp 2027-07-25, NO
+  // Cloudflare zone — Batch-S hours-class admin item; blocks serving only,
+  // never the build). Route attachment is a deploy decision AFTER zone
+  // provisioning:
+  // "routes": [{ "pattern": "apis.restaurant/*", "zone_name": "apis.restaurant" }]
+  //
+  // apis.pizza / apis.catering (also zoneless) are sub-verticals INSIDE this
+  // property per the property-grain ruling — addresses of the same instance,
+  // never separate builds.
+
+  // Optional: set GITHUB_CLIENT_ID (+ secret GITHUB_CLIENT_SECRET) to point
+  // /login at a real GitHub OAuth app. Without it the flow runs in labeled
+  // demo mode (keys random, unpersisted, not enforced).
+  // "vars": { "GITHUB_CLIENT_ID": "" }
+}
