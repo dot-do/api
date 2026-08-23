@@ -1,0 +1,63 @@
+{
+  "$comment": "Template spec §2 — the G4 projection config for register row fn-strategy. GAP row: per spec §0 everything except the G4 brand is instantiated; brand/domains stay null until a name is acquired (#16). This placeholder projection exists so the machine face, sandbox, seams, and experiment registration are real before naming.",
+  "substrate": "fn-strategy",
+  "gap": {
+    "status": "GAP — no api-grammar name held (register row anchor, coverage B.2)",
+    "acquisitionList": "#16",
+    "registerNote": "See REGISTER-NOTE.md in this directory — filed facts for the #16 acquisition list."
+  },
+  "brand": null,
+  "domains": [],
+  "placeholderOrigin": "https://fn-strategy.org.ai",
+  "icp": {
+    "companyTypes": ["all — horizontal Function row"],
+    "jobTypes": ["founder", "chief executive", "strategy officer", "chief of staff"],
+    "coordinates": ["Function=Strategy", "Department=Executive"],
+    "note": "Row flag kept: thinnest buyer-frequency function of the 13 — strategy is bought episodically [UNVERIFIED inference]."
+  },
+  "personas": [
+    { "id": "founder-operator", "description": "founder/CEO steering an annual-or-episodic planning cycle" },
+    { "id": "strategy-officer", "description": "strategy/chief-of-staff role running the objective and analysis cadence" },
+    { "id": "agent-caller", "description": "autonomous agent consuming plan/objective/analysis records over the machine face (B2A)" }
+  ],
+  "motion": "B2A",
+  "offer": [
+    { "shape": "anon-sandbox", "gate": "none — keyless", "price": "free", "status": "live", "note": "universal floor; labeled synthetic seed" },
+    { "shape": "earned-credits", "gate": "credits earned via proof-of-work (ladder rung 1)", "price": "earned", "status": "stub — credits ledger not wired; advertised as stub in the 402 alternatives" },
+    { "shape": "human-claimed", "gate": "a human claims the agent workspace (rung 2)", "price": "free/earned", "status": "stub — claim door not wired; advertised as stub in the 402 alternatives" },
+    { "shape": "paid", "gate": "402 metering against machine identity (rung 3)", "price": "metered units", "status": "stub — settlement not wired; rate card served with binding: false and a plain statement" }
+  ],
+  "pricing": {
+    "pattern": "402 metered per-call",
+    "rateCardRef": "/pricing",
+    "rates": {
+      "$comment": "BLOCKER carried, not patched: the vendored axp-faces Pricing Document does not yet support operationId-keyed rates[] (DRAFT §2 wire schema). Per the fix-the-generator law this is a generator extension, never a one-site patch. Until it lands, the intended per-operation rate table lives here as config, NOT on the wire.",
+      "intended": [
+        { "operation": "listObjectives", "price": 0, "freeQuota": "unlimited" },
+        { "operation": "getObjective", "price": 0.002, "freeQuota": 100 },
+        { "operation": "listPlans", "price": 0, "freeQuota": "unlimited" },
+        { "operation": "getPlan", "price": 0.002, "freeQuota": 100 },
+        { "operation": "createObjective", "price": 0.002, "freeQuota": 100 },
+        { "operation": "recordKeyResultProgress", "price": 0.002, "freeQuota": 100 },
+        { "operation": "listAnalyses", "price": 0, "freeQuota": "unlimited" },
+        { "operation": "getAnalysis", "price": 0.002, "freeQuota": 100 }
+      ]
+    }
+  },
+  "positioning": null,
+  "positioningNote": "Claim-free by rule: a GAP row has no brand to carry a claim, and the §4.6 worthiness bar (conformance + live anon sandbox + verified published suite on record) is not attested. 'Agent default' is never asserted here.",
+  "mdx": null,
+  "experiment": {
+    "pattern": "402-metered",
+    "motion": "B2A",
+    "shapes": ["anon-sandbox", "earned-credits", "human-claimed", "paid"],
+    "rateCardRef": "/pricing",
+    "startDate": "2026-08-23",
+    "hypothesis": "Wave-zero placeholder registration only: freemium floor is the sole live shape; the metered rungs are stubs. The first real hypothesis is assigned when a brand attaches."
+  },
+  "counterpartBrandGap": {
+    "recorded": true,
+    "reason": "The row's ICP (founder/CEO/strategy-officer across every CompanyType) includes non-technical principals; if agents transact on their behalf (B2A2B/B2A2C) a human-vocabulary counterpart brand is required, and none exists for this cell. Detection rides the §9.3 signal (agent-referred human traffic), read from the signup/traffic seams this worker emits."
+  },
+  "openQuestion": "Row note carried verbatim: the estate's strategy product may be constitutively internal (the studio IS the strategy function for its portfolio), which would make this row internal-only like media rather than an acquisition gap. Not ruled anywhere — flagged as the row's open question."
+}
