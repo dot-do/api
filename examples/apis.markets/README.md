@@ -77,16 +77,18 @@ holds):
   with rung 1+.
 - **Family registry empty.** The property's sub-audience rails serve nothing
   today; presence-when-true keeps them out.
-- **Rail-ledger registration: BLOCKED-ON-RAIL-LEDGER.** The §9.1 final box
-  (face registered in the rail ledger, the faces-payable/week denominator)
-  is recorded blocked: no ledger address exists in `~/projects/ax` as of
-  2026-08-23. The box closes by registering this face at the ledger address
-  when it lands — never by stubbing a fake ledger.
+- **Rail-ledger registration: REGISTERED.** The §9.1 final box (face
+  registered in the rail ledger, the faces-payable/week denominator) is
+  registered via LEDGER.md door A — row in
+  packages/rail-ledger/registry/faces.json @ draft/rail-ledger-v1 (studio #9
+  alignment pass 2026-08-23); readout
+  https://ledger.apis.ax/readouts/faces-payable (service built, deploy
+  pending Batch-S).
 
 ## §9.1 self-verify score
 
-15/16 pass; the 16th (rail-ledger registration) is blocked-on-rail-ledger as
-above. Every passing box is asserted by `check.mjs` or by this tree directly;
+16/16 pass; the 16th (rail-ledger registration) is REGISTERED as above.
+Every passing box is asserted by `check.mjs` or by this tree directly;
 the 402-OFFER ladder box passes under the ruled mounted-rungs-only placement
 (only the anon sandbox is mounted, only it is advertised). §9.2 (independent
 api.qa hosted verdict + worthiness-bar attestation) is out of this tree's
