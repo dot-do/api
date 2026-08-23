@@ -1,0 +1,8 @@
+{
+  // apis.markets — wave-zero worker (custom site allowed per template
+  // §7.1 prove-then-extract; CNAME → workers.do is the extraction target,
+  // not a wave-zero requirement).
+  "name": "apis-markets",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-08-01"
+}

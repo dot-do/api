@@ -1,0 +1,59 @@
+{
+  "$type": "G4Projection",
+  "$comment": "Stratum B — the G4 projection config for apis.markets over the capital-markets substrate (template spec §2, docs/plans/2026-08-23-property-template-spec.md in the studio repo). Content, not code: one projection = one config file. Register context: thinnest row in cluster 3 — four names held (apis.markets primary; apis.trading/apis.investments/apis.broker are sub-audience rails WITHIN this property per the property-grain ruling, not separate brands), zero records ruled, source route not ruled. Scope, permanent: execution and custody out of scope — reference/market/position data and post-trade documents only.",
+  "substrate": "capital-markets",
+  "brand": "apis.markets",
+  "domains": ["apis.markets"],
+  "subAudienceRails": {
+    "names": ["apis.trading", "apis.investments", "apis.broker"],
+    "status": "content within this property (property-grain ruling); none serves today, so none is linked anywhere (presence-when-true)"
+  },
+  "icp": {
+    "companyType": "broker-dealers, RIAs, fund administrators, family offices",
+    "jobTypes": ["operations manager", "middle-office systems owner", "portfolio operations analyst"]
+  },
+  "personas": [
+    { "id": "market-data-pull-agent", "class": "machine", "description": "an agent pulling reference, market, and position records — a data puller, never a trader" },
+    { "id": "post-trade-recon-agent", "class": "machine", "description": "an agent reconciling positions against post-trade documents" },
+    { "id": "middle-office-operator", "class": "human", "description": "an operations or middle-office systems owner reading the same records in a browser" }
+  ],
+  "motion": "B2A",
+  "offer": [
+    {
+      "shape": "anon-sandbox",
+      "gate": "none — keyless (AXP Clause 7, the universal floor)",
+      "price": "free"
+    }
+  ],
+  "pricing": {
+    "pattern": "freemium-floor-only",
+    "rateCard": "/pricing",
+    "model": "free",
+    "binding": false,
+    "note": "rates[] rides TOP-LEVEL in the served Pricing Document (ruled bridge placement, batch-2 rollup) with every row priced from zero; the 402 door at /offer is a labeled stub, never fake billing"
+  },
+  "positioning": null,
+  "positioningNote": "No positioning claim is carried. The agent-default claim is withheld until the §4.6 worthiness bar is attested (conformance verdict + live anon sandbox + verified published suite). No ranking is implied anywhere on this surface [CONVICTION]. Execution/custody exclusion is a scope statement, not a positioning claim.",
+  "mdx": null,
+  "experiment": {
+    "pattern": "freemium-floor-only",
+    "motion": "B2A",
+    "shapes": ["anon-sandbox"],
+    "rateCardRef": "/pricing",
+    "startDate": "2026-08-23",
+    "hypothesis": "none at wave zero — registration per template §7.3 (motion + pattern declared, trivially the freemium floor); the substrate rollup key is capital-markets"
+  },
+  "counterpartBrand": {
+    "status": "gap-recorded",
+    "note": "The row's ICP includes principals (family offices; RIA principals) who may transact through agents without API vocabulary — a B2A2B posture is plausible later. No held name qualifies as the human-vocabulary counterpart (apis.trading/investments/broker are all API-vocabulary rails), so the counterpart-brand gap is recorded per §5.1/§9.3; the trigger is the agent-referred-human diagnostic reading the signup/traffic seams, and the response is a register-row proposal named per #3 — never API-vocabulary patches on this surface."
+  },
+  "b2aLadder": {
+    "rung0": "anon sandbox — live (the keyless collection over the labeled seed); the ONLY rung mounted and the only rung advertised",
+    "rung1": "earned credits — deferred (no .ax-ledger integration at wave zero)",
+    "rung2": "human-claimed — deferred",
+    "rung3": "paid (402 metering on machine identity) — deferred; /offer is a labeled stub until then"
+  },
+  "coordination": {
+    "axApiFinance": "~/projects/ax/packages/api.finance is the ADR-0020 markets-data + advisory possibility surface (Directory archetype: one typed Definition + classified capability collection, open-floor/BYOL/credential-reserved axes, no worker). apis.markets does NOT duplicate its directory ply — this property serves typed records, not a capability directory. A future EDGAR/FINRA-class ingest (the row's [UNVERIFIED] source route) coordinates with api.finance's open-floor classification before any real-corpus record is served."
+  }
+}
