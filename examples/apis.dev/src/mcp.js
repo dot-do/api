@@ -1,7 +1,10 @@
 /**
  * mcp.js — the MCP door (POST /mcp, JSON-RPC 2.0). One definition: every
  * tool answers from the SAME manifest/seed the HTTP doors serve — the tools
- * are the HTTP nouns and verbs, not a second API (§3.3).
+ * are the HTTP nouns and verbs, not a second API (§3.3). Tool names ARE the
+ * canonical camelCase operationIds (axp-ext/rates-g2 §1): searchApis is the
+ * /apis branching collection, getPricing is GET /pricing — one operation,
+ * one identifier, every face.
  */
 
 import { collectionDecision, buildPricingDocument } from './axp-faces/index.js'
@@ -24,7 +27,7 @@ function rpcError(id, code, message) {
 export function buildTools(manifest) {
   return [
     {
-      name: 'search_apis',
+      name: 'searchApis',
       description:
         'Search the machine-face API records (the same /apis collection): filter = pricingModel, tag = $type. Typed OK | EMPTY | BLOCKED result.',
       inputSchema: {
@@ -33,22 +36,22 @@ export function buildTools(manifest) {
       },
     },
     {
-      name: 'get_api',
+      name: 'getAPI',
       description: 'One machine-face API record by id (its domain) — same records as GET /apis/{id}.',
       inputSchema: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] },
     },
     {
-      name: 'list_actions',
+      name: 'listActions',
       description: 'The Action catalog sample — labeled example data over fictional providers.',
       inputSchema: { type: 'object', properties: {} },
     },
     {
-      name: 'list_verification_reports',
+      name: 'listVerificationReports',
       description: 'Probe outcomes recorded as data (real observations, provenance stamped).',
       inputSchema: { type: 'object', properties: { subject: { type: 'string' } } },
     },
     {
-      name: 'get_pricing',
+      name: 'getPricing',
       description: 'The Pricing Document (AXP Appendix A.2) — same document as GET /pricing.',
       inputSchema: { type: 'object', properties: {} },
     },
@@ -57,21 +60,21 @@ export function buildTools(manifest) {
 
 function callTool(manifest, name, args = {}) {
   switch (name) {
-    case 'search_apis': {
+    case 'searchApis': {
       const params = new URLSearchParams()
       if (args.filter) params.set('filter', String(args.filter))
       if (args.tag) params.set('tag', String(args.tag))
       return collectionDecision(manifest, params).body
     }
-    case 'get_api': {
+    case 'getAPI': {
       const rec = manifest.collection.records.find((r) => r.id === args.id)
       return rec
         ? { type: 'OK', results: [rec] }
         : { type: 'EMPTY', results: [], message: `no API record with id ${args.id}` }
     }
-    case 'list_actions':
+    case 'listActions':
       return { type: 'OK', results: actionRecords }
-    case 'list_verification_reports': {
+    case 'listVerificationReports': {
       const recs = args.subject
         ? verificationReports.filter((r) => r.subject === args.subject)
         : verificationReports
@@ -79,7 +82,7 @@ function callTool(manifest, name, args = {}) {
         ? { type: 'OK', results: recs }
         : { type: 'EMPTY', results: [], message: `no reports for subject ${args.subject}` }
     }
-    case 'get_pricing':
+    case 'getPricing':
       return buildPricingDocument(manifest)
     default:
       return undefined

@@ -7,8 +7,9 @@
  * it arms the pinned spec's check-published-test-suite, which the deployed
  * verifier (autonomous-qa 0.3.0) does not implement — a declaration today
  * fails closed on a check the verifier cannot produce (the api.lawyer
- * precedent). The suite itself ships at /verify/suite.json and links.verify
- * is carried by /verify appearing in the card's http interfaces.
+ * precedent). The suite itself ships at /verify/suite.json, and the card
+ * carries links.verify natively (manifest verifyUrl — axp-ext/rates-g2 §3,
+ * generator-native since axp-faces 0.2.0).
  */
 
 import { buildProbes } from './axp-faces/index.js'

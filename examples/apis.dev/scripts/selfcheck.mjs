@@ -115,28 +115,47 @@ check(
     over.body.alternatives.length === 4 && half.status === 200 && zero.status === 200,
 )
 
-// 6 — rate card: model, hardCeiling, offers, binding axis, rate rows
-const rates = pricing.body.offers?.[0]?.rates ?? manifest.pricing.offers[0].rates
+// 6 — rate card: model, hardCeiling, offers, binding axis, rate rows at the
+// ruled placement (axp-ext-rates-g2@0.2.0, native since axp-faces 0.2.0 —
+// the old offer-nested bridge is gone)
+const rates = pricing.body.rates
 const opIds = Object.values(openapi.body.paths).flatMap((p) =>
   Object.values(p).map((op) => op.operationId).filter(Boolean),
 )
+const OPERATION_ID_RE = /^[a-z][A-Za-z0-9]*$/
 check(
   'rate card: metered, hardCeiling > 0, offers present, binding declared with statement',
   pricing.body.model === 'metered' && pricing.body.hardCeiling > 0 && pricing.body.binding === false &&
     typeof pricing.body.statement === 'string',
 )
 check(
-  'rate rows: every row has freeQuota or zero price; rates[].operation ⊆ OpenAPI operationIds',
-  rates.every((r) => r.freeQuota !== undefined || r.price === 0) &&
+  'rates[] TOP-LEVEL in the Pricing Document (§2 ruled placement, never offer-nested); every row has freeQuota or zero price; rates[].operation ⊆ OpenAPI operationIds',
+  Array.isArray(rates) && rates.length === 4 &&
+    card.body.monetization?.offers?.[0]?.rates === undefined &&
+    rates.every((r) => r.freeQuota !== undefined || r.price === 0) &&
     rates.every((r) => opIds.includes(r.operation)),
   `opIds=[${opIds}]`,
 )
+check(
+  'one cross-face operationId (§1): every contract operationId and MCP tool camelCase; tool names ⊆ {contract ∪ declared tools}; no duplicates in the contract',
+  opIds.every((id) => OPERATION_ID_RE.test(id)) &&
+    new Set(opIds).size === opIds.length &&
+    servedTools.every((t) => OPERATION_ID_RE.test(t)) &&
+    servedTools.includes('searchApis') && opIds.includes('searchApis'),
+  `opIds=[${opIds}] tools=[${servedTools}]`,
+)
+check(
+  'links.verify + g2 native on the card (§3/§4 ruled placements): links.verify → /verify beside links.conformance and links.icp; g2 a non-empty top-level object',
+  card.body.links?.verify === 'https://apis.dev/verify' &&
+    card.body.links?.icp === 'https://apis.dev/icp.json' &&
+    card.body.g2 && typeof card.body.g2 === 'object' && !Array.isArray(card.body.g2) &&
+    Object.keys(card.body.g2).length > 0 && card.body.g2.motion === 'B2A',
+)
 const offerBoundary = await call('/offer')
 check(
-  'rate rows served on the wire: card monetization.offers[0].rates and the /offer 402 body carry them ' +
-    '(the pinned generator closes /pricing to model/ceiling/binding — the DRAFT §2 top-level rates[] member awaits the rate-card extension ruling, spec Open #1)',
-  card.body.monetization?.offers?.[0]?.rates?.length === 4 &&
-    offerBoundary.status === 402 && offerBoundary.body.rates?.length === 4,
+  '402 /offer boundary answers OFFER with the ladder (rates live at /pricing top-level, not on the offer)',
+  offerBoundary.status === 402 && offerBoundary.body.type === 'OFFER' &&
+    offerBoundary.body.rates === undefined,
 )
 
 // 7 — motion declared; B2A gates only (no OAuth/CC gate anywhere)

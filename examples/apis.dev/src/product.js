@@ -63,10 +63,27 @@ export const product = {
   /** Transports emitted from this one definition. */
   transports: ['REST', 'MCP'],
 
-  /** OpenAPI operationIds — the only things a rate card may price.
-   *  These are the ids the vendored generator emits; site routes beyond the
-   *  quartet are documented paths without operationIds at this pin. */
-  operations: ['listCollection', 'getPricing', 'getFamilyRegistry', 'getOffer'],
+  /** Canonical operationIds (axp-ext/rates-g2 §1) — the only things a rate
+   *  card may price. Since axp-faces 0.2.0 every route carries its
+   *  operationId natively (routes[].operationId passthrough; the branching
+   *  collection is site-named searchApis) and MCP tool names are the same
+   *  identifiers. */
+  operations: [
+    'searchApis',
+    'getPricing',
+    'getFamilyRegistry',
+    'getOffer',
+    'getAPI',
+    'listActions',
+    'listVerificationReports',
+    'getICP',
+    'getVerify',
+    'getVerifySuite',
+    'createWorkspace',
+    'getWorkspace',
+    'listWorkspaceAPIs',
+    'registerWorkspaceAPI',
+  ],
 
   /** §5.2 sandbox spec — versioned with the manifest; reseed is a build step. */
   sandbox: {
@@ -85,7 +102,7 @@ export const product = {
 
   /** Per-operation usage meters — seams only (§7.4); tags per §6.4. */
   meters: [
-    { operation: 'listCollection', event: 'meter' },
+    { operation: 'searchApis', event: 'meter' },
     { operation: 'getPricing', event: 'meter' },
     { operation: 'getFamilyRegistry', event: 'meter' },
     { operation: 'getOffer', event: 'meter' },

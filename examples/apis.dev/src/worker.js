@@ -97,7 +97,7 @@ export default {
       emitMeterEvent(env, ctx, request, {
         operation:
           path === manifest.collection.path
-            ? 'listCollection'
+            ? manifest.collection.operationId
             : path === '/pricing'
               ? 'getPricing'
               : path === manifest.familyPath

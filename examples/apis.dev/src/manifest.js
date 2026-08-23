@@ -1,11 +1,15 @@
 /**
  * manifest.js — the ONE source of truth for apis.dev's machine face: every
  * quartet artifact renders from this via the vendored axp-faces generator
- * (pinned apis-ax-axp@2.6.0, digest a9a1197c… — see ./axp-faces/PINS.json).
+ * (0.3.0; pinned apis-ax-axp@2.6.0, digest a9a1197c…, extension
+ * axp-ext-rates-g2@0.2.0 — see ./axp-faces/PINS.json). The four extension
+ * members (rates[], operationId, links.verify, g2) are declared natively
+ * here at their ruled placements — no site-side bridging.
  */
 
 import { defineSiteManifest } from './axp-faces/index.js'
 import { apiRecords } from './seed.js'
+import { projection } from './projection.js'
 
 export const ORIGIN = 'https://apis.dev'
 
@@ -116,11 +120,14 @@ export const LADDER_ALTERNATIVES = [
   },
 ]
 
-/** Rate rows, carried on the offer (operationId-keyed; every row names a
- *  freeQuota or prices from zero — §5.1). Rows reference only operationIds
- *  the OpenAPI contract actually emits at this pin. */
+/** The operation rate card (axp-ext/rates-g2 §2) — a TOP-LEVEL array of the
+ *  Pricing Document at the ruled placement, native in the generator since
+ *  axp-faces 0.2.0 (extension axp-ext-rates-g2, now 0.2.0 — the survey
+ *  ADOPT-NOW floor). operationId-keyed; every row names a freeQuota or prices
+ *  from zero (§5.1), and every row references an operation this same
+ *  manifest declares — the generator refuses anything else, fail-closed. */
 export const RATE_ROWS = [
-  { operation: 'listCollection', price: 0.0002, unit: 'USD/call', freeQuota: 1000, status: 'stub — test-mode, no live settlement' },
+  { operation: 'searchApis', price: 0.0002, unit: 'USD/call', freeQuota: 1000, status: 'stub — test-mode, no live settlement' },
   { operation: 'getPricing', price: 0, unit: 'USD/call' },
   { operation: 'getFamilyRegistry', price: 0, unit: 'USD/call' },
   { operation: 'getOffer', price: 0, unit: 'USD/call' },
@@ -135,6 +142,10 @@ export const manifest = defineSiteManifest({
 
   collection: {
     path: '/apis',
+    /** axp-ext/rates-g2 §1 — the branching collection's canonical operationId:
+     *  the SAME identifier on the OpenAPI contract, the MCP door, and the
+     *  rate-card key (the rates[] row above keys on it). */
+    operationId: 'searchApis',
     memberName: 'results',
     summary: 'Machine-face API records — typed OK | EMPTY | BLOCKED | OFFER, branching on the query',
     records: apiRecords,
@@ -156,6 +167,9 @@ export const manifest = defineSiteManifest({
     binding: false,
     statement:
       'Test-mode rate card: metering seams are live, settlement is a labeled stub — no charge is collected today. Prices are the stated intent of the wave-zero pricing experiment, not bound terms.',
+    /** TOP-LEVEL in the Pricing Document — the axp-ext/rates-g2 §2 ruled
+     *  placement, never nested under an offer. */
+    rates: RATE_ROWS,
     offers: [
       {
         id: 'metered-calls',
@@ -163,7 +177,6 @@ export const manifest = defineSiteManifest({
         price: 0.0002,
         unit: 'USD/call',
         status: 'stub — the 402 boundary is served; no charge is collected',
-        rates: RATE_ROWS,
         alternatives: LADDER_ALTERNATIVES,
       },
     ],
@@ -172,11 +185,14 @@ export const manifest = defineSiteManifest({
   },
 
   /** Live routes beyond the quartet — presence-when-true: everything listed
-   *  here answers today. */
+   *  here answers today. Each carries its canonical camelCase operationId
+   *  (axp-ext/rates-g2 §1): the ONE cross-face operation name, passed through
+   *  to the OpenAPI contract and shared with the MCP door and metering seams. */
   routes: [
     {
       method: 'GET',
       path: '/apis/{id}',
+      operationId: 'getAPI',
       summary: 'One machine-face API record by id (its domain)',
       responses: {
         200: { description: 'OK envelope with the record' },
@@ -186,32 +202,38 @@ export const manifest = defineSiteManifest({
     {
       method: 'GET',
       path: '/actions',
+      operationId: 'listActions',
       summary: 'Action catalog sample — labeled example data over fictional providers',
     },
     {
       method: 'GET',
       path: '/verification-reports',
+      operationId: 'listVerificationReports',
       summary: 'Probe outcomes recorded as data (real observations, provenance stamped)',
       params: [{ name: 'subject', description: 'filter by probed domain' }],
     },
     {
       method: 'GET',
       path: '/icp.json',
+      operationId: 'getICP',
       summary: 'G2 coordinates: ICP, personas, agent classes, and the attestation ladder',
     },
     {
       method: 'GET',
       path: '/verify',
+      operationId: 'getVerify',
       summary: 'Run our tests — the public-contract checks, runnable by anyone',
     },
     {
       method: 'GET',
       path: '/verify/suite.json',
+      operationId: 'getVerifySuite',
       summary: 'The declarative check suite behind /verify',
     },
     {
       method: 'POST',
       path: '/workspaces',
+      operationId: 'createWorkspace',
       summary:
         'Auto-mint an anonymous sandbox workspace (keyless; ephemeral in wave zero — retention disclosed on mint)',
       responses: { 200: { description: 'OK envelope with the minted workspace' } },
@@ -219,30 +241,48 @@ export const manifest = defineSiteManifest({
     {
       method: 'GET',
       path: '/workspaces/{id}',
+      operationId: 'getWorkspace',
       summary: 'One workspace — the system-of-record door (headless ply)',
     },
     {
       method: 'GET',
       path: '/workspaces/{id}/apis',
+      operationId: 'listWorkspaceAPIs',
       summary: 'API records registered in a workspace',
     },
     {
       method: 'POST',
       path: '/workspaces/{id}/apis',
+      operationId: 'registerWorkspaceAPI',
       summary: 'Register an API record in a workspace (native binding — system of record)',
     },
   ],
 
+  /** MCP tool names ARE the canonical operationIds (axp-ext/rates-g2 §1) —
+   *  the same camelCase identifier as the OpenAPI contract, one operation,
+   *  one name, every face. */
   mcp: {
     url: `${ORIGIN}/mcp`,
     transport: 'streamable-http',
-    tools: ['search_apis', 'get_api', 'list_actions', 'list_verification_reports', 'get_pricing'],
+    tools: ['searchApis', 'getAPI', 'listActions', 'listVerificationReports', 'getPricing'],
   },
 
   llms: { body: LLMS_BODY },
 
   docsUrl: `${ORIGIN}/llms.txt`,
   icpUrl: `${ORIGIN}/icp.json`,
+  /** links.verify (axp-ext/rates-g2 §3) — the published runnable-suite export,
+   *  native on the card since axp-faces 0.2.0. */
+  verifyUrl: '/verify',
+  /** g2 (axp-ext/rates-g2 §4) — the property's G2/ICP coordinates, TOP-LEVEL
+   *  on the card, carried verbatim from the projection config (the fuller
+   *  /icp.json document stays linked beside it via links.icp). */
+  g2: {
+    substrate: projection.substrate,
+    motion: projection.motion,
+    icp: projection.icp,
+    personas: projection.personas,
+  },
   conformanceUrl: 'https://api.qa/apis.dev',
 
   family: [
