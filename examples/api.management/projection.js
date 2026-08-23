@@ -56,7 +56,7 @@ export const PROJECTION = {
     rateCard: "/pricing",
     binding: false, // stated intent, declared in the Pricing Document itself
     perOperationRates:
-      "deferred — the pinned axp-faces Pricing Document carries no rates[] extension yet (template spec Open Question 1); per-operation pricing stays declared here, never hand-rolled onto /pricing",
+      "served — rates[] rides TOP-LEVEL in the Pricing Document at /pricing (axp-ext-rates-g2@0.1.0 §2, native in the vendored axp-faces 0.2.0), one row per metered operation keyed by canonical operationId; declared in manifest.js pricing.rates, generated, never hand-rolled",
   },
 
   positioning:

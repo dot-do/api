@@ -5,7 +5,7 @@
  * the PINS.json digest).
  */
 import { defineSiteManifest } from "./vendor/axp-faces/index.js";
-import { buildSeed, SEED_VERSION } from "./substrate.js";
+import { buildSeed, SEED_VERSION, API_PRODUCT } from "./substrate.js";
 import { PROJECTION } from "./projection.js";
 
 export const ORIGIN = "https://api.management";
@@ -108,6 +108,9 @@ export const manifest = defineSiteManifest({
   // ceiling answers 402 OFFER.
   collection: {
     path: "/processes",
+    // axp-ext-rates-g2 §1: the branching collection's canonical operationId —
+    // the same identifier the MCP tool carries and the rate row keys on.
+    operationId: "listProcesses",
     memberName: "processes",
     summary: "The APQC-typed process spine plus the demo tenant's process-state records — typed OK | EMPTY | BLOCKED, branching on apqc/kind",
     records: seed.processes,
@@ -126,6 +129,18 @@ export const manifest = defineSiteManifest({
     binding: false,
     statement:
       "Wave-zero stub: metering runs in test mode only — no live settlement, no invoice will issue. Prices are the stated intent of the registered pricing experiment (pattern: 402-metered, motion: B2A), not bound terms. The anonymous sandbox floor is free.",
+    // axp-ext-rates-g2 §2: the operation rate card, TOP-LEVEL in the Pricing
+    // Document at its ruled placement — one row per metered noun operation,
+    // keyed by the canonical operationId (contract op or MCP tool name).
+    // Same test-mode label as the document: binding:false + statement above.
+    rates: [
+      { operation: "listProcesses", price: 0.002, unit: "usd-per-call" },
+      { operation: "getProcess", price: 0.002, unit: "usd-per-call" },
+      { operation: "listKPIs", price: 0.002, unit: "usd-per-call" },
+      { operation: "listObjectives", price: 0.002, unit: "usd-per-call" },
+      { operation: "listProperties", price: 0.002, unit: "usd-per-call" },
+      { operation: "getProperty", price: 0.002, unit: "usd-per-call" },
+    ],
     offers: [
       {
         id: "b2a-metered-402-stub",
@@ -142,11 +157,14 @@ export const manifest = defineSiteManifest({
     spendParam: "spend",
   },
 
-  // Extra LIVE routes (presence-when-true — every one of these answers in worker.js)
+  // Extra LIVE routes (presence-when-true — every one of these answers in
+  // worker.js). Each business route carries its canonical camelCase
+  // operationId (axp-ext-rates-g2 §1): route = MCP tool = rate key.
   routes: [
     {
       method: "GET",
       path: "/kpis",
+      operationId: "listKPIs",
       summary: "KPI records of the operated estate (data ply) — typed OK | EMPTY | BLOCKED, branching on kind/property/id",
       params: [
         { name: "kind", description: "filter by KPI kind (availability, p95-latency-ms, metered-calls, …)" },
@@ -157,6 +175,7 @@ export const manifest = defineSiteManifest({
     {
       method: "GET",
       path: "/objectives",
+      operationId: "listObjectives",
       summary: "Objective (OKR) records of the operated estate — typed envelopes, branching on quarter/status/id",
       params: [
         { name: "quarter", description: "filter by quarter (e.g. 2026-Q3)" },
@@ -167,6 +186,7 @@ export const manifest = defineSiteManifest({
     {
       method: "GET",
       path: "/properties",
+      operationId: "listProperties",
       summary: "ManagedProperty records — the headless operate door over deployed properties (system of record: ERP⟨management-operations⟩); same collections, same envelopes as the data ply",
       params: [
         { name: "lifecycle", description: "filter by lifecycle state (live | building | sunset-review)" },
@@ -176,11 +196,13 @@ export const manifest = defineSiteManifest({
     {
       method: "GET",
       path: "/icp.json",
+      operationId: "getICP",
       summary: "G2 coordinates of this projection: ICP (CompanyTypes × JobTypes), personas, System coordinates, motion",
     },
     {
       method: "GET",
       path: "/verify",
+      operationId: "getVerify",
       summary: "Run our tests — how to verify this surface yourself against the pinned conformance spec (claims that can be tests are tests)",
     },
     {
@@ -191,23 +213,32 @@ export const manifest = defineSiteManifest({
     },
   ],
 
-  // MCP declared on the card ONLY because the door is mounted (worker.js /mcp)
+  // MCP declared on the card ONLY because the door is mounted (worker.js /mcp).
+  // Tools are STRING names — each name IS the canonical operationId
+  // (axp-ext-rates-g2 §1); descriptions and input schemas are served live by
+  // tools/list (mcp.js toolDefs).
   mcp: {
     url: `${ORIGIN}/mcp`,
     transport: "streamable-http",
-    tools: [
-      { name: "listProcesses", description: "list the typed process spine (filters: apqc, kind)" },
-      { name: "getProcess", description: "get one process record by id" },
-      { name: "listKPIs", description: "list KPI records (filters: kind, property)" },
-      { name: "listObjectives", description: "list OKR records (filters: quarter, status)" },
-      { name: "listProperties", description: "list managed properties (filter: lifecycle)" },
-      { name: "getProperty", description: "get one managed property by id" },
-    ],
+    tools: ["listProcesses", "getProcess", "listKPIs", "listObjectives", "listProperties", "getProperty"],
   },
 
   llms: { body: llmsBody },
 
-  // G2 coordinates exposed on the card (links.icp)
+  // axp-ext-rates-g2 §3: the card's links.verify — the run-our-tests door.
+  verifyUrl: "/verify",
+
+  // axp-ext-rates-g2 §4: G2/ICP coordinates TOP-LEVEL on the card, carried
+  // verbatim from the projection (the register row's G2 projection).
+  // links.icp (the same truth at /icp.json) stays legal beside it.
+  g2: {
+    substrate: PROJECTION.substrate,
+    projection: PROJECTION.brand,
+    motion: PROJECTION.motion,
+    icp: PROJECTION.icp,
+    personas: PROJECTION.personas,
+    systems: API_PRODUCT.systems,
+  },
   icpUrl: `${ORIGIN}/icp.json`,
 
   // Typed sibling edges — only doors verified serving (presence-when-true):

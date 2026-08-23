@@ -9,7 +9,10 @@ import { meterEvent } from "./seams.js";
 
 const PROTOCOL_VERSION = "2025-06-18";
 
-/** tools/list — mirrors manifest.mcp.tools (asserted equal in the test suite). */
+/** tools/list — the live registry behind the card's manifest.mcp.tools string
+ *  names (axp-ext-rates-g2 §1: the tool NAME is the canonical operationId and
+ *  lives on the card; descriptions and schemas are served here, live).
+ *  Name-for-name equality with the card is asserted in the test suite. */
 export function toolDefs(seed) {
   return [
     { name: "listProcesses", description: "list the typed process spine (filters: apqc, kind)", run: (a) => filterList(seed.processes, a, ["apqc", "kind"], "processes") },

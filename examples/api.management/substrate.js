@@ -75,17 +75,18 @@ export const SYSTEMS = [{ system: "ERP", coordinates: ["management-operations"] 
 export const TRANSPORTS = ["REST", "MCP"];
 
 /**
- * Operations — the served contract only (live-only law). The pinned
- * axp-faces generator assigns operationIds to the surfaces it owns
- * (listCollection, getPricing, getOffer, getFamilyRegistry); site routes
- * carry method+path until the generator grows route-level operationIds
- * (filed upstream — fix the generator, never patch one site).
+ * Operations — the served contract only (live-only law). Every operation
+ * carries its canonical camelCase operationId (axp-ext-rates-g2@0.1.0 §1,
+ * native in the vendored axp-faces 0.2.0 — the upstream route-level
+ * operationId gap is closed): OpenAPI operationId = MCP tool name = suite
+ * coverage reference = SDK method = rates[] key. The branching collection's
+ * name is site-declared via collection.operationId (manifest.js).
  */
 export const OPERATIONS = [
-  { operation: "listProcesses", operationId: "listCollection", method: "GET", path: "/processes" },
-  { operation: "listKPIs", method: "GET", path: "/kpis" },
-  { operation: "listObjectives", method: "GET", path: "/objectives" },
-  { operation: "listProperties", method: "GET", path: "/properties" },
+  { operation: "listProcesses", operationId: "listProcesses", method: "GET", path: "/processes" },
+  { operation: "listKPIs", operationId: "listKPIs", method: "GET", path: "/kpis" },
+  { operation: "listObjectives", operationId: "listObjectives", method: "GET", path: "/objectives" },
+  { operation: "listProperties", operationId: "listProperties", method: "GET", path: "/properties" },
   { operation: "getPricing", operationId: "getPricing", method: "GET", path: "/pricing" },
   { operation: "getOffer", operationId: "getOffer", method: "GET", path: "/offer" },
   { operation: "getFamilyRegistry", operationId: "getFamilyRegistry", method: "GET", path: "/family.json" },

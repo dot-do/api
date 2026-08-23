@@ -1,15 +1,5 @@
 {
-  "package": "axp-faces",
-  "version": "0.3.0",
-  "standard": "https://apis.ax/axp",
-  "pinnedSpec": "apis-ax-axp@2.6.0",
-  "pinnedSpecDigest": "a9a1197c439d708b4db54f606f07c9a2d019c7f2989fbcd9b599de2fcc028e0d",
-  "extensions": {
-    "axp-ext-rates-g2": {
-      "version": "0.2.0",
-      "digest": "903e414d4f1440ddf9028b66d6987a2a3263ec1e84902b9ef4f8cb715a12ccc5"
-    }
-  },
+  "source": "axp.org.ai/packages/axp-faces",
   "files": {
     "src/card.js": "69db44d689fbece7886bde7d2b62b64ef4da13292d9078d13128f453a4bb1e65",
     "src/conneg.js": "a079843903f10bb606cfe37c133900463ae578764d0ca5b41aa7f532c37d52bb",
@@ -21,6 +11,7 @@
     "src/manifest.js": "8fadd03fd3dd31b367bb64ed59fcd879737a73ec35d91c3eebfaa5de53d546a1",
     "src/openapi.js": "b2004c8a53c72d88aaa3e754ae1086c16780705d032929ed2e8a57d4e9b19309",
     "src/pricing.js": "b61862aa84e6dc5223a916ede0afc8ffe57075549e33900ea2cf8647cb78e3aa",
-    "src/routes.js": "c2de095f54e1cad659c9bb35be61affb7230492c72b95fa0cfe594d0d9c1e402"
+    "src/routes.js": "c2de095f54e1cad659c9bb35be61affb7230492c72b95fa0cfe594d0d9c1e402",
+    "PINS.json": "8db6185612bcf1e93af81ad4001dee449daee52c2e7e578df496b6c759b1d4f3"
   }
 }

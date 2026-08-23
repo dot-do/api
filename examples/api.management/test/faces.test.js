@@ -55,7 +55,7 @@ describe("two plies, one definition — §3", () => {
   it("every MCP tool resolves the same collections the HTTP routes serve", async () => {
     const listed = await post("/mcp", { jsonrpc: "2.0", id: 1, method: "tools/list" });
     const tools = (await listed.json()).result.tools.map((t) => t.name);
-    expect(tools).toEqual(manifest.mcp.tools.map((t) => t.name)); // card == door
+    expect(tools).toEqual([...manifest.mcp.tools]); // card == door (string tool names, axp-ext-rates-g2 §1)
 
     const call = await post("/mcp", { jsonrpc: "2.0", id: 2, method: "tools/call", params: { name: "listKPIs", arguments: { kind: "availability" } } });
     const envelope = JSON.parse((await call.json()).result.content[0].text);
@@ -91,7 +91,7 @@ describe("the B2A ladder — §5.1 / the 402 OFFER body", () => {
   });
 });
 
-describe("G2 coordinates on the card — stake #6", () => {
+describe("G2 coordinates on the card — stake #6 / axp-ext-rates-g2 §4", () => {
   it("the card links icp.json and the document carries ICP + personas + System coordinates", async () => {
     const card = await (await get("/.well-known/agents.json")).json();
     expect(card.links.icp).toBe(`${ORIGIN}/icp.json`);
@@ -100,6 +100,67 @@ describe("G2 coordinates on the card — stake #6", () => {
     expect(icp.personas.some((p) => p.class === "agent")).toBe(true);
     expect(icp.systems).toEqual(API_PRODUCT.systems);
     expect(icp.motion).toBe("B2A");
+  });
+
+  it("g2 rides TOP-LEVEL on the card (the ruled placement), verbatim from the projection, with links.icp legal beside it", async () => {
+    const card = await (await get("/.well-known/agents.json")).json();
+    expect(card.g2).toBeDefined();
+    expect(card.g2.substrate).toBe("fn-business-ops");
+    expect(card.g2.projection).toBe("api.management");
+    expect(card.g2.motion).toBe("B2A");
+    expect(card.g2.icp).toEqual(PROJECTION.icp);
+    expect(card.g2.personas).toEqual(PROJECTION.personas);
+    expect(card.g2.systems).toEqual(API_PRODUCT.systems);
+    expect(card.links.icp).toBe(`${ORIGIN}/icp.json`); // independent and legal beside g2
+  });
+});
+
+describe("axp-ext-rates-g2 — the native ruled placements (bridge retired)", () => {
+  it("rates[] rides TOP-LEVEL in the Pricing Document, keyed by canonical operationId — never nested under an offer", async () => {
+    const doc = await (await get("/pricing")).json();
+    expect(Array.isArray(doc.rates)).toBe(true);
+    expect(doc.rates.map((r) => r.operation).sort()).toEqual(
+      ["getProcess", "getProperty", "listKPIs", "listObjectives", "listProperties", "listProcesses"].sort(),
+    );
+    for (const row of doc.rates) {
+      expect(row.price).toBe(0.002);
+      expect(row.unit).toBe("usd-per-call");
+    }
+    // the ruled placement is top-level: no offer anywhere carries a nested rate card
+    const card = await (await get("/.well-known/agents.json")).json();
+    for (const offer of card.monetization.offers) expect(offer.rates).toBeUndefined();
+    const offerBody = await (await get(`/processes?spend=${manifest.pricing.hardCeiling + 1}`)).json();
+    expect(JSON.stringify(offerBody)).not.toContain('"rates"');
+  });
+
+  it("every rate row keys on an operation the contract or the MCP door declares (§1: one identifier, five surfaces)", async () => {
+    const openapi = await (await get("/openapi.json")).json();
+    const contractIds = Object.values(openapi.paths).flatMap((p) =>
+      Object.values(p).map((op) => op.operationId).filter((id) => id !== undefined),
+    );
+    const nameable = new Set([...contractIds, ...manifest.mcp.tools]);
+    const doc = await (await get("/pricing")).json();
+    for (const row of doc.rates) expect(nameable.has(row.operation), `rate row ${row.operation} names a ghost door`).toBe(true);
+  });
+
+  it("the contract carries the canonical camelCase operationId on every business route", async () => {
+    const openapi = await (await get("/openapi.json")).json();
+    expect(openapi.paths["/processes"].get.operationId).toBe("listProcesses");
+    expect(openapi.paths["/kpis"].get.operationId).toBe("listKPIs");
+    expect(openapi.paths["/objectives"].get.operationId).toBe("listObjectives");
+    expect(openapi.paths["/properties"].get.operationId).toBe("listProperties");
+    expect(openapi.paths["/icp.json"].get.operationId).toBe("getICP");
+    expect(openapi.paths["/verify"].get.operationId).toBe("getVerify");
+    const ids = Object.values(openapi.paths).flatMap((p) => Object.values(p).map((op) => op.operationId).filter(Boolean));
+    expect(new Set(ids).size).toBe(ids.length); // one operation, one identifier
+  });
+
+  it("links.verify rides the card beside links.conformance (§3)", async () => {
+    const card = await (await get("/.well-known/agents.json")).json();
+    expect(card.links.verify).toBe(`${ORIGIN}/verify`);
+    expect(card.links.conformance).toBeDefined();
+    const res = await get("/verify"); // presence-when-true: the door answers
+    expect(res.status).toBe(200);
   });
 });
 

@@ -17,7 +17,7 @@ one payable machine-face property out, per the property-template spec
 | Branching collection (Clauses 4+7) | `/processes` | generated from the seed |
 | Data-ply collections | `/kpis` · `/objectives` | site routes, same envelope law |
 | Headless operate door (ERP⟨management-operations⟩) | `/properties` | same definition, same envelopes |
-| G2 coordinates (card `links.icp`) | `/icp.json` | projection config |
+| G2 coordinates (card top-level `g2` + `links.icp`) | `/.well-known/agents.json`, `/icp.json` | projection config |
 | Run-our-tests page | `/verify` | this repo's conformance gate |
 | MCP door (JSON-RPC over HTTP) | `POST /mcp` | same Nouns/verbs as HTTP |
 | 402 OFFER boundary | `/offer`, `/processes?spend=>ceiling` | generated; B2A ladder in `alternatives` |
@@ -78,10 +78,11 @@ held (third-party Gandi, exp 2026-10-30) — opportunistic acquisition per #3.
 
 ## Open items filed upstream (never patched locally)
 
-- `axp-faces` route-level `operationId`s: site routes beyond the generator's
-  own four carry method+path only in the emitted contract.
-- Rate-card `rates[]` extension (per-operation prices, `freeQuota`) — template
-  spec Open Question 1; per-operation rates live in `projection.js` until the
-  Pricing Document shape is ratified.
+- ~~`axp-faces` route-level `operationId`s~~ — CLOSED by `axp-ext-rates-g2@0.1.0`
+  (vendored axp-faces 0.2.0): every route carries its canonical camelCase
+  operationId, native passthrough.
+- ~~Rate-card `rates[]` extension~~ — CLOSED by `axp-ext-rates-g2@0.1.0` §2:
+  `rates[]` rides TOP-LEVEL in the Pricing Document, declared in `manifest.js`
+  `pricing.rates` and keyed by canonical operationId.
 - `interfaces.testSuite` declaration — made only when a digest-pinned suite
   document answers at its address (A.8.5), not before.

@@ -45,6 +45,12 @@ describe("api.management — pinned apis-ax-axp@2.6.0, digest-checked, in-proces
     const pins = JSON.parse(readFileSync(new URL("../vendor/axp-faces/PINS.json", import.meta.url), "utf8"));
     expect(pins.pinnedSpec).toBe("apis-ax-axp@2.6.0");
     expect(pins.pinnedSpecDigest).toBe(expectedDigest);
+    // the ratified generator extension rides the vendored tree by pin
+    expect(pins.version).toBe("0.3.0");
+    expect(pins.extensions["axp-ext-rates-g2"]).toEqual({
+      version: "0.2.0",
+      digest: "903e414d4f1440ddf9028b66d6987a2a3263ec1e84902b9ef4f8cb715a12ccc5",
+    });
     for (const [file, digest] of Object.entries(pins.files)) {
       const name = file.split("/").pop();
       const bytes = readFileSync(new URL(`../vendor/axp-faces/${name}`, import.meta.url));
