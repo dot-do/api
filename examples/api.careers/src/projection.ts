@@ -73,7 +73,7 @@ export const apiCareersProjection: ProjectionConfig = {
 
   pricing: {
     pattern: '402-metered-per-call',
-    rateCardRef: './manifest.ts — pricing.offers[0].rates (operationId-keyed; every row freeQuota or zero price)',
+    rateCardRef: './manifest.ts — pricing.rates, top-level in the Pricing Document per axp-ext/rates-g2 §2 (operationId-keyed; every row freeQuota or zero price)',
   },
 
   // Claim-free until the §4.6 worthiness bar attests (conformance + live anon
@@ -87,7 +87,7 @@ export const apiCareersProjection: ProjectionConfig = {
     pattern: '402-metered-per-call',
     motion: 'B2A',
     shapes: ['anon-sandbox', 'earned-credits', 'human-claimed', 'paid-402'],
-    rateCardRef: 'manifest pricing.offers[0].rates',
+    rateCardRef: 'manifest pricing.rates (top-level, axp-ext/rates-g2 §2)',
     startDate: '2026-08-23',
     hypothesis:
       'O*NET-typed placement reads convert anonymous agent traffic up the B2A ladder (sandbox → earned credits) at a higher rate than record reads without G1 typing',
