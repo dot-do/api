@@ -111,10 +111,15 @@ carry yet:
 - RPC / CapnWeb / full HATEOAS transports — arrive with the workers.do lane
   (spec §7.2 extraction target); only what serves is declared.
 
-## §9.1 rail-ledger box: blocked-on-rail-ledger
+## §9.1 rail-ledger box: REGISTERED
 
 The checklist's final box — "face registered in the rail ledger
-(faces-payable/week denominator)" — is **blocked-on-rail-ledger**: no rail
-ledger exists in the ax repo at build time (checked 2026-08-23). The box is
-recorded as blocked, never satisfied by a stubbed or fabricated ledger entry;
-registration lands when the ledger address exists.
+(faces-payable/week denominator)" — is **REGISTERED**: registered via
+LEDGER.md door A — row in packages/rail-ledger/registry/faces.json @
+draft/rail-ledger-v1 (studio #9 alignment pass 2026-08-23); readout
+https://ledger.apis.ax/readouts/faces-payable (service built, deploy pending
+Batch-S). The box was previously blocked-on-rail-ledger (no rail ledger
+existed in the ax repo at 2026-08-23 build time); it was never satisfied by
+a stubbed or fabricated ledger entry — registration landed when the ledger
+package and its door-A registry existed. The served projection config
+records the ledger address in its `railLedger` field.
