@@ -1,0 +1,26 @@
+{
+  // apis.dev — wave zero of register row software-it-services
+  // Deploy: wrangler deploy (from this directory)
+  //
+  // DNS CUTOVER PREREQUISITE (deploy-time act, not done by this build):
+  // the apis.dev zone currently proxies to a legacy Vercel Next.js
+  // multi-tenant deployment (x-matched-path /domains/[domain]) that answers
+  // 500 on every path. Attaching the route below only takes effect once the
+  // zone's DNS records stop pointing at Vercel. Cutover is a founder call.
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "apis-dev",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-01-24",
+
+  "routes": [{ "pattern": "apis.dev/*", "zone_name": "apis.dev" }],
+
+  "vars": {
+    "API_NAME": "apis.dev"
+  }
+
+  // Metering seam transport (§7.4) — bind when the dataset exists; the seam
+  // logs structured events regardless.
+  // "analytics_engine_datasets": [
+  //   { "binding": "METERS", "dataset": "apis_dev_meters" }
+  // ]
+}

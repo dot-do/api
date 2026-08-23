@@ -1,0 +1,256 @@
+/**
+ * manifest.js — the ONE source of truth for apis.dev's machine face: every
+ * quartet artifact renders from this via the vendored axp-faces generator
+ * (pinned apis-ax-axp@2.6.0, digest a9a1197c… — see ./axp-faces/PINS.json).
+ */
+
+import { defineSiteManifest } from './axp-faces/index.js'
+import { apiRecords } from './seed.js'
+
+export const ORIGIN = 'https://apis.dev'
+
+const LLMS_BODY = `# apis.dev
+
+Functions agents buy. apis.dev is the build-and-monetize lifecycle face of
+the software & IT services substrate: a keyless registry of machine-face API
+records, the probe reports behind them, and an auto-minted sandbox workspace
+for registering your own.
+
+Every collection answers without a key. Typed envelopes everywhere:
+OK | EMPTY | BLOCKED | OFFER — three emptinesses never blend.
+
+## Doors
+
+- \`GET /apis\` — machine-face API records (branching collection; \`?filter=<pricingModel>\`, \`?tag=<$type>\`)
+- \`GET /apis/{id}\` — one record by id
+- \`GET /actions\` — Action catalog sample (labeled example data)
+- \`GET /verification-reports\` — probe outcomes recorded as data
+- \`POST /workspaces\` — auto-mint an anonymous sandbox workspace (keyless; ephemeral in wave zero, disclosed on mint)
+- \`POST /mcp\` — MCP door (JSON-RPC 2.0): the same nouns and verbs as HTTP
+- \`GET /verify\` — run our tests: the public-contract checks, runnable by anyone
+
+## Pricing
+
+Metered rate card with a declared hard ceiling. Settlement is a labeled
+test-mode stub today: the 402 OFFER boundary is served, no charge is
+collected, and the pricing document says so in its own \`statement\` member.
+
+## Data classes
+
+API and VerificationReport records are real, derived from each origin's own
+published machine surfaces (provenance stamped on every record). Action
+records are labeled example data (\`"example": true\`) over fictional
+providers.`
+
+const HOME_MD = `# apis.dev
+
+Functions agents buy.
+
+A keyless registry of machine-face API records over the software & IT
+services substrate — with the probe reports behind them and an auto-minted
+sandbox workspace.
+
+- Machine card: /.well-known/agents.json
+- Contract: /openapi.json · Pricing: /pricing · Agents: /llms.txt
+- Records: /apis · /actions · /verification-reports
+- Sandbox: POST /workspaces · MCP: POST /mcp · Tests: /verify
+
+API records are real (provenance stamped). Action records are labeled
+example data. Settlement is a labeled test-mode stub — the 402 boundary is
+served, nothing is charged.`
+
+const HOME_HTML = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>apis.dev — functions agents buy</title>
+<style>
+  body{font:16px/1.6 system-ui,sans-serif;max-width:44rem;margin:4rem auto;padding:0 1.25rem;color:#111}
+  h1{font-size:1.6rem;margin:0 0 .25rem} p.tag{color:#555;margin-top:0}
+  code{background:#f4f4f4;padding:.1em .35em;border-radius:4px}
+  ul{padding-left:1.2rem} li{margin:.35rem 0}
+  .note{font-size:.85rem;color:#666;border-top:1px solid #eee;margin-top:2rem;padding-top:1rem}
+  @media (prefers-color-scheme:dark){body{background:#111;color:#eee}code{background:#222}p.tag{color:#aaa}.note{color:#999;border-color:#333}}
+</style></head>
+<body>
+<h1>apis.dev</h1>
+<p class="tag">Functions agents buy.</p>
+<p>A keyless registry of machine-face API records over the software &amp; IT services substrate — with the probe reports behind them and an auto-minted sandbox workspace.</p>
+<ul>
+  <li>Machine card: <code>GET /.well-known/agents.json</code></li>
+  <li>Contract: <code>/openapi.json</code> · Pricing: <code>/pricing</code> · Agents: <code>/llms.txt</code></li>
+  <li>Records: <code>/apis</code> · <code>/actions</code> · <code>/verification-reports</code></li>
+  <li>Sandbox: <code>POST /workspaces</code> · MCP: <code>POST /mcp</code> · Tests: <code>/verify</code></li>
+</ul>
+<p class="note">API and probe-report records are real, derived from each origin&rsquo;s own published machine surfaces (provenance stamped on every record). Action records are labeled example data over fictional providers. Settlement is a labeled test-mode stub: the 402 boundary is served, nothing is charged.</p>
+</body></html>`
+
+/** The §5.1 B2A ladder, advertised whole on every 402 OFFER (`alternatives`):
+ *  pay / work / claim from one boundary. Unwired rungs say so — stubs are
+ *  labeled stubs, never live doors. */
+export const LADDER_ALTERNATIVES = [
+  {
+    rung: 0,
+    id: 'anon-sandbox',
+    title: 'Anonymous sandbox — keyless and free',
+    url: `${ORIGIN}/apis`,
+    price: 0,
+  },
+  {
+    rung: 1,
+    id: 'earned-credits',
+    title: 'Work: earn .ax-ledger credits via proof-of-work',
+    status: 'stub — ledger not wired in wave zero; this rung does not settle yet',
+  },
+  {
+    rung: 2,
+    id: 'human-claimed',
+    title: 'Claim: a human claims this agent workspace (attribution → tenure)',
+    status: 'stub — claim door not wired in wave zero',
+  },
+  {
+    rung: 3,
+    id: 'paid-402',
+    title: 'Pay: metered calls against machine identity (id.org.ai)',
+    price: 0.0002,
+    unit: 'USD/call',
+    status: 'stub — test-mode; no live settlement, no charge is collected',
+  },
+]
+
+/** Rate rows, carried on the offer (operationId-keyed; every row names a
+ *  freeQuota or prices from zero — §5.1). Rows reference only operationIds
+ *  the OpenAPI contract actually emits at this pin. */
+export const RATE_ROWS = [
+  { operation: 'listCollection', price: 0.0002, unit: 'USD/call', freeQuota: 1000, status: 'stub — test-mode, no live settlement' },
+  { operation: 'getPricing', price: 0, unit: 'USD/call' },
+  { operation: 'getFamilyRegistry', price: 0, unit: 'USD/call' },
+  { operation: 'getOffer', price: 0, unit: 'USD/call' },
+]
+
+export const manifest = defineSiteManifest({
+  origin: ORIGIN,
+  name: 'apis.dev',
+  description:
+    'Functions agents buy: a keyless registry of machine-face API records over the software & IT services substrate, with probe reports, an Action catalog sample, and auto-minted sandbox workspaces.',
+  version: '0.1.0',
+
+  collection: {
+    path: '/apis',
+    memberName: 'results',
+    summary: 'Machine-face API records — typed OK | EMPTY | BLOCKED | OFFER, branching on the query',
+    records: apiRecords,
+    filters: ['filter', 'tag'],
+    blockedScopes: ['admin', 'internal'],
+    match: (rec, param, value) =>
+      param === 'filter' ? rec.pricingModel === value : param === 'tag' ? rec.$type === value : false,
+    emptyMessage: (param, value) =>
+      `no API records match ${param}=${value} — a truthful empty set, not an error`,
+    blockedReason: (scope) =>
+      `scope '${scope}' is reserved to the platform — not served to your agent class`,
+  },
+
+  pricing: {
+    model: 'metered',
+    hardCeiling: 100,
+    unit: 'USD',
+    price: 0.0002,
+    binding: false,
+    statement:
+      'Test-mode rate card: metering seams are live, settlement is a labeled stub — no charge is collected today. Prices are the stated intent of the wave-zero pricing experiment, not bound terms.',
+    offers: [
+      {
+        id: 'metered-calls',
+        title: 'Metered calls (test-mode stub — no live settlement)',
+        price: 0.0002,
+        unit: 'USD/call',
+        status: 'stub — the 402 boundary is served; no charge is collected',
+        rates: RATE_ROWS,
+        alternatives: LADDER_ALTERNATIVES,
+      },
+    ],
+    offerPath: '/offer',
+    spendParam: 'spend',
+  },
+
+  /** Live routes beyond the quartet — presence-when-true: everything listed
+   *  here answers today. */
+  routes: [
+    {
+      method: 'GET',
+      path: '/apis/{id}',
+      summary: 'One machine-face API record by id (its domain)',
+      responses: {
+        200: { description: 'OK envelope with the record' },
+        404: { description: 'EMPTY envelope — no record with that id' },
+      },
+    },
+    {
+      method: 'GET',
+      path: '/actions',
+      summary: 'Action catalog sample — labeled example data over fictional providers',
+    },
+    {
+      method: 'GET',
+      path: '/verification-reports',
+      summary: 'Probe outcomes recorded as data (real observations, provenance stamped)',
+      params: [{ name: 'subject', description: 'filter by probed domain' }],
+    },
+    {
+      method: 'GET',
+      path: '/icp.json',
+      summary: 'G2 coordinates: ICP, personas, agent classes, and the attestation ladder',
+    },
+    {
+      method: 'GET',
+      path: '/verify',
+      summary: 'Run our tests — the public-contract checks, runnable by anyone',
+    },
+    {
+      method: 'GET',
+      path: '/verify/suite.json',
+      summary: 'The declarative check suite behind /verify',
+    },
+    {
+      method: 'POST',
+      path: '/workspaces',
+      summary:
+        'Auto-mint an anonymous sandbox workspace (keyless; ephemeral in wave zero — retention disclosed on mint)',
+      responses: { 200: { description: 'OK envelope with the minted workspace' } },
+    },
+    {
+      method: 'GET',
+      path: '/workspaces/{id}',
+      summary: 'One workspace — the system-of-record door (headless ply)',
+    },
+    {
+      method: 'GET',
+      path: '/workspaces/{id}/apis',
+      summary: 'API records registered in a workspace',
+    },
+    {
+      method: 'POST',
+      path: '/workspaces/{id}/apis',
+      summary: 'Register an API record in a workspace (native binding — system of record)',
+    },
+  ],
+
+  mcp: {
+    url: `${ORIGIN}/mcp`,
+    transport: 'streamable-http',
+    tools: ['search_apis', 'get_api', 'list_actions', 'list_verification_reports', 'get_pricing'],
+  },
+
+  llms: { body: LLMS_BODY },
+
+  docsUrl: `${ORIGIN}/llms.txt`,
+  icpUrl: `${ORIGIN}/icp.json`,
+  conformanceUrl: 'https://api.qa/apis.dev',
+
+  family: [
+    { name: 'apis.do', origin: 'https://apis.do', role: 'every service, one envelope — the managed implementation layer' },
+    { name: 'apis.ax', origin: 'https://apis.ax', role: 'the agent-first API catalog (B2A register)' },
+    { name: 'api.qa', origin: 'https://api.qa', role: 'independent conformance verifier' },
+    { name: 'api.lawyer', origin: 'https://api.lawyer', role: 'AXP reference implementation' },
+  ],
+
+  home: { html: HOME_HTML, md: HOME_MD },
+})
