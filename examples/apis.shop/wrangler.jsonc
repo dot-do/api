@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "apis-shop",
+  // Build first: npx tsx build.ts  (bundles worker.ts → _worker.js,
+  // externalizing the framework's optional oauth.do/rpc.do imports)
+  "main": "_worker.js",
+  "no_bundle": true,
+  "compatibility_date": "2026-01-24",
+
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
+
+  // The apis.shop CF zone exists (zone-only register state; renewal due
+  // 2026-12-12 — Batch-S dated admin, not a build gate). Route attachment is
+  // a deploy decision, not a wave-zero requirement — uncomment at go-live:
+  // "routes": [{ "pattern": "apis.shop/*", "zone_name": "apis.shop" }]
+}

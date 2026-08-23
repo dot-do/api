@@ -1,0 +1,49 @@
+{
+  "$comment": "G4 projection config (spec §2) — the served projection of the retail-ecommerce substrate. Content, not code. SERVED by this example worker.",
+  "substrate": "retail-ecommerce",
+  "brand": "apis.shop",
+  "domains": ["apis.shop"],
+  "served": true,
+  "adminNote": "apis.shop renewal due 2026-12-12 (Batch-S dated admin, not a build gate). apis.shopping is held (name-only, marginal grammar) and is NOT projected.",
+  "icp": {
+    "companyTypes": ["online retailer", "multichannel merchant", "marketplace seller"],
+    "jobTypes": ["e-commerce ops manager", "head of digital"]
+  },
+  "personas": [
+    { "id": "agent-buyer", "role": "autonomous purchasing agent hitting the Offer/Order surfaces — the row's stronger near-term buyer (Axis-2 ruling)" },
+    { "id": "ecommerce-ops-manager", "role": "e-commerce ops manager whose OMS/storefront systems call these functions" },
+    { "id": "head-of-digital", "role": "head of digital evaluating the machine face for the merchant's stack" }
+  ],
+  "motion": "B2A",
+  "motionNote": "register row: 'the stronger near-term buyer is the agent side — agents as purchasers hitting Offer/Order surfaces (B2A), per the Axis-2 ruling'. No OAuth door, no credit-card door on this face; onboarding is the ladder.",
+  "offer": [
+    { "shape": "anon-sandbox", "gate": "none — keyless", "price": "free", "status": "mounted", "note": "the universal floor and the ONLY rung mounted at wave zero; labeled synthetic seed (GS1 demo-952 GTINs); ephemeral auto workspace with disclosed retention" },
+    { "shape": "earned-credits", "gate": ".ax-ledger credits earned via proof-of-work", "price": "earned", "status": "deferred-not-advertised", "note": "NOT advertised in the 402 OFFER alternatives per the batch ruling (advertise only mounted rungs); the credit ledger is not wired in this deployment" },
+    { "shape": "human-claimed", "gate": "a human claims the agent workspace (attribution → tenure)", "price": "free/earned", "status": "deferred-not-advertised", "note": "NOT advertised until the claim door mounts" },
+    { "shape": "paid-402", "gate": "id.org.ai machine identity + 402 metering", "price": "metered per rate card", "status": "stub", "note": "the 402 boundary is served and typed (offerPath /offer, spend param); settlement is NOT active — test mode, no billing occurs (pricing.binding: false states this on the wire)" }
+  ],
+  "pricing": {
+    "pattern": "402-metered-per-call",
+    "rateCardRef": "/pricing",
+    "note": "metered per call across the catalog/identity/offer/order operations; order capture (createOrder) is the priced write at the commerce rail"
+  },
+  "positioning": "the functions a shop's systems call",
+  "positioningNote": "agent-default claim WITHHELD until the §4.6 worthiness bar passes (conformance + live anon sandbox + verified published suite with runs on record)",
+  "mdx": "custom landing in this worker (spec §7.1: custom site allowed at wave zero; per-brand MDX layer on the shared renderer deferred to extraction)",
+  "experiment": {
+    "pattern": "402-metered-per-call",
+    "motion": "B2A",
+    "shapes": ["anon-sandbox", "paid-402"],
+    "rateCardRef": "/pricing",
+    "startDate": "2026-08-23",
+    "hypothesis": "GTIN-normalized Offer/Order surfaces convert anonymous agent buyers to repeat order capture (the recurring-consumable restock pattern) at a higher rate than un-normalized catalog reads",
+    "rollupKey": "retail-ecommerce"
+  },
+  "counterpartBrand": {
+    "state": "gap-recorded",
+    "gap": true,
+    "trigger": "the §9.3 diagnostic — agent-referred HUMAN traffic arriving on this agent-facing brand (B2A2C signal: agents buying on behalf of consumers/merchant principals who do not know what an API is)",
+    "candidates": "recurring-consumable commerce names (restock/refill/replenish family) — the register row names these as the purest agents-as-buyers overlay [DC #16]; no human-vocabulary name is held for this cell",
+    "note": "recorded as a gap with register-named candidates, not asserted; named per #3 when triggered. The traffic seam this worker emits carries identity class × referral source, which is the signal."
+  }
+}
