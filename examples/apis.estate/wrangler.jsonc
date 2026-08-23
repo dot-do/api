@@ -1,0 +1,26 @@
+{
+  // apis.estate — wave zero of register row real-estate
+  // Deploy: wrangler deploy (from this directory)
+  //
+  // DNS/ZONE PREREQUISITE (deploy-time act, not done by this build):
+  // the apis.estate name has NO Cloudflare zone today (property surface
+  // register 2026-08-23: cf_zone "n", state name-only, registrar porkbun).
+  // Creating the zone and attaching the route below is a founder-ruled act;
+  // until then the worker deploys to workers.dev only.
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "apis-estate",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-01-24",
+
+  // "routes": [{ "pattern": "apis.estate/*", "zone_name": "apis.estate" }],
+
+  "vars": {
+    "API_NAME": "apis.estate"
+  }
+
+  // Metering seam transport (§7.4) — bind when the dataset exists; the seam
+  // logs structured events regardless.
+  // "analytics_engine_datasets": [
+  //   { "binding": "METERS", "dataset": "apis_estate_meters" }
+  // ]
+}
