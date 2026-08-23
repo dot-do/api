@@ -1,0 +1,8 @@
+{
+  "vendoredFrom": "axp.org.ai/packages/axp-faces (src/*.js + PINS.json)",
+  "pattern": "byte-identical vendoring-with-pins — PINS.json carries per-file sha256 digests; the pinned spec digest is the only authority",
+  "pinnedSpec": "apis-ax-axp@2.6.0",
+  "pinnedSpecDigest": "a9a1197c439d708b4db54f606f07c9a2d019c7f2989fbcd9b599de2fcc028e0d",
+  "vendoredOn": "2026-08-23",
+  "rule": "never edit these files here — fix the generator in axp.org.ai and re-vendor; estate extensions this example needs but the generator lacks are applied as site-level wrappers in ../src/axp.ts and recorded as generator gaps in the example README"
+}

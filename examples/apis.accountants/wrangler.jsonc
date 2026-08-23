@@ -1,0 +1,25 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "apis-accountants",
+  // Build first: npx tsx build.ts  (bundles worker.ts → _worker.js,
+  // externalizing the framework's optional oauth.do/rpc.do imports)
+  "main": "_worker.js",
+  "no_bundle": true,
+  "compatibility_date": "2026-01-24",
+
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
+
+  // The apis.accountants CF zone exists (BRAND-ONLY register state; acquisition
+  // paper trail in studio domains/data/apis-accountants-buy-results.json).
+  // Route attachment is a deploy decision, not a wave-zero requirement —
+  // uncomment at go-live:
+  // "routes": [{ "pattern": "apis.accountants/*", "zone_name": "apis.accountants" }]
+
+  // Optional: set GITHUB_CLIENT_ID (+ secret GITHUB_CLIENT_SECRET) to point
+  // /login at a real GitHub OAuth app. Without it the flow runs in labeled
+  // demo mode (keys random, unpersisted, not enforced).
+  // "vars": { "GITHUB_CLIENT_ID": "" }
+}
