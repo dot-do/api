@@ -1,0 +1,31 @@
+{
+  "$comment": "G4 projection config (spec §2) — Projection 2 of the passenger-mobility substrate: the livery/limo sub-niche face. RECORDED here (non-exclusivity is load-bearing); NOT served yet — the apis.limo zone exists (the row's one provisioned zone, a provisioning fact not a curation signal) but nothing is deployed to it. Presence-when-true: served flips only when a worker answers at the name.",
+  "substrate": "passenger-mobility",
+  "brand": "apis.limo",
+  "domains": ["apis.limo"],
+  "served": false,
+  "icp": {
+    "companyTypes": ["livery/limo operator", "chauffeured-service operator"],
+    "jobTypes": ["fleet owner-operator", "dispatch manager"]
+  },
+  "personas": [{ "id": "operator-livery-owner", "role": "livery operator running chauffeured bookings" }],
+  "motion": "B2D",
+  "offer": [
+    { "shape": "anon-sandbox", "gate": "none — keyless", "price": "free" },
+    { "shape": "self-serve-metered", "gate": "key + card on file; 402 boundary", "price": "metered per its own rate card" }
+  ],
+  "pricing": {
+    "pattern": "402-metered-per-call",
+    "rateCardRef": "apis.limo rate card (its own /pricing when served)",
+    "note": "same substrate, same operations; a divergent livery-grain rate card is the §6 experiment this projection exists to run (cross-projection price divergence is accepted segmentation, §5.3)"
+  },
+  "positioning": "the functions a livery operator's systems call (sub-niche face of the passenger-mobility substrate)",
+  "mdx": "unbuilt",
+  "experiment": {
+    "pattern": "402-metered-per-call",
+    "motion": "B2D",
+    "shapes": ["anon-sandbox", "self-serve-metered"],
+    "startDate": null,
+    "hypothesis": "a livery-grain face converts charter/chauffeured operators better than the category-generic taxi face; registered when served"
+  }
+}

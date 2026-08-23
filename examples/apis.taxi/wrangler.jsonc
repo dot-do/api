@@ -1,0 +1,26 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "apis-taxi",
+  // Build first: npx tsx build.ts  (bundles worker.ts → _worker.js,
+  // externalizing the framework's optional oauth.do/rpc.do imports)
+  "main": "_worker.js",
+  "no_bundle": true,
+  "compatibility_date": "2026-01-24",
+
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
+
+  // apis.taxi is HELD but ZONELESS (register state: name-only; the sibling
+  // apis.limo has the zone — a provisioning fact, not a curation signal).
+  // Zone provisioning is Batch-S admin: it blocks SERVING at the apex name,
+  // never building. No route is attached until the zone exists — attach at
+  // go-live:
+  // "routes": [{ "pattern": "apis.taxi/*", "zone_name": "apis.taxi" }]
+
+  // Optional: set GITHUB_CLIENT_ID (+ secret GITHUB_CLIENT_SECRET) to point
+  // /login at a real GitHub OAuth app. Without it the flow runs in labeled
+  // demo mode (keys random, unpersisted, not enforced).
+  // "vars": { "GITHUB_CLIENT_ID": "" }
+}

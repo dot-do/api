@@ -1,0 +1,26 @@
+{
+  "$comment": "G4 projection config (spec §2) — Projection 3 of the passenger-mobility substrate: the cross-cutting agent-first face. RECORDED here (non-exclusivity is load-bearing); served by the apis.ax property, not by this worker.",
+  "substrate": "passenger-mobility",
+  "brand": "apis.ax",
+  "domains": ["apis.ax"],
+  "served": false,
+  "icp": { "companyTypes": ["autonomous agents (universal)"], "jobTypes": ["agent"] },
+  "personas": [{ "id": "autonomous-agent", "role": "agent with machine identity via id.org.ai; cannot OAuth, cannot put a card on file" }],
+  "motion": "B2A",
+  "offer": [
+    { "shape": "anon-sandbox", "gate": "none — keyless; auto-minted workspace, disclosed retention, #17 anon tenure", "price": "free" },
+    { "shape": "earned-credits", "gate": ".ax-ledger credits earned via proof-of-work (#17)", "price": "earned" },
+    { "shape": "human-claimed", "gate": "a human claims the agent's workspace (attribution → tenure)", "price": "free/earned, longer tenure" },
+    { "shape": "paid", "gate": "402 metering against machine identity (id.org.ai)", "price": "metered units" }
+  ],
+  "pricing": { "pattern": "402-metered-per-call", "rateCardRef": "apis.ax rate card (its own /pricing)" },
+  "positioning": "agent-default candidate for the category — carries the §5.3 guardrail obligation (never discoverably worse-priced than a sibling estate face for identical same-shape calls)",
+  "mdx": "apis.ax surface",
+  "experiment": {
+    "pattern": "402-metered",
+    "motion": "B2A",
+    "shapes": ["anon-sandbox", "earned-credits", "human-claimed", "paid"],
+    "startDate": "2026-08-23",
+    "hypothesis": "the #17 ladder converts anonymous agent traffic to paid machine-identity metering"
+  }
+}
