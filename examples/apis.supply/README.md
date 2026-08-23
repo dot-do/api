@@ -126,15 +126,19 @@ list; zero divergence):
 
 ## Definition of done (spec §9.1, run 2026-08-23)
 
-**15/16 pass.** The gate is `tests/apis-supply.test.ts` (20 tests, fail-closed
-at the pinned digest) plus the projection configs and this record. The one
-open box:
+**16/16 pass.** The gate is `tests/apis-supply.test.ts` (20 tests, fail-closed
+at the pinned digest) plus the projection configs and this record. The final
+box:
 
-- **Rail-ledger registration (final box): blocked-on-rail-ledger.** The
-  faces-payable/week ledger does not exist in `~/projects/ax` at build time
-  (searched 2026-08-23: no rail-ledger / faces-payable address in the repo).
-  Register this face there the moment the ledger lands — never stub a fake
-  ledger entry.
+- **Rail-ledger registration (final box): REGISTERED** — registered via
+  LEDGER.md door A — row in packages/rail-ledger/registry/faces.json @
+  draft/rail-ledger-v1 (studio #9 alignment pass 2026-08-23); readout
+  https://ledger.apis.ax/readouts/faces-payable (service built, deploy
+  pending Batch-S). Previously blocked-on-rail-ledger (no ledger existed in
+  `~/projects/ax` at 2026-08-23 build time); no fake ledger entry was ever
+  stubbed — registration landed when the ledger package and its door-A
+  registry existed. The served projection config records the ledger address
+  in its `railLedger` field.
 
 Guardrail (§5.3) note: this projection carries no agent-default claim, so the
 box passes by construction; the apis.ax projection (recorded, not served)
