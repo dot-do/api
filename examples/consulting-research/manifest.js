@@ -13,6 +13,24 @@ import seed from "./seed.json" with { type: "json" };
 export const ORIGIN = "https://consulting-research.org.ai"; // PLACEHOLDER — GAP row, G4 name pending
 export const SUBSTRATE = "consulting-research";
 
+/**
+ * G2 coordinates (axp-ext/rates-g2@0.2.0 §4) — carried VERBATIM onto the
+ * agents.json card as the top-level `g2` object, and reused by /icp.json
+ * (surfaces.js), which remains the linked long-form document via links.icp.
+ */
+export const G2 = {
+  icp: {
+    companyTypes: ["consulting firm", "research lab", "agency of record"],
+    jobTypes: ["management analyst", "researcher", "engagement manager"],
+  },
+  personas: [
+    { id: "operator", description: "engagement manager or partner at a professional-services firm running engagements as records" },
+    { id: "developer", description: "developer at a professional-services systems vendor integrating engagement/PSA records" },
+    { id: "agent", description: "autonomous agent purchasing completed, verified analysis deliverables (outcome grain)" },
+  ],
+  motion: "B2A",
+};
+
 const llmsBody = `# consulting-research — engagement records and verified deliverables for consulting & scientific services (NAICS 5416-5417)
 
 Typed engagement records (Engagement, StatementOfWork, Milestone, Deliverable)
@@ -56,6 +74,9 @@ export const manifest = defineSiteManifest({
   // The ONE branching collection (Clauses 4 + 7 on one pathname).
   collection: {
     path: "/engagements",
+    // axp-ext/rates-g2 §1: the canonical name of the collection operation —
+    // the SAME string as the MCP tool (one operation, one identifier).
+    operationId: "listEngagements",
     memberName: "engagements",
     summary: "Engagements — the branching typed collection: OK | EMPTY | BLOCKED on one pathname",
     records: seed.engagements,
@@ -64,33 +85,36 @@ export const manifest = defineSiteManifest({
   },
 
   // Extra LIVE routes — every path listed here answers in worker.js today.
+  // axp-ext/rates-g2 §1: each carries its canonical camelCase operationId —
+  // the ONE cross-face name (OpenAPI = MCP tool = coverage ref = rate key).
   routes: [
-    { method: "GET", path: "/engagements/{id}", summary: "One engagement by id, typed envelope" },
+    { method: "GET", path: "/engagements/{id}", operationId: "getEngagement", summary: "One engagement by id, typed envelope" },
     {
       method: "POST",
       path: "/engagements",
+      operationId: "createEngagement",
       summary: "Create an engagement in your sandbox workspace (headless system-of-record door)",
       description:
         "Anonymous callers are auto-minted an ephemeral workspace (X-Workspace response header). Retention is disclosed in the response body; the sandbox is the real product over labeled example data.",
       requestBody: { required: true, content: { "application/json": { schema: { type: "object", required: ["title"], properties: { title: { type: "string" }, sector: { type: "string" } } } } } },
       responses: { 200: { description: "OK envelope with the created record and workspace id" } },
     },
-    { method: "GET", path: "/sows", summary: "Statements of Work, typed envelope" },
-    { method: "GET", path: "/sows/{id}", summary: "One Statement of Work by id" },
-    { method: "GET", path: "/milestones", summary: "Milestones across engagements", params: [{ name: "engagement", description: "filter by engagement id" }] },
-    { method: "GET", path: "/deliverables", summary: "Deliverables — the outcome grain", params: [{ name: "status", description: "draft | in-review | verified" }, { name: "engagement", description: "filter by engagement id" }] },
-    { method: "GET", path: "/deliverables/{id}", summary: "One deliverable by id" },
+    { method: "GET", path: "/sows", operationId: "listSows", summary: "Statements of Work, typed envelope" },
+    { method: "GET", path: "/sows/{id}", operationId: "getSow", summary: "One Statement of Work by id" },
+    { method: "GET", path: "/milestones", operationId: "listMilestones", summary: "Milestones across engagements", params: [{ name: "engagement", description: "filter by engagement id" }] },
+    { method: "GET", path: "/deliverables", operationId: "listDeliverables", summary: "Deliverables — the outcome grain", params: [{ name: "status", description: "draft | in-review | verified" }, { name: "engagement", description: "filter by engagement id" }] },
+    { method: "GET", path: "/deliverables/{id}", operationId: "getDeliverable", summary: "One deliverable by id" },
     {
       method: "POST",
       path: "/deliverables/{id}/order",
+      operationId: "orderDeliverable",
       summary: "Order a verified deliverable (outcome verb) — answers a typed 402 OFFER; wave-zero STUB, no live settlement",
       responses: { 402: { description: "OFFER envelope advertising the pay / work / claim ladder; stub: true — nothing is charged" } },
     },
-    { method: "GET", path: "/tasks", summary: "Task-decomposition grain (O*NET task typing anchor; synthetic statements, labeled)", params: [{ name: "engagement", description: "filter by engagement id" }] },
-    { method: "GET", path: "/processes", summary: "Process grain (APQC-shaped synthetic ids, labeled)" },
-    { method: "GET", path: "/icp.json", summary: "G2 coordinates: ICP + personas + System coordinates of this substrate" },
-    { method: "GET", path: "/rates", summary: "Rate card (operation-keyed rates[]; supplements /pricing — every row free-quota'd or zero-priced; stub, not bound)" },
-    { method: "GET", path: "/verify", summary: "The published verification suite document — run our tests" },
+    { method: "GET", path: "/tasks", operationId: "listTasks", summary: "Task-decomposition grain (O*NET task typing anchor; synthetic statements, labeled)", params: [{ name: "engagement", description: "filter by engagement id" }] },
+    { method: "GET", path: "/processes", operationId: "listProcesses", summary: "Process grain (APQC-shaped synthetic ids, labeled)" },
+    { method: "GET", path: "/icp.json", operationId: "getIcp", summary: "G2 coordinates: ICP + personas + System coordinates of this substrate" },
+    { method: "GET", path: "/verify", operationId: "getVerify", summary: "The published verification suite document — run our tests" },
   ],
 
   // MCP — declared because the door IS mounted at /mcp (worker.js).
@@ -111,6 +135,32 @@ export const manifest = defineSiteManifest({
     binding: false,
     statement:
       "Wave-zero stub pricing on a placeholder surface: no live settlement exists here and nothing is ever charged. The 402 boundary is test-mode. Rates are stated intent for the category, not terms.",
+    // The operation rate card (axp-ext/rates-g2@0.2.0 §2) — TOP-LEVEL rates[]
+    // in the Pricing Document, keyed by the canonical operationId. This was
+    // served at a /rates side door while the /pricing shape was a generator
+    // gap; closed by axp-ext-rates-g2 (native since 0.1.0; row vocabulary at
+    // the 0.2.0 survey floor) — the ruled placement is here.
+    // binding:false above covers these rows too: stated intent, never terms.
+    rates: [
+      { operation: "listEngagements", price: 0 },
+      { operation: "getEngagement", price: 0.002, freeQuota: 100 },
+      { operation: "createEngagement", price: 0, note: "anonymous sandbox workspaces — unmetered at wave zero" },
+      { operation: "listSows", price: 0 },
+      { operation: "getSow", price: 0 },
+      { operation: "listMilestones", price: 0 },
+      { operation: "listDeliverables", price: 0 },
+      { operation: "getDeliverable", price: 0.002, freeQuota: 100 },
+      {
+        operation: "orderDeliverable",
+        price: 25.0,
+        unit: "usd-per-verified-deliverable",
+        freeQuota: 1,
+        stub: true,
+        note: "Per completed verified deliverable (per-outcome). The 402 OFFER boundary is served today; settlement is a stub (test-mode) advertising the pay / work / claim ladder — nothing is charged.",
+      },
+      { operation: "listTasks", price: 0 },
+      { operation: "listProcesses", price: 0 },
+    ],
     offers: [
       {
         id: "metered-access-stub",
@@ -128,6 +178,14 @@ export const manifest = defineSiteManifest({
   },
 
   llms: { body: llmsBody },
+
+  // axp-ext/rates-g2 §3: the card's links.verify — the published runnable
+  // suite anyone can run against the live surface ("run this", not "trust us").
+  verifyUrl: "/verify",
+
+  // axp-ext/rates-g2 §4: G2/ICP coordinates TOP-LEVEL on the card, verbatim.
+  // links.icp (icpUrl) stays legal and declared beside it — the long form.
+  g2: G2,
   icpUrl: `${ORIGIN}/icp.json`,
 
   // Family: a GAP row has no ruled sibling doors — presence-when-true, so no

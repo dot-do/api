@@ -17,7 +17,7 @@
  */
 import { createAxpRoutes, ok, empty, offer, envelopeResponse } from "./axp/index.js";
 import { manifest } from "./manifest.js";
-import { ICP_DOC, RATES_DOC, VERIFY_DOC } from "./surfaces.js";
+import { ICP_DOC, VERIFY_DOC } from "./surfaces.js";
 import { createMcpHandler } from "./mcp.js";
 import { emitMeter, emitMoneyEvent, emitReceipt } from "./seams.js";
 import seed from "./seed.json" with { type: "json" };
@@ -82,7 +82,7 @@ async function createEngagement(request) {
   };
   ws.engagements.push(rec);
   workspaces.set(wsId, ws);
-  emitMeter(request, { operation: "openapi:POST /engagements", shape: "anon-sandbox" });
+  emitMeter(request, { operation: "openapi:createEngagement", shape: "anon-sandbox" });
   return json({ type: "OK", engagements: [rec], workspace: wsId, retention: RETENTION }, { headers: { "x-workspace": wsId } });
 }
 
@@ -92,9 +92,9 @@ function orderDeliverable(request, id) {
   if (!rec) {
     return envelopeResponse(empty(`no deliverable with id ${id} — nothing to order`, { memberName: "deliverables" }));
   }
-  emitMeter(request, { operation: "openapi:POST /deliverables/{id}/order", shape: "paid-stub" });
-  emitMoneyEvent(request, { operation: "openapi:POST /deliverables/{id}/order", amount: 25.0 });
-  emitReceipt(request, { operation: "openapi:POST /deliverables/{id}/order" });
+  emitMeter(request, { operation: "openapi:orderDeliverable", shape: "paid-stub" });
+  emitMoneyEvent(request, { operation: "openapi:orderDeliverable", amount: 25.0 });
+  emitReceipt(request, { operation: "openapi:orderDeliverable" });
   return envelopeResponse(
     offer({
       id: "order-deliverable-stub",
@@ -123,7 +123,7 @@ export default {
     // The machine face (quartet, branching collection, offer, home).
     const hit = await axp(request, env);
     if (hit !== undefined) {
-      if (path === manifest.collection.path && method === "GET") emitMeter(request, { operation: "openapi:listCollection", shape: "anon-sandbox" });
+      if (path === manifest.collection.path && method === "GET") emitMeter(request, { operation: "openapi:listEngagements", shape: "anon-sandbox" });
       return hit;
     }
 
@@ -140,29 +140,30 @@ export default {
 
     if (method === "GET" || method === "HEAD") {
       if (path === "/icp.json") return json(ICP_DOC);
-      if (path === "/rates") return json(RATES_DOC);
+      // /rates side door RETIRED: rates[] rides top-level in /pricing
+      // (axp-ext-rates-g2 — the ruled placement; served by the generator).
       if (path === "/verify") return json(VERIFY_DOC);
 
       if (seg[0] === "engagements" && seg.length === 2) {
-        emitMeter(request, { operation: "openapi:GET /engagements/{id}", shape: "anon-sandbox" });
+        emitMeter(request, { operation: "openapi:getEngagement", shape: "anon-sandbox" });
         const wsId = request.headers.get("x-workspace");
         const wsRecs = wsId && workspaces.get(wsId) ? workspaces.get(wsId).engagements : [];
         return getOr([...seed.engagements, ...wsRecs], seg[1], "engagements", "engagement");
       }
       if (path === "/sows") {
-        emitMeter(request, { operation: "openapi:GET /sows", shape: "anon-sandbox" });
+        emitMeter(request, { operation: "openapi:listSows", shape: "anon-sandbox" });
         return listOr(seed.sows, [{ param: "engagement", field: "engagementId" }], url.searchParams, "sows", "statements of work");
       }
       if (seg[0] === "sows" && seg.length === 2) {
-        emitMeter(request, { operation: "openapi:GET /sows/{id}", shape: "anon-sandbox" });
+        emitMeter(request, { operation: "openapi:getSow", shape: "anon-sandbox" });
         return getOr(seed.sows, seg[1], "sows", "statement of work");
       }
       if (path === "/milestones") {
-        emitMeter(request, { operation: "openapi:GET /milestones", shape: "anon-sandbox" });
+        emitMeter(request, { operation: "openapi:listMilestones", shape: "anon-sandbox" });
         return listOr(seed.milestones, [{ param: "engagement", field: "engagementId" }], url.searchParams, "milestones", "milestones");
       }
       if (path === "/deliverables") {
-        emitMeter(request, { operation: "openapi:GET /deliverables", shape: "anon-sandbox" });
+        emitMeter(request, { operation: "openapi:listDeliverables", shape: "anon-sandbox" });
         return listOr(
           seed.deliverables,
           [
@@ -175,15 +176,15 @@ export default {
         );
       }
       if (seg[0] === "deliverables" && seg.length === 2) {
-        emitMeter(request, { operation: "openapi:GET /deliverables/{id}", shape: "anon-sandbox" });
+        emitMeter(request, { operation: "openapi:getDeliverable", shape: "anon-sandbox" });
         return getOr(seed.deliverables, seg[1], "deliverables", "deliverable");
       }
       if (path === "/tasks") {
-        emitMeter(request, { operation: "openapi:GET /tasks", shape: "anon-sandbox" });
+        emitMeter(request, { operation: "openapi:listTasks", shape: "anon-sandbox" });
         return listOr(seed.tasks, [{ param: "engagement", field: "engagementId" }], url.searchParams, "tasks", "tasks");
       }
       if (path === "/processes") {
-        emitMeter(request, { operation: "openapi:GET /processes", shape: "anon-sandbox" });
+        emitMeter(request, { operation: "openapi:listProcesses", shape: "anon-sandbox" });
         return envelopeResponse(ok(seed.processes, { memberName: "processes" }));
       }
     }

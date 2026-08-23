@@ -2,19 +2,21 @@
  * surfaces.js — the substrate's supplemental served documents:
  *
  *   /icp.json  — the G2 coordinates of this substrate (ICP + personas +
- *                System coordinates), exposed from the card via links.icp.
- *   /rates     — the operation-keyed rate card (rates[]), supplementing the
- *                closed AXP Pricing Document at /pricing. The rate-card
- *                extension shape inside /pricing itself is an OPEN founder
- *                question (template spec, Open Q1); until ruled, the rates
- *                document is served at its own address and linked.
+ *                System coordinates), exposed from the card via links.icp
+ *                and carried top-level on the card as `g2` (both from the
+ *                one G2 object in manifest.js — axp-ext/rates-g2 §4).
  *   /verify    — the published verification suite document ("run this",
- *                not "trust us"). interfaces.testSuite is NOT declared on
- *                the card at wave zero: declaration arms the strict
+ *                not "trust us"), linked from the card via links.verify
+ *                (axp-ext/rates-g2 §3). interfaces.testSuite is NOT declared
+ *                on the card at wave zero: declaration arms the strict
  *                digest-pinned check, which belongs after the hosted api.qa
  *                verdict exists for this (placeholder) domain.
+ *
+ * The former /rates side door is RETIRED: the rate card rides TOP-LEVEL as
+ * rates[] in the Pricing Document at /pricing — the ruled placement, native
+ * in the generator since axp-ext-rates-g2@0.2.0 (axp-faces 0.3.0).
  */
-import { ORIGIN, SUBSTRATE } from "./manifest.js";
+import { ORIGIN, SUBSTRATE, G2 } from "./manifest.js";
 import { product } from "./product.js";
 
 export const ICP_DOC = {
@@ -22,17 +24,7 @@ export const ICP_DOC = {
   $type: "ICP",
   $id: `${ORIGIN}/icp.json`,
   substrate: SUBSTRATE,
-  g2: {
-    icp: {
-      companyTypes: ["consulting firm", "research lab", "agency of record"],
-      jobTypes: ["management analyst", "researcher", "engagement manager"],
-    },
-    personas: [
-      { id: "operator", description: "engagement manager or partner at a professional-services firm running engagements as records" },
-      { id: "developer", description: "developer at a professional-services systems vendor integrating engagement/PSA records" },
-      { id: "agent", description: "autonomous agent purchasing completed, verified analysis deliverables (outcome grain)" },
-    ],
-  },
+  g2: G2,
   systems: product.systems,
   anchors: {
     naics: ["5416", "5417"],
@@ -40,40 +32,6 @@ export const ICP_DOC = {
     unspsc: ["80"],
     napcs: "NAPCS services catalog types the sellable engagement outcomes",
   },
-};
-
-// Every rate row names a freeQuota or prices from zero (template spec §5.1).
-// binding mirrors /pricing: stated intent, stub — nothing is ever charged here.
-export const RATES_DOC = {
-  $context: "https://schema.org.ai",
-  $type: "RateCard",
-  $id: `${ORIGIN}/rates`,
-  substrate: SUBSTRATE,
-  pricingDocument: `${ORIGIN}/pricing`,
-  binding: false,
-  statement:
-    "Wave-zero stub rate card on a placeholder surface: stated intent for the category, not terms. No live settlement exists; nothing is ever charged. Operation keys use the AXP A.8.7.1 canonical identifier grammar.",
-  currency: "USD",
-  rates: [
-    { operation: "openapi:listCollection", path: "GET /engagements", price: 0, freeQuota: "unlimited" },
-    { operation: "openapi:GET /engagements/{id}", price: 0.002, freeQuota: 100 },
-    { operation: "openapi:POST /engagements", price: 0, freeQuota: "unlimited (sandbox workspaces)" },
-    { operation: "openapi:GET /sows", price: 0, freeQuota: "unlimited" },
-    { operation: "openapi:GET /sows/{id}", price: 0, freeQuota: "unlimited" },
-    { operation: "openapi:GET /milestones", price: 0, freeQuota: "unlimited" },
-    { operation: "openapi:GET /deliverables", price: 0, freeQuota: "unlimited" },
-    { operation: "openapi:GET /deliverables/{id}", price: 0.002, freeQuota: 100 },
-    {
-      operation: "openapi:POST /deliverables/{id}/order",
-      price: 25.0,
-      unit: "per completed verified deliverable (per-outcome)",
-      freeQuota: 1,
-      stub: true,
-      note: "402 OFFER boundary is served today; settlement is a stub (test-mode). The OFFER body advertises the pay / work / claim ladder.",
-    },
-    { operation: "openapi:GET /tasks", price: 0, freeQuota: "unlimited" },
-    { operation: "openapi:GET /processes", price: 0, freeQuota: "unlimited" },
-  ],
 };
 
 // api.qa/suite@1-SHAPED declarative checks; undeclared on the card (see header).

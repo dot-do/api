@@ -25,7 +25,7 @@ of any name.
 | Outcome verb — 402 OFFER **stub** advertising the pay/work/claim ladder | `POST /deliverables/{id}/order` |
 | MCP door (declared on the card because mounted) | `POST /mcp` (JSON-RPC 2.0) |
 | G2 coordinates (ICP + personas + System coordinates) | `/icp.json` (card `links.icp`) |
-| Rate card (operation-keyed `rates[]`) | `/rates` |
+| Rate card — top-level `rates[]` in the Pricing Document (axp-ext-rates-g2; former `/rates` side door retired) | `/pricing` |
 | Published verification suite ("run this") | `/verify` |
 
 ## Strata

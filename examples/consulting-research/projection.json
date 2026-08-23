@@ -22,7 +22,7 @@
   ],
   "pricing": {
     "pattern": "402-metered-per-call + per-outcome on deliverable orders",
-    "rateCardRef": "/rates",
+    "rateCardRef": "/pricing",
     "binding": false
   },
   "positioning": "typed engagement records and verified deliverables for consulting & scientific services — agent-default claim WITHHELD (worthiness bar §4.6 not attempted: no ruled domain, no hosted verdict)",
@@ -31,7 +31,7 @@
     "pattern": "402-metered",
     "motion": "B2A",
     "shapes": ["anon-sandbox", "earned-credits", "human-claimed", "paid"],
-    "rateCardRef": "/rates",
+    "rateCardRef": "/pricing",
     "startDate": "2026-08-23",
     "hypothesis": "wave-zero registration only — sandbox-floor traffic shape on a placeholder address; pattern comparison begins when a G4 name attaches"
   },

@@ -20,7 +20,6 @@ process.chdir(DIR);
 const worker = (await import("../worker.js")).default;
 const { manifest, ORIGIN } = await import("../manifest.js");
 const { product } = await import("../product.js");
-const { RATES_DOC } = await import("../surfaces.js");
 const { coverageDomain } = await import("../axp/coverage.js");
 
 const results = [];
@@ -142,22 +141,26 @@ await (async () => {
   });
 })();
 
-// ── 6. Rate card ─────────────────────────────────────────────────────────────
+// ── 6. Rate card — TOP-LEVEL rates[] in the Pricing Document ────────────────
+// (axp-ext-rates-g2: the ruled placement; the former /rates side door is
+// retired and must NOT answer.)
 await (async () => {
   const pricing = await call("/pricing");
-  const rates = await call("/rates");
-  box("Rate card served: model declared; metered → hardCeiling>0 + offers; every rate row freeQuota or zero price; operations ⊆ contract", () => {
+  const retired = await call("/rates");
+  box("Rate card at the ruled placement: top-level rates[] in /pricing; metered → hardCeiling>0 + offers; every row freeQuota or zero price; rows key on canonical operationIds ⊆ contract; /rates side door retired", () => {
     assert(pricing.json.model === "metered" && pricing.json.hardCeiling > 0, "pricing model/ceiling");
     assert(pricing.json.binding === false && typeof pricing.json.statement === "string", "unbound stub must carry binding:false + statement");
-    assert(rates.status === 200 && Array.isArray(rates.json.rates) && rates.json.rates.length > 0, "/rates missing");
-    for (const row of rates.json.rates) {
+    const rates = pricing.json.rates;
+    assert(Array.isArray(rates) && rates.length > 0, "top-level rates[] missing from the Pricing Document");
+    for (const row of rates) {
       assert(row.price === 0 || row.freeQuota !== undefined, `rate row ${row.operation} lacks freeQuota and is not zero-priced`);
     }
     const domain = new Set(coverageDomain(manifest));
-    for (const row of rates.json.rates) {
-      assert(domain.has(row.operation), `rate row ${row.operation} not in the contract's canonical operation domain`);
+    for (const row of rates) {
+      assert(domain.has(`openapi:${row.operation}`) || domain.has(`mcp:${row.operation}`), `rate row ${row.operation} not in the contract's canonical operation domain`);
     }
-    return `${rates.json.rates.length} rows, all ⊆ coverage domain (${domain.size} ids)`;
+    assert(retired.status === 404, "/rates side door still answers — the ruled placement is top-level rates[] in /pricing");
+    return `${rates.length} rows in /pricing, all ⊆ coverage domain (${domain.size} ids); /rates retired (404)`;
   });
 })();
 
@@ -218,10 +221,13 @@ note(
 await (async () => {
   const verify = await call("/verify");
   const card = await call("/.well-known/agents.json");
-  box("/verify export published; interfaces.testSuite NOT declared (declaration arms the strict pinned check — deferred until hosted verdict exists)", () => {
+  box("/verify export published + card links.verify (axp-ext-rates-g2) + top-level g2; interfaces.testSuite NOT declared (declaration arms the strict pinned check — deferred until hosted verdict exists)", () => {
     assert(verify.status === 200 && Array.isArray(verify.json.checks) && verify.json.checks.length >= 10, "/verify missing or thin");
+    assert(card.json.links.verify === `${ORIGIN}/verify`, "card links.verify missing or wrong — the ruled placement for the runnable-suite link");
+    assert(card.json.g2 && typeof card.json.g2 === "object" && Object.keys(card.json.g2).length > 0, "card top-level g2 missing — the ruled placement for G2/ICP coordinates");
+    assert(typeof card.json.links.icp === "string", "links.icp stays declared beside g2");
     assert(card.json.interfaces.testSuite === undefined, "testSuite declared without a verified pinned suite — inadmissible");
-    return `${verify.json.checks.length} published checks`;
+    return `${verify.json.checks.length} published checks; links.verify + g2 on the card`;
   });
 
   // run the published checks against the live worker — the suite must be TRUE
