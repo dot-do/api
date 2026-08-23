@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "api-careers",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-01-24",
+
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
+
+  // No routes/custom_domain yet: api.careers is held (porkbun, 2027-07-19)
+  // but has NO Cloudflare zone — zone provisioning is the graduated task the
+  // register records as at-risk for this row. Until the zone exists this
+  // worker runs locally (`wrangler dev`) and under the vitest in-memory gate.
+  // Deploying to the domain is a founder-visible blocker, not a config flag.
+}
