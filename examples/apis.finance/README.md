@@ -57,8 +57,11 @@ ranking implied anywhere.
 `node check.mjs` → **ALL GATES GREEN**, including `gradePinned` **24/24** at
 the ratified digest `a9a1197c…`.
 
-## §9.1 checklist: 15/16
+## §9.1 checklist: 16/16
 
-Every box passes except the last: **face registered in the rail ledger** —
-recorded **blocked-on-rail-ledger** (no rail ledger exists in `~/projects/ax`
-at build time; a fake ledger is never stubbed).
+Every box passes, including the last: **face registered in the rail ledger**
+— REGISTERED: registered via LEDGER.md door A — row in
+packages/rail-ledger/registry/faces.json @ draft/rail-ledger-v1 (studio #9
+alignment pass 2026-08-23); readout
+https://ledger.apis.ax/readouts/faces-payable (service built, deploy pending
+Batch-S).
