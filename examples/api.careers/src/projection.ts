@@ -27,6 +27,7 @@ export interface ProjectionConfig {
   motion: Motion
   offer: OfferShape[]
   pricing: { pattern: string; rateCardRef: string }
+  railLedger: string
   positioning: string
   mdx: string | null
   experiment: {
@@ -75,6 +76,14 @@ export const apiCareersProjection: ProjectionConfig = {
     pattern: '402-metered-per-call',
     rateCardRef: './manifest.ts — pricing.rates, top-level in the Pricing Document per axp-ext/rates-g2 §2 (operationId-keyed; every row freeQuota or zero price)',
   },
+
+  // §9.1 final box (Face registered in the rail ledger — faces-payable/week
+  // denominator): registered via LEDGER.md door A — row in
+  // packages/rail-ledger/registry/faces.json @ draft/rail-ledger-v1 (studio #9
+  // alignment pass 2026-08-23); readout
+  // https://ledger.apis.ax/readouts/faces-payable (service built, deploy
+  // pending Batch-S).
+  railLedger: 'https://ledger.apis.ax/faces?face=api.careers',
 
   // Claim-free until the §4.6 worthiness bar attests (conformance + live anon
   // sandbox + verified published suite). "Agent default" is earned, never asserted.

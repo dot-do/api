@@ -70,3 +70,14 @@ node scripts/vendor.mjs <this-dir>/src/axp --check
    document is digest-pinned (declaring arms the strict published-suite check).
 4. "Agent default" positioning is **withheld**: the §4.6 worthiness bar needs a
    hosted api.qa verdict at the live domain, which needs the zone.
+
+## Rail ledger (§9.1 final box)
+
+Face registered in the rail ledger (faces-payable/week denominator):
+registered via LEDGER.md door A — row in
+`packages/rail-ledger/registry/faces.json` @ `draft/rail-ledger-v1`
+(studio #9 alignment pass 2026-08-23); readout
+https://ledger.apis.ax/readouts/faces-payable (service built, deploy pending
+Batch-S). The served projection config records the address in its
+`railLedger` field. One registry row covers the shared staffing-talent /
+fn-hr-talent cell (byte-identical siblings; face api.careers).
