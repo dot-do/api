@@ -38,6 +38,13 @@ advertises the whole B2A ladder (`pay-402` / `work-earned-credits` /
 Metering/money/signup seams are emitted as structured events tagged
 `{substrate, projection, motion, operation, shape, pattern}` (§6.4).
 
+Rail ledger (§9.1 final box — face registered in the rail ledger,
+faces-payable/week denominator): registered via LEDGER.md door A — row in
+packages/rail-ledger/registry/faces.json @ draft/rail-ledger-v1 (studio #9
+alignment pass 2026-08-23); readout
+https://ledger.apis.ax/readouts/faces-payable (service built, deploy pending
+Batch-S).
+
 ## Run
 
 ```sh
