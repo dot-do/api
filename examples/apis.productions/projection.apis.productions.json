@@ -1,0 +1,52 @@
+{
+  "$type": "G4Projection",
+  "$comment": "Stratum B — the G4 projection config for apis.productions over the media-entertainment substrate (template spec §2, docs/plans/2026-08-23-property-template-spec.md in the studio repo). Content, not code: one projection = one config file. Register ruling: this row is INTERNAL-ONLY (Class F) — the name faces the estate's own content operation, not an external market; external productization requires re-opening the Class F ruling, not a better name.",
+  "substrate": "media-entertainment",
+  "brand": "apis.productions",
+  "domains": ["apis.productions"],
+  "icp": {
+    "companyType": "first-party content operation (the studio itself)",
+    "jobTypes": ["producer", "content lead", "brand operator"]
+  },
+  "personas": [
+    { "id": "film-program-agent", "class": "machine", "description": "an agent operating a launch-film program against these records" },
+    { "id": "deck-factory-agent", "class": "machine", "description": "an agent producing and releasing deck suites" },
+    { "id": "content-operator", "class": "human", "description": "a producer or content lead reading the same records in a browser" }
+  ],
+  "motion": "B2A",
+  "offer": [
+    {
+      "shape": "anon-sandbox",
+      "gate": "none — keyless (AXP Clause 7, the universal floor)",
+      "price": "free"
+    }
+  ],
+  "pricing": {
+    "pattern": "freemium-floor-only",
+    "rateCard": "/pricing",
+    "model": "free",
+    "binding": false,
+    "note": "no rates[] — a free model declares no metered rows; the 402 door at /offer is a labeled stub, never fake billing"
+  },
+  "positioning": null,
+  "positioningNote": "INTERNAL-ONLY (Class F ruling) — no public positioning and no G4 claims are carried; the agent-default claim is not attempted (worthiness bar §4.6 not entered). No ranking is implied anywhere on this surface [CONVICTION].",
+  "mdx": null,
+  "experiment": {
+    "pattern": "freemium-floor-only",
+    "motion": "B2A",
+    "shapes": ["anon-sandbox"],
+    "rateCardRef": "/pricing",
+    "startDate": "2026-08-23",
+    "hypothesis": "none at wave zero — registration per template §7.3 (motion + pattern declared, trivially the freemium floor); the substrate rollup key is media-entertainment"
+  },
+  "counterpartBrand": {
+    "status": "not-applicable",
+    "note": "B2A2B/B2A2C do not apply: the projection's principals are first-party (the studio's own operation); no non-technical external principal exists in this cell while the Class F ruling stands. The §9.3 agent-referred-human diagnostic still runs off the signup/traffic seams."
+  },
+  "b2aLadder": {
+    "rung0": "anon sandbox — live (the keyless collection over the labeled seed)",
+    "rung1": "earned credits — deferred (no .ax-ledger integration at wave zero)",
+    "rung2": "human-claimed — deferred",
+    "rung3": "paid (402 metering on machine identity) — deferred; /offer is a labeled stub until then"
+  }
+}
