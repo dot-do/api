@@ -1,0 +1,9 @@
+{
+  // api.services — wave-zero worker (fn-service-delivery substrate).
+  // No route/custom-domain binding here: attaching the api.services zone is a
+  // deploy decision taken outside this example (the domain's renewal is a
+  // graduated human task — see README).
+  "name": "api-services",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-08-01"
+}
