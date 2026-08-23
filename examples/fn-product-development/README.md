@@ -44,3 +44,13 @@ pnpm test                         # fail-closed digest-pinned conformance + §9.
 `test/conformance.test.js` runs the vendored ratified spec
 (`spec/apis-ax-axp-2.6.0.spec.json`, digest `a9a1197c…`) against the worker in
 memory — the same digest-locked checks the hosted verifier at api.qa runs.
+
+## Rail ledger
+
+§9.1 final box (face registered in the rail ledger, faces-payable/week
+denominator): registered via LEDGER.md door A — row in
+packages/rail-ledger/registry/faces.json @ draft/rail-ledger-v1 (studio #9
+alignment pass 2026-08-23); readout
+https://ledger.apis.ax/readouts/faces-payable (service built, deploy pending
+Batch-S). GAP rule: the placeholder host `fn-product-development.org.ai` is
+the registered face until the address is ruled.
