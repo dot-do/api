@@ -4,19 +4,16 @@
  * generated from this manifest by the vendored axp-faces generator at the
  * PINS.json digest — never hand-rolled.
  *
- * Known generator gaps at axp-faces 0.1.0, recorded (filed upstream, never
- * patched around locally):
- *   1. the Pricing Document has no top-level `rates[]` member (DRAFT §2 wire
- *      schema) — the operationId-keyed rate card rides pricing.offers[0].rates
- *      (offers pass through their members verbatim) until the generator
- *      carries rates natively;
- *   2. manifest.routes entries do not pass `operationId` through to the
- *      OpenAPI paths — the substrate's operation ids are the authority
- *      (./substrate.ts) and the property test suite enforces
- *      rates[].operation ⊆ substrate operation ids;
- *   3. the generated card has no `links.verify` member — /verify is declared
- *      as a live GET route (it lands in interfaces.http) and cross-linked
- *      from llms.txt.
+ * The axp-faces 0.1.0 generator gaps recorded here (top-level rates[],
+ * routes[].operationId passthrough, links.verify) are CLOSED by the ratified
+ * generator extension axp-ext-rates-g2@0.1.0 (axp-faces 0.2.0; PINS.json
+ * pins the extension digest): the rate card is now `pricing.rates` (a
+ * TOP-LEVEL array of the Pricing Document), every route carries its
+ * canonical camelCase-verb operationId (route = MCP tool = suite reference
+ * = SDK method = rates[] key, unified and fail-closed at
+ * defineSiteManifest), the card carries `links.verify` (manifest input
+ * `verifyUrl`), and the property's G2/ICP coordinates ride the card as the
+ * TOP-LEVEL `g2` object (carried verbatim; `links.icp` stays beside it).
  */
 
 // @ts-ignore — vendored byte-identical JS (PINS.json digest-checked); never edited here
@@ -41,6 +38,29 @@ export const rates = [
   { operation: 'listOccupations', price: 0, note: 'O*NET-SOC vocabulary is free G1 reference data' },
   { operation: 'getOccupation', price: 0 },
 ] as const
+
+/**
+ * The property's G2/ICP coordinates (axp-ext/rates-g2 §4) — the register
+ * row's G2 projection, declared ONCE here and carried verbatim onto the card
+ * as the top-level `g2` object; worker.ts serves the same substance at
+ * /icp.json (the `links.icp` door stays legal beside `g2`).
+ */
+export const g2Coordinates = {
+  register: {
+    row: 'staffing-talent',
+    kind: 'vertical',
+    naics: '5613',
+    sharedWith: 'fn-hr-talent (one cell, two register addresses — the vertical row leads)',
+    grain: 'placement (90-day-validatable outcome)',
+  },
+  icp: apiCareersProjection.icp,
+  personas: apiCareersProjection.personas,
+  motion: apiCareersProjection.motion,
+  agent_classes: [
+    { id: 'reader-agent', description: 'keyless reads: the quartet, /placements, /candidates, /job-orders, /occupations, /verify — no key, no account' },
+    { id: 'sandbox-transactor', description: 'mints an ephemeral workspace via any POST door and exercises the ATS system-of-record contract against labeled synthetic state' },
+  ],
+} as const
 
 const llmsBody = `# api.careers — the careers object an agent calls to get a placement
 
@@ -91,6 +111,7 @@ export const manifest = defineSiteManifest({
   // Clauses 4 + 7 on one pathname: keyless OK, knownEmpty ×2, knownForbidden ×2.
   collection: {
     path: '/placements',
+    operationId: 'listPlacements', // axp-ext/rates-g2 §1 — the rate row keys on it
     memberName: 'placements',
     summary: 'Placements — the branching typed collection (O*NET-typed, 90-day-validatable outcomes; labeled example seed)',
     records: [...placements],
@@ -105,6 +126,11 @@ export const manifest = defineSiteManifest({
     hardCeiling: 25,
     unit: 'usd-per-month',
     price: 0.002,
+    // axp-ext/rates-g2 §2 — the ruled placement: the operationId-keyed rate
+    // card is a TOP-LEVEL array of the Pricing Document, never nested under
+    // an offer. The generator judges it fail-closed (rows ⊆ declared
+    // operation ids, unique keys, price >= 0).
+    rates,
     binding: false,
     statement:
       'Test mode: this rate card is a stated intent, not bound terms. Settlement is not active on this deployment — 402 responses are typed offer boundaries served as labeled stubs and no billing occurs. Keyless sandbox reads are free within the published quotas.',
@@ -135,7 +161,6 @@ export const manifest = defineSiteManifest({
               'a human claims the agent-minted workspace for attribution and longer tenure; the claim door is not wired in this deployment.',
           },
         ],
-        rates,
       },
     ],
     offerPath: '/offer',
@@ -143,19 +168,22 @@ export const manifest = defineSiteManifest({
   },
 
   // Live extra routes — presence-when-true: every path here answers in worker.ts.
+  // Each carries its canonical operationId (axp-ext/rates-g2 §1): the
+  // substrate's operation ids (./substrate.ts) are the authority; /icp.json
+  // and /verify carry their own honest verb-form names.
   routes: [
-    { method: 'GET', path: '/placements/{id}', summary: 'Get one placement (typed envelope; 404 EMPTY when the id was never minted)' },
-    { method: 'POST', path: '/placements', summary: 'Record a placement — headless ATS door; keyless calls auto-mint an ephemeral sandbox workspace', requestBody: { content: { 'application/json': { schema: { type: 'object', required: ['candidateId', 'jobOrderId', 'onetCode'], properties: { candidateId: { type: 'string' }, jobOrderId: { type: 'string' }, onetCode: { type: 'string' }, startDate: { type: 'string' }, feeModel: { type: 'string' } } } } } }, responses: { 201: { description: 'OK envelope with the minted record, workspace id, and retention disclosure' }, 400: { description: 'BLOCKED envelope — missing required members' } } },
-    { method: 'GET', path: '/candidates', summary: 'List candidates (O*NET-typed skills; labeled example seed + your workspace records)', params: [{ name: 'status', description: 'filter by candidate status' }, { name: 'occupation', description: 'filter by O*NET-SOC code' }] },
-    { method: 'GET', path: '/candidates/{id}', summary: 'Get one candidate' },
-    { method: 'POST', path: '/candidates', summary: 'Create a candidate — headless ATS door; keyless calls auto-mint an ephemeral sandbox workspace', requestBody: { content: { 'application/json': { schema: { type: 'object', required: ['name', 'onetCode'], properties: { name: { type: 'string' }, onetCode: { type: 'string' }, skills: { type: 'array', items: { type: 'string' } }, metro: { type: 'string' } } } } } }, responses: { 201: { description: 'OK envelope with the minted record, workspace id, and retention disclosure' }, 400: { description: 'BLOCKED envelope — missing required members' } } },
-    { method: 'GET', path: '/job-orders', summary: 'List job orders', params: [{ name: 'status', description: 'filter by job-order status' }, { name: 'occupation', description: 'filter by O*NET-SOC code' }] },
-    { method: 'GET', path: '/job-orders/{id}', summary: 'Get one job order' },
-    { method: 'POST', path: '/job-orders', summary: 'Create a job order — headless ATS door; keyless calls auto-mint an ephemeral sandbox workspace', requestBody: { content: { 'application/json': { schema: { type: 'object', required: ['client', 'title', 'onetCode'], properties: { client: { type: 'string' }, title: { type: 'string' }, onetCode: { type: 'string' }, billRateUsdHour: { type: 'number' } } } } } }, responses: { 201: { description: 'OK envelope with the minted record, workspace id, and retention disclosure' }, 400: { description: 'BLOCKED envelope — missing required members' } } },
-    { method: 'GET', path: '/occupations', summary: 'List the O*NET-SOC occupation vocabulary excerpt — real G1 reference data (U.S. DOL, CC BY 4.0)' },
-    { method: 'GET', path: '/occupations/{id}', summary: 'Get one O*NET-SOC occupation by code' },
-    { method: 'GET', path: '/icp.json', summary: 'G2 coordinates of this projection: ICP company/job types, personas, motion, agent classes' },
-    { method: 'GET', path: '/verify', summary: 'The published runnable suites for this property — the /verify export' },
+    { method: 'GET', path: '/placements/{id}', operationId: 'getPlacement', summary: 'Get one placement (typed envelope; 404 EMPTY when the id was never minted)' },
+    { method: 'POST', path: '/placements', operationId: 'createPlacement', summary: 'Record a placement — headless ATS door; keyless calls auto-mint an ephemeral sandbox workspace', requestBody: { content: { 'application/json': { schema: { type: 'object', required: ['candidateId', 'jobOrderId', 'onetCode'], properties: { candidateId: { type: 'string' }, jobOrderId: { type: 'string' }, onetCode: { type: 'string' }, startDate: { type: 'string' }, feeModel: { type: 'string' } } } } } }, responses: { 201: { description: 'OK envelope with the minted record, workspace id, and retention disclosure' }, 400: { description: 'BLOCKED envelope — missing required members' } } },
+    { method: 'GET', path: '/candidates', operationId: 'listCandidates', summary: 'List candidates (O*NET-typed skills; labeled example seed + your workspace records)', params: [{ name: 'status', description: 'filter by candidate status' }, { name: 'occupation', description: 'filter by O*NET-SOC code' }] },
+    { method: 'GET', path: '/candidates/{id}', operationId: 'getCandidate', summary: 'Get one candidate' },
+    { method: 'POST', path: '/candidates', operationId: 'createCandidate', summary: 'Create a candidate — headless ATS door; keyless calls auto-mint an ephemeral sandbox workspace', requestBody: { content: { 'application/json': { schema: { type: 'object', required: ['name', 'onetCode'], properties: { name: { type: 'string' }, onetCode: { type: 'string' }, skills: { type: 'array', items: { type: 'string' } }, metro: { type: 'string' } } } } } }, responses: { 201: { description: 'OK envelope with the minted record, workspace id, and retention disclosure' }, 400: { description: 'BLOCKED envelope — missing required members' } } },
+    { method: 'GET', path: '/job-orders', operationId: 'listJobOrders', summary: 'List job orders', params: [{ name: 'status', description: 'filter by job-order status' }, { name: 'occupation', description: 'filter by O*NET-SOC code' }] },
+    { method: 'GET', path: '/job-orders/{id}', operationId: 'getJobOrder', summary: 'Get one job order' },
+    { method: 'POST', path: '/job-orders', operationId: 'createJobOrder', summary: 'Create a job order — headless ATS door; keyless calls auto-mint an ephemeral sandbox workspace', requestBody: { content: { 'application/json': { schema: { type: 'object', required: ['client', 'title', 'onetCode'], properties: { client: { type: 'string' }, title: { type: 'string' }, onetCode: { type: 'string' }, billRateUsdHour: { type: 'number' } } } } } }, responses: { 201: { description: 'OK envelope with the minted record, workspace id, and retention disclosure' }, 400: { description: 'BLOCKED envelope — missing required members' } } },
+    { method: 'GET', path: '/occupations', operationId: 'listOccupations', summary: 'List the O*NET-SOC occupation vocabulary excerpt — real G1 reference data (U.S. DOL, CC BY 4.0)' },
+    { method: 'GET', path: '/occupations/{id}', operationId: 'getOccupation', summary: 'Get one O*NET-SOC occupation by code' },
+    { method: 'GET', path: '/icp.json', operationId: 'getIcp', summary: 'G2 coordinates of this projection: ICP company/job types, personas, motion, agent classes' },
+    { method: 'GET', path: '/verify', operationId: 'getVerify', summary: 'The published runnable suites for this property — the /verify export' },
   ],
 
   // MCP door — mounted at /mcp in worker.ts; same nouns/verbs, one definition.
@@ -170,6 +198,14 @@ export const manifest = defineSiteManifest({
   llms: { body: llmsBody },
 
   icpUrl: `${ORIGIN}/icp.json`,
+
+  // axp-ext/rates-g2 §3 — links.verify: the published runnable-suite export
+  // (the /verify door worker.ts serves). Presence-when-true, and it answers.
+  verifyUrl: '/verify',
+
+  // axp-ext/rates-g2 §4 — the G2/ICP coordinates as the card's top-level g2
+  // object, carried verbatim; links.icp (/icp.json, the same truth) beside it.
+  g2: g2Coordinates,
 
   family: [
     {

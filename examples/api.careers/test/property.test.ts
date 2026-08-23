@@ -6,7 +6,11 @@
  *   - fixture law: synthetic records labeled, no real-entity fields, secret-scan
  *   - every declared operation exercised by the seed corpus (both plies)
  *   - rate card: operationId-keyed, every row freeQuota or zero price,
- *     rates ⊆ substrate operation ids, full operation coverage
+ *     rates ⊆ substrate operation ids, full operation coverage, and served
+ *     at the RULED placement — pricing.rates, TOP-LEVEL in the Pricing
+ *     Document (axp-ext/rates-g2 §2; never nested under an offer)
+ *   - operationId unified across contract + MCP + rate keys (rates-g2 §1)
+ *   - card carries links.verify (§3) and the top-level g2 object (§4)
  *   - 402 boundary served as a LABELED stub (never fake billing)
  *   - MCP door serves the same operations as HTTP (one definition)
  *   - seams tagged {substrate, projection, motion, operation, shape, pattern}
@@ -15,7 +19,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import worker, { seams, icpDocument } from '../src/worker.ts'
-import { manifest, rates } from '../src/manifest.ts'
+import { manifest, rates, g2Coordinates } from '../src/manifest.ts'
 import { staffingTalent } from '../src/substrate.ts'
 import { apiCareersProjection } from '../src/projection.ts'
 import * as seed from '../src/seed.ts'
@@ -125,6 +129,27 @@ describe('rate card — operationId-keyed, honest from zero', () => {
     expect(body.binding).toBe(false)
     expect(body.statement).toContain('no billing occurs')
   })
+
+  it('the rate card rides the RULED placement: top-level rates[] in the Pricing Document, never nested under an offer (axp-ext/rates-g2 §2)', async () => {
+    const body = await (await get('/pricing')).json()
+    expect(body.rates).toEqual(rates.map((r) => ({ ...r })))
+    // the bridge placement is gone: no offer (card monetization or 402 body) carries rates
+    const card = await (await get('/.well-known/agents.json')).json()
+    for (const offer of card.monetization.offers) expect(offer.rates).toBeUndefined()
+    const offerBody = await (await get('/offer')).json()
+    expect(JSON.stringify(offerBody)).not.toContain('"rates"')
+  })
+
+  it('the OpenAPI contract carries the ONE canonical operationId on every operation, uniquely, and every rate row keys on a declared id (axp-ext/rates-g2 §1)', async () => {
+    const oas = await (await get('/openapi.json')).json()
+    const ids: string[] = []
+    for (const methods of Object.values(oas.paths as Record<string, Record<string, { operationId?: string }>>)) {
+      for (const op of Object.values(methods)) if (op.operationId) ids.push(op.operationId)
+    }
+    expect(new Set(ids).size).toBe(ids.length) // one operation, one identifier
+    for (const op of staffingTalent.operations) expect(ids, op.id).toContain(op.id)
+    for (const row of rates) expect(ids, row.operation).toContain(row.operation)
+  })
 })
 
 describe('the 402 boundary — a labeled stub advertising the whole B2A ladder', () => {
@@ -232,6 +257,15 @@ describe('G2 on the wire, /verify export, no ghost surfaces', () => {
     expect(card.links.conformance).toBe('https://api.qa/api.careers')
     expect(card.interfaces.mcp.url).toBe(`${ORIGIN}/mcp`)
     expect(card.interfaces.mcp.tools.length).toBe(staffingTalent.operations.length)
+  })
+
+  it('the card carries links.verify and the TOP-LEVEL g2 object at the ruled placements (axp-ext/rates-g2 §3/§4), with links.icp beside them', async () => {
+    const card = await (await get('/.well-known/agents.json')).json()
+    expect(card.links.verify).toBe(`${ORIGIN}/verify`)
+    expect(card.links.icp).toBe(`${ORIGIN}/icp.json`)
+    expect(card.g2).toEqual(JSON.parse(JSON.stringify(g2Coordinates)))
+    // MCP tool names ARE the canonical operationIds (§1) — string entries
+    for (const tool of card.interfaces.mcp.tools) expect(typeof tool).toBe('string')
   })
 
   it('conneg spot-check: bare fetch gets JSON at /, browser gets HTML, /pricing.md is markdown', async () => {

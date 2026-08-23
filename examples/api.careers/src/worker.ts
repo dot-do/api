@@ -18,7 +18,7 @@
 
 // @ts-ignore — vendored byte-identical JS (PINS.json digest-checked); never edited here
 import { createAxpRoutes, envelopeResponse, ok, empty, blocked, collectionDecision } from './axp/index.js'
-import { manifest, ORIGIN } from './manifest.ts'
+import { manifest, ORIGIN, g2Coordinates } from './manifest.ts'
 import { staffingTalent, type OperationDef } from './substrate.ts'
 import { apiCareersProjection } from './projection.ts'
 import { occupations, candidates as seedCandidates, jobOrders as seedJobOrders, placements as seedPlacements, RETENTION_NOTE } from './seed.ts'
@@ -179,20 +179,9 @@ const opById = new Map(staffingTalent.operations.map((op) => [op.id, op]))
 export const icpDocument = {
   $context: 'https://schema.org.ai',
   property: 'api.careers',
-  register: {
-    row: 'staffing-talent',
-    kind: 'vertical',
-    naics: '5613',
-    sharedWith: 'fn-hr-talent (one cell, two register addresses — the vertical row leads)',
-    grain: 'placement (90-day-validatable outcome)',
-  },
-  icp: apiCareersProjection.icp,
-  personas: apiCareersProjection.personas,
-  motion: apiCareersProjection.motion,
-  agent_classes: [
-    { id: 'reader-agent', description: 'keyless reads: the quartet, /placements, /candidates, /job-orders, /occupations, /verify — no key, no account' },
-    { id: 'sandbox-transactor', description: 'mints an ephemeral workspace via any POST door and exercises the ATS system-of-record contract against labeled synthetic state' },
-  ],
+  // ONE definition: the same coordinates ride the card's top-level `g2`
+  // object (axp-ext/rates-g2 §4) — /icp.json is the links.icp door to it.
+  ...g2Coordinates,
   ladder: [
     { rung: 0, id: 'anonymous', description: `keyless anon sandbox — ${RETENTION_NOTE}` },
   ],
