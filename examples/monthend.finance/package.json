@@ -1,0 +1,15 @@
+{
+  "name": "monthend.finance",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "monthend.finance — the fn-finance register row's wave-zero property: the Ledger + ten typed close deliverables behind an AXP machine face",
+  "scripts": {
+    "test": "vitest run",
+    "verify": "node scripts/selfverify.mjs"
+  },
+  "devDependencies": {
+    "autonomous-qa": "link:../../../api.qa",
+    "vitest": "^3.0.0"
+  }
+}

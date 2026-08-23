@@ -1,0 +1,43 @@
+{
+  "$type": "G4Projection",
+  "spec": "docs/plans/2026-08-23-property-template-spec.md §2 (studio repo)",
+  "substrate": "fn-finance",
+  "brand": "monthend.finance",
+  "domains": ["monthend.finance"],
+  "icp": {
+    "companyTypes": ["every CompanyType above a size floor — the finance department is a horizontal root; first ICP is the estate's own portfolio (every minted startup ships with the Ledger), then fractional accountants and firms selling close-as-deliverable"],
+    "jobTypes": ["controller", "CFO / fractional CFO", "bookkeeper", "accountant"]
+  },
+  "personas": [
+    { "name": "controller", "kind": "human" },
+    { "name": "fractional CFO", "kind": "human" },
+    { "name": "SMB owner / principal", "kind": "human", "note": "does not know what an API is — served in plain language on this brand's human surfaces" },
+    { "name": "finance agent", "kind": "machine" }
+  ],
+  "motion": "B2A2B",
+  "motionNotes": "The agent leg runs the B2A shapes (anon sandbox → earned credits → human-claimed → paid 402 on machine identity; never OAuth/CC gates). The human counterpart onboards on THIS brand in its own vocabulary — monthend.finance is itself the human-vocabulary counterpart name for the close function (register row: category-completing, ladder top rung), so the §5.1 counterpart-brand requirement is satisfied by construction and no counterpart-brand gap is recorded. The HTML face carries zero API/agent vocabulary (Marlow jargon-ban law); machine vocabulary lives on the machine faces only.",
+  "offer": [
+    { "shape": "anon-sandbox", "gate": "none — keyless", "price": "free", "notes": "universal floor; labeled synthetic seed (§5.2); stateless at wave zero" },
+    { "shape": "earned-credits", "gate": "ledger credits earned via proof-of-work", "price": "earned", "notes": "advertised in the 402 alternatives; credit rail not yet live — labeled as such" },
+    { "shape": "human-claimed", "gate": "a human claims the agent's workspace", "price": "free/earned, longer tenure", "notes": "advertised in the 402 alternatives; claiming door not yet live — labeled as such" },
+    { "shape": "paid-402", "gate": "402 metering against machine identity (id.org.ai grain)", "price": "metered; per-outcome on orderCloseDeliverable", "notes": "wave-zero labeled stub — no live settlement; test-mode counts as face-payable" },
+    { "shape": "subscription", "gate": "human conversation on the human-vocabulary surface", "price": "negotiated", "notes": "the human counterpart leg of B2A2B; never the only door" }
+  ],
+  "pricing": {
+    "pattern": "per-outcome",
+    "rateCard": "/rates",
+    "pricingDocument": "/pricing",
+    "guardrailNote": "No agent-default claim is carried, so the §5.3 same-shape price guardrail imposes no obligation on siblings yet; the harness comparison arms if the claim is ever earned and taken."
+  },
+  "positioning": "Your month-end close, done — the close function as typed, verifiable, outcome-priced deliverables. (The 'agent default' claim is WITHHELD: the §4.6 worthiness bar — hosted conformance verdict + live anon sandbox + continuously verified published suite — has not been attested by api.qa yet.)",
+  "mdx": null,
+  "mdxNotes": "Custom minimal HTML landing at wave zero (§7.1 prove-then-extract); per-brand MDX layer deferred to the shared-renderer extraction.",
+  "experiment": {
+    "pattern": "per-outcome",
+    "motion": "B2A2B",
+    "shapes": ["anon-sandbox", "earned-credits", "human-claimed", "paid-402", "subscription"],
+    "rateCardRef": "/rates",
+    "startDate": "2026-08-23",
+    "hypothesis": "Outcome-priced close deliverables beat per-call metering on revenue per substrate call for the finance function; the internal-first portfolio is tenant #1."
+  }
+}

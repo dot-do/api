@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "monthend-finance",
+  "main": "worker.js",
+  "compatibility_date": "2026-01-24",
+  "account_id": "b6641681fe423910342b9ffa1364c76d",
+  "routes": [
+    { "pattern": "monthend.finance/*", "zone_name": "monthend.finance" }
+  ],
+  // §7.4 seams — bind the analytics plane when it exists; the worker's seam
+  // emitters no-op without it (presence-when-true, the seam is still emitted
+  // in code so the unified plane attaches without touching the property).
+  "analytics_engine_datasets": [
+    { "binding": "SEAMS", "dataset": "monthend-finance-seams" }
+  ]
+}
