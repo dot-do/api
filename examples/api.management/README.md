@@ -86,3 +86,13 @@ held (third-party Gandi, exp 2026-10-30) — opportunistic acquisition per #3.
   `pricing.rates` and keyed by canonical operationId.
 - `interfaces.testSuite` declaration — made only when a digest-pinned suite
   document answers at its address (A.8.5), not before.
+
+## Rail ledger (§9.1 final box)
+
+Face registered in the rail ledger (faces-payable/week denominator):
+registered via LEDGER.md door A — row in
+`packages/rail-ledger/registry/faces.json` @ `draft/rail-ledger-v1`
+(studio #9 alignment pass 2026-08-23); readout
+https://ledger.apis.ax/readouts/faces-payable (service built, deploy pending
+Batch-S). The served projection config records the address in its
+`railLedger` field.
