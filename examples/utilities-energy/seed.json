@@ -1,0 +1,543 @@
+{
+  "$context": "https://schema.org.ai",
+  "substrate": "utilities-energy",
+  "generated": "deterministic (mulberry32, keyed on substrate id) — reseed via scripts/generate-seed.mjs",
+  "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy.",
+  "fixtureLaw": {
+    "realNames": false,
+    "syntheticIdentifiers": "UTIL-EX-/MTR-EX-/ISO-EX-/TRF-EX- prefixes, 00-prefixed EIN pattern, *-ex-* record ids; no real EIA/FERC/ISO identifiers or tariff numbers presented as authoritative",
+    "gtins": "no GTIN grain exists on this row — the GS1 952 demo-prefix rule applies where GTINs exist, and none do here",
+    "typingAnchors": "Green Button/NAESB ESPI carried as typing anchors only (register: [UNVERIFIED — not in estate docs])",
+    "secretScan": "no credentials present by construction"
+  },
+  "utilities": [
+    {
+      "id": "UTIL-EX-2201",
+      "name": "Glimmerford Electric Cooperative [example]",
+      "kind": "electric-distribution",
+      "naics": "2211",
+      "ein": "00-2200001",
+      "state": "EX",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "UTIL-EX-2202",
+      "name": "Bracken Hollow Water & Power District [example]",
+      "kind": "combined-utility",
+      "naics": "2211",
+      "ein": "00-2200002",
+      "state": "EX",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "UTIL-EX-2203",
+      "name": "Tarrowgate Gas Service Company [example]",
+      "kind": "gas-distribution",
+      "naics": "2212",
+      "ein": "00-2200003",
+      "state": "EX",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "meters": [
+    {
+      "id": "MTR-EX-1001",
+      "utilityId": "UTIL-EX-2202",
+      "serviceKind": "electricity",
+      "kind": "interval",
+      "espiTypingAnchor": "Green Button / NAESB ESPI UsagePoint shape (typing anchor only — register marks the standard [UNVERIFIED]; record content synthetic)",
+      "servicePoint": "Feeder EX-101, Exampleford County [example]",
+      "status": "active",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "MTR-EX-1002",
+      "utilityId": "UTIL-EX-2203",
+      "serviceKind": "electricity",
+      "kind": "interval",
+      "espiTypingAnchor": "Green Button / NAESB ESPI UsagePoint shape (typing anchor only — register marks the standard [UNVERIFIED]; record content synthetic)",
+      "servicePoint": "Feeder EX-102, Exampleford County [example]",
+      "status": "active",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "MTR-EX-1003",
+      "utilityId": "UTIL-EX-2201",
+      "serviceKind": "gas",
+      "kind": "interval",
+      "espiTypingAnchor": "Green Button / NAESB ESPI UsagePoint shape (typing anchor only — register marks the standard [UNVERIFIED]; record content synthetic)",
+      "servicePoint": "Feeder EX-103, Exampleford County [example]",
+      "status": "active",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "MTR-EX-1004",
+      "utilityId": "UTIL-EX-2202",
+      "serviceKind": "water",
+      "kind": "interval",
+      "espiTypingAnchor": "Green Button / NAESB ESPI UsagePoint shape (typing anchor only — register marks the standard [UNVERIFIED]; record content synthetic)",
+      "servicePoint": "Feeder EX-104, Exampleford County [example]",
+      "status": "active",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "MTR-EX-1005",
+      "utilityId": "UTIL-EX-2203",
+      "serviceKind": "electricity",
+      "kind": "monthly-register",
+      "espiTypingAnchor": "Green Button / NAESB ESPI UsagePoint shape (typing anchor only — register marks the standard [UNVERIFIED]; record content synthetic)",
+      "servicePoint": "Feeder EX-105, Exampleford County [example]",
+      "status": "active",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "MTR-EX-1006",
+      "utilityId": "UTIL-EX-2201",
+      "serviceKind": "electricity",
+      "kind": "monthly-register",
+      "espiTypingAnchor": "Green Button / NAESB ESPI UsagePoint shape (typing anchor only — register marks the standard [UNVERIFIED]; record content synthetic)",
+      "servicePoint": "Feeder EX-106, Exampleford County [example]",
+      "status": "inactive",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "intervalReads": [
+    {
+      "id": "ir-ex-1",
+      "meter": "MTR-EX-1001",
+      "utilityId": "UTIL-EX-2202",
+      "period": "2026-08-22T00:00Z/PT1H",
+      "kWh": 0.564,
+      "quality": "synthetic-example",
+      "espiTypingAnchor": "ESPI IntervalBlock shape (typing anchor only; values synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ir-ex-2",
+      "meter": "MTR-EX-1001",
+      "utilityId": "UTIL-EX-2202",
+      "period": "2026-08-22T01:00Z/PT1H",
+      "kWh": 1.088,
+      "quality": "synthetic-example",
+      "espiTypingAnchor": "ESPI IntervalBlock shape (typing anchor only; values synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ir-ex-3",
+      "meter": "MTR-EX-1001",
+      "utilityId": "UTIL-EX-2202",
+      "period": "2026-08-22T02:00Z/PT1H",
+      "kWh": 3.056,
+      "quality": "synthetic-example",
+      "espiTypingAnchor": "ESPI IntervalBlock shape (typing anchor only; values synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ir-ex-4",
+      "meter": "MTR-EX-1001",
+      "utilityId": "UTIL-EX-2202",
+      "period": "2026-08-22T03:00Z/PT1H",
+      "kWh": 3.396,
+      "quality": "synthetic-example",
+      "espiTypingAnchor": "ESPI IntervalBlock shape (typing anchor only; values synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ir-ex-5",
+      "meter": "MTR-EX-1001",
+      "utilityId": "UTIL-EX-2202",
+      "period": "2026-08-22T04:00Z/PT1H",
+      "kWh": 2.148,
+      "quality": "synthetic-example",
+      "espiTypingAnchor": "ESPI IntervalBlock shape (typing anchor only; values synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ir-ex-6",
+      "meter": "MTR-EX-1001",
+      "utilityId": "UTIL-EX-2202",
+      "period": "2026-08-22T05:00Z/PT1H",
+      "kWh": 3.179,
+      "quality": "synthetic-example",
+      "espiTypingAnchor": "ESPI IntervalBlock shape (typing anchor only; values synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ir-ex-7",
+      "meter": "MTR-EX-1002",
+      "utilityId": "UTIL-EX-2203",
+      "period": "2026-08-22T00:00Z/PT1H",
+      "kWh": 1.15,
+      "quality": "synthetic-example",
+      "espiTypingAnchor": "ESPI IntervalBlock shape (typing anchor only; values synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ir-ex-8",
+      "meter": "MTR-EX-1002",
+      "utilityId": "UTIL-EX-2203",
+      "period": "2026-08-22T01:00Z/PT1H",
+      "kWh": 1.751,
+      "quality": "synthetic-example",
+      "espiTypingAnchor": "ESPI IntervalBlock shape (typing anchor only; values synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ir-ex-9",
+      "meter": "MTR-EX-1002",
+      "utilityId": "UTIL-EX-2203",
+      "period": "2026-08-22T02:00Z/PT1H",
+      "kWh": 3.054,
+      "quality": "synthetic-example",
+      "espiTypingAnchor": "ESPI IntervalBlock shape (typing anchor only; values synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ir-ex-10",
+      "meter": "MTR-EX-1002",
+      "utilityId": "UTIL-EX-2203",
+      "period": "2026-08-22T03:00Z/PT1H",
+      "kWh": 1.752,
+      "quality": "synthetic-example",
+      "espiTypingAnchor": "ESPI IntervalBlock shape (typing anchor only; values synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ir-ex-11",
+      "meter": "MTR-EX-1002",
+      "utilityId": "UTIL-EX-2203",
+      "period": "2026-08-22T04:00Z/PT1H",
+      "kWh": 0.44,
+      "quality": "synthetic-example",
+      "espiTypingAnchor": "ESPI IntervalBlock shape (typing anchor only; values synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ir-ex-12",
+      "meter": "MTR-EX-1002",
+      "utilityId": "UTIL-EX-2203",
+      "period": "2026-08-22T05:00Z/PT1H",
+      "kWh": 3.394,
+      "quality": "synthetic-example",
+      "espiTypingAnchor": "ESPI IntervalBlock shape (typing anchor only; values synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ir-ex-13",
+      "meter": "MTR-EX-1003",
+      "utilityId": "UTIL-EX-2201",
+      "period": "2026-08-22T00:00Z/PT1H",
+      "kWh": 3.432,
+      "quality": "synthetic-example",
+      "espiTypingAnchor": "ESPI IntervalBlock shape (typing anchor only; values synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ir-ex-14",
+      "meter": "MTR-EX-1003",
+      "utilityId": "UTIL-EX-2201",
+      "period": "2026-08-22T01:00Z/PT1H",
+      "kWh": 0.927,
+      "quality": "synthetic-example",
+      "espiTypingAnchor": "ESPI IntervalBlock shape (typing anchor only; values synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ir-ex-15",
+      "meter": "MTR-EX-1003",
+      "utilityId": "UTIL-EX-2201",
+      "period": "2026-08-22T02:00Z/PT1H",
+      "kWh": 1.743,
+      "quality": "synthetic-example",
+      "espiTypingAnchor": "ESPI IntervalBlock shape (typing anchor only; values synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ir-ex-16",
+      "meter": "MTR-EX-1003",
+      "utilityId": "UTIL-EX-2201",
+      "period": "2026-08-22T03:00Z/PT1H",
+      "kWh": 2.256,
+      "quality": "synthetic-example",
+      "espiTypingAnchor": "ESPI IntervalBlock shape (typing anchor only; values synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ir-ex-17",
+      "meter": "MTR-EX-1003",
+      "utilityId": "UTIL-EX-2201",
+      "period": "2026-08-22T04:00Z/PT1H",
+      "kWh": 1.611,
+      "quality": "synthetic-example",
+      "espiTypingAnchor": "ESPI IntervalBlock shape (typing anchor only; values synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ir-ex-18",
+      "meter": "MTR-EX-1003",
+      "utilityId": "UTIL-EX-2201",
+      "period": "2026-08-22T05:00Z/PT1H",
+      "kWh": 3.089,
+      "quality": "synthetic-example",
+      "espiTypingAnchor": "ESPI IntervalBlock shape (typing anchor only; values synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ir-ex-19",
+      "meter": "MTR-EX-1004",
+      "utilityId": "UTIL-EX-2202",
+      "period": "2026-08-22T00:00Z/PT1H",
+      "kWh": 0.866,
+      "quality": "synthetic-example",
+      "espiTypingAnchor": "ESPI IntervalBlock shape (typing anchor only; values synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ir-ex-20",
+      "meter": "MTR-EX-1004",
+      "utilityId": "UTIL-EX-2202",
+      "period": "2026-08-22T01:00Z/PT1H",
+      "kWh": 1.607,
+      "quality": "synthetic-example",
+      "espiTypingAnchor": "ESPI IntervalBlock shape (typing anchor only; values synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ir-ex-21",
+      "meter": "MTR-EX-1004",
+      "utilityId": "UTIL-EX-2202",
+      "period": "2026-08-22T02:00Z/PT1H",
+      "kWh": 2.808,
+      "quality": "synthetic-example",
+      "espiTypingAnchor": "ESPI IntervalBlock shape (typing anchor only; values synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ir-ex-22",
+      "meter": "MTR-EX-1004",
+      "utilityId": "UTIL-EX-2202",
+      "period": "2026-08-22T03:00Z/PT1H",
+      "kWh": 3.44,
+      "quality": "synthetic-example",
+      "espiTypingAnchor": "ESPI IntervalBlock shape (typing anchor only; values synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ir-ex-23",
+      "meter": "MTR-EX-1004",
+      "utilityId": "UTIL-EX-2202",
+      "period": "2026-08-22T04:00Z/PT1H",
+      "kWh": 3.124,
+      "quality": "synthetic-example",
+      "espiTypingAnchor": "ESPI IntervalBlock shape (typing anchor only; values synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ir-ex-24",
+      "meter": "MTR-EX-1004",
+      "utilityId": "UTIL-EX-2202",
+      "period": "2026-08-22T05:00Z/PT1H",
+      "kWh": 2.108,
+      "quality": "synthetic-example",
+      "espiTypingAnchor": "ESPI IntervalBlock shape (typing anchor only; values synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "queueEntries": [
+    {
+      "id": "que-ex-1",
+      "queue": "ISO-EX-EAST",
+      "position": "Q2025-041",
+      "status": "active",
+      "resourceType": "solar+storage",
+      "capacityMW": 16.3,
+      "county": "Exampleford County [example]",
+      "utilityId": "UTIL-EX-2202",
+      "sourceShape": "public FERC/ISO interconnection-queue record shape (register: implied by interconnection.click; queue content synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "que-ex-2",
+      "queue": "ISO-EX-EAST",
+      "position": "Q2026-042",
+      "status": "active",
+      "resourceType": "storage",
+      "capacityMW": 125.9,
+      "county": "Exampleford County [example]",
+      "utilityId": "UTIL-EX-2203",
+      "sourceShape": "public FERC/ISO interconnection-queue record shape (register: implied by interconnection.click; queue content synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "que-ex-3",
+      "queue": "ISO-EX-EAST",
+      "position": "Q2025-043",
+      "status": "withdrawn",
+      "resourceType": "wind",
+      "capacityMW": 5.5,
+      "county": "Exampleford County [example]",
+      "utilityId": "UTIL-EX-2201",
+      "sourceShape": "public FERC/ISO interconnection-queue record shape (register: implied by interconnection.click; queue content synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "que-ex-4",
+      "queue": "ISO-EX-WEST",
+      "position": "Q2026-044",
+      "status": "completed",
+      "resourceType": "solar",
+      "capacityMW": 121.8,
+      "county": "Exampleford County [example]",
+      "utilityId": "UTIL-EX-2202",
+      "sourceShape": "public FERC/ISO interconnection-queue record shape (register: implied by interconnection.click; queue content synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "que-ex-5",
+      "queue": "ISO-EX-WEST",
+      "position": "Q2025-045",
+      "status": "active",
+      "resourceType": "solar+storage",
+      "capacityMW": 44.4,
+      "county": "Exampleford County [example]",
+      "utilityId": "UTIL-EX-2203",
+      "sourceShape": "public FERC/ISO interconnection-queue record shape (register: implied by interconnection.click; queue content synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "que-ex-6",
+      "queue": "ISO-EX-WEST",
+      "position": "Q2026-046",
+      "status": "active",
+      "resourceType": "storage",
+      "capacityMW": 81.5,
+      "county": "Exampleford County [example]",
+      "utilityId": "UTIL-EX-2201",
+      "sourceShape": "public FERC/ISO interconnection-queue record shape (register: implied by interconnection.click; queue content synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "interconnectionRequests": [
+    {
+      "id": "icr-ex-1",
+      "applicant": "Suncrest Array Partners LLC [example]",
+      "utilityId": "UTIL-EX-2202",
+      "status": "draft",
+      "systemSizeKwDc": 4364.4,
+      "resourceType": "solar",
+      "tariffId": "TRF-EX-3001",
+      "workspace": null,
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "icr-ex-2",
+      "applicant": "Fernwheel Solar Installations Inc. [example]",
+      "utilityId": "UTIL-EX-2203",
+      "status": "submitted",
+      "systemSizeKwDc": 3638.6,
+      "resourceType": "solar",
+      "tariffId": "TRF-EX-3002",
+      "workspace": null,
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "icr-ex-3",
+      "applicant": "Osselbrook Distributed Energy Co. [example]",
+      "utilityId": "UTIL-EX-2201",
+      "status": "under-review",
+      "systemSizeKwDc": 790.5,
+      "resourceType": "solar+storage",
+      "tariffId": "TRF-EX-3003",
+      "workspace": null,
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "tariffs": [
+    {
+      "id": "TRF-EX-3001",
+      "utilityId": "UTIL-EX-2202",
+      "name": "Residential TOU Schedule EX-1 [example]",
+      "filingStatus": "effective",
+      "ratePerKwh": 0.3543,
+      "currency": "USD",
+      "sourceShape": "utility tariff-filing record shape (public source class per the row's route; content synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "TRF-EX-3002",
+      "utilityId": "UTIL-EX-2203",
+      "name": "Commercial Demand Schedule EX-2 [example]",
+      "filingStatus": "effective",
+      "ratePerKwh": 0.0935,
+      "currency": "USD",
+      "sourceShape": "utility tariff-filing record shape (public source class per the row's route; content synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "TRF-EX-3003",
+      "utilityId": "UTIL-EX-2201",
+      "name": "Residential TOU Schedule EX-3 [example]",
+      "filingStatus": "effective",
+      "ratePerKwh": 0.2696,
+      "currency": "USD",
+      "sourceShape": "utility tariff-filing record shape (public source class per the row's route; content synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "TRF-EX-3004",
+      "utilityId": "UTIL-EX-2202",
+      "name": "Commercial Demand Schedule EX-4 [example]",
+      "filingStatus": "pending",
+      "ratePerKwh": 0.2313,
+      "currency": "USD",
+      "sourceShape": "utility tariff-filing record shape (public source class per the row's route; content synthetic)",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the utilities-energy substrate; not real utility, meter, queue, or tariff data. Identifiers are schema-shaped synthetic (UTIL-EX/MTR-EX/ISO-EX/TRF-EX); Green Button/ESPI is a typing anchor only. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ]
+}

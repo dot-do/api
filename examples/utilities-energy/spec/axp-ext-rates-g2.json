@@ -1,0 +1,56 @@
+{
+  "$type": "AxpExtension",
+  "name": "axp-ext-rates-g2",
+  "version": "0.2.0",
+  "status": "draft",
+  "extends": "apis-ax-axp@2.6.0",
+  "extendsDigest": "a9a1197c439d708b4db54f606f07c9a2d019c7f2989fbcd9b599de2fcc028e0d",
+  "title": "The operation rate card, the canonical operationId, links.verify, and the G2 card object",
+  "spec": "./rates-g2.md",
+  "ratified": "2026-08-23 — StartupsStudio/studio#9 batch-1 founder rulings [STAKE]; placements ruled, wire members closed to the four below. 0.2.0 same day: the adversarial pricing-model survey (90 businesses; 7 EXACT / 73 STRAINED / 10 INEXPRESSIBLE) returned on the pre-authorized revise-on-friction path — the ADOPT-NOW floor (A1-A5, A7-A8, G3 meter lite) lands in §2 and every deferred amendment name is RESERVED",
+  "additiveOnly": true,
+  "members": {
+    "operationId": {
+      "placement": "OpenAPI operation member, passthrough on every manifest route (and collection.operationId for the branching collection)",
+      "shape": "camelCase verb form: /^[a-z][A-Za-z0-9]*$/ (decodeVin, createPlacement; embedded acronyms may stay uppercase)",
+      "unifies": ["openapi operationId", "mcp tool name", "published-suite coverage reference", "generated SDK method name", "rates[].operation key"]
+    },
+    "rates": {
+      "placement": "TOP-LEVEL array of the Pricing Document (never nested under an offer)",
+      "row": {
+        "operation": "required — the canonical operationId, must be declared by the same manifest",
+        "price": "scalar >= 0 | compound {fixed?, percent?, basis, cap?, floor?, min_fee?} (A1) | {passthrough: {provider, reference?, markup?: {fixed?, percent?}}} (A2) | {discovery: 'market', reference?, buyer_cap?} (A2); absent/null ONLY under non-published disclosure (A8)",
+        "unit": "optional string",
+        "included": "A5 — qty > 0 | 'unlimited' | {qty, period: day|month|once, rollover?, at_limit?}; freeQuota stays as legacy shorthand for {qty, period:'month'} — never both",
+        "modifiers": "A3 — [{op: multiply|add, value, scope?: rate|offer|card, condition?: {attribute, op?, value?}, stacking_order?}]",
+        "derived_from": "A3 — operationId of another row on this card (no self-reference)",
+        "meter": "G3 lite — {aggregation: sum|distinct|high-watermark|gauge|peak, basis?: consumed|provisioned|standing, reset_period?, definition_url?}",
+        "volume_breaks": "A7 — {mode: graduated|retroactive|reprice-offer (REQUIRED), basis?: units|spend|instantaneous-rate, breaks: [{from, price|discount_percent}], formula_url?, approximate?}",
+        "disclosure": "A8 — published|calculator-only|quote-only|undisclosed",
+        "estimate": "A8 — {low, high, provenance?}, legal only under withheld disclosure",
+        "note": "optional string",
+        "...": "unreserved extra members pass through verbatim"
+      },
+      "offerMembers": {
+        "spend_cap": "A4 — {amount > 0, settable_by: buyer|seller}",
+        "allowances": "A5 — [{pool_qty > 0 | 'unlimited', denomination: unit|currency, applies_to: [operationIds], conversion?: {operationId: ratio > 0}, disjunctive?, period?, rollover?, at_limit?}]"
+      },
+      "atLimit": ["bill", "block", "throttle", "force-upgrade", "renew-early", "drop"],
+      "freeModelRule": "scalar zero prices only; no freeQuota/modifiers/volume_breaks/reference prices; nothing withheld; included.at_limit closed to block|throttle|drop"
+    },
+    "links.verify": {
+      "placement": "capability-card link member, beside links.conformance",
+      "meaning": "the property's published runnable-suite export (the /verify door) — presence-when-true"
+    },
+    "g2": {
+      "placement": "TOP-LEVEL object on the agents.json capability card",
+      "meaning": "the property's G2/ICP coordinates, carried verbatim from the site manifest — presence-when-true, never authored by the generator"
+    }
+  },
+  "reserved": {
+    "rate": { "keys": "D1", "payment": "D4", "direction": "A14", "recurrence": "A13", "effective": "D5", "condition": "G20", "credits": "A6", "currencies": "D3" },
+    "offer": { "credits": "A6", "base_fee": "A9", "minimum": "A10", "relations": "A12", "entitlements": "A15", "eligibility": "D6", "effective": "D5", "recurrence": "A13" },
+    "rule": "reserved names are REFUSED by the generator until their amendment is ratified, so early adopters cannot colonize them with incompatible private conventions"
+  },
+  "surveyProvenance": "studio docs/plans/research/2026-08-23-pricing-model-survey.md"
+}

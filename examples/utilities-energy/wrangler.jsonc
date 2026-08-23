@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // PLACEHOLDER worker name — GAP register row (no apex name held for NAICS
+  // 22) under the SC #21 depth ruling; no route/custom-domain is configured
+  // until/unless a name is ruled via the #16 acquisition lane.
+  "name": "utilities-energy-wave0",
+  "main": "worker.js",
+  "compatibility_date": "2026-01-24",
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
+}

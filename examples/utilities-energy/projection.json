@@ -1,0 +1,49 @@
+{
+  "$comment": "Stratum-B G4 projection config (template spec §2). GAP register row under a DEPTH RULING: SC #21 classes NAICS 22 Axis-2 only, avoid-class 5 — 'the depth ruling, not the name shortage, is the binding constraint' (register note, carried verbatim). This projection therefore runs under a placeholder org.ai address per spec §0 (energy.org.ai is a held G2 namespace, not a market face) at the ruled noun-grain: the metering.click + interconnection.click entry-artifact grain, no apex face, no data-thesis face. Nothing here implies acquisition of any name — the register itself notes the depth ruling weakens the case for buying an apex name in this cell. Repo config, not a served surface.",
+  "substrate": "utilities-energy",
+  "brand": null,
+  "brandStatus": "GAP — no apex name held for NAICS 22 (coverage B.1; CEN §4.1); ladder exhausts on held inventory with no candidate named in any estate doc. The ruled posture: metering.click + interconnection.click are the compatible held entry artifacts; energy.org.ai (held G2 namespace) is the placeholder address until/unless a name is ruled via #16 — and the SC #21 depth ruling weakens the acquisition case relative to other GAP rows (register note). Naming is #3/#16's job, never this build's.",
+  "domains": ["energy.org.ai (placeholder — held G2 namespace, not a market face)"],
+  "icp": {
+    "companyTypes": ["solar installer / EPC", "interconnection applicant (project developer / IPP)", "energy-data software vendor"],
+    "jobTypes": ["interconnection analyst", "project developer", "operations manager", "energy analyst"]
+  },
+  "personas": [
+    { "id": "operator", "description": "interconnection analyst at a solar installer/EPC — the party filing into the utility (the row's ruled buyer coordinate; the utility-side sale fails the door-shape/balance-sheet screen)" },
+    { "id": "developer", "description": "developer at an energy-data software vendor integrating meter/interval and queue records" },
+    { "id": "agent", "description": "autonomous agent monitoring interconnection-queue positions, assembling interval-read evidence, or preparing filings on an applicant principal's behalf" }
+  ],
+  "motion": "B2A",
+  "offer": [
+    { "shape": "anon-sandbox", "price": "free", "gate": "none — keyless; auto-minted ephemeral workspace, disclosed retention. THE ONLY MOUNTED RUNG at wave zero (mounted-rungs rule: unmounted rungs are never advertised as live doors)." },
+    { "shape": "earned-credits", "price": "earned", "gate": "proof-of-work ladder rung 1 — STUB, NOT MOUNTED: declared in the 402 alternatives for ladder-shape discovery only (mounted:false); the credit ledger is not yet live." },
+    { "shape": "human-claimed", "price": "free/earned", "gate": "rung 2 — STUB, NOT MOUNTED: claim door not yet live (mounted:false in the 402 alternatives)." },
+    { "shape": "paid", "price": "metered (402, machine identity)", "gate": "rung 3 — STUB, NOT MOUNTED: test-mode, no live settlement (mounted:false in the 402 alternatives)." }
+  ],
+  "pricing": {
+    "pattern": "402-metered-per-call + per-outcome on submitted interconnection filing packages",
+    "rateCardRef": "/pricing (rates[] top-level in the Pricing Document — the ruled axp-ext/rates-g2 placement; no separate rates address)",
+    "binding": false
+  },
+  "positioning": "noun-grain meter/interval and interconnection-queue records for the parties filing into the utility (NAICS 22) — the Axis-2 posture SC #21 rules for this cell: entry artifacts on the rails, no front, no apex, no data-thesis face. Agent-default claim WITHHELD (worthiness bar §4.6 not attempted: no ruled domain, no hosted verdict).",
+  "mdx": null,
+  "experiment": {
+    "pattern": "402-metered",
+    "motion": "B2A",
+    "shapes": ["anon-sandbox", "earned-credits", "human-claimed", "paid"],
+    "rateCardRef": "/pricing",
+    "startDate": "2026-08-23",
+    "hypothesis": "wave-zero registration only — sandbox-floor traffic shape on a placeholder address at the ruled minimal depth; pattern comparison begins only if a G4 name is ever ruled for this cell. Row-specific sub-hypothesis to test then: per-outcome pricing on the submitted filing package (the interconnection.click grain) vs per-call metering on queue reads."
+  },
+  "counterpartBrandGap": {
+    "recorded": true,
+    "reason": "the row's ICP is solar installers/EPCs and interconnection applicants — principals who do not know what an API is — and the demand shape is agent-intermediated filing on their behalf (B2A2B). No human-vocabulary counterpart brand is ruled for this cell; the held task-grain artifacts metering.click and interconnection.click are the register's ruled-compatible entry candidates [recorded as candidates only, not asserted — naming is #3's job, never this build's]. Surfaced per spec §9.3."
+  },
+  "registerRowCaveats": {
+    "depthRuling": "SC #21: Axis-2 only, avoid-class 5 (door-shape + balance-sheet failure on the utility-side sale) — THE binding constraint on this row. This build holds the ruled posture: noun-grain rails for the filing party; no apex face, no data-thesis face, minimal depth by design.",
+    "emptyHeadlessCell": "the only market row in the cascade whose headless cell is empty ('—' in SC #21); CIS/MDM candidates are [UNVERIFIED] and undeclared. The native InterconnectionRequest door is the applicant-filing entry-artifact grain, not a 52-System coordinate.",
+    "unverifiedAnchors": "Green Button / NAESB ESPI as meter-data interchange [UNVERIFIED — not in estate docs]; O*NET 49-9051 metering occupations [UNVERIFIED]; UNSPSC segment 26 [UNVERIFIED] — all carried as typing anchors with the row's own caveats, never as authority.",
+    "sourceRouteProbe": "probed in-session 2026-08-23: api.eia.gov v2 is key-gated (API_KEY_MISSING keyless); the EIA bulk manifest answers 200 keyless. The row classes the route public-licensable ingest [UNVERIFIED], not class A — so the wave-zero sandbox seed is labeled synthetic, typed to the EIA-class feed shapes so real ingest can replace it without a schema change.",
+    "incumbencyProbe": "no incumbency probe on record (register note); no vacancy claim is made anywhere on this property."
+  }
+}
