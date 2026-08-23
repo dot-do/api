@@ -67,3 +67,13 @@ projection-config completeness). `axp/` is byte-identical vendored from
   posture): declaring it arms `check-capability-coverage` against deployed
   verifiers that predate the registry row. The suite still ships at
   `/verify/suite.json` and `links.verify` names it.
+
+## Rail ledger
+
+§9.1 final box (face registered in the rail ledger, faces-payable/week
+denominator): registered via LEDGER.md door A — row in
+packages/rail-ledger/registry/faces.json @ draft/rail-ledger-v1 (studio #9
+alignment pass 2026-08-23); readout
+https://ledger.apis.ax/readouts/faces-payable (service built, deploy pending
+Batch-S). GAP rule: the placeholder host `fn-strategy.org.ai` is the
+registered face until a name attaches.
