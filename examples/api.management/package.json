@@ -1,0 +1,14 @@
+{
+  "name": "api-management-example",
+  "private": true,
+  "type": "module",
+  "description": "api.management wave zero — the fn-business-ops operate face (payable machine-face property template instantiation)",
+  "scripts": {
+    "test": "vitest run",
+    "dev": "npx wrangler dev"
+  },
+  "devDependencies": {
+    "autonomous-qa": "file:../../../api.qa",
+    "vitest": "^2.0.0"
+  }
+}

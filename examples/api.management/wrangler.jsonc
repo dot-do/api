@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "api-management",
+  "main": "worker.js",
+  "compatibility_date": "2026-01-24",
+
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
+
+  // NO routes / custom domain on purpose: api.management is estate-CONTROLLED
+  // (CF zone in the Semantics.dev account, Vercel-verified on team
+  // longtailstudio) but the registrar paper is [UNVERIFIED] — confirm control
+  // (log into Sav per the register row's graduated task) before wiring:
+  // "routes": [{ "pattern": "api.management", "custom_domain": true }]
+}
