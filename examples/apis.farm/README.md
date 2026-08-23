@@ -75,12 +75,13 @@ anywhere.
   Recorded in the projection config; the §9.3 diagnostic reads the traffic
   seams and a proposal files against the register row if the signal fires.
 
-## §9.1 checklist — 15/16 pass, 1 blocked
+## §9.1 checklist — 16/16 pass
 
 All boxes pass via `node check.mjs` (ALL GATES GREEN; conformance 24/24 at
-the ratified digest) and the configs above, except:
+the ratified digest) and the configs above, including:
 
-- **Rail-ledger registration (final box): blocked-on-rail-ledger.** No
-  faces-payable rail ledger exists in `~/projects/ax` at build time. The box
-  is recorded as blocked, never stubbed; registration lands when the ledger
-  address exists.
+- **Rail-ledger registration (final box): REGISTERED** — registered via
+  LEDGER.md door A — row in packages/rail-ledger/registry/faces.json @
+  draft/rail-ledger-v1 (studio #9 alignment pass 2026-08-23); readout
+  https://ledger.apis.ax/readouts/faces-payable (service built, deploy
+  pending Batch-S).
