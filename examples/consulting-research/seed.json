@@ -1,0 +1,1054 @@
+{
+  "$context": "https://schema.org.ai",
+  "substrate": "consulting-research",
+  "generated": "deterministic (mulberry32, keyed on substrate id) — reseed via scripts/generate-seed.mjs",
+  "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy.",
+  "fixtureLaw": {
+    "realNames": false,
+    "syntheticIdentifiers": "00-prefixed EIN pattern; PCF-EX-* process ids; *-ex-* record ids",
+    "secretScan": "no credentials present by construction"
+  },
+  "firms": [
+    {
+      "id": "firm-ex-1",
+      "name": "Bramblewick Advisory LLC [example]",
+      "kind": "management-consulting",
+      "naics": "541611",
+      "ein": "00-1100001",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "firm-ex-2",
+      "name": "Quarrelstone Research Collective LLC [example]",
+      "kind": "scientific-rd-services",
+      "naics": "541715",
+      "ein": "00-1100002",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "firm-ex-3",
+      "name": "Fennelmoor Strategy Partners LLC [example]",
+      "kind": "management-consulting",
+      "naics": "541613",
+      "ein": "00-1100003",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "clients": [
+    {
+      "id": "client-ex-1",
+      "name": "Osselton Fabrication Co. [example]",
+      "sector": "manufacturing",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "client-ex-2",
+      "name": "Larkspindle Logistics Inc. [example]",
+      "sector": "freight-logistics",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "client-ex-3",
+      "name": "Midgewater Provisions LLC [example]",
+      "sector": "food-retail",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "client-ex-4",
+      "name": "Tarnbeck Utilities Cooperative [example]",
+      "sector": "utilities-energy",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "engagements": [
+    {
+      "id": "eng-ex-1",
+      "title": "Outcome verification engagement — freight-logistics [example]",
+      "firmId": "firm-ex-2",
+      "clientId": "client-ex-2",
+      "status": "active",
+      "sector": "freight-logistics",
+      "naics": "5416",
+      "start": "2026-02-02",
+      "sowId": "sow-ex-1",
+      "milestoneIds": [
+        "ms-ex-1",
+        "ms-ex-2",
+        "ms-ex-3"
+      ],
+      "deliverableIds": [
+        "del-ex-1",
+        "del-ex-2",
+        "del-ex-3"
+      ],
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "eng-ex-2",
+      "title": "Outcome verification engagement — food-retail [example]",
+      "firmId": "firm-ex-3",
+      "clientId": "client-ex-3",
+      "status": "active",
+      "sector": "food-retail",
+      "naics": "5417",
+      "start": "2026-03-03",
+      "sowId": "sow-ex-2",
+      "milestoneIds": [
+        "ms-ex-4",
+        "ms-ex-5",
+        "ms-ex-6",
+        "ms-ex-7"
+      ],
+      "deliverableIds": [
+        "del-ex-4",
+        "del-ex-5",
+        "del-ex-6",
+        "del-ex-7"
+      ],
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "eng-ex-3",
+      "title": "Operating-model diagnostic — utilities-energy [example]",
+      "firmId": "firm-ex-1",
+      "clientId": "client-ex-4",
+      "status": "closed",
+      "sector": "utilities-energy",
+      "naics": "5416",
+      "start": "2026-04-04",
+      "sowId": "sow-ex-3",
+      "milestoneIds": [
+        "ms-ex-8",
+        "ms-ex-9"
+      ],
+      "deliverableIds": [
+        "del-ex-8",
+        "del-ex-9"
+      ],
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "eng-ex-4",
+      "title": "Process redesign program — manufacturing [example]",
+      "firmId": "firm-ex-2",
+      "clientId": "client-ex-1",
+      "status": "active",
+      "sector": "manufacturing",
+      "naics": "5417",
+      "start": "2026-05-05",
+      "sowId": "sow-ex-4",
+      "milestoneIds": [
+        "ms-ex-10",
+        "ms-ex-11",
+        "ms-ex-12"
+      ],
+      "deliverableIds": [
+        "del-ex-10",
+        "del-ex-11",
+        "del-ex-12"
+      ],
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "eng-ex-5",
+      "title": "Operating-model diagnostic — freight-logistics [example]",
+      "firmId": "firm-ex-3",
+      "clientId": "client-ex-2",
+      "status": "active",
+      "sector": "freight-logistics",
+      "naics": "5416",
+      "start": "2026-06-06",
+      "sowId": "sow-ex-5",
+      "milestoneIds": [
+        "ms-ex-13",
+        "ms-ex-14",
+        "ms-ex-15",
+        "ms-ex-16"
+      ],
+      "deliverableIds": [
+        "del-ex-13",
+        "del-ex-14",
+        "del-ex-15",
+        "del-ex-16"
+      ],
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "eng-ex-6",
+      "title": "Applied research study — food-retail [example]",
+      "firmId": "firm-ex-1",
+      "clientId": "client-ex-3",
+      "status": "closed",
+      "sector": "food-retail",
+      "naics": "5417",
+      "start": "2026-01-07",
+      "sowId": "sow-ex-6",
+      "milestoneIds": [
+        "ms-ex-17",
+        "ms-ex-18"
+      ],
+      "deliverableIds": [
+        "del-ex-17",
+        "del-ex-18"
+      ],
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "sows": [
+    {
+      "id": "sow-ex-1",
+      "engagementId": "eng-ex-1",
+      "title": "Statement of Work — Larkspindle Logistics Inc. [example] × Quarrelstone Research Collective LLC [example]",
+      "scope": "Synthetic SOW scope: claims handling improvement program, 3 milestones, outcome-verified deliverables. [example]",
+      "signed": true,
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "sow-ex-2",
+      "engagementId": "eng-ex-2",
+      "title": "Statement of Work — Midgewater Provisions LLC [example] × Fennelmoor Strategy Partners LLC [example]",
+      "scope": "Synthetic SOW scope: inventory close improvement program, 4 milestones, outcome-verified deliverables. [example]",
+      "signed": true,
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "sow-ex-3",
+      "engagementId": "eng-ex-3",
+      "title": "Statement of Work — Tarnbeck Utilities Cooperative [example] × Bramblewick Advisory LLC [example]",
+      "scope": "Synthetic SOW scope: lab sample routing improvement program, 2 milestones, outcome-verified deliverables. [example]",
+      "signed": true,
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "sow-ex-4",
+      "engagementId": "eng-ex-4",
+      "title": "Statement of Work — Osselton Fabrication Co. [example] × Quarrelstone Research Collective LLC [example]",
+      "scope": "Synthetic SOW scope: claims handling improvement program, 3 milestones, outcome-verified deliverables. [example]",
+      "signed": true,
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "sow-ex-5",
+      "engagementId": "eng-ex-5",
+      "title": "Statement of Work — Larkspindle Logistics Inc. [example] × Fennelmoor Strategy Partners LLC [example]",
+      "scope": "Synthetic SOW scope: vendor onboarding improvement program, 4 milestones, outcome-verified deliverables. [example]",
+      "signed": true,
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "sow-ex-6",
+      "engagementId": "eng-ex-6",
+      "title": "Statement of Work — Midgewater Provisions LLC [example] × Bramblewick Advisory LLC [example]",
+      "scope": "Synthetic SOW scope: vendor onboarding improvement program, 2 milestones, outcome-verified deliverables. [example]",
+      "signed": true,
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "milestones": [
+    {
+      "id": "ms-ex-1",
+      "engagementId": "eng-ex-1",
+      "name": "Milestone 1: pilot verified [example]",
+      "due": "2026-03-15",
+      "status": "complete",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ms-ex-2",
+      "engagementId": "eng-ex-1",
+      "name": "Milestone 2: recommendations delivered [example]",
+      "due": "2026-04-15",
+      "status": "complete",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ms-ex-3",
+      "engagementId": "eng-ex-1",
+      "name": "Milestone 3: final readout [example]",
+      "due": "2026-05-15",
+      "status": "open",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ms-ex-4",
+      "engagementId": "eng-ex-2",
+      "name": "Milestone 1: pilot verified [example]",
+      "due": "2026-04-15",
+      "status": "complete",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ms-ex-5",
+      "engagementId": "eng-ex-2",
+      "name": "Milestone 2: diagnostic complete [example]",
+      "due": "2026-05-15",
+      "status": "complete",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ms-ex-6",
+      "engagementId": "eng-ex-2",
+      "name": "Milestone 3: recommendations delivered [example]",
+      "due": "2026-06-15",
+      "status": "complete",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ms-ex-7",
+      "engagementId": "eng-ex-2",
+      "name": "Milestone 4: final readout [example]",
+      "due": "2026-07-15",
+      "status": "open",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ms-ex-8",
+      "engagementId": "eng-ex-3",
+      "name": "Milestone 1: final readout [example]",
+      "due": "2026-05-15",
+      "status": "complete",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ms-ex-9",
+      "engagementId": "eng-ex-3",
+      "name": "Milestone 2: pilot verified [example]",
+      "due": "2026-06-15",
+      "status": "complete",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ms-ex-10",
+      "engagementId": "eng-ex-4",
+      "name": "Milestone 1: pilot verified [example]",
+      "due": "2026-06-15",
+      "status": "complete",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ms-ex-11",
+      "engagementId": "eng-ex-4",
+      "name": "Milestone 2: pilot verified [example]",
+      "due": "2026-07-15",
+      "status": "complete",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ms-ex-12",
+      "engagementId": "eng-ex-4",
+      "name": "Milestone 3: final readout [example]",
+      "due": "2026-08-15",
+      "status": "open",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ms-ex-13",
+      "engagementId": "eng-ex-5",
+      "name": "Milestone 1: final readout [example]",
+      "due": "2026-07-15",
+      "status": "complete",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ms-ex-14",
+      "engagementId": "eng-ex-5",
+      "name": "Milestone 2: diagnostic complete [example]",
+      "due": "2026-08-15",
+      "status": "complete",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ms-ex-15",
+      "engagementId": "eng-ex-5",
+      "name": "Milestone 3: pilot verified [example]",
+      "due": "2026-01-15",
+      "status": "complete",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ms-ex-16",
+      "engagementId": "eng-ex-5",
+      "name": "Milestone 4: final readout [example]",
+      "due": "2026-02-15",
+      "status": "open",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ms-ex-17",
+      "engagementId": "eng-ex-6",
+      "name": "Milestone 1: diagnostic complete [example]",
+      "due": "2026-08-15",
+      "status": "complete",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "ms-ex-18",
+      "engagementId": "eng-ex-6",
+      "name": "Milestone 2: recommendations delivered [example]",
+      "due": "2026-01-15",
+      "status": "complete",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "deliverables": [
+    {
+      "id": "del-ex-1",
+      "engagementId": "eng-ex-1",
+      "milestoneId": "ms-ex-1",
+      "title": "Implementation plan [example]",
+      "status": "verified",
+      "napcsClass": "synthetic-services-outcome",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "del-ex-2",
+      "engagementId": "eng-ex-1",
+      "milestoneId": "ms-ex-2",
+      "title": "Implementation plan [example]",
+      "status": "verified",
+      "napcsClass": "synthetic-services-outcome",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "del-ex-3",
+      "engagementId": "eng-ex-1",
+      "milestoneId": "ms-ex-3",
+      "title": "Current-state assessment [example]",
+      "status": "draft",
+      "napcsClass": "synthetic-services-outcome",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "del-ex-4",
+      "engagementId": "eng-ex-2",
+      "milestoneId": "ms-ex-4",
+      "title": "Peer-reviewed findings package [example]",
+      "status": "verified",
+      "napcsClass": "synthetic-services-outcome",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "del-ex-5",
+      "engagementId": "eng-ex-2",
+      "milestoneId": "ms-ex-5",
+      "title": "Implementation plan [example]",
+      "status": "verified",
+      "napcsClass": "synthetic-services-outcome",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "del-ex-6",
+      "engagementId": "eng-ex-2",
+      "milestoneId": "ms-ex-6",
+      "title": "Findings memo [example]",
+      "status": "verified",
+      "napcsClass": "synthetic-services-outcome",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "del-ex-7",
+      "engagementId": "eng-ex-2",
+      "milestoneId": "ms-ex-7",
+      "title": "Peer-reviewed findings package [example]",
+      "status": "in-review",
+      "napcsClass": "synthetic-services-outcome",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "del-ex-8",
+      "engagementId": "eng-ex-3",
+      "milestoneId": "ms-ex-8",
+      "title": "Current-state assessment [example]",
+      "status": "verified",
+      "napcsClass": "synthetic-services-outcome",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "del-ex-9",
+      "engagementId": "eng-ex-3",
+      "milestoneId": "ms-ex-9",
+      "title": "Findings memo [example]",
+      "status": "verified",
+      "napcsClass": "synthetic-services-outcome",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "del-ex-10",
+      "engagementId": "eng-ex-4",
+      "milestoneId": "ms-ex-10",
+      "title": "Current-state assessment [example]",
+      "status": "verified",
+      "napcsClass": "synthetic-services-outcome",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "del-ex-11",
+      "engagementId": "eng-ex-4",
+      "milestoneId": "ms-ex-11",
+      "title": "Peer-reviewed findings package [example]",
+      "status": "verified",
+      "napcsClass": "synthetic-services-outcome",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "del-ex-12",
+      "engagementId": "eng-ex-4",
+      "milestoneId": "ms-ex-12",
+      "title": "Current-state assessment [example]",
+      "status": "in-review",
+      "napcsClass": "synthetic-services-outcome",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "del-ex-13",
+      "engagementId": "eng-ex-5",
+      "milestoneId": "ms-ex-13",
+      "title": "Current-state assessment [example]",
+      "status": "verified",
+      "napcsClass": "synthetic-services-outcome",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "del-ex-14",
+      "engagementId": "eng-ex-5",
+      "milestoneId": "ms-ex-14",
+      "title": "Current-state assessment [example]",
+      "status": "verified",
+      "napcsClass": "synthetic-services-outcome",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "del-ex-15",
+      "engagementId": "eng-ex-5",
+      "milestoneId": "ms-ex-15",
+      "title": "Verified outcome report [example]",
+      "status": "verified",
+      "napcsClass": "synthetic-services-outcome",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "del-ex-16",
+      "engagementId": "eng-ex-5",
+      "milestoneId": "ms-ex-16",
+      "title": "Verified outcome report [example]",
+      "status": "in-review",
+      "napcsClass": "synthetic-services-outcome",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "del-ex-17",
+      "engagementId": "eng-ex-6",
+      "milestoneId": "ms-ex-17",
+      "title": "Verified outcome report [example]",
+      "status": "verified",
+      "napcsClass": "synthetic-services-outcome",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "del-ex-18",
+      "engagementId": "eng-ex-6",
+      "milestoneId": "ms-ex-18",
+      "title": "Findings memo [example]",
+      "status": "verified",
+      "napcsClass": "synthetic-services-outcome",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "tasks": [
+    {
+      "id": "task-ex-1",
+      "engagementId": "eng-ex-1",
+      "deliverableId": "del-ex-1",
+      "statement": "Interview process owners in claims handling and code the findings [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-5.3.4",
+      "status": "done",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-2",
+      "engagementId": "eng-ex-1",
+      "deliverableId": "del-ex-1",
+      "statement": "Draft the recommendations memo for vendor onboarding [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-4.2.2",
+      "status": "done",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-3",
+      "engagementId": "eng-ex-1",
+      "deliverableId": "del-ex-2",
+      "statement": "Draft the recommendations memo for inventory close [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-3.1.5",
+      "status": "done",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-4",
+      "engagementId": "eng-ex-1",
+      "deliverableId": "del-ex-2",
+      "statement": "Draft the recommendations memo for lab sample routing [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-4.2.2",
+      "status": "done",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-5",
+      "engagementId": "eng-ex-1",
+      "deliverableId": "del-ex-3",
+      "statement": "Interview process owners in lab sample routing and code the findings [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-5.3.4",
+      "status": "open",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-6",
+      "engagementId": "eng-ex-1",
+      "deliverableId": "del-ex-3",
+      "statement": "Verify post-change metrics for field scheduling against the baseline [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-5.3.1",
+      "status": "open",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-7",
+      "engagementId": "eng-ex-2",
+      "deliverableId": "del-ex-4",
+      "statement": "Document the current-state workflow for claims handling and identify handoff losses [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-3.1.5",
+      "status": "done",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-8",
+      "engagementId": "eng-ex-2",
+      "deliverableId": "del-ex-4",
+      "statement": "Assemble the baseline metrics workbook for lab sample routing [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-5.3.4",
+      "status": "done",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-9",
+      "engagementId": "eng-ex-2",
+      "deliverableId": "del-ex-5",
+      "statement": "Interview process owners in claims handling and code the findings [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-5.3.1",
+      "status": "done",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-10",
+      "engagementId": "eng-ex-2",
+      "deliverableId": "del-ex-5",
+      "statement": "Verify post-change metrics for vendor onboarding against the baseline [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-4.2.2",
+      "status": "done",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-11",
+      "engagementId": "eng-ex-2",
+      "deliverableId": "del-ex-6",
+      "statement": "Verify post-change metrics for vendor onboarding against the baseline [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-5.3.1",
+      "status": "done",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-12",
+      "engagementId": "eng-ex-2",
+      "deliverableId": "del-ex-6",
+      "statement": "Build the implementation sequence for the inventory close changes [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-2.4.1",
+      "status": "done",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-13",
+      "engagementId": "eng-ex-2",
+      "deliverableId": "del-ex-7",
+      "statement": "Build the implementation sequence for the vendor onboarding changes [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-5.3.1",
+      "status": "open",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-14",
+      "engagementId": "eng-ex-2",
+      "deliverableId": "del-ex-7",
+      "statement": "Document the current-state workflow for inventory close and identify handoff losses [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-4.2.2",
+      "status": "open",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-15",
+      "engagementId": "eng-ex-3",
+      "deliverableId": "del-ex-8",
+      "statement": "Verify post-change metrics for inventory close against the baseline [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-3.1.5",
+      "status": "done",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-16",
+      "engagementId": "eng-ex-3",
+      "deliverableId": "del-ex-8",
+      "statement": "Verify post-change metrics for vendor onboarding against the baseline [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-3.1.5",
+      "status": "done",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-17",
+      "engagementId": "eng-ex-3",
+      "deliverableId": "del-ex-9",
+      "statement": "Verify post-change metrics for order intake against the baseline [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-2.4.1",
+      "status": "done",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-18",
+      "engagementId": "eng-ex-3",
+      "deliverableId": "del-ex-9",
+      "statement": "Build the implementation sequence for the field scheduling changes [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-2.4.1",
+      "status": "done",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-19",
+      "engagementId": "eng-ex-4",
+      "deliverableId": "del-ex-10",
+      "statement": "Verify post-change metrics for vendor onboarding against the baseline [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-2.4.1",
+      "status": "done",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-20",
+      "engagementId": "eng-ex-4",
+      "deliverableId": "del-ex-10",
+      "statement": "Build the implementation sequence for the lab sample routing changes [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-3.1.5",
+      "status": "done",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-21",
+      "engagementId": "eng-ex-4",
+      "deliverableId": "del-ex-11",
+      "statement": "Document the current-state workflow for field scheduling and identify handoff losses [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-1.2.3",
+      "status": "done",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-22",
+      "engagementId": "eng-ex-4",
+      "deliverableId": "del-ex-11",
+      "statement": "Draft the recommendations memo for inventory close [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-3.1.5",
+      "status": "done",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-23",
+      "engagementId": "eng-ex-4",
+      "deliverableId": "del-ex-12",
+      "statement": "Assemble the baseline metrics workbook for inventory close [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-5.3.4",
+      "status": "open",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-24",
+      "engagementId": "eng-ex-4",
+      "deliverableId": "del-ex-12",
+      "statement": "Document the current-state workflow for inventory close and identify handoff losses [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-3.1.5",
+      "status": "open",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-25",
+      "engagementId": "eng-ex-5",
+      "deliverableId": "del-ex-13",
+      "statement": "Document the current-state workflow for vendor onboarding and identify handoff losses [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-1.2.3",
+      "status": "done",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-26",
+      "engagementId": "eng-ex-5",
+      "deliverableId": "del-ex-13",
+      "statement": "Build the implementation sequence for the lab sample routing changes [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-4.2.2",
+      "status": "done",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-27",
+      "engagementId": "eng-ex-5",
+      "deliverableId": "del-ex-14",
+      "statement": "Build the implementation sequence for the vendor onboarding changes [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-2.4.1",
+      "status": "done",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-28",
+      "engagementId": "eng-ex-5",
+      "deliverableId": "del-ex-14",
+      "statement": "Draft the recommendations memo for inventory close [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-5.3.1",
+      "status": "done",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-29",
+      "engagementId": "eng-ex-5",
+      "deliverableId": "del-ex-15",
+      "statement": "Assemble the baseline metrics workbook for vendor onboarding [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-5.3.4",
+      "status": "done",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-30",
+      "engagementId": "eng-ex-5",
+      "deliverableId": "del-ex-15",
+      "statement": "Document the current-state workflow for field scheduling and identify handoff losses [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-2.4.1",
+      "status": "done",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-31",
+      "engagementId": "eng-ex-5",
+      "deliverableId": "del-ex-16",
+      "statement": "Interview process owners in lab sample routing and code the findings [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-4.2.2",
+      "status": "open",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-32",
+      "engagementId": "eng-ex-5",
+      "deliverableId": "del-ex-16",
+      "statement": "Document the current-state workflow for inventory close and identify handoff losses [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-1.2.3",
+      "status": "open",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-33",
+      "engagementId": "eng-ex-6",
+      "deliverableId": "del-ex-17",
+      "statement": "Interview process owners in field scheduling and code the findings [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-4.2.2",
+      "status": "done",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-34",
+      "engagementId": "eng-ex-6",
+      "deliverableId": "del-ex-17",
+      "statement": "Document the current-state workflow for vendor onboarding and identify handoff losses [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-1.2.3",
+      "status": "done",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-35",
+      "engagementId": "eng-ex-6",
+      "deliverableId": "del-ex-18",
+      "statement": "Document the current-state workflow for inventory close and identify handoff losses [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-1.2.3",
+      "status": "done",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "task-ex-36",
+      "engagementId": "eng-ex-6",
+      "deliverableId": "del-ex-18",
+      "statement": "Verify post-change metrics for claims handling against the baseline [synthetic statement]",
+      "onetTypingAnchor": "13-1111.00",
+      "processId": "PCF-EX-4.2.2",
+      "status": "done",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ],
+  "processes": [
+    {
+      "id": "PCF-EX-1.2.3",
+      "name": "Assess current-state operating model [synthetic process id]",
+      "grain": "apqc-process",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "PCF-EX-2.4.1",
+      "name": "Define future-state process design [synthetic process id]",
+      "grain": "apqc-process",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "PCF-EX-3.1.5",
+      "name": "Plan and sequence implementation [synthetic process id]",
+      "grain": "apqc-process",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "PCF-EX-4.2.2",
+      "name": "Measure and verify outcomes [synthetic process id]",
+      "grain": "apqc-process",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "PCF-EX-5.3.1",
+      "name": "Design and run research protocol [synthetic process id]",
+      "grain": "apqc-process",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    },
+    {
+      "id": "PCF-EX-5.3.4",
+      "name": "Compile and peer-review findings [synthetic process id]",
+      "grain": "apqc-process",
+      "example": true,
+      "demo_notice": "Synthetic example data — mechanically generated sandbox seed for the consulting-research substrate; not real client, firm, or engagement data. Retention: sandbox seed is versioned with the manifest and may be regenerated at any deploy."
+    }
+  ]
+}

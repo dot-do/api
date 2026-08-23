@@ -1,0 +1,42 @@
+{
+  "$comment": "Stratum-B G4 projection config (template spec §2). GAP register row: no brand/domain is held for NAICS 5416-5417, so this projection runs under a placeholder org.ai address per spec §0; the brand fields attach when a name is ruled. Nothing here implies acquisition of any name. Repo config, not a served surface.",
+  "substrate": "consulting-research",
+  "brand": null,
+  "brandStatus": "GAP — no api-grammar or category-completing name held (register row, 2026-08-23); placeholder address consulting-research.org.ai until ruled",
+  "domains": ["consulting-research.org.ai (placeholder)"],
+  "icp": {
+    "companyTypes": ["consulting firm", "research lab", "agency of record"],
+    "jobTypes": ["management analyst", "researcher", "engagement manager"]
+  },
+  "personas": [
+    { "id": "operator", "description": "engagement manager / partner at a professional-services firm" },
+    { "id": "developer", "description": "developer at a professional-services systems vendor" },
+    { "id": "agent", "description": "autonomous agent purchasing completed, verified analysis deliverables" }
+  ],
+  "motion": "B2A",
+  "offer": [
+    { "shape": "anon-sandbox", "price": "free", "gate": "none — keyless; auto-minted ephemeral workspace, disclosed retention" },
+    { "shape": "earned-credits", "price": "earned", "gate": "proof-of-work ladder rung 1 — STUB: declared in the 402 alternatives; credit ledger not yet live" },
+    { "shape": "human-claimed", "price": "free/earned", "gate": "rung 2 — STUB: claim door not yet live" },
+    { "shape": "paid", "price": "metered (402, machine identity)", "gate": "rung 3 — STUB: test-mode, no live settlement" }
+  ],
+  "pricing": {
+    "pattern": "402-metered-per-call + per-outcome on deliverable orders",
+    "rateCardRef": "/rates",
+    "binding": false
+  },
+  "positioning": "typed engagement records and verified deliverables for consulting & scientific services — agent-default claim WITHHELD (worthiness bar §4.6 not attempted: no ruled domain, no hosted verdict)",
+  "mdx": null,
+  "experiment": {
+    "pattern": "402-metered",
+    "motion": "B2A",
+    "shapes": ["anon-sandbox", "earned-credits", "human-claimed", "paid"],
+    "rateCardRef": "/rates",
+    "startDate": "2026-08-23",
+    "hypothesis": "wave-zero registration only — sandbox-floor traffic shape on a placeholder address; pattern comparison begins when a G4 name attaches"
+  },
+  "counterpartBrandGap": {
+    "recorded": true,
+    "reason": "the row's long-run demand shape is agents buying verified deliverables on behalf of principals who do not know what an API is (B2A2B); no human-vocabulary counterpart name exists in this cell — the register row itself is a GAP. Surfaced per spec §9.3; naming is #3's job, never this build's."
+  }
+}
