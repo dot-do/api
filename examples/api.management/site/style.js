@@ -410,6 +410,7 @@ export function renderPage({ title, description, path, body, script = "" }) {
 <title>${escChrome(title)}</title>
 <meta name="description" content="${escChrome(description)}">
 <meta name="color-scheme" content="light dark">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#e9ecea">
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1b2124">
 <meta property="og:type" content="website">
