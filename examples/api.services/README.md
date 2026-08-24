@@ -81,7 +81,7 @@ npx wrangler dev
 | 13 | Seams emitted with the full tag set + identity class + referral | pass (tested) |
 | 14 | Conneg matrix spot-checked; demo data labeled | pass (tested) |
 | 15 | No ghost surfaces | pass (every card-declared GET answers — tested) |
-| 16 | Face registered in the rail ledger (faces-payable/week denominator) | **registered** via LEDGER.md door A — row in packages/rail-ledger/registry/faces.json @ draft/rail-ledger-v1 (studio #9 alignment pass 2026-08-23); readout https://ledger.apis.ax/readouts/faces-payable (service built, deploy pending Batch-S) |
+| 16 | Face registered in the rail ledger (faces-payable/week denominator) | **registered** via LEDGER.md door A — row in packages/rail-ledger/registry/faces.json @ draft/rail-ledger-v1 (studio #9 alignment pass 2026-08-23); readout https://apis.ax/account/readouts/faces-payable (service built, deploy pending Batch-S) |
 
 §9.2 (independent, post-deploy): hosted api.qa verdict, probe ladder against
 the public origin, worthiness-bar attestation — all pending deploy, which is
