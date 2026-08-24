@@ -267,12 +267,51 @@ box(15, 'no ghost surfaces: every non-templated GET in openapi answers as declar
 box(
   16,
   'face registered in the rail ledger (faces-payable/week denominator)',
-  'BLOCKED',
-  'blocked-on-rail-ledger: no ledger service or LEDGER.md on the committed draft/rail-ledger-v1 branch of ~/projects/ax; no address convention exists yet — recorded, not stubbed',
+  projection.experiment.railLedger === 'https://ledger.apis.ax/faces?face=apis.mortgage',
+  'door A (own act): registry row on ax draft/rail-ledger-v1 @ ef4d688 — {apis.mortgage, mortgage, B2A, 402-metered-per-call, test-mode}; readout recorded in the experiment config',
 )
+
+// ── supplementary (not §9.1 boxes): the carried-over waitlist register ─────
+// The cutover contract (#9): POST /waitlist semantics ported whole from the
+// pre-cutover worker — 405/413/422/503 typed refusals, 201 receipts, durable
+// write or an honest refusal, never a receipt it did not earn.
+const wlStore = new Map()
+const wlEnv = { WAITLIST: { put: async (k, v) => void wlStore.set(k, v) } }
+const wlBroken = { WAITLIST: { put: async () => { throw new Error('kv down') } } }
+const wlCall = async (init, env2) => {
+  const res = await worker.fetch(new Request(`${ORIGIN}/waitlist`, init), env2, undefined)
+  const text = await res.text()
+  let body
+  try { body = JSON.parse(text) } catch { body = text }
+  return { status: res.status, headers: res.headers, body, text }
+}
+const supp = []
+const scheck = (name, ok, detail = '') => {
+  supp.push({ name, ok })
+  console.log(`${ok ? 'PASS   ' : 'FAIL   '} [WL] ${name}${detail ? ` — ${detail}` : ''}`)
+}
+
+const wlGet = await wlCall({ method: 'GET' }, wlEnv)
+scheck('GET /waitlist → typed 405, writes-never-lists, recorded:false', wlGet.status === 405 && wlGet.body.status === 'METHOD_NOT_ALLOWED' && wlGet.body.recorded === false)
+
+const wlNoEmail = await wlCall({ method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ building: 'x' }) }, wlEnv)
+scheck('POST without email → typed 422 EMAIL_REQUIRED carrying a cure, nothing recorded', wlNoEmail.status === 422 && wlNoEmail.body.status === 'EMAIL_REQUIRED' && wlNoEmail.body.recorded === false && !!wlNoEmail.body.cure && wlStore.size === 0)
+
+const wlJson = await wlCall({ method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: 'selfcheck@example.com', building: 'selfcheck', surface: 'payoff/lien', volume: '0' }) }, wlEnv)
+const stored = wlStore.size === 1 ? JSON.parse([...wlStore.values()][0]) : null
+scheck('POST JSON → 201 receipt {recorded:true}; one durable record, property-stamped', wlJson.status === 201 && wlJson.body.recorded === true && stored?.property === 'apis.mortgage' && stored?.email === 'selfcheck@example.com')
+
+const wlForm = await wlCall({ method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: 'email=selfcheck2%40example.com&surface=doc+intelligence' }, wlEnv)
+scheck('POST form → 201 rendered HTML receipt; second durable record', wlForm.status === 201 && /^<!doctype html>/i.test(wlForm.text) && (wlForm.headers.get('content-type') || '').includes('text/html') && wlStore.size === 2)
+
+const wlDown = await wlCall({ method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: 'selfcheck@example.com' }) }, wlBroken)
+scheck('failed durable write → honest 503 STORAGE_UNAVAILABLE, recorded:false, never a receipt', wlDown.status === 503 && wlDown.body.status === 'STORAGE_UNAVAILABLE' && wlDown.body.recorded === false)
+
+scheck('browser landing carries the machine-face footer row + waitlist form', /\/\.well-known\/agents\.json/.test(homeBrowser.text) && /action="\/waitlist"/.test(homeBrowser.text) && /headless mortgage system of record/.test(homeBrowser.text))
 
 console.log = realLog
 const passed = results.filter((r) => r.state === true).length
 const failed = results.filter((r) => r.state === false)
-console.log(`\n${passed}/16 boxes pass (${results.filter((r) => r.state === 'BLOCKED').length} blocked)`)
-if (failed.length > 0) process.exit(1)
+const suppFailed = supp.filter((s) => !s.ok)
+console.log(`\n${passed}/16 boxes pass (${results.filter((r) => r.state === 'BLOCKED').length} blocked); waitlist supplement ${supp.length - suppFailed.length}/${supp.length}`)
+if (failed.length > 0 || suppFailed.length > 0) process.exit(1)

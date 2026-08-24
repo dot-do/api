@@ -4,10 +4,13 @@
  * projection = one config. Non-exclusivity is load-bearing — apis.ax and
  * data-face siblings may project the same substrate under their own configs.
  *
- * Entity-gating (the register row's own ruling): apis.mortgage is
- * deliberately plural — "entity-gated on purpose: a separate property under
- * its own paper." This projection is the machine face of the data/document
- * door only.
+ * Posture (2026-08-23 founder ruling, #9): the pre-cutover 'entity-gated,
+ * no pricing/MCP while in formation' posture is STRUCK. apis.mortgage is
+ * the headless system of record; the licensed operator (broker, lender,
+ * servicer) is the customer and brings the license. This projection is the
+ * machine face of the data/document/pipeline door; the attested ROADMAP
+ * rows (payoff/lien, eNote/eVault, doc intelligence) wait on their named
+ * events and post to the carried-over waitlist first.
  */
 
 export const projection = {
@@ -80,6 +83,11 @@ export const projection = {
     startDate: '2026-08-23',
     hypothesis:
       'a keyless MISMO/HMDA record floor with a 402-shaped paid rung converts returning agent identities to metered calls once settlement activates',
+    /** §9.1 box 16 — door-A registration (own act): one row in
+     *  packages/rail-ledger/registry/faces.json on ax draft/rail-ledger-v1
+     *  @ ef4d688 ({apis.mortgage, mortgage, B2A, 402-metered-per-call,
+     *  test-mode}); readout at the live ledger. */
+    railLedger: 'https://ledger.apis.ax/faces?face=apis.mortgage',
   },
 
   /** §5.1 B2A2B check: the row's ICP includes non-technical principals

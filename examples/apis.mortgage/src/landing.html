@@ -1,0 +1,2256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>apis.mortgage: the headless mortgage system of record. Machine face live.</title>
+<meta name="description" content="The headless mortgage system of record: loan files, market records and pipelines as typed, keyless doors, priced on a posted rate card. The licensed operator brings the license; the software holds the record. Payoff, lien and eNote rows are ROADMAP and post to the waitlist first.">
+<meta property="og:site_name" content="apis.mortgage">
+<meta property="og:title" content="Agents can’t originate a mortgage. Neither can most software. Both will reach the company that holds the file through apis.mortgage.">
+<meta property="og:description" content="The headless mortgage system of record: loan files, market records and pipelines as typed, keyless doors. The licensed operator brings the license; the software holds the record. Payoff, lien and eNote rows are ROADMAP. Waitlist open.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://apis.mortgage">
+<meta property="og:image" content="https://apis.mortgage/og.png">
+<meta property="og:image:alt" content="A register of three ROADMAP surfaces and two reserved entries under a WAITLIST stamp, above the category line payoff, lien and eNote data. Headline: Agents can’t originate a mortgage. Neither can most software. Both will reach the company that holds the file through apis.mortgage.">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="canonical" href="https://apis.mortgage">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Piazzolla:opsz,wght@8..30,400;8..30,500;8..30,600&family=Sometype+Mono&display=swap" rel="stylesheet">
+<link rel="alternate" type="text/plain" href="/llms.txt" title="llms.txt">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebSite","name":"apis.mortgage","url":"https://apis.mortgage","description":"The headless mortgage system of record: loan files, market records and pipelines as typed, keyless doors, priced on a posted rate card. The licensed operator brings the license; the software holds the record. Payoff, lien and eNote rows are ROADMAP and post to the waitlist first."}
+</script>
+<style>
+/* ============================================================
+   apis.mortgage · THE RESERVED MARGIN (DESIGN.md Part IV)
+
+   TWO MATERIALS, AND THE PAGE IS THE SCENE PART IV WRITES.
+
+   Ground  = the recorder's counter, limestone, warm buff stone.
+   Figure  = the unexecuted security instrument, warm near-white
+             stock LYING ON the counter: its own edge, the leaf
+             beneath it, and the cast that edge throws.
+   Ruling  = drawn in the stock's own hue, so every rule on the
+             instrument is the same material as the instrument.
+   Seal    = oxblood, and oxblood only where DESIGN.md puts it,
+             which makes it the page's ONE chromatic event.
+
+   M56 (2026-08-02) SUPERSEDED M14 and M38 and built the counter.
+   M57 (2026-08-02, same file, on the second design review) does
+   two things M56 left undone.
+
+   ONE HUE FAMILY, NOT THREE. M56 warmed the stock and left every
+   rule and the counter itself on hue 250, so the page was warm
+   paper carrying a cool ruling on a cool desk: measured by area,
+   the navy rule ink covered 0.49% of the page against oxblood's
+   0.22%, and the accent was outweighed 2:1 by a hue nobody had
+   chosen. Paper, ruling and counter are now one family (hue 40 to
+   45) and oxblood is the only departure from it. Limestone is a
+   warm stone; the cool desk was the default, not the decision.
+
+   FIVE STOCKS, NOT THREE, AND FOUR OF THEM INSIDE THE SHEET.
+   M56's whole in-page range was 0.965 -> 0.910 -> 0.893: three
+   near-identical creams, so the reading column was ONE flat
+   surface for its entire 6,000px and the only real value step on
+   the page was the desk OUTSIDE the instrument. The sheet now
+   carries recessed stock under the objects that are instruments
+   (the two schedules, the docket, the register's own bands) and a
+   distinct ground under the operative provision, at a measured
+   spread of 0.107 OKLCH between the base sheet and --sheet-4 and
+   0.150 down to --sheet-5.
+   ============================================================ */
+:root{
+  color-scheme: light;
+
+  /* ---- MATERIAL 1 · the counter (limestone, warm buff, hue 45) ---- */
+  --counter:oklch(0.700 0.014 45);        /* rgb(166,156,151) relLum 0.341 */
+  --counter-cast:oklch(0.530 0.020 45);   /* rgb(118,104,98)  relLum 0.147 */
+
+  /* ---- MATERIAL 2 · the instrument (warm stock, hue 40), FIVE STOCKS.
+     Every one of them is a surface a reader can see the edge of, and each
+     names the class of object that lies on it:
+       --sheet    the sheet itself, and the face of anything laid ON it
+       --sheet-2  a BAND that runs the sheet's width: the reserved margin,
+                  the operative provision's ground, the footer
+       --sheet-3  a RECESSED INSTRUMENT quoted inside the document: the two
+                  schedules' bodies, the docket's message, the register's
+                  own annotation bands
+       --sheet-4  the HEAD of a recessed instrument, and the two bounded
+                  prose fields: table head bands, the gate schedule, the
+                  honest limit, the register's recording foot
+       --sheet-5  the deepest stock on the sheet and the smallest by area:
+                  the docket's envelope band. Mono chrome only: no primary
+                  text, no link and no hairline is ever drawn on it.
+
+     AND THE FIFTH STOCK'S BAN IS A PRICE, WITH THE NUMBERS THAT SET IT (M62.2).
+     --sheet-5 is the one ground on this sheet three of its own ink pairings
+     cannot stand on: --ink measures 10.43 against this file's 12 floor, --ink-2
+     6.45 against 7, --seal 6.12 against 6.5, and --rule-hair 1.15, which is not
+     a hairline but an absence. What may stand on it is MONO CHROME at the 4.5
+     floor, which is what the envelope band carries at 6.45. The ground is not
+     lifted to clear the three, because clearing them puts it at 0.858, which IS
+     --sheet-4: the fifth stock would stop existing and the envelope band would
+     lose the one value step that makes it read as an envelope. The ladder is the
+     design and the ban is what the bottom rung costs. It had been written here
+     and in BUILD-SPEC-mortgage.md since M57 and read by nothing; scripts/check.mjs
+     §11(m2) now fails the build if this ground spreads past the envelope band or
+     if any of the three is ever drawn on it. ---- */
+  --sheet:oklch(0.965 0.006 40);          /* rgb(247,242,240) relLum 0.897 */
+  --sheet-2:oklch(0.928 0.010 40);        /* rgb(238,229,226) relLum 0.797 */
+  --sheet-3:oklch(0.886 0.014 40);        /* rgb(226,215,211) relLum 0.693 */
+  --sheet-4:oklch(0.858 0.017 40);        /* rgb(219,205,200) relLum 0.628 */
+  --sheet-5:oklch(0.815 0.020 40);        /* rgb(207,191,185) relLum 0.538 */
+  --sheet-cast:oklch(0.700 0.024 40);     /* the cast inside the warm world  */
+
+  /* ---- THE RULE HIERARCHY · three weights, three jobs, and no fourth.
+     W3  --rule-frame 2px   THE INSTRUMENT FRAME. An object that is itself
+                            an instrument: the register, the recording stamp
+                            box, the docket, §3's operative rules, the two
+                            tables, the footer's opening rule.
+     W2  --rule-mid   1px   THE FIELD DIVISION. A division INSIDE a framed
+                            object, the reserved margin's own edge, every
+                            section's closing rule, the two bounded fields.
+     W1  --rule-hair  1px   THE HAIRLINE. Every recording line, every table
+                            body row, every schedule row. The quietest mark
+                            on the sheet, and the one the blanks are drawn in.
+     A rule that cannot be named in one of those three sentences does not
+     get drawn. This is the named deliverable of the 2026-08-02 pass.
+     M57: all three are on the stock's own hue. A hairline at 0.845 was also
+     invisible on recessed stock, so the weights are re-set against the
+     DEEPEST ground each is drawn on rather than against the base sheet. ---- */
+  --rule-hair:oklch(0.775 0.017 40);
+  --rule-mid:oklch(0.635 0.024 40);
+  --rule-frame:oklch(0.415 0.030 40);
+
+  /* ---- THE INK · warm document ink, and the sheet's only text.
+     M57 re-sets all three against --sheet-4, the deepest ground any of them
+     is set on, rather than against the base sheet: primary 12.04, body 7.45,
+     mono 5.57, all measured as real sRGB ratios. ---- */
+  --ink:oklch(0.188 0.027 35);
+  --ink-2:oklch(0.348 0.030 35);
+  --ink-3:oklch(0.418 0.026 35);
+
+  /* ---- THE SEAL · oxblood, hue 25 (Part IV stamp theology) ---- */
+  --seal:oklch(0.372 0.115 25);
+  --seal-deep:oklch(0.302 0.100 25);
+  --seal-ring:oklch(0.445 0.120 25);
+  --paper-on-seal:oklch(0.965 0.010 40);
+
+  --serif:'Piazzolla',Charter,'Bitstream Charter',Georgia,serif;
+  --mono:'Sometype Mono',ui-monospace,'SF Mono',Menlo,monospace;
+
+  /* M56: THE opsz AXIS IS WORKED. Piazzolla runs 8..30 and the sheet had been
+     setting every tier at 28, so the body was a display cut at reading size and
+     the headline was a reading cut at display size. The axis now does the register
+     work Part IV's type table says it does: 30 at the headline (fine joins, high
+     contrast, tight fit), 26 at section heads, 20 at the two display fields, 11 in
+     body prose and 9 in small serif, where the cut opens up and thickens. */
+  --text-body:clamp(1.0625rem,1rem + 0.3vw,1.1875rem);
+  --text-clause:clamp(1.35rem,1.25rem + 0.6vw,1.75rem);
+  --text-h2:clamp(1.75rem,1.6rem + 1.15vw,2.6rem);
+  --text-h1:clamp(2.05rem,1.2rem + 2.75vw,3.5rem);
+  --text-mono:clamp(0.8125rem,0.79rem + 0.15vw,0.9rem);
+  --text-small:0.875rem;
+  --text-fine:0.8125rem;
+
+  --space-section:clamp(4.5rem,3rem + 6vw,7.5rem);
+  --space-block:clamp(1.75rem,1.4rem + 1.5vw,3rem);
+  --space-row:clamp(0.9rem,0.8rem + 0.5vw,1.35rem);
+
+  --quart:cubic-bezier(0.25,1,0.5,1);
+  --expo:cubic-bezier(0.16,1,0.3,1);
+
+  /* THE SHEET ON THE COUNTER. The instrument does not fill the window: it is a
+     sheet of a size, lying on a counter that is larger than it. `--reveal` is how
+     much counter shows on each side, and it is never zero, at any width. */
+  /* The instrument is a sheet of a size, and the counter is larger than it. The
+     sheet stops growing at 76rem, so past that width it is the COUNTER that
+     grows, which is what a document on a counter does when you step back from it.
+     `--edge` is the offset of the leaf under it and of the cast that leaf throws;
+     both are always smaller than `--reveal`, so the stack never reaches the
+     window's own edge at any width. */
+  --sheet-max:76rem;
+  /* M57 opens the phone crop. At 390 the reveal measured 8px and the edge 3px,
+     so the scene the whole material argument rests on was a hairline nobody
+     could see on the device most readers arrive on. */
+  --reveal:clamp(0.85rem,3vw,1.25rem);
+  --edge:clamp(4px,0.7vw,6px);
+  --margin-w:0rem;
+  --colgap:clamp(2rem,3vw,3rem);
+  --gutter:clamp(1rem,3.4vw,2.75rem);
+
+  /* THE TERMINATION LAW (M37, unchanged in substance). A rule ends where the
+     thing it rules ends, and there are two kinds of thing on this sheet: the
+     DOCUMENT's fields, set at --measure (body) or --measure-clause (display),
+     and the SHEET's own furniture, which runs the instrument's full width and
+     terminates on the reserved margin. */
+  --measure:38rem;
+  --measure-clause:50rem;
+  --rule-reach:0px;
+  --hero-reach:0px;
+
+  /* M59: THE REGISTER IS A FIXED MEASURE, NOT A PROPORTIONAL REMAINDER. Through
+     M58 the object's inline insets inside the fixed 272px margin were authored as
+     `clamp(1.1rem,1.9vw,1.9rem)`, so the most produced object on the sheet got
+     NARROWER as the window got wider: 235px at 1000, 229 at 1280, 226 at 1440,
+     223 at 1600, and its inner measure with it (154.4 -> 143.4). "Payoff / lien
+     data" measures 146.2px in this face at this size, so the register's own
+     shortest surface name held one line at 1280 and broke at 1600, which put the
+     worst line breaks on the page inside the one object whose argument is ruling
+     discipline. The insets are a constant 24px now and the object is 224px at
+     every width from 1000 up; the entry column and the field pad are set so the
+     inner measure lands at 152px, which holds every surface name this register
+     carries with 6px to spare and does not move. */
+  /* the banded grounds' own inline padding, declared once because the schedules
+     inside them are hung off the band's outer edge and have to give it back */
+  --band-pad:clamp(1rem,1.6vw,1.5rem);
+  --reg-pad:0.55rem;
+  /* M58: the entry column is sized to the tab that labels it. Through M57 the tab
+     was 234px wide over a 38px number column, so its right edge fell mid-cell
+     inside the Surface column and aligned to nothing, in the one object whose
+     whole argument is tab-stop discipline. The column and its label are one
+     measure now, and the tab's right edge IS the column division.
+
+     M60 RE-SIZES IT TO WHAT THE COLUMN ACTUALLY CARRIES. The entry column is the
+     register's own hand: the entry's numeral and the entry's endorsement, on one
+     left tab stop. It is ruled to the stamp component at its ratified 0.72rem
+     (76.2px measured) plus the field pad on both sides, and the head that labels
+     it (`ENTRY`, 39.1px at the micro tier) sets inside it with room. */
+  --entry-col:5.5rem;
+  --reg-inset:12px;
+  --reg-head-h:2.2rem;
+
+  /* THE REGISTER'S OWN SCALE (M60). Three type registers inside one 248px object,
+     and the scale that separates them is declared here rather than inlined:
+       --t-reg-micro  the MACHINE tier: field keys and the two column heads, mono,
+                      caps, +0.12em, --ink-3. The recorder's printed rubric.
+       --t-reg-name   the DISPLAY tier: entry names, Piazzolla 500 at opsz 20,
+                      --ink. What was presented for recording.
+     The third register is the object's PROSE tier (--text-fine mono, sentence
+     case, --ink-3): the specimen caption, the reserved-entry note, the recording
+     foot's key and the entry numerals. Measured ratio across the object's scale,
+     10.88px to 16.80px: 1.544. */
+  --t-reg-micro:0.68rem;
+  --t-reg-name:1.05rem;
+}
+@media(min-width:1000px){
+  :root{
+    /* M56: THE SOVEREIGN MARGIN RETURNS TO ITS RATIFIED WIDTH. DESIGN.md Part IV
+       Layout binds `grid-template-columns: minmax(0,1fr) 17rem` at 1000px and
+       above; the sheet had been serving clamp(6.5rem,8.5vw,9.5rem), which is 40
+       to 56 per cent of it, and a margin that narrow cannot hold the one composed
+       object the Part gives it, which is why the register had migrated into the
+       hero's own column and the margin had been left carrying section furniture
+       instead. 17rem, and the register is in it. */
+    --margin-w:17rem;
+    /* the counter shows generously once there is a desk to see: a phone is a
+       close crop of the scene and a laptop is the step back from it. */
+    --reveal:clamp(1.75rem,4vw,4.5rem);
+    /* M58: THE READING COLUMN'S RIGHT EDGE IS THE MARGIN'S RULE, so a section
+       rule that stops at 0 stops ON the reserved margin. Every closing rule on
+       the sheet, both schedules and §3's recital band therefore terminate on one
+       vertical (content width minus 17rem), the reader never meets a rule that
+       ends in the middle of nothing, and neither reach token has any work left
+       to do. They are kept at zero rather than deleted because `.content>section
+       ::after` and the hero's override are both authored in terms of them. */
+    --rule-reach:0px;
+    --hero-reach:0px;
+  }
+}
+/* THE LAPTOP BAND (M47, M52, re-set by M56 for the ratified margin). Between 1000
+   and 1199 the reserved margin has taken 17rem and the reading column is the
+   narrowest it ever gets, so the headline gives back the width it cannot use.
+   Measured at 1024x768, the commonest laptop: this is the difference between the
+   fold's primary action clearing the fold and standing 200 pixels under it. */
+@media(min-width:1000px) and (max-width:1199px){
+  :root{ --text-h1:clamp(1.95rem,3.4vw,2.6rem); }
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0}
+html{-webkit-text-size-adjust:100%;background:var(--counter)}
+body{background:var(--counter);color:var(--ink);
+  font:400 var(--text-body)/1.62 var(--serif);
+  font-variation-settings:'opsz' 11;
+  font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;
+  min-height:100vh;overflow-x:clip}
+/* `clip` and not `hidden`: `hidden` would make the body a scroll container and
+   the running head would stand inside it instead of at the viewport top. */
+
+/* ---- THE INSTRUMENT, LYING ON THE COUNTER.
+        Outward from the document's own face the stack is:
+          1px --rule-frame   the sheet's cut edge
+          5px --sheet-3      the leaf beneath it, uncovered at foot and fore-edge
+          5px --counter-cast the cast that edge throws on the stone
+              --counter      the counter
+        No shadow, no blur, no gradient: four flat tones and two offsets, which
+        is what a sheet on a counter actually looks like under even light. ---- */
+.sheet{position:relative;background:var(--sheet);
+  width:min(var(--sheet-max),100% - var(--reveal) * 2);
+  margin-inline:auto;margin-block:0 var(--reveal);
+  border:1px solid var(--rule-frame);
+  min-height:100vh;display:flex;flex-direction:column}
+.sheet::before{content:"";position:absolute;z-index:-1;
+  top:var(--edge);left:var(--edge);
+  right:calc(-1 * var(--edge));bottom:calc(-1 * var(--edge));
+  background:var(--sheet-3);border:1px solid var(--rule-mid)}
+.sheet::after{content:"";position:absolute;z-index:-2;
+  top:calc(var(--edge) * 2);left:calc(var(--edge) * 2);
+  right:calc(-2 * var(--edge));bottom:calc(-2 * var(--edge));
+  background:var(--counter-cast)}
+
+h1{font:600 var(--text-h1)/1.015 var(--serif);
+  font-variation-settings:'opsz' 30;letter-spacing:-0.019em}
+h2{font:600 var(--text-h2)/1.11 var(--serif);
+  font-variation-settings:'opsz' 26;letter-spacing:-0.012em;
+  margin-bottom:var(--space-block);max-width:20ch}
+p{margin-bottom:var(--space-row)}
+p:last-child{margin-bottom:0}
+code{font-family:var(--mono);font-size:0.92em}
+a{color:var(--seal);text-decoration:underline;text-underline-offset:0.18em;
+  text-decoration-thickness:1px;text-decoration-color:var(--seal-deep);
+  transition:text-decoration-thickness 150ms var(--quart),color 150ms var(--quart)}
+a:hover{color:var(--seal-deep);text-decoration-thickness:2px}
+:focus-visible{outline:2px solid var(--seal-ring);outline-offset:2px}
+::selection{background:var(--sheet-3)}
+
+/* M56: THE HEADLINE CARRIES ONE MARKED TERM. The estate reference this pass is
+   measured against sets one word of its headline in the accent with a rule under
+   it, and the sheet had no such mark anywhere: 129 characters of one weight, one
+   colour and one size, which is a paragraph in a large size and not a display
+   line. The term is `reach`, and it is not a designer's pick: it is the single
+   word docs/copy/mortgage-copy.md MR-E3 is written about, re-ruled once by MR-F2
+   for tense and once by MR-G3 for landing, and named there as the thing this
+   property actually offers ("the property is the address, not the holder", MR-D1).
+   The ink is recorded as the fifth authorized placement of --seal in
+   BUILD-SPEC-mortgage.md M56, with its ground; the four in DESIGN.md Part IV are
+   otherwise untouched, and the coverage cost is one word. */
+h1 .mark{color:var(--seal);text-decoration:underline;
+  text-decoration-thickness:2px;text-decoration-color:var(--seal);
+  text-underline-offset:0.1em}
+
+/* ---- the running head: the instrument's standing line, and the machine door.
+        Four cells at every width (copy doc MR-E1, MR-E2, MR-E8): the property
+        name, the WAITLIST stamp, /llms.txt and the act. Below 1000px it sets as
+        two flex rows so all four hold, and the door and the status artifact both
+        sit inside the first forty pixels. ---- */
+.runhead{border-bottom:1px solid var(--rule-mid);background:var(--sheet);
+  flex:none;position:sticky;top:0;z-index:6}
+:target{scroll-margin-block-start:6.5rem}
+h2{scroll-margin-block-start:6.5rem}
+@media(min-width:1000px){
+  :target{scroll-margin-block-start:5rem}
+  h2{scroll-margin-block-start:5rem}
+}
+/* M58 AUTHORS THE PHONE MASTHEAD INSTEAD OF LETTING IT WRAP. Through M57 this row
+   was `flex-wrap` plus a zero-height `::after` break and two `margin-inline-start:
+   auto` pushes, and what it produced at 390 was row one pairing `apis.mortgage`
+   with `/llms.txt` and row two pairing `payoff, lien and eNote data` with `Join the
+   waitlist`: the two halves of one identity phrase on different lines beside two
+   unrelated items, which reads as a wrap accident and not as a two-line runhead.
+   The row is an explicit grid now and every cell is placed by hand:
+
+     row 1   apis.mortgage · WAITLIST                          /llms.txt
+     row 2   payoff, lien and eNote data
+     row 3                                             Join the waitlist
+
+   The identity phrase is whole on one row and it is nobody's neighbour. The
+   machine door stands in row one because DESIGN.md Part I §3.2 binds it to the
+   first forty pixels and scripts/check-viewport.mjs measures it there, not
+   because the eyebrow ran out of room; the same law holds the WAITLIST stamp
+   (stampEdge). From 760px up the two links group on one terminus in row one and
+   the masthead is two rows. */
+.runhead-inner{padding:0.6rem var(--gutter);
+  font:400 var(--text-fine) var(--mono);color:var(--ink-3);
+  display:grid;grid-template-columns:auto auto minmax(0,1fr);
+  column-gap:0.6rem;row-gap:0.28rem;align-items:baseline}
+.runhead-inner p{margin:0}
+.runhead-inner .eyebrow{display:contents}
+.runhead-inner .self{color:var(--ink);grid-column:1;grid-row:1}
+.runhead-inner .stat{grid-column:2;grid-row:1;white-space:nowrap}
+.runhead-inner .door{grid-column:3;grid-row:1;justify-self:end;white-space:nowrap}
+.runhead-inner .cat{grid-column:1 / -1;grid-row:2;min-width:0}
+.runhead-inner .rh-act{grid-column:1 / -1;grid-row:3;justify-self:end;white-space:nowrap}
+.runhead-inner .rh-act a{color:var(--seal)}
+/* M59 · THE PHONE MASTHEAD IS TWO ROWS AND TWO EDGES, NOT THREE RAGGED ONES.
+   M58 authored the row as an explicit grid and put the act alone on row three:
+
+     row 1   apis.mortgage · WAITLIST                          /llms.txt
+     row 2   payoff, lien and eNote data
+     row 3                                             Join the waitlist
+
+   Measured at 390, the two right-aligned cells landed on the same terminus but on
+   two different vertical rhythms with the category line stranded between them, and
+   the property's PRIMARY ACT sat alone under a utility link, which is the one
+   ranking this masthead must not state. The review's own cure was to drop
+   `/llms.txt` at the narrow breakpoint; that cure is unavailable and the ground is
+   not preference. DESIGN.md Part I §3.2 binds the machine door to the first forty
+   pixels at every width, scripts/check.mjs §11(l2) fails the build if the cell is
+   ever `display:none`, and scripts/check-viewport.mjs measures its edge from 320
+   up. A machine door is not removed to make room for anything.
+
+   So the ROWS are cut instead of the door:
+
+     row 1   apis.mortgage · WAITLIST                          /llms.txt
+     row 2   payoff, lien and eNote data                Join the waitlist
+
+   Two rows, one right terminus, and the two links stand on ADJACENT lines instead
+   of three lines apart with a stranded left half between them. The act cannot take
+   row one and the reason is arithmetic, not taste: at 390 the identity pair, the
+   stamp and the door measure 241px of a 362px content row, and the act is 118, so
+   a four-cell row one overflows at every phone width. What the act takes instead
+   is rank on the row it does hold: it is the only mark in the strip drawn at the
+   2px underline weight, against the door's hairline, which is the same one-step
+   ranking MR-G8 gave the wordmark over the slots beside it. Below 340 the act
+   returns to a row of its own, because row one cannot hold the identity pair, the
+   stamp and the door inside 292 pixels of content width, and an overflowing
+   masthead is worse than a third row. */
+@media(min-width:340px) and (max-width:759px){
+  .runhead-inner{grid-template-columns:auto minmax(0,1fr) auto}
+  .runhead-inner .stat{grid-column:2;grid-row:1;justify-self:start}
+  .runhead-inner .door{grid-column:3;grid-row:1;justify-self:end}
+  .runhead-inner .cat{grid-column:1 / 3;grid-row:2}
+  .runhead-inner .rh-act{grid-column:3;grid-row:2;justify-self:end}
+}
+.runhead-inner .rh-act a{text-decoration-thickness:2px}
+/* the two links take one terminus as soon as one row can hold the identity pair
+   and both of them: a machine door and a human act are one class of cell, and a
+   rule divides them the same way the desktop head's own door cell is divided. */
+@media(min-width:760px){
+  .runhead-inner{grid-template-columns:auto auto minmax(0,1fr) auto}
+  /* act then door, in that order at every width from 760 up, which is the order
+     the desktop head takes at 1200 where the door's cell IS the reserved
+     margin's cell. A machine door that changes places with the human act at one
+     breakpoint is a strip that reflows for no reason. */
+  .runhead-inner .rh-act{grid-column:3;grid-row:1;justify-self:end}
+  .runhead-inner .door{grid-column:4;
+    border-inline-start:1px solid var(--rule-mid);padding-inline-start:0.9rem}
+}
+/* A MACHINE DOOR IS A TAP TARGET. 18px in the head strip, which is the stated
+   exception the hub and the rate card take, because Part I §3.2 puts this row
+   inside forty pixels and MR-E1 measured the door at y13-29. */
+.runhead-inner .door a{display:inline-block;padding-block:1px;line-height:16px}
+.runhead-inner .stamp{vertical-align:baseline}
+/* MR-E2: every separator is suppressed at the widths where its slot takes its own
+   row, so no line begins or ends on a bare rule dot. */
+.runhead-inner .eyebrow .sep{display:none}
+/* MR-G4: one category string, one width. It renders whole at every width. */
+.runhead-inner .eyebrow .cat-long{display:inline}
+/* MR-G8: the wordmark takes a weight and a size step, so the three slots stop
+   reading as a breadcrumb trail whose first crumb is the brand. */
+.runhead-inner .self{font-weight:500;font-size:1.08em;letter-spacing:0.005em}
+/* M56: THE MASTHEAD KEEPS THE TWO-ROW SET UNTIL 1200. With the reserved margin at
+   its ratified 17rem the eyebrow's own cell in the desktop grid is ~456px at
+   1024, and the three slots wrap there, which opened row two on a bare leading
+   rule dot: verbatim the defect MR-E2 was authored against. Below 1200 the head
+   is two flex rows and every separator is suppressed, so a row edge divides the
+   slots that a rule dot divided on one line, and the door and the status artifact
+   both hold the first forty pixels. */
+@media(min-width:1200px){
+  .runhead-inner{display:grid;font-size:var(--text-small);
+    grid-template-columns:minmax(0,1fr) auto var(--margin-w);
+    column-gap:0;align-items:baseline;
+    padding-inline:var(--gutter) 0}
+  .runhead-inner .eyebrow{display:block;grid-column:1;grid-row:1}
+  .runhead-inner .eyebrow .sep{display:inline}
+  .runhead-inner .rh-act{grid-column:2;grid-row:1;justify-self:end;
+    border-inline-start:0;padding-inline:0 var(--colgap)}
+  /* the door's cell IS the reserved margin's cell, so the sheet's first line and
+     the sheet's own column division land on one vertical. */
+  .runhead-inner .door{grid-column:3;grid-row:1;justify-self:start;
+    padding-inline-start:1.15rem;
+    border-inline-start:1px solid var(--rule-mid)}
+  .runhead-inner .stamp{margin-inline-start:0.15rem}
+}
+
+/* ============================================================
+   THE SOVEREIGN MARGIN: the instrument left, the reserved margin right, and the
+   margin runs the whole height of the sheet.
+
+   M58 (2026-08-02, third design review) RESTORES THE FULL-HEIGHT COLUMN AND
+   SUPERSEDES M57.3 IN FULL. M57's own note is kept below because it is the
+   argument this amendment answers.
+
+   What M57 shipped was not a margin. `.margin` spanned y44 to y1122 of a 6,575px
+   scroll (17%), was not sticky, and terminated as a flat-edged tinted rectangle
+   with no closing mark; for the other 83% of the document there was no margin, no
+   vertical rule and no register, and the right 272px of the sheet was blank paper.
+   DESIGN.md Part IV Layout is not ambiguous about this: "the right 17rem, FULL
+   PAGE HEIGHT, separated by one 1px rule on its left, filled --stone-1,
+   TERMINATING EXACTLY INTO THE FOOTER BAND at every breakpoint (this join is a
+   ship gate: if it breaks, the signature reads as a bug)". A column that runs out
+   at 17% is the ship gate breaking.
+
+   THE ONE-OBJECT LAW IS UNTOUCHED AND SO IS M57'S DIAGNOSIS. Part IV gives the
+   margin exactly one composed object and this build still gives it exactly one,
+   the register, near the top and baseline-set against the H1; below it the margin
+   is empty for the entire scroll, which is the sentence immediately after the
+   one-object clause and is the whole point of a reserved margin. M57 was right
+   that an unexplained tint band is Rejection 2, and the cure it chose (cut the
+   column) was the wrong half: what makes a reserved margin read as reserved is
+   that it is BOUNDED and TERMINATED, not that it is short. So the band is drawn
+   once, as a single rule-led column from the runhead's own divider to the footer's
+   opening rule, it is the same vertical the masthead's machine-door cell already
+   stands on, and it ends on a 2px instrument rule rather than in mid-air. Nothing
+   is added inside it: no folio marks, no section numbers, no clause keys, no
+   watermark. The register never animates and the column never becomes sticky;
+   emptiness that moves is decoration, and a bar that reflows on scroll would be
+   the loudest motion this page could ship.
+
+   AND THE COLUMN GAP IS CLOSED, WHICH IS WHAT GIVES THE SHEET ONE RIGHT EDGE.
+   With `column-gap:0` the reading column's right edge IS the margin's rule, so
+   every section rule, both schedules and §3's recital band terminate on the one
+   vertical at content width minus 17rem, the register terminates on the sheet's
+   own fore-edge with the footer and the runhead, and the page runs three right
+   edges instead of the five M57 shipped.
+
+   (M57's superseded note, kept because this amendment answers it.)
+
+   M56 made the margin a column of the WHOLE PAGE. The register filled its
+   first ~1,090px and the remaining band ran flat --sheet-2 from y1090 to
+   y6080: at 1280 that is a 272 x 5,000px strip of tint down the right of the
+   document with nothing in it, which is PRODUCT.md's named Rejection 2
+   (dead whitespace reading as an unstyled internal document) drawn in this
+   property's own ink. It was the page's largest visual liability.
+
+   THE ONE-OBJECT LAW IS NOT AMENDED AND IS NOT WORKED AROUND. DESIGN.md Part
+   IV Layout gives the reserved margin exactly one composed object and nothing
+   else, ever, and this build still gives it exactly one: the register. What
+   M57 changes is that the sheet stops RESERVING a full-height column for an
+   object that ends at the head. The margin is row one of the reading grid; the
+   register is in it, baseline-set against the headline; the band closes on a
+   W2 field rule at row one's foot, on the same vertical the hero's own closing
+   rule lands on; and every section below row one takes the sheet's whole
+   width. There is no empty band left to explain, and the second option the
+   review offered (a margin carrying a second and third composed object down
+   the scroll) is declined on the record because it needs strings this
+   property's copy doc does not author and the one-object law forbids.
+
+   The roman folio marks stay struck (M56, `.content>section::before`): they
+   were entries the CONTENT column made against its own rules, standing in the
+   margin because that was where the space was.
+   ============================================================ */
+.page{position:relative;width:100%;flex:1 0 auto;display:flex;flex-direction:column}
+.content{padding-inline:var(--gutter);min-width:0;display:flow-root;flex:1 0 auto}
+@media(min-width:1000px){
+  .content{display:grid;grid-template-columns:minmax(0,1fr) var(--margin-w);
+    column-gap:0;align-items:stretch;
+    padding-inline:var(--gutter) 0;position:relative}
+  /* THE RESERVED MARGIN, DRAWN ONCE, FLOOR TO FLOOR. The band is a single painted
+     column on the reading grid's own padding box, so it starts on the runhead's
+     divider and ends on the footer's 2px opening rule with no join to maintain
+     and nothing to fall out of alignment. It is drawn here rather than on the
+     `<aside>` because the aside holds the object and the column holds the
+     reservation, and those are two different lengths: the object ends where the
+     register ends, the reservation ends where the instrument ends. */
+  .content::after{content:"";position:absolute;z-index:0;
+    inset-block:0;inset-inline-end:0;width:var(--margin-w);
+    background:var(--sheet-2);
+    border-inline-start:1px solid var(--rule-mid)}
+  .content>*{position:relative;z-index:1}
+  /* THE HERO CLOSES WHERE THE HERO ENDS. `align-self:start` and not the grid's
+     default stretch: stretched, the section's closing rule was pushed to the
+     foot of the head band and stood ~370px below the last line it was closing,
+     which is a rule floating in space and the exact fault the termination law
+     exists to forbid (a rule ends where the thing it rules ends). */
+  .content>section.hero{grid-column:1;grid-row:1;align-self:start}
+  /* THE ASIDE IS THE OBJECT'S BERTH, NOT THE COLUMN, AND IT DOES NOT SIZE A ROW
+     OF THE READING GRID. `.content::after` above draws the reservation for the
+     whole instrument; this places the one composed object in it, top-set against
+     the headline, OUT OF THE ROW FLOW. That last part is the difference between
+     a margin and a two-column head band: an in-flow aside makes row one as deep
+     as the register, so a register deeper than the hero opens ~900px of blank
+     sheet in the reading column before §2 can start, which is the dead
+     whitespace this pass exists to remove and which M57 tried to cure by cutting
+     the column instead. Out of flow, the document reads straight down its own
+     column at its own interval and the register stands in the margin beside
+     whatever passage happens to be level with it, which is what a marginal
+     object does on a ruled instrument.
+
+     It is inset from the sheet's fore-edge by the object's own pad, because the
+     register is a LEAF LYING ON the margin and it carries a leaf and a cast of
+     its own: run its 2px frame onto the sheet's cut edge and the reader meets
+     four dark lines stacked in three pixels, which reads as a clipped object
+     rather than as a filed one. The page's three RULE termini are unchanged by
+     the inset: --measure for prose, the margin's rule for every section rule and
+     both schedules, the sheet's fore-edge for the runhead, the margin band and
+     the footer. */
+  .margin{position:absolute;top:0;inset-inline-end:0;width:var(--margin-w);
+    isolation:isolate;z-index:1;
+    padding-inline:var(--reg-inset);padding-block:0}
+  /* and every section of the document stands in the reading column, because the
+     margin is reserved for the whole height of the sheet and nothing crosses it */
+  .content>section:not(.hero){grid-column:1}
+  /* and the hero's own copy is set at the desktop's leading, not the phone's:
+     the fold has 900 pixels here and the block was tuned inside 667. */
+  .hero h1{margin-bottom:0.42em}
+  .content p.hero-sub{line-height:1.3}
+  .hero-stand{margin-block-start:1.5rem}
+  .hero-cta{margin-block-start:2.2rem}
+  .hero-cta .standing-reason{margin-block-end:1.1rem}
+  .hero-recipient{margin-block-start:1.15rem}
+}
+@media(max-width:999px){
+  /* THE MARGIN COLUMN IS DELETED, NOT SHRUNK, AND THE REGISTER IS NOT DELETED
+     WITH IT (M58, superseding M57.9 and the render half of MR-G6).
+
+     DESIGN.md Part IV Layout writes the phone build in its own sentence: "Mobile
+     < 1000px: the margin column is deleted, not shrunk. The empty register (same
+     five ruled rows, same single stamp) renders as a --stone-1 band bounded by
+     1px rules." M57 shipped the first clause and dropped the second, and what a
+     phone reader met at 390 was prose plus tinted panels with `.margin` and
+     `.register` both measuring 0x0: the property's registered exclusive
+     architecture, the reserved margin and the empty register, and its whole
+     honesty grammar, that the empty register IS the artifact, deleted on the
+     device class most readers arrive on. A hero artifact that exists only on
+     desktop is not the hero artifact.
+
+     MR-G6's own holding is satisfied rather than worked around. It rules that
+     the specimen "renders whole or not at all" and forbids a collapsed variant
+     that keeps the surface names and drops the reserved entries, the blank rules
+     and the recording foot. This is the WHOLE object: the tab, the 2px
+     instrument frame, the numbered gutter, the specimen band, every keyed and
+     unkeyed recording line, the reserved entries with their caption, and the
+     unfilled `Received for record` stamp box. What is dropped is only the
+     two-column margin GEOMETRY, which is the clause Part IV writes.
+
+     PLACEMENT. Part IV puts the band above the H1; it renders here directly
+     under the hero's own action instead, because MR-F7's fold gate binds this
+     property's primary control above a 667px viewport and a ~1,100px band over
+     the headline would put it four screens down. Directly under the act is where
+     the estate reference this pass is measured against places its own
+     instrument, and it is the first object the reader meets after the ask. */
+  .page{display:block}
+  .margin{display:block;padding:0;margin-block:var(--space-block) 0}
+  .register{margin-block-start:0;margin-block-end:0}
+}
+
+/* ============================================================
+   M59 (2026-08-02, fourth design review) · THE MARGIN CARRIES THE INSTRUMENT FOR
+   THE WHOLE SCROLL, AND IT DOES IT WITHOUT A SINGLE NEW STRING.
+
+   THE FINDING. M58's margin is exactly 272px at 1000/1280/1440/1600 and never
+   collapses, but it carried the register for 1,529px of a 6,392px document. From
+   the register's lower edge at y1573 to the footer at y6056 it was a 272px empty
+   tinted rail: 77 per cent of the scroll, three quarters of the reader's time on
+   the page, beside a reference build that keeps marginal notes running the whole
+   length of its own terminal block. A reserved margin that falls silent for three
+   quarters of a document is a wide gutter with a tint on it.
+
+   THE ONE-OBJECT LAW IS NOT AMENDED, AND NOTHING IS INVENTED TO FILL THE COLUMN.
+   DESIGN.md Part IV Layout gives the reserved margin exactly one COMPOSED OBJECT
+   and this build still gives it exactly one: the register, framed, ruled, tabbed
+   and stamped. What runs below it is not a second object. It is the document's own
+   marginal apparatus: three strings the sheet was ALREADY rendering, relocated out
+   of the reading column into the margin they annotate, plus the marginal termini
+   of the sheet's own section rules. No string is added, none is duplicated, none
+   is edited and the DOM order of every one of them is untouched, so with CSS off
+   the reader meets docs/copy/mortgage-copy.md in copy order exactly as before.
+   A29's closed chrome set is not extended, because nothing new is written.
+
+   THE FIVE RELOCATED NOTES, in copy order:
+     §2  `.closing`        the rate-card note, which was already an annotation on
+                           the schedule and is now beside it
+     §3  `h2`              "Why this door stands apart." set as the MARGINAL CLAUSE
+                           KEY Part IV's own §3 spec asks for, in the actual margin
+                           rather than in a key column carved out of the band
+     §4  `.persona-lead`   the gloss that introduces the four portraits, beside the
+                           four portraits
+     §4  `.persona-close`  the sentence that closes them, beside the block it closes
+     §5  `h2`              the family strip's key, on the same device as §3's
+
+   WHY §3 AND §5 TAKE MARGINAL KEYS AND §2 AND §4 KEEP DISPLAY HEADS. A section
+   whose whole body is ONE BOUNDED INSTRUMENT takes a key: the recital band and the
+   family strip are each one object with a gloss, and a key is what a bounded object
+   is labelled with. A section that carries the argument in prose keeps a display
+   head, which is §2 and §4. §2 could not take a key in any case, because the margin
+   beside it is occupied by the one composed object the Part reserves it for.
+
+   Each note is typographically SUBORDINATE to the register by construction: mono at
+   --text-fine, --ink-2, one hairline above, no frame, no fill, no stamp geometry.
+   The register keeps the frame, the tab, the stamps and the stock. It is the
+   produced object; these are annotations on the same instrument.
+
+   AND THE SECTION RULES TERMINATE IN THE MARGIN RATHER THAN AT IT. A closing rule
+   that REACHES the margin sends a stub across its division, so the reader meets a
+   rule in the column at every section's foot. These are RULES AND NOT MARKS:
+   `content:""`, no numeral, no letter, no alphabet. The recorder's roman folios
+   stay struck and scripts/check.mjs §11(m) still fails the build if a keyed mark
+   is ever drawn in this column again.
+   (M61 strikes M59's sentence "a rule that stops on its own field, which is §4's,
+   sends none". M60 put every section's closing rule across the margin whole, §4's
+   included, and the served bytes have drawn §4's terminus since; the sentence was
+   describing a build two passes old. It is recorded rather than deleted because a
+   comment that went stale silently is the same fault as a number that did.)
+
+   AND WHAT COUNTS AS A MARK, RULED, BECAUSE THE FILE READ BOTH WAYS. The
+   one-viewport law is measured on TEXT MARKS ONLY -- the register, the five
+   relocated notes and the two schedules' keys. A section terminus is a hairline
+   the reader crosses, not a note the reader reads, and a law about a column
+   falling silent is a law about reading matter. This is the strict reading and it
+   is the one that binds; the earlier text enumerated the termini in the apparatus
+   and then called them not-marks four sentences later, which let the same
+   measurement return two answers.
+
+   MEASURED, ON THE STRICT READING, AND ONE INTERVAL IS OVER. At 1000, 1280, 1440
+   and 1600 every interval between two text marks in this column is inside one
+   viewport EXCEPT ONE: 902, 955, 974 and 991 pixels, from `.persona-close` to §5's
+   key, against a 900px read height. It is §4's ask block, and it is a BOUNDED
+   EXCEPTION with a stated reason, a measured ceiling and a gate, not an oversight:
+
+     THE REASON. M59's cure is "no string is added, none is duplicated, none is
+     edited". Every string standing beside that interval is held in place by a copy
+     ruling that predates this one. MR-C4 sets HONEST LIMIT at body size inside its
+     own quiet rules as §4's second paragraph and gives the display tier to the
+     ask; MR-C4 again fixes the standing reason at body size in the document serif
+     as the one sentence on the page that gives a reason to act; MR-F5 puts the
+     recipient line AT the control, because a `mailto:` whose only explanation
+     stood 250 pixels away was the defect MR-F5 exists to close, and 250 pixels
+     away is exactly where this margin is. So the four candidates are the four
+     strings that may not move, and the alternative -- writing a note for the
+     column -- is the one thing M59 forbids outright.
+
+     AND THE QUIET IS THE SECTION'S ARGUMENT. §4 is the only converting section on
+     the property and MR-C4's whole ruling is that the loudest thing on that screen
+     must be the ask. An annotation hanging in the margin beside the button is a
+     second thing to read at the moment the page has stopped arguing, which is the
+     competition MR-C4 removed from inside the column. The rail is clear there
+     because the reader is at the control.
+
+     THE CEILING, AND THE GATE. The exception is §4's ask block and nothing else.
+     scripts/check-viewport.mjs `marginMarks` measures every interval in this column
+     at 1000, 1280, 1440 and 1600 on every publish, and it measures the tail from the
+     last mark to the foot of the column too: a second interval over one viewport
+     fails the build, and this one fails it the moment it passes the cap.
+
+     M62 RE-CUTS THE CAP FROM 1,050 TO 1,000, BECAUSE 1,050 WAS SIZED TO THE VOID
+     RATHER THAN WRITTEN AGAINST IT. The measured intervals are 902, 955, 974 and
+     991, and a cap at 1,050 handed this exception 59 further pixels that nothing on
+     the record had argued for. An exception that may quietly grow another half-screen
+     is the unrecorded breach the cap exists to prevent, one rung up. One thousand is
+     one viewport and one hundred pixels, and the hundred is a FREEZE and not a
+     budget: it is the eighth pass's own measurement rounded to the next hundred so a
+     font-metric wobble cannot break a build by itself, and there is no room in it for
+     another paragraph. A later pass that needs this interval taller argues for it
+     here, in the open, and moves the number by hand.
+
+     AND THE HONEST PART, STATED PLAINLY, BECAUSE THIS IS THE PAGE'S SHARPEST OPEN
+     TENSION. Read as a landing page, a 950-pixel stretch of painted rail with nothing
+     on it beside the only section a reader can act in is dead whitespace, and it is
+     the failure mode this property's own Rejection 2 names. Read as this property,
+     it is the signature: DESIGN.md Part IV Layout rules the reserved margin "contains
+     exactly one composed object and nothing else, ever", and then, in its own words,
+     "Below it the margin is empty for the entire scroll. No notes, no watermarks, no
+     ghost text, no cursor, no 'coming soon': one clever addition destroys the
+     meaning." M59's five relocated notes are the DEVIATION from that, taken because
+     three quarters of a silent rail read as a gutter; the ask block is the one place
+     the deviation has nothing to relocate, so what stands there is the ratified
+     design with nothing added to it.
+     What makes it a decision rather than a leftover: all four strings beside this
+     interval are pinned by rulings that predate the margin (MR-C4 twice, MR-D2,
+     MR-F5); the fifth string the column would need is the one thing M59 forbids
+     outright; and abbreviating one of the four to fill it is exactly what M61 did to
+     §4's fourth persona key and what MR-H1 has just undone. The cure, if the tension
+     is ever resolved the other way, is a string this property is entitled to write
+     and has not written. Until then the number is frozen and the rail is quiet on the
+     record. Recorded in docs/design/BUILD-SPEC-mortgage.md M62.
+   ============================================================ */
+@media(min-width:1000px){
+  .content>section .marginal{position:absolute;inset-inline-start:100%;
+    width:var(--margin-w);padding-inline:var(--reg-inset);
+    max-width:none;margin:0;z-index:2;
+    font:400 var(--text-fine)/1.5 var(--mono);color:var(--ink-2);
+    letter-spacing:0.01em;
+    border-top:1px solid var(--rule-mid);padding-block-start:0.55rem}
+  /* the stations. Each offset is measured from its own section's top edge at
+     1000, 1280, 1440 and 1600 so that (a) no note ever runs under the register,
+     whose foot is the lowest at 1000, and (b) no gap between two marks in this
+     column exceeds one viewport. */
+  .content>section h2.marginal{max-width:none;
+    font:400 var(--text-fine)/1.5 var(--mono);color:var(--ink-2);
+    letter-spacing:0.06em;text-align:start}
+  /* M60: the three relocated NOTES take their own static position, which is where
+     the flow already puts them, so each one stands beside the passage it annotates
+     instead of at a hand-tuned offset from its section's top edge. M59's measured
+     offsets were the only way to place them when the margin below the register was
+     otherwise empty; with the two schedules now keying into the same column the
+     offsets collided with the keys, and a note whose y is authored by hand is a
+     number that goes stale the next time a paragraph grows. The two SECTION KEYS
+     keep top:0, because a key labels its object from the object's own top edge. */
+  .content>section h2#h-family.marginal{top:0}
+  /* TWO NOTES HANG ABOVE THEIR OWN STATIC POSITION, and both for the same reason:
+     an out-of-flow note takes the y of the thing that follows it, and in these two
+     places the thing that follows is a mark of the sheet's own, not a passage.
+     `.persona-lead` introduces the four portraits, so its static y is the
+     schedule's top edge, level with the first portrait's key; `.closing` is §2's
+     last child, so its static y is the section's foot and the section's closing
+     rule ran through the middle of it. Each is lifted by its own height and one
+     row of clear space: the gloss reads as the line ABOVE the four keys, and the
+     rate-card note closes on the schedule it annotates instead of on the rule that
+     closes the section. Nothing is placed by a hand-tuned offset. */
+  .content>section p.persona-lead,
+  .content>section p.closing{transform:translateY(calc(-100% - 0.9rem))}
+  /* AND THE TWO RULE WEIGHTS BEHAVE DIFFERENTLY AT THE MARGIN, WHICH IS WHAT
+     MAKES THE HIERARCHY A HIERARCHY RATHER THAN THREE THICKNESSES. W2, the field
+     division, ends on the margin's own rule and sends a stub across it: the
+     reading column is the field, and the margin is marked by it. W3, the
+     instrument frame, spans the WHOLE INSTRUMENT, reserved margin included. §3's
+     recital band is the only W3-ruled section on the sheet, so its two rules run
+     the full sheet width and the clause key hangs from the upper one inside the
+     bracket they make. The band's own STOCK stops at the margin's division, which
+     is what keeps the rail legible as a rail. */
+  .boundary h2.marginal{top:0;border-top:2px solid var(--rule-frame);
+    padding-block-start:0.75rem;
+    font:400 var(--text-fine)/1.5 var(--mono);color:var(--ink-2);
+    letter-spacing:0.06em;text-transform:none;text-align:start;
+    border-inline-end:0;padding-inline-end:var(--reg-inset);margin:0}
+  /* THE MARGINAL TERMINUS OF EVERY SECTION RULE, ON ONE GRAMMAR (M60).
+     M59 shipped two: §3's rule crossed the reserved margin WHOLE at 2px to the
+     sheet's cut edge, and every other section sent a 1.5rem stub that stopped
+     250px short of that edge and aligned to nothing on either side of itself. A
+     24px mark floating in a 272px column is the unanchored-mark defect this same
+     build struck from §2's status column one pass earlier, and running two
+     terminus grammars on one sheet is what made the margin read as a gutter with
+     furniture in it rather than as part of the instrument.
+     ONE grammar, the one §3 already had: a section's closing rule crosses the
+     reserved margin WHOLE, at the weight of the rule it continues, and ends on the
+     sheet's own cut edge. The rule's own field still stops on the margin's
+     division (M58's three-right-edges law is untouched) -- what crosses is the
+     terminus, and it now reaches the edge the instrument ends at. Every section
+     that closes on a rule sends one. */
+  .content>section::before{content:"";position:absolute;bottom:0;
+    inset-inline-start:100%;width:var(--margin-w);height:1px;
+    background:var(--rule-mid)}
+  /* §5 closes on the footer's own W3 rule, which already spans the whole sheet, so
+     it has no rule of its own for a terminus to continue. */
+  .content>section:last-of-type::before{display:none}
+  /* §3 closes on the clause's own W3 rule, so its terminus carries that weight. */
+  .content>section.boundary::before{height:2px;background:var(--rule-frame)}
+}
+
+/* THE SHEET'S FURNITURE. Every section closes with one W2 field rule, and it is
+   the only rule in the section that does. §3 and §4 close on their own field's
+   terminus rather than on the sheet line, because a rule ends where the thing it
+   rules ends (M53, copy doc MR-E7). */
+.content>section{position:relative;margin-block-start:var(--space-section);
+  padding-block-end:var(--space-block)}
+.content>section::after{content:"";position:absolute;left:0;bottom:0;height:1px;
+  right:calc(-1 * var(--rule-reach));background:var(--rule-mid)}
+/* the hero's rule is the head band's closing rule: it terminates on the reserved
+   margin's own divider, and the margin's foot rule continues it to the sheet's
+   cut edge, so one W2 line closes the head band across the whole instrument. */
+.content>section.hero::after{right:calc(-1 * var(--hero-reach))}
+/* §3's closing rule IS the clause's own bottom rule, at the instrument weight.
+   A second rule 43px under it was the sheet closing the same section twice. */
+.content>section.boundary::after{display:none}
+.content>section.boundary{padding-block-end:0}
+/* M60: §4's closing rule reaches the margin's division like every other section's.
+   It had been ruled to --measure, which left it 252px short of the vertical every
+   other rule on the sheet lands on and gave the section no terminus a marginal
+   mark could record (MR-F8's law: a mark records a rule that REACHES it). The
+   sheet now closes five sections on one vertical and crosses the margin on one
+   grammar; the FIELDS inside §4 are still ruled at --measure, which is where M53's
+   termination law actually applies. */
+/* and the last section closes on the footer's own opening rule, which is the
+   instrument weight and spans the whole sheet. A section rule 25px above it was
+   the sheet closing the same section twice, the same doubling §3 carried. */
+.content>section:last-of-type::after{display:none}
+.content>section.hero{margin-block-start:1rem}
+@media(min-width:1000px){ .content>section.hero{margin-block-start:0.75rem} }
+.content p{max-width:var(--measure)}
+
+/* ---- hero.
+        M56: the headline takes the whole instrument column. Through M55 it shared
+        the hero's first row with the register and set 28 to 30 characters a line
+        at 1280, which is a five-line paragraph in a large size. The register is in
+        the margin now, so row one is the headline alone and row two is the
+        document's opening argument beside the instrument's own head. ---- */
+/* ONE COLUMN, AND THE HEADLINE TAKES ALL OF IT. Through M55 the headline shared
+   the hero's first row with the register and set 28 to 30 characters a line at
+   1280, which is a five-line paragraph in a large size rather than a display
+   line. The register is in the reserved margin now; the instrument's head band
+   opens the sheet above the headline; and the headline has the whole instrument
+   column. The DOM is untouched, so with CSS off the reader still meets headline,
+   deck, disclosure, reason, act, in copy order. */
+.hero-grid{display:grid;grid-template-columns:minmax(0,1fr);align-items:start}
+.hero-head{grid-row:1}
+.hero-text{grid-row:2}
+.hero-cta{grid-row:3}
+.hero h1{margin-bottom:0.3em}
+
+/* ---- M57 CUTS THE TITLE BLOCK (M56's `.hero-art` / `.titleblock` / `.tb-zone`).
+        M56 put three empty ruled zones directly under the running head as the
+        first object on the page: three blank cells with stray hairlines inside a
+        W3 frame, no string, no numeral, nothing to key them. It was legible only
+        to a reader who had read the stylesheet comment justifying it, it spent
+        the page's most valuable 100 pixels, and it stood as a SECOND empty
+        artifact competing with the register for the claim to be the produced
+        hero. An unkeyed empty three-cell grid is the exact tell this rebuild
+        exists to remove.
+        The review offered two cures, cut it or key it, and the second one is
+        foreclosed here rather than declined by taste: keying it needs a string
+        naming the preparer, return-to and recorder zones, docs/copy/mortgage-copy.md
+        authors none, and A29's chrome set is closed at the labels it enumerates.
+        On the property whose thesis is that nothing has been recorded yet, an
+        invented `Prepared by` is a fabricated record. So it is cut, and the
+        instrument's head is now what a head actually is on this sheet: the
+        headline, and the register standing in the margin beside it. ---- */
+
+/* ---- the deck: the display tier, and the fold's one positive payload
+        (copy doc MR-D2, MR-E4, MR-F3). ---- */
+.content p.hero-sub{color:var(--ink);max-width:var(--measure-clause);
+  font:400 var(--text-clause)/1.24 var(--serif);
+  font-variation-settings:'opsz' 20;letter-spacing:-0.008em;
+  margin-bottom:0}
+@media(max-width:699px){ .content p.hero-sub{line-height:1.17} }
+/* the non-liveness disclosure (MR-D2, MR-D9, MR-F5): body size, directly under
+   the deck, above the standing reason and above the ask. Never below a button. */
+.hero-stand{color:var(--ink-2);max-width:var(--measure);
+  margin-block-start:clamp(0.5rem,0.4rem + 0.3vw,0.85rem)}
+.hero-cta{margin-block-start:clamp(0.6rem,0.5rem + 0.32vw,1rem)}
+.hero-cta p{margin:0}
+/* MR-F7 / M56: the fold's primary action clears a REAL phone viewport, not a raw
+   device height, and 667 (an iPhone SE) is the height it is measured against
+   rather than 844. No string is deleted and no tier is removed: this block is the
+   headline's phone size and leading, the deck's, the leading of the standing line
+   and the standing reason, and four leading margins, all inside 699px. The
+   masthead sets on two rows here rather than three, which is the other half.
+   The tiers still separate: 28px headline, 19.2px deck, 17.2px body. */
+@media(max-width:699px){
+  .content>section.hero{margin-block-start:0.2rem}
+  .hero h1{font-size:clamp(1.7rem,7.2vw,1.85rem);line-height:0.98;
+    letter-spacing:-0.023em}
+  .content p.hero-sub{font-size:1.2rem;line-height:1.13}
+  .hero-stand{line-height:1.38;margin-block-start:0.28rem}
+  .hero-cta{margin-block-start:0.4rem}
+  .hero-cta .standing-reason{line-height:1.38;margin-block-end:0.25rem}
+}
+@media(max-width:430px){
+  :root{ --gutter:0.875rem }
+  /* the head's own tier steps down so the category and the act share one row.
+     At 13px they measure 211 and 133 against a 337px row and wrapped to a third
+     line; at 12px they measure 194 and 122 and the head is two rows at every
+     phone width, which is 21 pixels of fold returned to the argument. */
+  .runhead-inner{font-size:0.75rem}
+}
+/* ---- the standing reason (MR-C4, MR-D2). It renders above both buttons, in the
+        same words both times, and it is the only sentence on this page that gives
+        a reason to act, so it sets at body size in the document serif. ---- */
+.standing-reason{max-width:var(--measure);
+  font:400 var(--text-body)/1.55 var(--serif);color:var(--ink-2);
+  font-variation-settings:'opsz' 11;
+  border-inline-start:1px solid var(--rule-mid);padding-inline-start:0.8rem}
+.hero-cta .standing-reason{margin-block-end:0.4rem}
+.ask>p.standing-reason{margin-block-start:var(--space-block);margin-block-end:0}
+
+/* ============================================================
+   THE EMPTY REGISTER · the one composed object in the reserved margin.
+
+   M56 returns it to the margin DESIGN.md Part IV gives it, and produces it as
+   the most worked object on the sheet:
+     · figure and ground · a --sheet face on the margin's --sheet-2 stock, with
+       the leaf beneath it uncovered at the foot and fore-edge and the cast that
+       edge throws. The same four-tone stack the whole instrument is built from,
+       one order of magnitude down.
+     · three rule weights · W3 frames the object and the recording stamp box, W2
+       divides its fields, W1 draws every blank.
+     · one left tab stop, one right terminus · every key sets on one vertical and
+       every recording line runs between two fixed verticals. No rule is a flex
+       remainder, so the blanks read as ruling and not as ragged leftovers.
+     · a tab breaking its own top edge · the register's first column head sits
+       proud of the instrument frame, which is what a filed thing does.
+     · an UNFILLED recording stamp box · the statutory artifact this property is
+       named for, drawn at the foot under the copy's own `Received for record`,
+       architecturally empty and the most produced object on the page.
+   It claims no liveness: every line in it is a name, a stamp, or a blank, and
+   nothing in it is ever filled (check.mjs §11(l)). It never animates.
+
+   M57 · THE CHROME TELLS THE TRUTH ABOUT ITS OWN COLUMNS, AND THE OBJECT STOPS
+   BEING A SECOND PRINTING OF §2.
+
+   (1) TAB STOPS. M56's column head set `Surface` at x=992.4 while the surface
+   names it heads set at x=1032.4: the head stood 40px left, over the ENTRY
+   column, not over its own. In an object whose entire argument is tab-stop and
+   rule discipline that is the chrome lying about the ruling. The head row is
+   now the same two-column grid the entry rows are, so `Surface` sets on the
+   `.reg-main` stop exactly, and the entry column's division rule runs from the
+   object's top edge rather than starting under the head.
+
+   (2) `Status` IS STRUCK FROM THE HEAD. It named a column the body never ruled:
+   the three ROADMAP stamps floated right with no division under the word that
+   promised them. Of the review's two cures, ruling a real status column is
+   measured and declined -- the reserved margin is 17rem, the object's inner
+   measure is ~231px, and an entry column plus a stamp-width status field leaves
+   the surface names ~68px, which sets `eNote / eVault: who holds control` at
+   four lines. The stamps sit as marks ON the surface column instead, on the
+   object's one right terminus, which is what the head now says they are. Nothing
+   is lost from A29's closed chrome set, which never contained `Status`.
+
+   (3) ROW RHYTHM. The stamp is locked to the row's FIRST band, at one fixed
+   offset from every row's top rule, instead of falling below the title and
+   leaving an empty wedge in the one-line row. Rows carry a minimum height, so
+   entries 01 and 02 stand on one measure and only entry 03, which records four
+   fields, is taller than its neighbours -- which is a fact about entry 03.
+
+   (4) TWO VOICES, SO THE REGISTER AND §2 STOP SAYING THE SAME THING TWICE. The
+   surface names set in the MONO face here and in the document serif in §2: this
+   object is the recorder's hand (ruled, numbered, stamped, unfilled) and §2 is
+   the instrument's own text (a catalog of what the surfaces do). The review's
+   preferred cure, entering each row's named gate beside it, is foreclosed by
+   MR-D6, which gave the waits-on ledger exactly one owner and made §2 the owner;
+   its alternative, demoting §2's table to a ruled list, is foreclosed by MR-D11,
+   which hangs this object's `aria-hidden` render on §2 marking the same data up
+   as a real table with scope="col" headers. Both are recorded in
+   BUILD-SPEC-mortgage.md M57 with their grounds.
+   ============================================================ */
+.register{position:relative;border:2px solid var(--rule-frame);
+  background:var(--sheet);margin-block-start:0;
+  margin-block-end:var(--space-block)}
+/* BASELINE-ALIGNED TO THE HEADLINE (DESIGN.md Part IV Layout: the register sits
+   "near the top, aligned to the H1's first baseline"). The object's own first
+   typed line, the `Surface / Status` head row, closes on the vertical the
+   headline's first line closes on, and the reserved margin above it is empty,
+   which is the whole point of a reserved margin. Two values because the headline
+   takes the laptop band's reduced size between 1000 and 1199 and its first
+   baseline moves with it; measured at 1024, 1280 and 1440. */
+/* M58 re-sets the value against the headline's FIRST LINE rather than against
+   the block: the object's own first typed line, the `Entry / Surface` head row,
+   now closes within a few pixels of the vertical the headline's first line
+   closes on, at 1024, 1280 and 1440, and the tab that breaks the register's top
+   edge still clears the runhead's divider. Above it the reserved margin is
+   empty, which is what a reserved margin is. */
+@media(min-width:1000px){ .register{margin-block-start:2rem} }
+/* The leaf beneath, uncovered at the foot and the fore-edge, and the cast that
+   leaf throws. M58 turns the offset down-RIGHT, which is the direction the sheet
+   itself is lit from (`.sheet::before` and `.sheet::after` run down-right), so
+   the whole page has one light and the register is the same object one order of
+   magnitude down. M57 ran it down-left because the object's right frame stood on
+   the instrument's own cut edge and a right-hand leaf would have crossed out of
+   the document; the object is inset from that edge now, and 8px of cast still
+   lands inside the reserved margin at every width.
+
+   M60 CAPS THE STACK'S TOP EDGE. Both leaves ran an open top: the only part of
+   either that shows is the strip to the right of the instrument's own frame, and
+   that strip was arriving as a hairline step and a bare tone change with nothing
+   closing it, so the object's top-right corner read as an unfinished cut rather
+   than as two leaves under one. Each leaf's top edge now carries the 2px frame
+   rule, and because the instrument's own ground covers everything to the left of
+   its right frame, the cap starts exactly at the instrument's top-right corner
+   without an inset having to be authored. */
+.register::before{content:"";position:absolute;z-index:-1;
+  top:4px;left:4px;right:-4px;bottom:-4px;background:var(--sheet-3);
+  border:1px solid var(--rule-mid);border-top:2px solid var(--rule-frame)}
+.register::after{content:"";position:absolute;z-index:-2;
+  top:8px;left:8px;right:-8px;bottom:-8px;background:var(--sheet-cast);
+  border-top:2px solid var(--rule-frame)}
+/* THE TAB, SNAPPED TO THE COLUMN IT LABELS (M58).
+
+   M57's tab was 234px wide over a 38px number column, so its right edge fell
+   mid-cell inside the Surface column and aligned to no division on the object,
+   and `Entry` and `Surface` read as two column labels sitting on two different
+   baselines with the header row's first cell left empty. The header was
+   ambiguous: was `Entry` the artifact's title or the gutter column's label?
+
+   It is the gutter column's label, and the object now says so twice over. The
+   tab is exactly the entry column's width, its right edge IS that column's
+   division rule, and it runs DOWN through the header band so that `Entry` and
+   `Surface` set on ONE baseline, one label over each of the object's two ruled
+   columns. It still breaks the instrument's own top edge, which is what a filed
+   thing does. Nothing is invented and nothing is printed twice: `Entry` is the
+   first string in the closed REGISTER CHROME set (copy doc, A29 as amended) and
+   it renders once, and putting a second copy of it in the header row's first
+   cell -- the review's other half -- would be the same word set twice in the
+   same face 20px apart, which is the defect one column over. Three weights in
+   one device: 2px frame where the tab crosses the instrument's edge, 1px field
+   division where it is the column's own rule, 1px under the header band.
+
+   M60 CLOSES THE CORNERS, superseding M58's rise. The tab rose 1.55rem ABOVE the
+   instrument, so `Entry` and `Surface` sat under two different top rules at two
+   different y (53.3 and 76.1, measured at 1280), and the instrument's own 2px
+   frame was broken open at its top-left corner by a three-sided box that left a
+   step at the corner it crossed. A filed thing that breaks its own edge is a
+   device; two column heads under two edges is a defect, and this object is one
+   ruled instrument rather than a stack of tabbed folders.
+   The two heads are now two CELLS OF ONE HEAD BAND: one top rule at one y (the
+   instrument's own 2px frame), one closing rule under both, one division between
+   them, and the active head distinguished by FILL AND WEIGHT ONLY -- `Entry` on
+   the instrument's own --sheet at 500 in --ink, `Surface` on the recessed
+   --sheet-4 at 400 in --ink-3. No corner is broken and no step is left. Both
+   labels set in the register's own MACHINE tier, which is the tier their field
+   keys set in, because a column head and a field key are the same kind of mark. */
+.reg-tab{position:absolute;top:0;left:0;z-index:1;
+  width:var(--entry-col);height:var(--reg-head-h);
+  background:var(--sheet);
+  border-inline-end:1px solid var(--rule-mid);
+  border-bottom:1px solid var(--rule-mid);
+  display:flex;align-items:flex-end;
+  padding:0 var(--reg-pad) 0.52rem;
+  font:500 var(--t-reg-micro)/1 var(--mono);color:var(--ink);
+  text-transform:uppercase;letter-spacing:0.12em}
+/* THE COLUMN HEAD, ON THE COLUMN'S OWN TAB STOP (M57, kept). Same grid as every
+   entry row below it, so `Surface` sets on the `.reg-main` stop to the pixel and
+   the entry column's W2 division runs the object's full height from its top
+   edge. The head band takes a fixed height so both labels land on one baseline
+   by construction rather than by coincidence. */
+.reg-cols{display:grid;grid-template-columns:var(--entry-col) minmax(0,1fr);
+  height:var(--reg-head-h);align-items:end;
+  background:var(--sheet-4);
+  border-bottom:1px solid var(--rule-mid);
+  font:400 var(--t-reg-micro)/1 var(--mono);color:var(--ink-3);
+  text-transform:uppercase;letter-spacing:0.12em}
+.reg-cols::before{content:"";grid-column:1;height:100%;
+  border-inline-end:1px solid var(--rule-mid)}
+.reg-cols span{grid-column:2;padding:0 var(--reg-pad) 0.52rem}
+/* the specimen's own caption: the one sentence saying the emptiness is deliberate
+   (MR-G5). Chrome, not a value: no rule in this object is filled by it. */
+.reg-caption{padding:0.55rem var(--reg-pad);
+  border-bottom:1px solid var(--rule-mid);background:var(--sheet-3);
+  font:400 var(--text-fine)/1.45 var(--mono);color:var(--ink-3)}
+/* THE ROW, AND ITS ONE PRIMARY TAB STOP (M60, superseding M56's centred numeral
+   and M58's right-floated stamp).
+
+   THE FINDING. Measured at 1280 on the shipped bytes, entry 01's numeral set its
+   baseline at y217, its ROADMAP stamp at y219.9 and its surface name at y266.9:
+   three marks, three baselines, none of them registered. The stamp took the row's
+   first band alone on the right, so the left 90px of that band was empty; the
+   entry column then ran 135px (entry 01) to 300px (entry 03) with one 16px
+   numeral at the top of it and nothing else. Those two emptinesses meet at the
+   column division and make ONE L-SHAPED VOID, hinged on the corner where the
+   object's two most produced marks should have registered against each other.
+
+   THE CURE, and the measurement that chose it. The entry column is the register's
+   own hand and it now carries what a recorder's hand carries: the entry's
+   NUMERAL and the entry's ENDORSEMENT, stacked on ONE left tab stop, so the
+   column is occupied down its own height instead of holding one mark and 280px of
+   nothing. The surface column then opens on its first baseline with the entry
+   NAME at full measure, and every field key under it hangs on that same left tab
+   stop. Numeral and name share one first baseline by grid baseline alignment
+   rather than by tuned padding.
+   The arrangement the review asked for -- numeral, name and chip all on the first
+   baseline with the chip at the right terminus -- was built first and measured out
+   of the property: the widest name sets 123.4px at the ratified --t-reg-name, the
+   ROADMAP stamp sets 76.2px at Part IV's ratified 0.72rem, and with the gap that
+   needs 208.4px of surface column. A 17rem reserved margin (DESIGN.md Part IV
+   Layout, binding) yields at most 200px once the object keeps an inset wide enough
+   for its own two leaves and an entry column wide enough for the head that names
+   it. The two ways to buy the 8px were to cut the stamp below its ratified size or
+   to cut the name below the size this pass ratified, and both are worse than
+   moving the chip to the column whose head already says `Entry`. */
+.reg-row{position:relative;display:grid;
+  grid-template-columns:var(--entry-col) minmax(0,1fr);
+  align-items:baseline;border-top:1px solid var(--rule-mid)}
+.reg-row:first-of-type{border-top:0}
+/* the entry column's division, drawn on the row rather than on a cell, so it runs
+   the row's full height whether the entry carries an endorsement or is reserved */
+.reg-row::before{content:"";position:absolute;inset-block:0;
+  left:var(--entry-col);width:1px;background:var(--rule-mid)}
+/* the entry column: arabic here, and nowhere else on the sheet now that the
+   recorder's roman marks are struck (M56). Numeral over endorsement, one stop. */
+.reg-num{grid-column:1;display:flex;flex-direction:column;align-items:flex-start;
+  gap:0.6rem;padding:0.85rem var(--reg-pad) 0.9rem;
+  font:400 var(--text-fine)/1.3 var(--mono);color:var(--ink-3);
+  letter-spacing:0.06em}
+.reg-main{grid-column:2;padding:0.85rem var(--reg-pad) 0.9rem;min-width:0}
+/* THE OBJECT'S DISPLAY TIER (M60, superseding M57's mono cut). M57 set the entry
+   names in the machine mono so the register would read as the recorder's hand and
+   §2's table as the catalog. What it produced was an object with ONE type register
+   in it: numerals, heads, names, keys, captions and notes all in one face within
+   6px of one size, so nothing inside the instrument had rank and the whole of it
+   read as a caption. The recorder's hand is the MACHINE tier, and it still holds
+   the numerals, the heads and the keys; what was PRESENTED for recording is the
+   document's own voice and sets in the document's own face, which is the split
+   this property's temperature argument rests on. Measured ratio, 16.80px against
+   the 10.88px machine tier: 1.544. */
+.reg-surface{display:block;
+  font:500 var(--t-reg-name)/1.28 var(--serif);
+  font-variation-settings:'opsz' 20;
+  color:var(--ink);letter-spacing:0}
+/* M59 · THE OBJECT CHOOSES ITS OWN BREAKS. Re-measured by M60 against the display
+   tier and the 138.4px surface measure the wider object now gives: `Doc
+   intelligence` sets 118.8 and `Payoff / lien data` 123.4, so both hold one line
+   at every width, and `eNote / eVault: who holds control` takes two with the break
+   at the colon (108.0 over 130.9), which is the one break in it that leaves a
+   whole clause on the second line. The spans carry no string of their own and add
+   none: they are break control, and the rendered text is byte-identical to
+   docs/copy/mortgage-copy.md's SEQUENCE row names. */
+.reg-surface span{white-space:nowrap}
+/* the row's first band is the entry NAME alone, at the full measure of the column
+   the head names. The endorsement is entered in the entry column beside it. */
+.reg-line{display:block}
+/* THE RECORDING LINE, UNFILLED, KEYED (MR-F9). The key sets on the object's one
+   left tab stop and the rule runs from that stop to the object's one right
+   terminus, so nine blanks share two verticals instead of nine. */
+/* ONE FIELD GRAMMAR FOR THE WHOLE REGISTER (M59, superseding M58's uniform
+   four-line skeleton).
+
+   M58 gave every numbered entry four recording lines, keyed where the copy doc
+   authors a key and anonymous where it does not. Read down the column that
+   produced entry 01 with one key over three open rules, entry 02 with one key over
+   three open rules, and entry 03 with four keys: 02 did not read as an entry with
+   one named field, it read as an entry that had LOST its labels, and the three
+   presented entries looked like three differently-filled copies of one form.
+
+   The cure the review preferred, three named keys in every entry, is foreclosed
+   and the ground is on the record: MR-F9 admitted exactly six field keys to A29's
+   closed chrome set and mapped them to the surfaces whose typed fields they are
+   (`Controlling party` to 01, `Typed field · source page` to 02, and 03's four).
+   Levelling the counts means either moving a key onto a surface that does not
+   record it or authoring new ones, and this is a design-layer pass with no
+   authority to write a string on the property whose thesis is that a claim means
+   exactly what it says.
+
+   So the grammar is levelled instead of the counts: EVERY RECORDING LINE UNDER A
+   PRESENTED ENTRY IS KEYED, and no presented entry carries an anonymous rule. The
+   number of lines is then a fact about the entry rather than a shape imposed on
+   it, which is the same reading §2's schedule already states in prose. Entries 04
+   and 05 stay exactly as MR-B5 and MR-E6 rule them: four blank rules apiece, no
+   surface, no stamp, under the caption that says why. The two kinds of blank on
+   this object are now visually distinct as well as legally distinct, which is what
+   MR-E6 argued they were all along. */
+.reg-field{display:block;margin-block-start:0.6rem}
+.reg-field:first-of-type{margin-block-start:0.9rem}
+/* THE OBJECT'S MACHINE TIER (M60). The field keys are the recorder's printed
+   rubric: the words a blank form carries before anything is entered against them,
+   which is exactly what these six are. They set below the entry names they belong
+   to, in caps at the micro tier, so a key can never be mistaken for a value and
+   the object's scale reads at a glance instead of on inspection. Part I §3.3's ban
+   on "repeated tiny uppercase tracked section labels" is not touched: these label
+   no section, they are inside one instrument, and they are members of the copy
+   doc's own closed REGISTER CHROME set (A29 as amended by MR-F9). Contrast on
+   --sheet: --ink-3 measures 5.57, over the 4.5 mono floor. */
+.reg-key{display:block;font:400 var(--t-reg-micro)/1.3 var(--mono);color:var(--ink-3);
+  text-transform:uppercase;letter-spacing:0.12em}
+/* the unkeyed line takes the key's own line box as blank space, so the tab stops
+   and the rule pitch are identical in a keyed row and an unkeyed one */
+.reg-field.reg-open{padding-block-start:calc(var(--t-reg-micro) * 1.3)}
+.reg-blank{display:block;height:1rem;border-bottom:1px solid var(--rule-hair)}
+.reg-field .reg-blank{margin-block-start:0.1rem}
+/* the reserved entries and their caption (A29, MR-B5, MR-E6). A recording line
+   under a presented entry says this surface is not recorded yet; a reserved entry
+   with nothing presented against it says the register is not full and we are not
+   going to pretend it is. */
+.reg-note{padding:0.6rem var(--reg-pad);
+  border-top:1px solid var(--rule-mid);background:var(--sheet-3);
+  font:400 var(--text-fine)/1.45 var(--mono);color:var(--ink-3)}
+/* a reserved entry presents no surface and carries no stamp, which is the one
+   deliberate difference between it and a presented entry and the thing the
+   caption above it states. Its recording apparatus is the same four lines on the
+   same four stops, so the register's blankness is uniform down its whole height
+   (M58). */
+/* a reserved entry's surface column opens on a blank rule and not on a line of
+   type, so it has no first baseline for the numeral to register against: the row
+   aligns to its own top edge instead and the numeral keeps the same tab stop and
+   the same drop as every presented entry above it (M60). */
+.reg-row.reg-reserved{align-items:start}
+.reg-row.reg-reserved .reg-field:first-of-type{margin-block-start:0}
+/* ---- THE RECORDING STAMP BOX, UNFILLED. The endorsement field a recorder
+        stamps, drawn at the instrument's foot under the copy's own
+        `Received for record`. It is the statutory artifact this property is named
+        for and it is architecturally empty: a W3 frame, a W2 inner rule at a 4px
+        inset (the double-ruled endorsement field), and two W1 recording lines on
+        the same two verticals every other blank in the object uses. Renders only
+        against an unfilled rule (A29 limit one): the day anything is written in
+        it, it stops being chrome and becomes a claim the copy doc has to
+        author. ---- */
+.reg-foot{padding:0.65rem var(--reg-pad) 0.75rem;
+  border-top:1px solid var(--rule-mid);background:var(--sheet-4)}
+.reg-foot-key{display:block;font:400 var(--text-fine)/1 var(--mono);color:var(--ink-3);
+  letter-spacing:0.06em;margin-block-end:0.45rem}
+.reg-stampbox{display:block;border:2px solid var(--rule-frame);
+  background:var(--sheet);padding:4px}
+.reg-stampbox-inner{display:block;border:1px solid var(--rule-mid);
+  padding:0.6rem 0.6rem 0.5rem}
+.reg-stampbox .reg-blank{height:1.1rem}
+.reg-stampbox .reg-blank + .reg-blank{margin-block-start:0.55rem}
+
+/* ---- the stamp component (Part IV signature element 3) ---- */
+.stamp{display:inline-block;font:400 0.72rem var(--mono);text-transform:uppercase;
+  letter-spacing:0.14em;border:1px solid currentColor;border-radius:1px;
+  padding:0.3em 0.7em;background:transparent;white-space:nowrap}
+.stamp-waitlist{color:var(--seal)}
+.stamp-roadmap{color:var(--ink-3)}
+/* M60 · LIVE IS FILLED AGAIN, AND M58's CUT IS WITHDRAWN.
+   DESIGN.md Part IV states this twice, in two different paragraphs, as law:
+   signature element 3, "no fill except LIVE ... LIVE (family strip only): --ink
+   fill, --paper-on-seal text", and the Color section, "LIVE ... renders as an
+   --ink-filled chip: other properties' liveness is a fact this page reports, not
+   a promise it makes (imported verbatim as law)". M58 read Part I §2's one-line
+   registry cell as superseding both, and recorded that supersession NOWHERE BUT
+   IN A CSS COMMENT IN THE SHIPPED BYTES. That is the exact self-ratifying pattern
+   DESIGN.md Part III's own 2026-08-02 amendment blocks by name: "a clause is
+   superseded in the document that holds it or it is not superseded." Part IV is
+   the document that holds this clause and it has not been amended, so the shipped
+   page conforms to it rather than to its own footnote.
+   The two things M58 got right are kept: the mark is level, and it is the same
+   component every other stamp on the sheet uses. What returns is the fill, which
+   is the whole point of the clause -- the one property in the strip that is live
+   is the one mark on the page that is filled, and this page's own WAITLIST is not.
+   Contrast: --paper-on-seal on --ink measures 14.6:1, well over the 4.5 floor for
+   text on a fill. */
+.stamp-live{background:var(--ink);color:var(--paper-on-seal);border-color:var(--ink)}
+/* the compound's suffix (Part IV signature element 3): the stamp, then the mono
+   suffix OUTSIDE the border, in --ink-3. It sets inline beside the stamp so the
+   separator separates two things, which is the condition MR-B14 could not meet
+   when the suffix was wrapped onto its own line. */
+.suffix{font:400 var(--text-fine) var(--mono);color:var(--ink-3);white-space:nowrap}
+
+/* ---- tables: instruments, so they take the W3 frame, a banded head closed by a
+        W2 rule, and W1 body rows. Three weights, one object.
+        M57 RECESSES THEM ONTO THEIR OWN STOCK. Through M56 both tables stood on
+        the base sheet inside a frame, which made them ruled text rather than
+        instruments quoted inside the document: the whole reading column was one
+        surface for its entire scroll. The body is --sheet-3 and the head band is
+        --sheet-4, so a schedule reads as a leaf laid INTO the sheet, the way the
+        register reads as a leaf laid ON the margin. ---- */
+.tablewrap{overflow-x:auto;margin-block-start:var(--space-block)}
+table{border-collapse:collapse;width:100%;min-width:38rem;
+  border:2px solid var(--rule-frame);background:var(--sheet-3)}
+table{table-layout:fixed}
+/* M56: THE BANDED HEAD. The head row was --stone-2 under a 1px rule, half a step
+   off the body, so the two tables opened without an edge. It is a banded head
+   closed by the W2 field rule, which is the same head grammar the register's own
+   column rule uses; M57 steps it one stock deeper than the body it heads. */
+thead th{background:var(--sheet-4);font:500 var(--text-small) var(--serif);
+  font-variation-settings:'opsz' 10;text-align:left;
+  padding:0.85rem 1.1rem;border-bottom:1px solid var(--rule-mid);color:var(--ink)}
+td{padding:var(--space-row) 1.1rem;border-top:1px solid var(--rule-hair);
+  vertical-align:baseline}
+tbody tr:first-child td{border-top:0}
+td.surface{font-weight:600;font-variation-settings:'opsz' 16;letter-spacing:-0.006em}
+td.gets{color:var(--ink-2)}
+/* M56: THE STATUS COLUMN IS A RULED FIELD. The three ROADMAP stamps were floating
+   at the right edge of an unbounded cell, which is why the section's own honesty
+   rhythm did not read as a rhythm. The column has a leading W2 division rule down
+   its full height and every stamp is entered against it.
+   M59 STRIKES THE TICK. M56 also set a 2px x 0.62em bar ahead of each stamp,
+   anchored to no rule, no cell edge and no column division the eye could locate:
+   it stood ~20px left of its stamp and formed a faint vertical at x811 that only a
+   reader who knew to look for it could find, and the family strip two sections
+   down set the identical stamps with no tick at all, so the device was a one-off
+   rather than a system. On an object whose stated argument is rule discipline an
+   unanchored 2px mark is the one element that reads unintentional. The field is
+   carried by the division rule that was already drawing it, which is the review's
+   first cure and the one that leaves both schedules on one grammar.
+
+   M61 PUTS BOTH SCHEDULES' STAMPS ON ONE BEHAVIOUR. The field stayed ruled and the
+   division rule stayed, but the stamp inside it set FLUSH LEFT here and FLUSH
+   RIGHT in the family strip: one component, one sheet, two column behaviours, and
+   this was the one that read as a chip adrift, 14px off the division with 68px of
+   empty cell behind it at 1280 because MR-G7 leaves this column the surplus, so
+   the surplus was the thing the reader's eye landed in. THE RULE IS NOW ONE
+   SENTENCE FOR BOTH: a stamp hangs on the closing edge of the column it stamps.
+   Here that column is the schedule's last, so the three stamps land on the
+   margin's own division at 940; in the family strip Status is the middle column
+   and the four stamps land on that column's closing edge at 392. Two verticals,
+   because they are two columns, and one behaviour, which is what was missing.
+   It is also the behaviour both tables have always taken below 1000px, where the
+   stacked row sets its stamp right against the entry. MR-G7 is untouched: it rules
+   where the surplus goes and never which edge the stamp takes, and the surplus
+   still falls in this column. What the division rule draws is the field's opening;
+   the closing edge is where the entries are read off. */
+th.status,td.status{text-align:right;white-space:nowrap;
+  border-inline-start:1px solid var(--rule-mid);padding-inline:0.85rem}
+/* MR-G7: both tables obey the sheet's own measure. `max-width` is not honoured on
+   a table cell in auto layout, so the columns are ruled and the STATUS COLUMN IS
+   LEFT AUTO, so the surplus falls into the most under-filled column on the page
+   rather than into the reading line.
+   M56 re-sets the ramp for the 17rem margin. --measure is a length and a table
+   column takes it only where the frame is wide enough to leave the status field a
+   stamp's worth of room afterwards. With the reserved margin at its ratified
+   width the sheet's table reaches 950px at a 1440px viewport and not at 1100,
+   which is where the old ramp had it, so the description column would have been
+   ruled at 38rem inside an 857px table and the three ROADMAP stamps pushed out of
+   their own cell. Three steps, each measured at the width it starts at. */
+/* M58 STRIKES M57's ARBITRARY CAP AND GIVES BOTH SCHEDULES ONE OF THE SHEET'S
+   OWN EDGES. M57 capped the table at `--measure + 20rem` inside a full-width
+   `.tablewrap`, so at 1280 the frame stopped dead at x=1024: 67px inside the
+   margin line at 956 and 204px short of the sheet edge at 1228, aligned to
+   nothing. At 1000 the same cap landed exactly on the content edge, which is the
+   proof that the number was arbitrary rather than compositional. The page then
+   ran four unrelated right edges in one column (prose 704, tables 1024, register
+   1207, bands 1228) plus the footer's own hairline at a fifth, and that is the
+   specific unresolved tell that reads as unfinished beside a page holding one
+   measure end to end.
+
+   THE SCHEDULE IS STILL AN INSTRUMENT OF A SIZE; ITS SIZE IS NOW THE READING
+   COLUMN. With the reserved margin restored to its ratified full height the
+   reading column IS the instrument's measure: a table at `width:100%` terminates
+   on the margin's rule, which is the same vertical every section rule and the
+   recital band land on, so the schedule declares the margin rather than floating
+   inside it. THREE RIGHT EDGES ON THE PAGE: --measure for prose, the margin line
+   for the sheet's furniture and both schedules, and the sheet's fore-edge for
+   the runhead, the register and the footer band.
+
+   MR-G7's law is unchanged and its arrangement is unchanged: the columns are
+   ruled, the description is capped, and the status column is left auto so the
+   surplus falls there rather than into the reading line. What moves is the ramp,
+   because the column is 860px at 1280 and 900px above 1330 rather than 1,132px:
+   a description ruled at 38rem inside an 860px table leaves the status field 76
+   pixels for a 125px stamp entry, so the percentage steps hold below 1440 and
+   the length cap takes over at the width that can carry it. Each step measured
+   at the width it starts at. */
+thead th:first-child{width:9rem}
+thead th:nth-child(2){width:52%}
+thead th.status{width:auto}
+.family thead th:first-child{width:8.75rem}
+.family thead th.status{width:auto}
+.family thead th:last-child{width:52%}
+@media(min-width:1200px){
+  thead th:first-child{width:10.5rem}
+  thead th:nth-child(2){width:62%}
+  .family thead th:last-child{width:64%}
+}
+@media(min-width:1440px){
+  thead th:nth-child(2){width:var(--measure)}
+  .family thead th:last-child{width:var(--measure)}
+}
+@media(max-width:999px){
+  td.gets,.family tbody td:last-child{max-width:var(--measure)}
+}
+/* M57 STRIKES THE ROW HOVER TINT AND ITS 120ms TRANSITION. Neither table's rows
+   contain a control or lead anywhere, so the tint promised an affordance that
+   does not exist and put motion on a page whose whole argument is that nothing
+   here is live. Row scanning is carried by the W1 body rules and by the status
+   column's own W2 division, which are static marks. */
+.family td:first-child,.family th:first-child{width:8.75rem}
+.family td:first-child{font-family:var(--mono);font-size:var(--text-mono);
+  white-space:nowrap;color:var(--ink)}
+/* M40: the strip's stamps take the column edge and the suffix sets under them, so
+   all four rows keep one optical edge and one pitch. The stack is kept and
+   measured: the compound needs 200px set inline, and the Status column is 150px
+   at 1440 because MR-G7 rules the Role column at --measure and leaves Status the
+   surplus. Inline would need 227px of column, which this sheet does not have at
+   any width, so the mandate is met on the pitch M40 already built.
+   M60 RESTORES THE MANDATED SEPARATOR inside that stack, superseding MR-B14's
+   parenthesis: DESIGN.md Part IV signature element 3 writes the compound as the
+   `WAITLIST` stamp then `· entity-gated`, and the copy doc states the same
+   compound twice in its own prose. Right-aligned under the stamp, the separator
+   hangs on the stamp's own optical edge and continues it, which is the marginal
+   continuation grammar this sheet already uses; it is not a list bullet, because
+   the strip sets no list anywhere and the mark it continues is 11px above it.
+   M61: the strip no longer declares its own alignment. It set `text-align:right`
+   against a sheet-wide `left` and was the reason the sheet ran two stamp columns;
+   the shared rule sets right for both schedules now, so this block carries only
+   what is actually particular to the strip, which is the stacked suffix. */
+.family td.status,.family th.status{white-space:nowrap;padding-inline:0.85rem}
+.family td.status .suffix{display:block;line-height:1;margin-block-start:0.45rem}
+.family tbody td{vertical-align:middle}
+.family td:last-child{color:var(--ink-2)}
+.closing{font-size:var(--text-small);color:var(--ink-3);margin-block-start:var(--space-block)}
+
+/* ---- below 1000px both tables reflow to stacked entries, and the status stamp
+        comes with the row it stamps (M45). No string is added, edited, dropped or
+        reordered and every row keeps its DOM cell order. ---- */
+@media(max-width:999px){
+  .tablewrap{overflow-x:visible}
+  table{display:block;min-width:0;width:100%}
+  thead{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;
+    clip-path:inset(50%);white-space:nowrap;border:0}
+  tbody{display:block}
+  tbody tr{display:grid;grid-template-columns:minmax(0,1fr) auto;
+    column-gap:1rem;align-items:baseline;
+    padding:var(--space-row) 1.1rem;border-top:1px solid var(--rule-hair)}
+  tbody tr:first-child{border-top:0}
+  tbody td{display:block;width:auto;padding:0;border-top:0}
+  td.surface,.family tbody td:first-child{grid-column:1;grid-row:1;width:auto}
+  td.status,.family tbody td.status{grid-column:2;grid-row:1;width:auto;
+    text-align:right;border-inline-start:0;padding-inline-start:0}
+  td.gets,.family tbody td:last-child{grid-column:1 / -1;grid-row:2;
+    margin-block-start:0.55rem}
+}
+
+/* ---- §2 named unlocks: the schedule of gates, bounded above and below by the W2
+        field rule and ruled inside by W1 (M35, M37, M52). The copy's four named
+        event clauses are entered against the entries they gate, in the register's
+        own grammar, in copy order and word for word. ---- */
+/* M57 gives it its own ground. It is the section's densest field and it stood on
+   the base sheet between two hairlines, which read as more of the same paper. */
+.unlocks{position:relative;
+  margin-block-start:var(--space-block);
+  background:var(--sheet-4);border-block:1px solid var(--rule-mid);
+  padding:calc(var(--space-block) * 0.8) var(--band-pad)}
+.content .unlock-clause{max-width:var(--measure);margin:0;color:var(--ink)}
+.unlock-sched{margin-block:calc(var(--space-block) * 0.7);
+  border-block:1px solid var(--rule-hair)}
+.usched{display:grid;grid-template-columns:6.9rem minmax(0,1fr);
+  column-gap:1.05rem;border-top:1px solid var(--rule-hair);
+  --row-pad:0.85rem;padding-block:var(--row-pad)}
+.usched:first-child{border-top:0}
+.usched-key{font:400 var(--text-fine)/1.62 var(--mono);color:var(--ink-3);
+  letter-spacing:0.06em;white-space:nowrap;text-align:center;
+  border-inline-end:1px solid var(--rule-hair)}
+.usched-val{margin:0;color:var(--ink)}
+/* ============================================================
+   M60 · THE MARGIN CARRIES THE FOLIO MARKS AND THE PERSONA KEYS.
+
+   THE FINDING. M59 relocated five notes into the reserved margin and measured the
+   largest interval between two marks in the column. What it did not measure is
+   how much of the column those five notes OCCUPY: below the register's foot the
+   margin carried five short lines across 4,700px of scroll, so beside §2's gate
+   schedule and beside §4's four portraits -- the two densest fields on the sheet,
+   1,350px between them -- the reserved margin was blank paper with a tint on it.
+
+   NOTHING IS INVENTED AND THE ONE-OBJECT LAW IS NOT AMENDED. This is M59's own
+   device applied to the two schedules it skipped: a KEY hung in the margin beside
+   the value it keys. Eight strings move, all eight already rendered, none edited,
+   none duplicated, none added, and the DOM order of every one is untouched, so
+   with CSS off the reader still meets docs/copy/mortgage-copy.md in copy order.
+     §2  `.usched-key`   `01 · 02 · 03`, `01`, `02`, `03` -- the copy's own gate
+                         keys, which are the REGISTER'S OWN ENTRY NUMBERS, hung
+                         beside the clause that names each entry's blocker
+     §4  `.usched-key`   `The engineer`, `The founder`, `The servicing operations
+                         lead`, `Or the platform product manager` -- the copy's own
+                         portrait keys, hung beside the sentence each one opens
+
+   AND THE ARABIC IS THE SAME ARABIC (MR-D5, satisfied rather than bent). MR-D5
+   reserves arabic to the register's entries "because a boxed 01 in the margin at
+   the rule directly under 01 eNote / eVault invites a correlation that does not
+   exist". These four keys are not a second numbering: they are §2's own citation
+   OF the register's entries, the copy doc writes them as `01`, `02` and `03` for
+   exactly that reason, and the correlation MR-D5 was protecting against is the one
+   this page means. They are also not boxed, not ruled and not a mark of their own:
+   they are typed keys on the margin's one tab stop, at --text-fine in --ink-3,
+   subordinate to the register by the same construction M59 set for its five notes.
+   scripts/check.mjs §11(m) still fails the build if a KEYED SECTION MARK is ever
+   drawn in this column again, and none is: no `::before` on any section carries
+   content, and the recorder's roman folios stay struck.
+
+   AND THE SHEET LOSES THREE OF ITS FIVE RIGHT EDGES ON THE SAME MOVE. A key can
+   only hang on the margin's own tab stop if the schedule it keys ENDS on the
+   margin's division, which is where the two tables, every section rule and the
+   recital band already end. So the two banded grounds and the two schedules take
+   that vertical too, and the sheet is left with exactly two right edges: the
+   READING LINE at --measure, and every GROUND, RULE, TABLE and SCHEDULE on the
+   margin's division. The prose inside the bands does not move: `.unlock-clause`,
+   `.usched-val` and §4's limit paragraph are still ruled at --measure, which is
+   the ground `.clause` has stood on since M57 (a band wider than the provision
+   set on it). Measured at 1280: five right edges (703.7, 816.6, 860.1, 1203.8,
+   1227.8) become three, and the two that remain inside the reading column are the
+   two the termination law names.
+   ============================================================ */
+.unlocks,.unlock-sched,.personasched,.limit{max-width:none}
+.unlock-sched{margin-inline-end:calc(-1 * var(--band-pad))}
+.content .unlock-clause,.content .usched-val{max-width:var(--measure)}
+@media(min-width:1000px){
+  .unlock-sched .usched,.personasched .usched{display:block;position:relative;
+    padding-inline-end:0}
+  /* the key registers on the FIRST BASELINE of the value it keys, not on the row's
+     top edge: the row rule already runs from the value's own left edge to the
+     margin's division, so rule, clause and key make one ledger line and the four
+     portraits keep their subjects even though the subject sets in the margin.
+
+     M61 MAKES THE TAB STOP ONE REGISTRATION INSTEAD OF TWO. The offset was written
+     `calc(0.85rem + 0.36rem)` and described as the declared difference between the
+     two leadings. It was neither: `0.85rem` is the GATE schedule's row padding
+     hard-copied into a rule that also serves the PERSONA schedule, whose rows pad
+     0.7rem, so the one tab stop ran two registrations 2.4px apart, and `0.36rem`
+     was a round number that landed neither of them on zero. Measured with a
+     zero-height baseline-aligned probe: the gate keys sat 3.23px above the first
+     baseline of their clause and the persona keys 0.83px above it.
+
+     The offset is now two terms and each one says what it is. `--row-pad` is the
+     schedule's OWN declared row padding, taken from the schedule rather than
+     copied from its neighbour, so the key follows its rows when they are re-set.
+     `--key-drop` is the distance from a value's content-box top to its first
+     baseline minus the same distance in the key, which is a fact about two
+     typefaces at two sizes and two leadings and is not derivable in CSS: it is
+     MEASURED, it is one number because both schedules set the same two faces at
+     the same two sizes, and it is measured again on every publish -- the viewport
+     gate's `baselineTab` probe fails the build if either schedule drifts off zero.
+     A constant that is checked is a constant; one that is only asserted is the
+     defect this replaces. */
+  .unlock-sched .usched,.personasched .usched{--key-drop:8.99px}
+  .unlock-sched .usched-key,.personasched .usched-key{position:absolute;
+    top:calc(var(--row-pad) + var(--key-drop));
+    inset-inline-start:100%;width:var(--margin-w);
+    padding-inline:var(--reg-inset);
+    text-align:start;white-space:normal;border-inline-end:0;
+    font:400 var(--text-fine)/1.5 var(--mono);color:var(--ink-2);
+    letter-spacing:0.06em}
+}
+/* MR-E9: the gate schedule stacks on a phone, so the page's densest legal copy is
+   not set at 17 to 25 characters a line.
+
+   AND THE TWO PHONE GRAMMARS ARE TWO NAMED VARIANTS, NOT DRIFT (M62.3, recorded in
+   DESIGN.md Part IV Layout). One `.usched` takes two settings below 700px and two
+   different left origins, 28.6px and 44.6px at 390, and until this pass neither was
+   written down anywhere. A distinction that is real and unrecorded is indistinguishable
+   from a mistake, and the next pass unifies it by reflex.
+     THE DISPLAY difference is what the key IS. §2's key is a FOLIO REFERENCE -- `01`,
+     `02`, `03` -- pointing at the register's own entry numbers, part of no sentence, so
+     it stacks as a block above its clause. §4's key is a GRAMMATICAL SUBJECT, the head
+     of the sentence its value completes, so it sets inline as a lead-in: a subject that
+     stacks above its own predicate stops being a sentence with CSS off, which is the
+     one thing MR-C7 and MR-H1 will not spend.
+     THE ORIGIN difference is not the schedule's at all. §2's schedule stands inside the
+     `.unlocks` band and takes that band's own `--band-pad` inset, exactly as the clause
+     above it does; §4's stands on the reading column. The 16px is the band's. Aligning
+     the two would mean pulling §2's schedule out of the band it is filed in. */
+@media(max-width:699px){
+  .unlock-sched .usched{display:block;--row-pad:0.65rem}
+  .unlock-sched .usched-key{display:block;text-align:start;border-inline-end:0;
+    padding-inline-end:0;margin-block-end:0.35rem}
+}
+
+/* ============================================================
+   §3 THE BOUNDARY · the operative provision, and the sheet's centre of gravity.
+
+   M56 UNFRAMES IT, superseding M43's `.clause-field` card. DESIGN.md Part IV
+   Layout says of this property, in its own words, "No cards anywhere: there is no
+   document to frame yet", and signature element 4 specifies the section exactly:
+   "one paragraph at --text-clause, 62ch, ruled off above and below" and nothing
+   added. M43 answered a real finding (a heading and a paragraph alone in an
+   1280x780 band) with the one device the Part bans, and the card then read as the
+   only framed prose on the sheet.
+   What replaces the frame is the instrument's own device: the provision is ruled
+   off above and below by the W3 instrument rule, its heading sets as a MARGINAL
+   CLAUSE KEY beside it (Part I §3.2's ratified rail/margin placement transform,
+   which is the same transform the caption rail on the hub runs), and the operative
+   sentence carries the lead-in weight so the reader meets a provision with its
+   holding stated first rather than thirteen undifferentiated lines.
+   ============================================================ */
+/* M57 GIVES THE PROVISION ITS OWN GROUND, AND THE GROUND IS A BAND AND NOT A
+   CARD. Part IV's ban is on framing prose ("no cards anywhere: there is no
+   document to frame yet") and it is not touched: the provision has no side
+   rules, no corners and no box. What it has is a distinct stock running the
+   sheet's whole width between the two W3 instrument rules that were already
+   ruling it, which is what a recital band is on a real instrument, and which is
+   the page's largest single value step inside the reading column. */
+.content>section.boundary{margin-block-start:calc(var(--space-section) * 1.05)}
+/* M59 STEPS THE BAND OFF THE RAIL. Through M58 the recital band and the reserved
+   margin were the SAME VALUE, oklch(0.928 0.010 40): the band's heavy top and
+   bottom rules spanned x52 to x956 and stopped dead on the margin's division while
+   the identical tone continued unbroken to the sheet's fore-edge at x1228, so the
+   band and the rail fused into one L-shape neither element intends and the page's
+   two W3 rules died in mid-field. The band takes the next stock down the ladder,
+   --sheet-3, which is the stock every other recessed instrument on this sheet
+   already stands on; its rules now terminate on a visible tonal edge, and the
+   margin reads as the column beside the band rather than as part of it. */
+.clause{max-width:none;background:var(--sheet-3);
+  border-block:2px solid var(--rule-frame);
+  padding-block:calc(var(--space-block) * 1.05);
+  padding-inline:var(--gutter);
+  margin-inline:calc(-1 * var(--gutter))}
+@media(min-width:1000px){
+  /* the clause key stands in the reserved margin from here up, so the band is one
+     column again and the provision takes the whole of it. */
+  .clause{display:block;margin-inline-end:0;padding-inline-end:var(--gutter)}
+}
+.boundary h2{margin:0;max-width:none;
+  font:600 1.0625rem/1.28 var(--serif);font-variation-settings:'opsz' 12;
+  letter-spacing:0;color:var(--ink)}
+.content .boundary-clause{font:400 var(--text-clause)/1.38 var(--serif);
+  font-variation-settings:'opsz' 20;max-width:min(62ch,var(--measure-clause));
+  color:var(--ink);letter-spacing:-0.006em;margin:0}
+/* the operative sentence, in the lead-in weight. One string, one paragraph, one
+   `<p>`: the mark is a display transform on the sentence the clause opens with,
+   and the DOM text is byte-identical to the copy doc's paragraph. */
+.content .boundary-clause .lead,
+.content .boundary-clause .close{font-weight:600;color:var(--ink)}
+/* between 820 and 999 there is no reserved margin to stand the key in, so it keeps
+   the carved key column M56 gave it. */
+@media(min-width:820px) and (max-width:999px){
+  .clause{display:grid;grid-template-columns:10rem minmax(0,1fr);
+    column-gap:clamp(1.5rem,2.4vw,2.5rem)}
+  .boundary h2{text-align:right;padding-block-start:0.42rem;
+    border-inline-end:1px solid var(--rule-hair);padding-inline-end:clamp(1.5rem,2.4vw,2.5rem);
+    margin-inline-end:calc(-1 * clamp(1.5rem,2.4vw,2.5rem))}
+}
+@media(max-width:819px){
+  .boundary h2{margin-bottom:var(--space-row)}
+}
+
+/* ---- §4 the honest limit: body size inside the same two quiet field rules, so
+        the section's display tier belongs to the ask and not to a refusal
+        (M49, copy doc MR-C4). ---- */
+.limit{position:relative;
+  margin-block:calc(var(--space-block) * 1.05);
+  background:var(--sheet-4);border-block:1px solid var(--rule-mid);
+  padding:calc(var(--space-block) * 0.75) clamp(1rem,1.6vw,1.5rem)}
+.content .limit p{font:400 var(--text-body)/1.62 var(--serif);
+  font-variation-settings:'opsz' 11;
+  color:var(--ink-2);max-width:var(--measure);margin:0}
+.content p.askline{font:500 clamp(1.2rem,1.05rem + 0.55vw,1.5rem)/1.42 var(--serif);
+  font-variation-settings:'opsz' 18;letter-spacing:-0.006em;
+  color:var(--ink);max-width:var(--measure);
+  margin-block-start:var(--space-block)}
+
+/* ---- §4 the four readers, entered against their own names (MR-C7) ---- */
+.persona-lead{margin-bottom:calc(var(--space-row) * 0.75)}
+.personasched{margin-block:0 var(--space-row);
+  border-block:1px solid var(--rule-hair)}
+.personasched .usched{grid-template-columns:12rem minmax(0,1fr);
+  column-gap:0.95rem;--row-pad:0.7rem}
+.personasched .usched-key{text-align:start;white-space:normal;line-height:1.5}
+/* THE FOURTH PORTRAIT HANGS ITS CONJUNCTION, AND THE WRAP IS ANSWERED IN LAYOUT
+   RATHER THAN IN COPY (M62, copy doc MR-H1).
+
+   THE DEFECT THIS REPLACES. MR-C7 splits each portrait at its relative pronoun, so
+   the fourth key is the whole head of the fourth sentence, `Or the platform product
+   manager`. Set at --text-fine in the sheet's mono at 0.06em it measures 257.92px
+   against the margin key's 248px inner measure, and it was the only mark in this
+   column that set two lines. M61 answered that by moving the `Or` out of the key and
+   into the head of the value, which made the served document read `The platform
+   product manager Or whose roadmap now says mortgage data partner` with CSS off: a
+   string the file of record does not contain, authored to close a nine-pixel
+   overset. A ratified string is not a layout lever.
+
+   THE CURE IS THE PRINTER'S, AND IT IS THE OLDEST ONE. The conjunction hangs into
+   the gutter and the NAME lands on the margin's one tab stop with the other three,
+   so the four portraits still read as four names down the column and the fourth
+   still reads as the last of an enumeration. The margin's tab stop is not doubled:
+   `the platform product manager` starts exactly where `The engineer` starts, and
+   what stands left of it is a hanging conjunction, which is a hang and not a second
+   registration -- the same distinction that lets hung punctuation keep an optical
+   left edge.
+
+   THE INDENT IS DERIVED AND NOT CHOSEN. `Or ` is three characters of this
+   schedule's own face at this schedule's own tracking: 3ch of advance plus three
+   times the 0.06em the keys are tracked at. Written that way it follows the type
+   when the type is re-set, and it cannot go stale as a pixel constant would. It
+   measures 24.97px at 13px, which leaves the name's line 232.95px inside a 248px
+   measure and hangs 12.97px past the margin's division into 239px of clear paper:
+   the value's own first line ends 299px to the left of it at 1280 and 51px at
+   1000, the narrowest width this margin exists at. scripts/check-viewport.mjs
+   `marginHang` measures that clearance on every publish.
+
+   AND IT APPLIES ONLY WHERE THERE IS A GUTTER TO HANG INTO, WHICH IS MEASURED AND
+   NOT ASSUMED. A hung character needs clear paper at least its own width to its
+   left or it reads as the last word of the line it is hanging beside. The clear
+   paper here is the gutter between the reading field's right edge and the margin's
+   division, and that gutter does not exist at the bottom of this range: at 1000 the
+   field is capped by the COLUMN and not by `--measure`, so it runs to within 4px of
+   the division and the hang would stand 8.2px from the value's own first line. The
+   gutter opens as soon as `--measure` takes over, reaching 25.9px at 1020, 43.6px at
+   1040 and 256.3px at 1280. The hang is taken at 1040 and above, where the gutter is
+   at least one and a half times the hang; below it the key wraps to two lines in the
+   margin, which is what five of this column's other marks already do and what `The
+   servicing operations lead` does in the 700-999 band.
+
+   BETWEEN 700 AND 999 the key sets in the schedule's own 12rem column and wraps
+   there; below 700 it is an inline lead-in and `text-indent` does not reach an
+   inline box at all. Both are the settings those bands already had. */
+@media(min-width:1040px){
+  .personasched .usched-key.k-hang{text-indent:calc(-3ch - 0.18em)}
+}
+@media(max-width:699px){
+  .personasched .usched{display:block;--row-pad:0.65rem}
+  .personasched .usched-key{display:inline;border-inline-end:0;padding-inline-end:0.4rem}
+  .personasched .usched-val{display:inline}
+}
+
+/* ---- §4 THE DOCKET · a quoted instrument, and never a field to type in.
+        M56 raises it from a hairline-margined list to an object with its own
+        chrome: a W2 frame, an envelope band carrying the routing pair on
+        --sheet-3, a W2 division, and the message's three lines on --sheet-2.
+        THE INPUT-GEOMETRY BAN (MR-A5 limit one) IS UNAMENDED AND IS WHY THE
+        CHROME STOPS THERE: no rule under any line, no box around any line, no
+        placeholder, nothing that reads as typeable. This property's ratified
+        villain is a surface that lies about what it is, and a three-field inline
+        signup form that is not one is that villain drawn in this property's own
+        ink. The block carries the mailto's own `to` and `subject` so a reader
+        with webmail and no protocol handler can copy the whole message (MR-C5). ---- */
+.ask{margin-block-start:var(--space-block);scroll-margin-block-start:5.5rem}
+.ask>p{margin:0;margin-block-start:var(--space-block)}
+/* M57 raises the frame to W3 and steps the two zones onto real stock: the
+   envelope band takes --sheet-5, the deepest stock on the sheet and the only
+   place it is used, and the message takes --sheet-3. A quoted instrument is a
+   thing lying in the document, and it took the same tint as everything else. */
+.docket{max-width:var(--measure);border:2px solid var(--rule-frame);
+  background:var(--sheet-3)}
+.docket-row{padding:0.16rem 1rem}
+/* the envelope band: the routing pair the mail is addressed with, on the head
+   stock, closed by the W2 field rule. The message's own three lines follow on the
+   docket's own stock. Two zones, one quotation, and no rule under any line. */
+.docket-row.docket-env{background:var(--sheet-5)}
+.docket-row.docket-env:first-of-type{padding-block-start:0.6rem}
+.docket-row.docket-env + .docket-row:not(.docket-env){
+  border-top:1px solid var(--rule-mid);padding-block-start:0.85rem}
+.docket-row.docket-env:last-of-type{padding-block-end:0.6rem}
+.docket-row:last-child{padding-block-end:0.85rem}
+.docket-row span{display:block;font:400 var(--text-fine)/1.65 var(--mono);
+  color:var(--ink-2)}
+.docket-row.docket-env span{color:var(--ink-2)}
+
+/* ---- MR-J1 (2026-08-02, owner-directed): the register takes names, and this is
+        the thing that takes them. The docket quoted a message the reader had to go
+        somewhere else to send; these are the same five lines as fields that send it
+        here. It inherits the docket's instrument grammar (W3 frame, --sheet-5
+        envelope band over --sheet-3 message stock) because it is the same
+        instrument, now fillable. MR-A5's "never input geometry" governed the
+        DOCKET, a quotation; this is the intake itself, and an intake takes input. ---- */
+.wl{max-width:var(--measure);border:2px solid var(--rule-frame);
+  background:var(--sheet-3);margin-block-start:var(--space-block)}
+.wl-env{background:var(--sheet-5);padding:0.6rem 1rem;
+  border-bottom:1px solid var(--rule-mid)}
+.wl-env span{display:block;font:400 var(--text-fine)/1.65 var(--mono);color:var(--ink-2)}
+.wl-body{padding:0.85rem 1rem 1rem}
+.wl-f{display:block;margin-block-start:0.7rem}
+.wl-f:first-child{margin-block-start:0}
+.wl-f>span{display:block;font:400 var(--text-fine)/1.65 var(--mono);color:var(--ink-2);
+  margin-block-end:0.2rem}
+.wl-f .req{color:var(--ink-3)}
+.wl-f input,.wl-f select,.wl-f textarea{
+  display:block;width:100%;box-sizing:border-box;
+  font:400 var(--text-fine)/1.5 var(--mono);color:var(--ink-1);
+  background:var(--sheet-1);border:1px solid var(--rule-mid);border-radius:0;
+  padding:0.4rem 0.55rem;-webkit-appearance:none;appearance:none}
+.wl-f textarea{min-height:3.4rem;resize:vertical}
+.wl-f select{background-image:none}
+.wl-f input:focus,.wl-f select:focus,.wl-f textarea:focus{
+  outline:2px solid var(--seal);outline-offset:1px;border-color:var(--seal)}
+.wl-act{margin-block-start:0.95rem}
+.wl-note{font:400 var(--text-fine)/1.55 var(--mono);color:var(--ink-3);
+  margin:0.6rem 0 0}
+/* the JS-off path is a real POST and needs no script; these two only matter when
+   the enhancement runs, and they are inert otherwise. */
+.wl-live{font:400 var(--text-fine)/1.6 var(--mono);color:var(--ink-2);margin:0.6rem 0 0}
+.wl-live:empty{display:none}
+.wl[hidden]{display:none}
+/* the demoted mailto: still a real button and still the ratified label, set quieter
+   than the submit above it because it is now the alternate and not the act. */
+.alt-lead{font:400 var(--text-fine)/1.65 var(--mono);color:var(--ink-3);
+  max-width:var(--measure)}
+.ask>p.alt-lead{margin-block-start:var(--space-block);margin-block-end:0.55rem}
+.alt-act .btn{background:transparent;color:var(--seal);
+  box-shadow:inset 0 0 0 1px var(--seal)}
+.alt-act .btn:hover{background:var(--seal);color:var(--paper-on-seal)}
+
+/* ---- the recipient line: what the button does and who answers it
+        (MR-A4, MR-F5). Operational instruction, in the machine voice. ---- */
+.recipient{font:400 var(--text-fine)/1.65 var(--mono);color:var(--ink-3);
+  max-width:var(--measure);margin:0.75rem 0 0}
+.ask>p.recipient{margin:0.75rem 0 0}
+.hero-recipient{margin-block-start:0.7rem}
+
+/* the two open fields close on the right on the line the termination law assigns
+   them, so no prose block on the sheet ends on an unreconciled ragged right.
+   M57: the closure is now the STOCK's own edge rather than a hairline drawn where
+   the stock would have ended anyway. A ground that stops at --measure states the
+   termination more plainly than a rule describing it, and a hairline on three
+   sides of a field is a box pretending not to be one. */
+
+/* ---- buttons ---- */
+.btn{display:inline-block;font:500 1.0625rem var(--serif);
+  font-variation-settings:'opsz' 14;padding:0.85rem 1.75rem;
+  border-radius:2px;background:var(--seal);color:var(--paper-on-seal);
+  text-decoration:none;white-space:nowrap;
+  transition:background 150ms var(--quart),transform 120ms var(--quart)}
+.btn:hover{background:var(--seal-deep);color:var(--paper-on-seal)}
+.btn:active{transform:translateY(1px)}
+
+/* ---- footer: the band the reserved margin terminates into. Same stock as the
+        margin, opened by the W3 instrument rule, and it runs to the sheet's own
+        cut edge, where the leaf and the cast take over. ---- */
+.footer{background:var(--sheet-2);border-top:2px solid var(--rule-frame);
+  padding-block:var(--space-block) calc(var(--space-block) * 1.35);flex:none}
+.footer-inner{padding-inline:var(--gutter)}
+.foot-links{font:400 var(--text-small) var(--mono);color:var(--ink-3);
+  max-width:var(--measure);
+  padding-bottom:var(--space-row);border-bottom:1px solid var(--rule-hair);
+  margin-bottom:var(--space-block)}
+/* M58: AND THE FOOTER'S HAIRLINE TAKES THE SAME TERMINUS AS EVERY OTHER RULE ON
+   THE SHEET. It was ruled to --measure, which made it the page's fifth right
+   edge: a rule ending on a prose measure under a band that has no prose measure.
+   The footer sits below the reserved margin, so its rule runs to the vertical
+   the margin's own rule stands on and the reader meets one terminus from the
+   runhead to the last line of the estate note. */
+@media(min-width:1000px){
+  .footer-inner{padding-inline:var(--gutter) 0}
+  .foot-links{max-width:none;margin-inline-end:var(--margin-w)}
+}
+/* every anchor in the footer link row is a real tap target (WCAG 2.2 AA 2.5.8);
+   the footer has no forty-pixel ceiling, so it takes the full 40. */
+.foot-links a{color:var(--seal);display:inline-block;padding-block:12px;
+  line-height:16px}
+.standing{font:400 var(--text-body)/1.62 var(--serif);color:var(--ink);
+  font-variation-settings:'opsz' 11;
+  max-width:var(--measure);margin:0}
+
+/* ---- motion: one load under 750ms, then still forever. The counter, the sheet,
+        the ruling, the reserved margin and the register are present at 0ms and
+        never animate: emptiness that moves is decoration. ---- */
+html.js .m-h1{opacity:0;transform:translateY(8px)}
+html.js .m-h1.in{opacity:1;transform:none;
+  transition:opacity 600ms var(--expo) 80ms,transform 600ms var(--expo) 80ms}
+html.js .m-sub{opacity:0}
+html.js .m-sub.in{opacity:1;transition:opacity 450ms var(--expo) 160ms}
+html.js .m-cta{opacity:0}
+html.js .m-cta.in{opacity:1;transition:opacity 400ms var(--expo) 240ms}
+@media(prefers-reduced-motion:reduce){
+  html.js .m-h1,html.js .m-sub,html.js .m-cta{
+    opacity:1;transform:none;transition:none}
+}
+</style>
+</head>
+<body>
+
+<div class="sheet">
+
+<header class="runhead">
+  <div class="runhead-inner">
+    <!-- MR-D4 / MR-G4: one category string, `payoff, lien and eNote data`, whole
+         at every width. MR-E1 / MR-E2 / MR-E8: the door and the act render at
+         every width, and below 1000px the head sets as two rows so the name, the
+         status artifact and the machine door all hold the first forty pixels.
+         Reading order does not move: with CSS off this is still name, category,
+         status. -->
+    <p class="eyebrow"><code class="self">apis.mortgage</code><span class="cat"><span class="sep"> · </span><span class="cat-long">payoff, lien and eNote data</span></span><span class="stat"><span class="sep"> · </span><span class="stamp stamp-live">LIVE</span></span></p>
+    <!-- MR-F4: the standing act targets the ASK BLOCK, not §4's heading. -->
+    <p class="rh-act"><a href="#ask">Join the waitlist</a></p>
+    <p class="door"><a href="/llms.txt"><code>/llms.txt</code></a></p>
+  </div>
+</header>
+
+<div class="page">
+
+  <main class="content">
+
+    <section class="hero" aria-label="apis.mortgage">
+      <div class="hero-grid">
+        <div class="hero-head">
+          <!-- M56: one marked term. `reach` is the word MR-E3, MR-F2 and MR-G3 are
+               each written about, and the mark is the display transform Part I
+               §3.2 permits on a rendered string. The string is byte-identical to
+               docs/copy/mortgage-copy.md's HEADLINE block. -->
+          <h1 class="m-h1">Agents can’t originate a mortgage. Neither can most software. Both will <span class="mark">reach</span> the company that holds the file through apis.mortgage.</h1>
+        </div>
+
+        <div class="hero-text">
+          <p class="m-sub hero-sub">For the founder blocked on a Payoff figure that still arrives by telephone and portal login: that figure will come back attested, the issuing party named on it, the loan record cited, this entity answering for it, with its per-diem and its good-through date.</p>
+          <p class="m-sub hero-stand">apis.mortgage is not the vault, the servicer or the recorder, and it is not the licensee. It is the headless system of record: the software that holds the file and answers for the record. The licensed operator — the broker, the lender, the servicer — is the customer, and brings the license. The machine face is live and priced; the attested rows post here when they earn LIVE.</p>
+        </div>
+
+        <div class="hero-cta">
+          <p class="standing-reason m-cta">The waitlist will hear it first, and the order these surfaces ship in is set by what this list asks for.</p>
+          <!-- MR-F5 / MR-F6: the fold's only action is a labelled control and it
+               explains its own inbox at the control, which is where a cold reader
+               asks the question. -->
+          <p class="m-cta"><a class="btn" href="mailto:keys@apis.finance?subject=apis.mortgage%20waitlist&amp;body=What%20we%27re%20building%3A%0AWhich%20surface%20first%20(eNote%2FeVault%2C%20doc%20intelligence%2C%20payoff%2Flien)%3A%0AExpected%20volume%3A">Email us to join</a></p>
+          <p class="recipient hero-recipient">Opens your mail app to keys@apis.finance, the shared inbox for apis.finance and its properties. Answered by a person.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         THE RESERVED MARGIN, AND THE ONE COMPOSED OBJECT IN IT.
+
+         M56 returned the register to the margin DESIGN.md Part IV assigns it,
+         from the hero column M42 through M55 had it borrowing. M57 moves the
+         aside inside the reading grid and places it in ROW ONE, beside the hero
+         and nowhere else, so the margin is co-extensive with the object it
+         reserves instead of running 5,000px of empty tint to the footer. The
+         one-object law is unchanged: this is still the only thing in it.
+
+         The object is chrome, not copy: it is aria-hidden because MR-D11 rules
+         it a specimen of data §2 marks up properly as a <table> with
+         scope="col" headers, it holds no focusable element, and every key in it
+         is a fact §2's own SEQUENCE states in prose on both served surfaces
+         (MR-F10). With CSS off it now reads directly after the hero section it
+         stands beside, complete, and before §2 -- which is the copy order the
+         specimen is a specimen OF, and which no longer splits the fold's own
+         copy in two the way the M42-M55 placement did.
+         ============================================================ -->
+    <aside class="margin" aria-hidden="true">
+    <div class="register" aria-hidden="true">
+      <!-- the tab, breaking the instrument frame it belongs to -->
+      <div class="reg-tab">Entry</div>
+      <!-- M57: the head names the column it actually stands over, and only that
+           one. `Status` is struck because the body never ruled a status column
+           and the object's own argument is rule discipline; the three ROADMAP
+           marks sit on the surface column's right terminus instead. `Entry`
+           heads column one from the tab above it. -->
+      <div class="reg-cols"><span>Surface</span></div>
+      <!-- MR-G5: the specimen says once, in its own tier, that its blanks are
+           deliberate. Nothing is filled: the caption is the claim.
+           MR-J2 (2026-08-02): the caption said "nothing has shipped", which was a
+           claim about the whole property made by a caption standing over three
+           mortgage rows. On the day POST /waitlist started answering it became
+           false, and it is the diluted posture the owner ruling bans by name. The
+           blanks are still deliberate and still unfilled; what is scoped is the
+           claim, to the rows this object actually shows. -->
+      <div class="reg-caption">Specimen · no row is filled because no row has shipped</div>
+      <!-- MR-F9: the recording lines are KEYED. Every value beside every key is
+           empty, every stamp is ROADMAP, and nothing is presented as furnished. -->
+      <div class="reg-row">
+        <div class="reg-num">01<span class="stamp stamp-roadmap">ROADMAP</span></div>
+        <div class="reg-main">
+          <div class="reg-line"><span class="reg-surface"><span>eNote / eVault:</span> <span>who holds control</span></span></div>
+          <div class="reg-field"><span class="reg-key">Controlling party</span><span class="reg-blank"></span></div>
+        </div>
+      </div>
+      <div class="reg-row">
+        <div class="reg-num">02<span class="stamp stamp-roadmap">ROADMAP</span></div>
+        <div class="reg-main">
+          <div class="reg-line"><span class="reg-surface"><span>Doc intelligence</span></span></div>
+          <div class="reg-field"><span class="reg-key">Typed field · source page</span><span class="reg-blank"></span></div>
+        </div>
+      </div>
+      <div class="reg-row">
+        <div class="reg-num">03<span class="stamp stamp-roadmap">ROADMAP</span></div>
+        <div class="reg-main">
+          <div class="reg-line"><span class="reg-surface"><span>Payoff / lien data</span></span></div>
+          <div class="reg-field"><span class="reg-key">Issued by</span><span class="reg-blank"></span></div>
+          <div class="reg-field"><span class="reg-key">Loan record</span><span class="reg-blank"></span></div>
+          <div class="reg-field"><span class="reg-key">Per diem</span><span class="reg-blank"></span></div>
+          <div class="reg-field"><span class="reg-key">Good through</span><span class="reg-blank"></span></div>
+        </div>
+      </div>
+      <!-- MR-E6: the reserved entries and their caption. A reserved entry with
+           nothing presented against it says the register is not full and we are
+           not going to pretend it is. -->
+      <div class="reg-note">Entries 04 and 05 are reserved. Nothing is presented against them.</div>
+      <div class="reg-row reg-reserved">
+        <div class="reg-num">04</div>
+        <div class="reg-main">
+          <div class="reg-field reg-open"><span class="reg-blank"></span></div>
+          <div class="reg-field reg-open"><span class="reg-blank"></span></div>
+          <div class="reg-field reg-open"><span class="reg-blank"></span></div>
+          <div class="reg-field reg-open"><span class="reg-blank"></span></div>
+        </div>
+      </div>
+      <div class="reg-row reg-reserved">
+        <div class="reg-num">05</div>
+        <div class="reg-main">
+          <div class="reg-field reg-open"><span class="reg-blank"></span></div>
+          <div class="reg-field reg-open"><span class="reg-blank"></span></div>
+          <div class="reg-field reg-open"><span class="reg-blank"></span></div>
+          <div class="reg-field reg-open"><span class="reg-blank"></span></div>
+        </div>
+      </div>
+      <!-- THE RECORDING STAMP BOX, UNFILLED (M56). The statutory artifact this
+           property is named for, under the copy's own `Received for record`. -->
+      <div class="reg-foot">
+        <span class="reg-foot-key">Received for record</span>
+        <span class="reg-stampbox"><span class="reg-stampbox-inner"><span class="reg-blank"></span><span class="reg-blank"></span></span></span>
+      </div>
+    </div>
+    </aside>
+
+    <section aria-labelledby="h-ships">
+      <h2 id="h-ships">What ships first, and who is liable for it.</h2>
+      <p>You don’t need a license to know what the unregulated edge of a mortgage is. Extending credit, taking the Application, negotiating terms, deciding: those are Lender-Reserved, and they stay with the licensed operator who performs them. The edge is not reserved, and it ships first, from this property, in this order.</p>
+      <div class="tablewrap">
+        <table role="table">
+          <thead role="rowgroup"><tr role="row"><th role="columnheader" scope="col">Surface</th><th role="columnheader" scope="col">What your agent gets</th><th role="columnheader" scope="col" class="status">Status</th></tr></thead>
+          <tbody role="rowgroup">
+            <tr role="row"><td role="cell" class="surface">eNote / eVault: who holds control</td><td role="cell" class="gets">Typed state on electronic promissory notes: which eVault holds control, transfer and control events attested, under the UCC’s control regime for electronic chattel paper</td><td role="cell" class="status"><span class="stamp stamp-roadmap">ROADMAP</span></td></tr>
+            <tr role="row"><td role="cell" class="surface">Doc intelligence</td><td role="cell" class="gets">The mortgage file read by machine: the note, the security instrument, the disclosure set, extracted as typed fields with the source page cited</td><td role="cell" class="status"><span class="stamp stamp-roadmap">ROADMAP</span></td></tr>
+            <tr role="row"><td role="cell" class="surface">Payoff / lien data</td><td role="cell" class="gets">Attested Payoff figures: the issuing party named, the loan record cited, per-diem and good-through date, with lien and release status on mortgage Collateral</td><td role="cell" class="status"><span class="stamp stamp-roadmap">ROADMAP</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="unlocks">
+        <p class="unlock-clause">Each row waits on named events, never on a date.</p>
+        <dl class="unlock-sched">
+          <div class="usched">
+            <dt class="usched-key">01 · 02 · 03</dt>
+            <dd class="usched-val">Two of them are common to all three: a written counsel opinion that the surface performs no Lender-Reserved act and performs no licensed act by software, and a licensed operator on the other side of it, because an attested figure is attested by the party licensed to issue it — the operator brings the license, the software holds the record.</dd>
+          </div>
+          <div class="usched">
+            <dt class="usched-key">01</dt>
+            <dd class="usched-val">The eNote row waits on a third, a signed agreement with an eVault provider, and until there is one no row here will describe this entity as holding control of anything.</dd>
+          </div>
+          <div class="usched">
+            <dt class="usched-key">02</dt>
+            <dd class="usched-val">The doc intelligence row has no blocker of its own; it waits only on the two above.</dd>
+          </div>
+          <div class="usched">
+            <dt class="usched-key">03</dt>
+            <dd class="usched-val">The payoff and lien row waits on the per-state recording and release rules it would answer with.</dd>
+          </div>
+        </dl>
+        <p class="unlock-clause">Licenses gate the licensed acts, which a credentialed human performs and software never does. Nothing gates the Lender-Reserved acts; the Lender performs them alone. When a row’s events have happened, the row changes.</p>
+      </div>
+      <!-- M59: this sentence was already an annotation on the schedule above it.
+           At 1000px and up it stands in the reserved margin beside that schedule;
+           below 1000 there is no margin and it renders where it always did. The
+           string, its class and its position in the DOM are unchanged. -->
+      <p class="closing marginal">When a row goes live it will say LIVE and its price will post on a rate card.</p>
+    </section>
+
+    <section class="boundary" aria-labelledby="h-boundary">
+      <div class="clause">
+        <h2 id="h-boundary" class="marginal">Why this door stands apart.</h2>
+        <p class="boundary-clause"><span class="lead">The license stays with the operator. The record stays with the software.</span> Mortgage acts sit under their own federal and state regime, and an API in front of them moves none of them. apis.mortgage draws the line where the regime draws it: the software is the system of record — the loan file, the market record, the pipeline — and the licensed operator who runs on it brings the license, extends the credit, takes the Application, decides. You’ve seen mortgage APIs that turn out to be lead forms, and lead forms that turn out to be someone else’s license. This one holds the file and names whose license every regulated act runs on: the operator’s. A price posts on this page’s own rate card, and every row carries the status word it has earned. It never redirects into apis.finance. <span class="close">What is live here is live here, under this name, on the operator’s license and this software’s record.</span></p>
+      </div>
+    </section>
+
+    <section class="asksec" aria-labelledby="h-waitlist">
+      <h2 id="h-waitlist">Tell us what you’d build.</h2>
+      <p class="persona-lead marginal">You are probably one of four people.</p>
+      <!-- MR-C7, AS AMENDED BY MR-H1: the four portrait sentences, entered against
+           their own names in §2's schedule grammar. THE SPLIT IS AT THE RELATIVE
+           PRONOUN AND NOWHERE ELSE, one per portrait, so every key is the whole head
+           of its own sentence up to that pronoun and every value is the remainder of
+           it: `The engineer`, `The founder`, `The servicing operations lead`, and
+           `Or the platform product manager`. The fourth key carries the conjunction
+           because the conjunction is inside the head of the fourth sentence, and a
+           value that began `Or whose roadmap now says` would be a string the ratified
+           paragraph does not contain. With CSS off, and verbatim at 390 where the key
+           sets as an inline lead-in, the reader meets the same six sentences in the
+           same order and the same words, which is the whole of A30's test.
+           M61 rendered the fourth key `The platform product manager` and opened its
+           value with `Or`. That reads `The platform product manager Or whose roadmap
+           now says mortgage data partner` in document order, which is not English and
+           is not a sentence in the file of record; and it was done to stop the one key
+           that wrapped to two lines in the margin, which is a layout problem answered
+           in copy. MR-C7's own words foreclose exactly that move. The wrap is answered
+           in layout instead: see `.usched-key.k-hang` in the stylesheet.
+           scripts/check.mjs §11(j4) now reads the PERSONA PARAGRAPH block out of
+           docs/copy/mortgage-copy.md and fails the build if the six rendered strings
+           are not that paragraph, in order, byte for byte. -->
+      <dl class="personasched">
+        <div class="usched">
+          <dt class="usched-key">The engineer</dt>
+          <dd class="usched-val">who owns an eVault integration and cannot reach control state from anything they are shipping this year.</dd>
+        </div>
+        <div class="usched">
+          <dt class="usched-key">The founder</dt>
+          <dd class="usched-val">who has been told twice that the data exists, and twice that it comes with a partnership, a minimum and a licensed intermediary in the middle.</dd>
+        </div>
+        <div class="usched">
+          <dt class="usched-key">The servicing operations lead</dt>
+          <dd class="usched-val">who owns payoff fulfillment and lien release, measured against a statutory window, and unable to hire their way out of the volume.</dd>
+        </div>
+        <div class="usched">
+          <dt class="usched-key k-hang">Or the platform product manager</dt>
+          <dd class="usched-val">whose roadmap now says mortgage data partner, and who has learned to read a vendor page for its licensing posture before reading it for features.</dd>
+        </div>
+      </dl>
+      <p class="persona-close marginal">All four have been sold this category before by someone who could not say whose license it ran on.</p>
+      <div class="limit">
+        <p>Nothing else comes with joining. No early price, no reserved capacity, no beta, no place in a queue that moves ahead of anyone else’s. Those are the four things a list like this is usually sold with, and this list grants none of them.</p>
+      </div>
+      <!-- MR-C4: §4 has one display tier and it changes occupant, not size. The
+           tier belongs to the ask, which is the sentence the section's headline
+           names and the only one here a reader can act on. -->
+      <p class="askline">You know what you’d build the day these rows open. Tell us three things: what you’re building, which surface you need first (eNote/eVault, doc intelligence, payoff/lien), and the volume you expect. The waitlist hears it first, and it is answered by a person.</p>
+      <div class="ask" id="ask">
+        <!-- MR-J1 (2026-08-02, owner-directed). The docket rendered the message and
+             sent the reader elsewhere to send it; these are its own five lines, as a
+             real form, POSTing to this entity's own /waitlist. It works with no script:
+             the enhancement below only swaps the receipt in place. -->
+        <form class="wl" id="wl" action="/waitlist" method="post">
+          <div class="wl-env">
+            <span>To: keys@apis.finance</span>
+            <span>Subject: apis.mortgage waitlist</span>
+          </div>
+          <div class="wl-body">
+            <label class="wl-f">
+              <span>What we’re building:</span>
+              <textarea name="building" rows="2" autocomplete="off"></textarea>
+            </label>
+            <label class="wl-f">
+              <span>Which surface first (eNote/eVault, doc intelligence, payoff/lien):</span>
+              <select name="surface">
+                <option value="">(no preference)</option>
+                <option value="eNote/eVault">eNote/eVault</option>
+                <option value="doc intelligence">doc intelligence</option>
+                <option value="payoff/lien">payoff/lien</option>
+              </select>
+            </label>
+            <label class="wl-f">
+              <span>Expected volume:</span>
+              <input type="text" name="volume" autocomplete="off">
+            </label>
+            <label class="wl-f">
+              <span>Where we reply: <span class="req">(required)</span></span>
+              <input type="email" name="email" required autocomplete="email" inputmode="email">
+            </label>
+            <p class="wl-act"><button class="btn" type="submit">Join the waitlist</button></p>
+            <p class="wl-live" id="wl-live" role="status" aria-live="polite"></p>
+            <p class="wl-note">Goes to keys@apis.finance, the shared inbox for apis.finance and its properties. Answered by a person.</p>
+          </div>
+        </form>
+        <p class="standing-reason">The waitlist will hear it first, and the order these surfaces ship in is set by what this list asks for.</p>
+        <!-- The mailto is not deleted, it is demoted: a reader who prefers their own mail
+             mail app keeps a working path, with the same three questions pre-filled. -->
+        <p class="alt-lead">Or send it from your own mail app instead:</p>
+        <p class="alt-act"><a class="btn" href="mailto:keys@apis.finance?subject=apis.mortgage%20waitlist&amp;body=What%20we%27re%20building%3A%0AWhich%20surface%20first%20(eNote%2FeVault%2C%20doc%20intelligence%2C%20payoff%2Flien)%3A%0AExpected%20volume%3A">Email us to join</a></p>
+        <p class="recipient">Opens your mail app to keys@apis.finance, the shared inbox for apis.finance and its properties. Answered by a person.</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="h-family">
+      <h2 id="h-family" class="marginal">One family. This door answers for itself.</h2>
+      <p><code>api.X</code> is one API for one profession. <code>apis.X</code> is a family of APIs sharing one key. apis.mortgage belongs to the apis family and stands apart from it on purpose: one key will open it, but what answers behind it is this entity, not the hub.</p>
+      <div class="tablewrap">
+        <table class="family" role="table">
+          <thead role="rowgroup"><tr role="row"><th role="columnheader" scope="col">Property</th><th role="columnheader" scope="col" class="status">Status</th><th role="columnheader" scope="col">Role</th></tr></thead>
+          <tbody role="rowgroup">
+            <tr role="row"><td role="cell"><a href="https://apis.finance"><code>apis.finance</code></a></td><td role="cell" class="status"><span class="stamp stamp-live">LIVE</span></td><td role="cell">The hub. The catalog, the key, the posted rate card.</td></tr>
+            <tr role="row"><td role="cell"><a href="https://apis.credit"><code>apis.credit</code></a></td><td role="cell" class="status"><span class="stamp stamp-roadmap">ROADMAP</span></td><td role="cell">The data door. Business credit, KYB, UCC lien search. Posted and priced in draft; not yet callable.</td></tr>
+            <tr role="row"><td role="cell"><a href="https://apis.loans"><code>apis.loans</code></a></td><td role="cell" class="status"><span class="stamp stamp-roadmap">ROADMAP</span></td><td role="cell">The origination door, standing until origination is live through licensed partners.</td></tr>
+            <tr role="row"><td role="cell"><code>apis.mortgage</code></td><td role="cell" class="status"><span class="stamp stamp-live">LIVE</span> <span class="suffix">· machine face</span></td><td role="cell">You are here. Loan files, market records and pipelines answer today; payoff, lien and eNote rows post here when they earn LIVE. This property never redirects into the hub.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+
+  </main>
+
+</div>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <p class="foot-links"><a href="/llms.txt">/llms.txt</a> · <a href="mailto:keys@apis.finance">keys@apis.finance</a></p>
+    <p class="foot-links">MACHINE FACE · <a href="/.well-known/agents.json"><code>/.well-known/agents.json</code></a> · <a href="/openapi.json"><code>/openapi.json</code></a> · <a href="/pricing"><code>/pricing</code></a> · <code>POST /mcp</code> · <a href="/verify"><code>/verify</code></a> · <a href="/loan-files"><code>/loan-files</code></a> · <a href="/market-records"><code>/market-records</code></a></p>
+    <p class="standing">On the machine face, loan-file records are labeled example data over fictional lenders; market records are real FFIEC HMDA aggregations with the query URL and observation date stamped on every record. Borrower personal data is not served, in any class. The rate card is test-mode and says so in its own statement.</p>
+    <p class="standing">apis.mortgage is the headless mortgage system of record. It holds no license and performs no licensed act: the licensed operator it wraps — the broker, the lender, the servicer — brings the license, extends the credit, takes the Application and decides. What answers here is software and data, priced on its own rate card, each row carrying the status word it has earned.</p>
+  </div>
+</footer>
+
+</div>
+
+<script>
+document.documentElement.classList.add('js');
+addEventListener('DOMContentLoaded',function(){
+  document.querySelectorAll('.m-h1,.m-sub,.m-cta').forEach(function(el){el.classList.add('in')});
+
+  /* MR-J1: enhancement only. With no script the form is a real POST to /waitlist and
+     the worker answers a rendered receipt; this keeps the reader on the page instead.
+     Every failure path here falls back to letting the browser submit normally, so a
+     broken script can never swallow a submission. */
+  var f=document.getElementById('wl'),live=document.getElementById('wl-live');
+  if(!f||!live||!window.fetch)return;
+  f.addEventListener('submit',function(ev){
+    if(!f.checkValidity())return; // let the browser show its own message
+    ev.preventDefault();
+    var btn=f.querySelector('button[type=submit]');
+    var fd=new FormData(f),payload={};
+    fd.forEach(function(v,k){payload[k]=v});
+    if(btn){btn.disabled=true}
+    live.textContent='Recording…';
+    fetch('/waitlist',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)})
+      .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})})
+      .then(function(res){
+        if(btn){btn.disabled=false}
+        if(res.ok&&res.j&&res.j.recorded){
+          var w=document.createElement('div');
+          w.className='wl';
+          w.innerHTML='<div class="wl-env"><span>Recorded '+
+            String(res.j.received_at||'').replace(/[<>&]/g,'')+'</span></div>'+
+            '<div class="wl-body"><p class="wl-live">You’re on the list for apis.mortgage. '+
+            'Nothing on this property is live yet. '+
+            'As soon as we’re ready for someone with your profile and requirements, we’ll be in contact.</p>'+
+            '<p class="wl-note">A person replies from keys@apis.finance.</p></div>';
+          f.parentNode.replaceChild(w,f);
+          return;
+        }
+        live.textContent=(res.j&&res.j.detail)?res.j.detail:
+          'That did not record. Write to keys@apis.finance and a person will enter it by hand.';
+      })
+      .catch(function(){
+        if(btn){btn.disabled=false}
+        live.textContent='';
+        f.submit(); // network or parse failure: hand it back to the browser, never drop it
+      });
+  });
+});
+</script>
+</body>
+</html>

@@ -10,15 +10,23 @@
 import { defineSiteManifest } from './axp-faces/index.js'
 import { loanFiles } from './seed.js'
 import { projection } from './projection.js'
+import { LANDING_HTML } from './landing.js'
 
 export const ORIGIN = 'https://apis.mortgage'
 
 const LLMS_BODY = `# apis.mortgage
 
-The loan file and the mortgage market record as typed, keyless doors.
-apis.mortgage is the machine face of the mortgage substrate (NAICS 522292):
-MISMO-typed loan-file records, HMDA-derived lender market records, and an
-auto-minted sandbox loan pipeline — the LOS system-of-record door.
+The headless mortgage system of record. apis.mortgage is the machine face
+of the mortgage substrate (NAICS 522292): MISMO-typed loan-file records,
+HMDA-derived lender market records, and an auto-minted sandbox loan
+pipeline — the LOS system-of-record door.
+
+The boundary, stated once (founder ruling 2026-08-23): the software is the
+system of record, and the licensed operator — the broker, the lender, the
+servicer — is the customer and brings the license. Lender-Reserved acts
+(extending credit, taking the Application, negotiating terms, deciding)
+stay with the operator. What is served here is software and data, priced
+on this property's own rate card.
 
 Every collection answers without a key. Typed envelopes everywhere:
 OK | EMPTY | BLOCKED | OFFER — three emptinesses never blend.
@@ -31,6 +39,8 @@ OK | EMPTY | BLOCKED | OFFER — three emptinesses never blend.
 - \`POST /pipelines\` — auto-mint an anonymous sandbox loan pipeline (keyless; ephemeral in wave zero, disclosed on mint)
 - \`POST /mcp\` — MCP door (JSON-RPC 2.0): the same nouns and verbs as HTTP
 - \`GET /verify\` — run our tests: the public-contract checks, runnable by anyone
+- \`POST /waitlist\` — the register for the ROADMAP surfaces (payoff/lien data, eNote/eVault control state, doc intelligence). Takes \`email\` (required), \`building\`, \`surface\` and \`volume\`, form-encoded or JSON, capped at 16KB. Stores every accepted submission durably and answers 201 with a receipt; refuses with a typed 422 carrying a cure when the reply address is missing or unusable, and with a 503 that says nothing was recorded if the store is unavailable. GET answers a typed 405: this door writes and never lists — no name on this list is published in any form.
+- \`GET /healthz\` — liveness of the process; its \`callable\` member names what answers today.
 
 ## Pricing
 
@@ -48,13 +58,20 @@ lenders. Borrower personal data is not served on this face, in any class.
 
 ## Scope
 
-This is the data and document door of the mortgage substrate: the loan file
-and the market record. Loan origination, closing, and settlement are not
-served here.`
+This is the data, document and pipeline door of the mortgage substrate:
+the loan file, the market record, the pipeline. The attested rows —
+payoff/lien figures, eNote/eVault control state, doc intelligence — are
+ROADMAP: each waits on named events (a written counsel opinion; a licensed
+operator on the other side of it; for eNote, a signed eVault agreement)
+and posts to the waitlist first. Loan origination, closing, and settlement
+money movement are not served here — those are the operator's acts under
+the operator's license.`
 
 const HOME_MD = `# apis.mortgage
 
-The loan file and the mortgage market record as typed, keyless doors.
+The headless mortgage system of record: the loan file, the market record
+and the pipeline as typed, keyless doors. The licensed operator brings the
+license; the software holds the record.
 
 MISMO-typed loan-file records, HMDA-derived lender market records, and an
 auto-minted sandbox loan pipeline over the mortgage substrate (NAICS 522292).
@@ -63,35 +80,19 @@ auto-minted sandbox loan pipeline over the mortgage substrate (NAICS 522292).
 - Contract: /openapi.json · Pricing: /pricing · Agents: /llms.txt
 - Records: /loan-files · /market-records
 - Sandbox: POST /pipelines · MCP: POST /mcp · Tests: /verify
+- Waitlist for the ROADMAP rows (payoff/lien, eNote/eVault, doc intelligence): POST /waitlist
 
 Market records are real (FFIEC HMDA Data Browser, query URL stamped on every
 record). Loan-file records are labeled example data over fictional lenders.
 Borrower personal data is not served on this face. Settlement is a labeled
 test-mode stub — the 402 boundary is served, nothing is charged.`
 
-const HOME_HTML = `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>apis.mortgage — the loan file as a typed door</title>
-<style>
-  body{font:16px/1.6 system-ui,sans-serif;max-width:44rem;margin:4rem auto;padding:0 1.25rem;color:#111}
-  h1{font-size:1.6rem;margin:0 0 .25rem} p.tag{color:#555;margin-top:0}
-  code{background:#f4f4f4;padding:.1em .35em;border-radius:4px}
-  ul{padding-left:1.2rem} li{margin:.35rem 0}
-  .note{font-size:.85rem;color:#666;border-top:1px solid #eee;margin-top:2rem;padding-top:1rem}
-  @media (prefers-color-scheme:dark){body{background:#111;color:#eee}code{background:#222}p.tag{color:#aaa}.note{color:#999;border-color:#333}}
-</style></head>
-<body>
-<h1>apis.mortgage</h1>
-<p class="tag">The loan file and the mortgage market record as typed, keyless doors.</p>
-<p>MISMO-typed loan-file records, HMDA-derived lender market records, and an auto-minted sandbox loan pipeline over the mortgage substrate (NAICS 522292).</p>
-<ul>
-  <li>Machine card: <code>GET /.well-known/agents.json</code></li>
-  <li>Contract: <code>/openapi.json</code> · Pricing: <code>/pricing</code> · Agents: <code>/llms.txt</code></li>
-  <li>Records: <code>/loan-files</code> · <code>/market-records</code></li>
-  <li>Sandbox: <code>POST /pipelines</code> · MCP: <code>POST /mcp</code> · Tests: <code>/verify</code></li>
-</ul>
-<p class="note">Market records are real &mdash; each is one aggregation row from the FFIEC HMDA Data Browser API (public data), query URL and observation date stamped on the record. Loan-file records are labeled example data over fictional lenders. Borrower personal data is not served on this face. Settlement is a labeled test-mode stub: the 402 boundary is served, nothing is charged.</p>
-</body></html>`
+/** The browser face is the crafted landing carried over from the
+ * pre-cutover waitlist property (src/landing.html, embedded as
+ * src/landing.js by scripts/embed-landing.mjs), reframed to the 2026-08-23
+ * founder ruling: the software is the system of record; the licensed
+ * operator brings the license. The api.insure cutover pattern: keep the
+ * human page, add the machine-face footer row. */
 
 /** The §5.1 B2A ladder, advertised whole on every 402 OFFER (`alternatives`):
  *  pay / work / claim from one boundary. Unwired rungs say so — stubs are
@@ -144,7 +145,7 @@ export const manifest = defineSiteManifest({
   origin: ORIGIN,
   name: 'apis.mortgage',
   description:
-    'The loan file and the mortgage market record as typed, keyless doors: MISMO-typed loan-file records, HMDA-derived lender market records, and an auto-minted sandbox loan pipeline over the mortgage substrate.',
+    'The headless mortgage system of record: MISMO-typed loan-file records, HMDA-derived lender market records, and an auto-minted sandbox loan pipeline as typed, keyless doors over the mortgage substrate. The licensed operator brings the license; the software holds the record.',
   version: '0.1.0',
 
   collection: {
@@ -262,6 +263,26 @@ export const manifest = defineSiteManifest({
       operationId: 'addLoanFile',
       summary: 'Add a loan-file record to a pipeline (native binding — system of record)',
     },
+    {
+      method: 'POST',
+      path: '/waitlist',
+      operationId: 'joinWaitlist',
+      summary:
+        'Join the waitlist for the ROADMAP surfaces (payoff/lien, eNote/eVault, doc intelligence) — durable KV intake carried over from the pre-cutover property, receipt semantics preserved',
+      responses: {
+        201: { description: 'receipt — the submission was durably recorded' },
+        405: { description: 'typed refusal — this door answers POST only and never lists' },
+        413: { description: 'typed refusal — body over the 16KB cap; nothing recorded' },
+        422: { description: 'typed refusal carrying a cure — reply address missing or unusable; nothing recorded' },
+        503: { description: 'typed refusal — store unavailable; nothing recorded, said plainly' },
+      },
+    },
+    {
+      method: 'GET',
+      path: '/healthz',
+      operationId: 'getHealth',
+      summary: 'Liveness of the process — the `callable` member names what answers today',
+    },
   ],
 
   /** MCP tool names ARE the canonical operationIds (axp-ext/rates-g2 §1) —
@@ -298,5 +319,5 @@ export const manifest = defineSiteManifest({
     { name: 'api.lawyer', origin: 'https://api.lawyer', role: 'AXP reference implementation' },
   ],
 
-  home: { html: HOME_HTML, md: HOME_MD },
+  home: { html: LANDING_HTML, md: HOME_MD },
 })

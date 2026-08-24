@@ -1,23 +1,36 @@
 {
-  // apis.mortgage — wave zero of register row `mortgage` (GAP-CLOSURE:
-  // the machine face for the live waitlist-stage property).
+  // apis.mortgage — the machine face of register row `mortgage`, serving the
+  // apis.mortgage zone since the 2026-08-23 cutover.
   //
-  // ROUTE DELIBERATELY NOT CLAIMED: apis.mortgage serves 200 today from the
-  // live worker `apis-mortgage` (~/projects/fin/mortgage — waitlist-stage,
-  // KV-backed intake, custom_domain route). This build must not clobber that
-  // worker or its intake. Cutover of the apis.mortgage domain to this
-  // machine-face worker is a prove-then-extract decision (founder call),
-  // not a wave-zero act. Until then this worker deploys addressable but
-  // route-less (workers.dev), so the face can be probed without touching
-  // the live property.
+  // CUTOVER RECORD (#9 founder ruling, 2026-08-23): the 'no pricing/MCP while
+  // the entity is in formation' posture was STRUCK — apis.mortgage is the
+  // headless system of record; the licensed operator is the customer. This
+  // config REPLACES the pre-cutover waitlist worker in place: same worker
+  // name (`apis-mortgage`), same custom-domain route, same WAITLIST KV
+  // namespace (5b8bc716e80a40039e1a020de185db7f — no signup or existing data
+  // path lost), landing carried over as the browser face with the reframed
+  // copy and the machine-face footer row (the api.insure pattern).
   "$schema": "../../node_modules/wrangler/config-schema.json",
-  "name": "apis-mortgage-face",
+  "name": "apis-mortgage",
   "main": "src/worker.js",
+  "account_id": "b6641681fe423910342b9ffa1364c76d",
   "compatibility_date": "2026-01-24",
+  "observability": { "enabled": true },
+  "workers_dev": true,
 
-  // "routes": [{ "pattern": "apis.mortgage/*", "zone_name": "apis.mortgage" }],
-  // ^ enable only at cutover; the live `apis-mortgage` waitlist worker holds
-  //   the custom domain today.
+  "routes": [{ "pattern": "apis.mortgage", "custom_domain": true }],
+
+  // favicon.svg + og.png only — the landing itself is embedded
+  // (src/landing.js) so the browser face stays content-negotiated at "/".
+  "assets": { "directory": "./public" },
+
+  // The durable waitlist register — the SAME namespace the pre-cutover
+  // worker wrote to. docs guardrail carried over: submissions are stored
+  // durably and none are dropped; a failed write answers a typed 503, never
+  // a receipt.
+  "kv_namespaces": [
+    { "binding": "WAITLIST", "id": "5b8bc716e80a40039e1a020de185db7f" }
+  ],
 
   "vars": {
     "API_NAME": "apis.mortgage"

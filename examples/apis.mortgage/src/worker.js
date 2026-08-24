@@ -15,11 +15,15 @@
  * apis-ax-axp@2.6.0) from ./manifest.js — never hand-rolled. Custom routes
  * below serve only what the manifest declares (presence-when-true).
  *
- * Serving note (wave zero): custom worker allowed per §7.1. apis.mortgage
- * currently serves 200 from a SEPARATE live worker (`apis-mortgage`,
- * ~/projects/fin/mortgage — waitlist-stage, KV-backed intake). This build
- * does NOT touch that worker or its route; cutover is a prove-then-extract
- * decision recorded in wrangler.jsonc, not a wave-zero act.
+ * Serving note (CUTOVER, 2026-08-23): the #9 founder ruling struck the
+ * 'no pricing/MCP while the entity is in formation' posture — apis.mortgage
+ * is the headless system of record and the licensed operator is the
+ * customer. This worker REPLACES the pre-cutover waitlist worker
+ * (`apis-mortgage`, ~/projects/fin/mortgage) at the apis.mortgage route,
+ * carrying over whole: the crafted landing (./landing.html, reframed copy +
+ * machine-face footer row — the api.insure pattern), the KV-backed
+ * POST /waitlist on the SAME namespace (no signup or data path lost), and
+ * the /healthz + /robots.txt operational surfaces.
  *
  * Scope boundaries (the row's rulings, encoded): data/document door only —
  * no origination, no closing/settlement money layer, no lender-integration
@@ -33,6 +37,7 @@ import { lenderMarketRecords } from './seed.js'
 import { handleMcpMessage, filterMarketRecords } from './mcp.js'
 import { buildSuite, buildVerifyDoc, buildVerifyMd } from './verify.js'
 import { emitMeterEvent } from './seams.js'
+import { handleWaitlist } from './waitlist.js'
 
 const axpRoutes = createAxpRoutes(manifest)
 
@@ -98,6 +103,34 @@ export default {
     const url = new URL(request.url)
     const path = url.pathname
     const head = request.method === 'HEAD'
+
+    // ── the waitlist register (carried over at cutover — durable KV intake) ─
+    if (path === '/waitlist') {
+      emitMeterEvent(env, ctx, request, { operation: 'joinWaitlist', shape: 'anon-sandbox' })
+      return handleWaitlist(request, env)
+    }
+
+    // ── operational surfaces (carried over at cutover) ─────────────────────
+    if (path === '/healthz') {
+      if (request.method !== 'GET' && !head) return methodNotAllowed(path, 'GET, HEAD')
+      return json(
+        {
+          served: true,
+          callable: { dataDoors: true, pipelines: true, mcp: true, waitlist: true, roadmapRows: false },
+          property: 'apis.mortgage',
+          status: 'LIVE',
+          note: 'Liveness of the process. The machine face is live: loan-file, market-record and pipeline doors answer keyless, priced on a test-mode rate card, with MCP at POST /mcp. The ROADMAP rows (payoff/lien, eNote/eVault, doc intelligence) are not callable and post to the waitlist first.',
+          waitlist: 'https://apis.mortgage/waitlist',
+        },
+        { head, headers: { 'cache-control': 'no-store' } },
+      )
+    }
+    if (path === '/robots.txt') {
+      if (request.method !== 'GET' && !head) return methodNotAllowed(path, 'GET, HEAD')
+      return new Response(head ? null : 'User-agent: *\nAllow: /\n', {
+        headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'public, max-age=86400' },
+      })
+    }
 
     // ── generated AXP faces first (quartet, collection, offer, family, home)
     const hit = await axpRoutes(request, env)
