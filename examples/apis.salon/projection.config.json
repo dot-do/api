@@ -62,7 +62,7 @@
     "source route: no cascade row exists for 812 — the row's posture (booking/POS per-property capture, no founder-front) is itself marked [UNVERIFIED — posture inferred]; carried verbatim.",
     "ICP practitioner O*NET codes marked [UNVERIFIED] in the row — not restated here."
   ],
-  "railLedger": "https://ledger.apis.ax/faces?face=apis.salon",
+  "railLedger": "https://apis.ax/account/faces?face=apis.salon",
   "railLedgerNote": "Registered via door A (durable, works before deploy): one row added to packages/rail-ledger/registry/faces.json on the ax repo branch draft/rail-ledger-v1 per LEDGER.md §3; payableBasis test-mode (the 402 boundary is served, settlement not activated — test-mode counts as face-payable per DRAFT §7 / spec §7.3).",
   "experiment": {
     "pattern": "per-outcome",
