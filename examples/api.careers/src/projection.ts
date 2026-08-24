@@ -46,7 +46,7 @@ export const apiCareersProjection: ProjectionConfig = {
   substrate: 'staffing-talent',
   brand: 'api.careers',
   domains: ['api.careers'],
-  railLedger: 'https://ledger.apis.ax/faces?face=api.careers',
+  railLedger: 'https://apis.ax/account/faces?face=api.careers',
 
   // G2 coordinates from the register row (both addresses of the one cell).
   icp: {
