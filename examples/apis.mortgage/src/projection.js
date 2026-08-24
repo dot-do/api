@@ -87,7 +87,7 @@ export const projection = {
      *  packages/rail-ledger/registry/faces.json on ax draft/rail-ledger-v1
      *  @ ef4d688 ({apis.mortgage, mortgage, B2A, 402-metered-per-call,
      *  test-mode}); readout at the live ledger. */
-    railLedger: 'https://apis.ax/account/faces?face=apis.mortgage',
+    account: 'https://apis.ax/account/faces?face=apis.mortgage',
   },
 
   /** §5.1 B2A2B check: the row's ICP includes non-technical principals
