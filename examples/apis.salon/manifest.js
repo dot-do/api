@@ -125,7 +125,7 @@ export const manifest = defineSiteManifest({
   description:
     "The salon back office as a typed, verifiable surface: bookings, the service menu, and POS sale records " +
     "over a labeled synthetic sandbox, plus real provenance-labeled TDLR establishment-license data, with " +
-    "honest OK | EMPTY | BLOCKED | OFFER envelopes at a keyless floor.",
+    "typed OK | EMPTY | BLOCKED | OFFER envelopes at a keyless floor.",
   version: "0.1.0",
   collection: {
     path: "/bookings",
@@ -182,7 +182,7 @@ export const manifest = defineSiteManifest({
       operationId: "getBooking",
       summary: "One booking with its service, practitioner, and derived status",
       params: [{ name: "id", in: "path", required: true }],
-      responses: { 200: { description: "OK envelope" }, 404: { description: "typed EMPTY — unknown id is an honest miss, not an error page" } },
+      responses: { 200: { description: "OK envelope" }, 404: { description: "typed EMPTY envelope for an unknown id" } },
     },
     {
       method: "GET",
@@ -278,7 +278,7 @@ export const manifest = defineSiteManifest({
     {
       name: "api.qa",
       origin: "https://api.qa",
-      role: "independent conformance verifier — every claim this surface makes is checked there, never self-graded",
+      role: "independent conformance verifier",
     },
   ],
   home: {

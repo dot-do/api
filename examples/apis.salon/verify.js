@@ -27,7 +27,7 @@ const suiteDocument = {
     "AXP quartet shapes, the branching /bookings envelope (OK | EMPTY | BLOCKED | OFFER on one pathname), " +
     "the metered Pricing Document with its native top-level operation-keyed rates[] and stated-intent " +
     "binding, the native card placements (top-level g2, links.verify), the REAL provenance-labeled TDLR " +
-    "establishment-license corpus, and the labeled-example-data honesty rows. Runnable by anyone: " +
+    "establishment-license corpus, and the labeled-example-data rows. Runnable by anyone: " +
     "npx autonomous-qa verify https://apis.salon, or plain curl.",
   environments: {
     live: { vars: { baseUrl: "https://apis.salon" } },

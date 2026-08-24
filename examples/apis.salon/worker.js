@@ -60,7 +60,7 @@ export default {
         emitMeter(env, { operation: "getBooking" });
         const booking = getBooking(bkgMatch[1]);
         if (!booking)
-          return json(empty(`no booking '${bkgMatch[1]}' is visible to this caller — an honest miss, not an error page`, { memberName: "bookings" }), { status: 404, head });
+          return json(empty(`no booking '${bkgMatch[1]}' is visible to this caller`, { memberName: "bookings" }), { status: 404, head });
         return json({ type: "OK", booking }, { head });
       }
 

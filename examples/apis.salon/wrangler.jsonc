@@ -1,9 +1,11 @@
 {
   // apis.salon — wave-zero property worker (register row personal-care).
-  // Deploys when the apis.salon zone/route is provisioned (name-only today,
-  // porkbun exp 2027-07-26, no CF zone — surface register); the §7.4
+  // Zone apis.salon ACTIVE on the estate .do CF account (Batch-S sweep) —
+  // direct custom domain per the ruled serving pattern; the §7.4
   // analytics seam binds here as SEAMS when the unified plane exists.
   "name": "apis-salon",
   "main": "worker.js",
-  "compatibility_date": "2026-08-01"
+  "compatibility_date": "2026-08-01",
+  "account_id": "b6641681fe423910342b9ffa1364c76d",
+  "routes": [{ "pattern": "apis.salon", "custom_domain": true }]
 }
