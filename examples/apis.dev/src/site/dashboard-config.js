@@ -5,9 +5,9 @@
  * generic. Prices are derived from the manifest's own RATE_ROWS — never
  * retyped — so the billing panel cannot drift from /pricing.
  *
- * VERDICTS map: real api.qa verdicts ONLY (the brand-shelf ruling). api.qa's
- * own grade is A+ — the one registry record with an attested verdict today.
- * Every other record renders "unscored" by the template's absent-key rule.
+ * NO VERDICTS map (founder ruling 2026-08-24): apis.dev does not display
+ * api.qa scores at all — scoring is api.qa's product, linked, never
+ * duplicated. Each record's cell links to its conformance page instead.
  */
 
 import { RATE_ROWS, manifest } from '../manifest.js'
@@ -17,7 +17,7 @@ const metered = RATE_ROWS.find((r) => r.freeQuota !== undefined)
 export const dashboardConfig = {
   brand: 'apis.dev',
   description:
-    'Developer dashboard v1: workspaces, registered APIs with api.qa verdicts, usage and billing panels.',
+    'Developer dashboard v1: workspaces, registered APIs with links to their api.qa conformance pages, usage and billing panels.',
   demoNotice:
     'Demo-labeled shell. The APIs and Workspaces panels call this origin’s real doors; workspaces are ephemeral wave-zero sandboxes. Usage and billing are demo-local placeholders until the apis.ax account lane is wired.',
   panels: [
@@ -28,8 +28,7 @@ export const dashboardConfig = {
       wide: true,
       source: { method: 'GET', path: '/apis' },
       columns: { idKey: 'id', metaKeys: ['pricingModel', 'binding'], hrefKey: 'conformance' },
-      verdicts: { 'api.qa': 'A+' },
-      note: 'live from GET /apis — real records, provenance-stamped; a verdict appears only where api.qa has attested one',
+      note: 'live from GET /apis — real records, provenance-stamped; scoring is api.qa’s product — each record links to its conformance page there',
     },
     {
       id: 'workspaces',

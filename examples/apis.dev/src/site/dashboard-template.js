@@ -89,9 +89,15 @@ for (const p of cfg.panels) {
       rows.innerHTML = results.map((rec) => {
         const id = rec[p.columns.idKey];
         const meta = p.columns.metaKeys.map((k) => rec[k]).filter(Boolean).join(' · ');
-        const verdict = p.verdicts && Object.prototype.hasOwnProperty.call(p.verdicts, id)
-          ? '<b>' + escEl(p.verdicts[id]) + '</b> · api.qa'
-          : '<span style="color:var(--muted)">unscored</span>';
+        // Founder ruling 2026-08-24: apis.dev does not display api.qa scores
+        // at all -- scoring is api.qa's product, linked, never duplicated.
+        // When an instance declares no verdicts map, the cell is a plain
+        // link to the record's own conformance page (no grade, no "unscored").
+        const verdict = p.verdicts
+          ? (Object.prototype.hasOwnProperty.call(p.verdicts, id)
+            ? '<b>' + escEl(p.verdicts[id]) + '</b> · api.qa'
+            : '<span style="color:var(--muted)">unscored</span>')
+          : '<span style="color:var(--muted)">verify at api.qa</span>';
         const href = p.columns.hrefKey && rec[p.columns.hrefKey];
         const right = href ? '<a href="' + escEl(href) + '" rel="noopener">' + verdict + '</a>' : verdict;
         return row({ id, meta, right });

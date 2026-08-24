@@ -9,37 +9,38 @@
  * (figures band / worked-example pair / status table / shelf ledger /
  * ruled pricing line are five different anatomies).
  *
- * BRAND SHELF ruling (2026-08-24): names shown honestly — a verdict appears
- * ONLY where a real api.qa verdict exists, and EVERY verdict that exists is
- * printed (api.insure B, auto.dev F — both attested; api.qa's own grade A+).
- * Omitting an F would be curation (the api.management shelf states the same
- * law). Every unrun brand shows "unscored" and links to the api.qa page
- * where a run would land. No fabricated scores, ever.
+ * BRAND SHELF ruling (founder, 2026-08-24, reframed same day): apis.dev
+ * does not display api.qa scores AT ALL — scoring is api.qa's product,
+ * linked, never duplicated here. The shelf is "Built on apis.dev": the
+ * properties on the platform, no per-brand grades. The claim is the
+ * MECHANISM — properties built on apis.dev pass the pinned AXP
+ * conformance gate by construction (the generator emits the five faces
+ * conformant); continuous verification runs at api.qa, the independent
+ * verifier (one link; family disclosure covers the relationship). The
+ * one number printed is the collective mechanism stat, verified against
+ * the studio#9 build record before printing. General law: no F/failing
+ * grades on marketing shelves, ever — failing verdicts live on api.qa
+ * and internal ops consoles, not brand shelves. No fabricated scores.
  */
 
 import { renderPage } from './style.js'
 
-/** The shelf: top estate brands, with real api.qa verdicts only. */
+/** The shelf: properties built on apis.dev. No per-brand grades — ever (see ruling above). */
 const SHELF = [
-  { domain: 'auto.dev', what: 'vehicle data & VIN decode', verdict: { grade: 'F', note: 'attested' } },
-  { domain: 'apis.vin', what: 'vehicle APIs', verdict: null },
-  { domain: 'api.lawyer', what: 'legal work as an API', verdict: null },
-  { domain: 'api.insure', what: 'insurance as an API', verdict: { grade: 'B', note: 'attested' } },
-  { domain: 'barcoding.dev', what: 'barcodes & identifiers', verdict: null },
-  { domain: 'patent.click', what: 'patents', verdict: null },
+  { domain: 'auto.dev', what: 'vehicle data & VIN decode' },
+  { domain: 'apis.vin', what: 'vehicle APIs' },
+  { domain: 'api.lawyer', what: 'legal work as an API' },
+  { domain: 'api.insure', what: 'insurance as an API' },
+  { domain: 'apis.mortgage', what: 'mortgage as an API' },
+  { domain: 'barcoding.dev', what: 'barcodes & identifiers' },
 ]
 
 function shelfRows() {
-  return SHELF.map((b) => {
-    const verdict = b.verdict
-      ? `<span class="grade">${b.verdict.grade}</span> · ${b.verdict.note}`
-      : `<span class="unscored">unscored</span>`
-    return `<a class="srow" href="https://api.qa/${b.domain}" rel="noopener">
+  // No verdict column: scores are api.qa's product and are not duplicated here.
+  return SHELF.map((b) => `<a class="srow" href="https://${b.domain}" rel="noopener">
       <span class="brand">${b.domain}</span>
       <span class="what">${b.what}</span>
-      <span class="verdict">${verdict}</span>
-    </a>`
-  }).join('\n')
+    </a>`).join('\n')
 }
 
 /**
@@ -116,12 +117,12 @@ export function landingHtml({ rates, hardCeiling }) {
     </section>
 
     <section class="band" id="shelf">
-      <h2 class="sec-label">Built in this estate</h2>
+      <h2 class="sec-label">Built on apis.dev</h2>
       <div class="shelf">
-        <div class="colhead"><span>Brand</span><span class="h-what">What it sells</span><span style="text-align:right">api.qa verdict</span></div>
+        <div class="colhead"><span>Brand</span><span class="h-what">What it sells</span></div>
         ${shelfRows()}
       </div>
-      <p class="sec-note">Verdicts are api.qa's — attested, replayable evidence. A brand without a run shows unscored; no claim is made for it. api.qa's own public grade is A+.</p>
+      <p class="sec-note">52 of the register's 53 categories generated on this platform; every build gates at the pinned conformance spec (apis-ax-axp@2.6.0) before deploy — the generator emits the five faces conformant by construction, so a property scoring imperfectly is an apis.dev product gap, not the property's. Continuous verification is <a href="https://api.qa" rel="noopener">api.qa</a>'s product, not this page's: attested, replayable, and run by an estate sibling whose independence is procedural — pinned spec, evidence anyone can replay — not corporate.</p>
     </section>
 
     <section class="band" id="pricing">

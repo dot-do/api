@@ -161,8 +161,8 @@ section.band + section.band { border-top: 1px solid var(--border); }
 
 /* ---------- brand shelf (ledger rows, not cards) ---------- */
 .shelf { border-top: 2px solid var(--text); margin-top: 1.2rem; }
-.shelf .colhead { display: grid; grid-template-columns: minmax(160px, 1.4fr) 1fr minmax(150px, 0.9fr); gap: 12px; padding: 7px 2px; border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
-.shelf .srow { display: grid; grid-template-columns: minmax(160px, 1.4fr) 1fr minmax(150px, 0.9fr); gap: 12px; align-items: baseline; padding: 11px 2px; border-bottom: 1px solid var(--border-soft); text-decoration: none; transition: background var(--dur) var(--ease); }
+.shelf .colhead { display: grid; grid-template-columns: minmax(160px, 1.4fr) 1fr; gap: 12px; padding: 7px 2px; border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.shelf .srow { display: grid; grid-template-columns: minmax(160px, 1.4fr) 1fr; gap: 12px; align-items: baseline; padding: 11px 2px; border-bottom: 1px solid var(--border-soft); text-decoration: none; transition: background var(--dur) var(--ease); }
 .shelf .srow:hover { background: var(--accent-wash); }
 .shelf .brand { font-family: var(--mono); font-weight: 700; font-size: 0.95rem; }
 .shelf .what { font-size: 0.85rem; color: var(--muted); }
