@@ -19,6 +19,7 @@ import { meterEvent, moneyEvent, trafficEvent } from "./seams.js";
 import { renderDashboardPage } from "./site/dashboard-template.js";
 import { dashboardConfig } from "./site/dashboard-config.js";
 import { pricingPageHtml } from "./site/pricing-page.js";
+import { renderPage } from "./site/style.js";
 import { OG_PNG_BASE64 } from "./site/og.js";
 
 /** Decoded once per isolate: the 1200x630 social card served at /og.png. */
@@ -107,12 +108,20 @@ const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replac
 const mdOfJson = (title, obj) => `# ${title}\n\n\`\`\`json\n${JSON.stringify(obj, null, 2)}\n\`\`\`\n`;
 const htmlOfJson = (title, obj) =>
   `<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><title>${esc(title)}</title></head>\n<body><h1>${esc(title)}</h1><pre>${esc(JSON.stringify(obj, null, 2))}</pre></body></html>\n`;
-const htmlOfMd = (title, md) =>
-  `<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><title>${esc(title)}</title></head>\n<body><pre>${esc(md)}</pre></body></html>\n`;
-
 const icpFaces = { json: icpDoc, md: mdOfJson("api.management — G2 coordinates", icpDoc), html: htmlOfJson("api.management — G2 coordinates", icpDoc) };
 // Title is brand-first — the family title order (apis.dev: "apis.dev — run our tests").
-const verifyFaces = { json: verifyDoc, md: verifyMd, html: htmlOfMd("api.management — run our tests", verifyMd) };
+// The browser face of /verify wears the site chrome (renderPage) — the
+// document itself stays the markdown, set as a plate.
+const verifyFaces = {
+  json: verifyDoc,
+  md: verifyMd,
+  html: renderPage({
+    title: "api.management — run our tests",
+    description: "The /verify export: the pinned conformance spec, the probes, and the commands to run the gate yourself.",
+    path: "/verify",
+    body: `<main><div class="wrap"><pre class="verify-pre">${esc(verifyMd)}</pre></div></main>`,
+  }),
+};
 
 const ICP_PATHS = new Set(["/icp", "/icp.json", "/icp.md", "/icp.html"]);
 const VERIFY_PATHS = new Set(["/verify", "/verify.json", "/verify.md", "/verify.html"]);
