@@ -165,13 +165,13 @@ pattern}` (spec §6.4/§7.4).
 | 7 | `motion` declared; shapes from the motion's permissible set; B2A projections id.org.ai + 402 only | PASS (B2D served; B2A recorded config uses the #17 ladder, no OAuth/CC) |
 | 8 | 402 OFFER advertises per motion (B2D: checkout + OAuth free tier) | PASS (tested) |
 | 9 | B2A2B/C counterpart brand named OR gap recorded | PASS — GAP RECORDED (no human-vocabulary credentialing name held; the held artifact doors belong to the disputed grains; gigs.* doors are labor-supply) |
-| 10 | G4 projection config complete per §2 | PASS (2 projections; served one carries nameCandidates, grainDispute, counselBoundary, counterpartBrand, railLedger) |
+| 10 | G4 projection config complete per §2 | PASS (2 projections; served one carries nameCandidates, grainDispute, counselBoundary, counterpartBrand, account) |
 | 11 | Guardrail: agent-default claimant never beaten on same-shape identical calls | PASS (vacuous — no agent-default claim served, no sibling face serves this substrate yet; claim withheld per §4.6) |
 | 12 | `/verify` published; `interfaces.testSuite` undeclared until digest-pinned | PASS (tested) |
 | 13 | Seams emitted with §6.4 tags; traffic events carry identity class + referral | PASS |
 | 14 | Conneg matrix spot-checked; demo data labeled | PASS (tested) |
 | 15 | No ghost surfaces (presence-when-true) | PASS (tested) |
-| 16 | Face registered in the rail ledger | PASS — registered via door A: `healthcare.org.ai` row in `packages/rail-ledger/registry/faces.json` (ax repo, branch `draft/rail-ledger-v1`); `railLedger` pointer recorded in `projections/healthcare.org.ai.json`. A GAP-style placeholder host registers under the row key per LEDGER.md §3 — renaming later is a one-row edit |
+| 16 | Face registered in the platform account | PASS — registered via door A: `healthcare.org.ai` row in `packages/rail-ledger/registry/faces.json` (ax repo, branch `draft/rail-ledger-v1`); `account` pointer recorded in `projections/healthcare.org.ai.json`. A GAP-style placeholder host registers under the row key per LEDGER.md §3 — renaming later is a one-row edit |
 
 ## Deliberately absent (presence-when-true)
 
