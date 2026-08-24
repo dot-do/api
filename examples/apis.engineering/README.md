@@ -56,7 +56,7 @@ founder.
 
 ## Checklist state (§9.1, run `node scripts/selfcheck.mjs`)
 
-**15/16 boxes pass.** Box 16 (rail-ledger registration) is recorded
+**15/16 boxes pass.** Box 16 (platform-account registration) is recorded
 **blocked-on-rail-ledger**: at build time the ledger service on
 `~/projects/ax` branch `draft/rail-ledger-v1` has an empty `registry/`, no
 committed `LEDGER.md`, and no published face-address convention. Register
