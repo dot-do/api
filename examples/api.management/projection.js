@@ -59,13 +59,13 @@ export const PROJECTION = {
       "served — rates[] rides TOP-LEVEL in the Pricing Document at /pricing (axp-ext-rates-g2@0.1.0 §2, native in the vendored axp-faces 0.2.0), one row per metered operation keyed by canonical operationId; declared in manifest.js pricing.rates, generated, never hand-rolled",
   },
 
-  /** §9.1 final box (Face registered in the rail ledger — faces-payable/week
+  /** §9.1 final box (Face registered in the platform account (apis.ax) — faces-payable/week
    *  denominator): registered via LEDGER.md door A — row in
    *  packages/rail-ledger/registry/faces.json @ draft/rail-ledger-v1 (studio
    *  #9 alignment pass 2026-08-23); readout
    *  https://apis.ax/account/readouts/faces-payable (service built, deploy
    *  pending Batch-S). */
-  railLedger: "https://apis.ax/account/faces?face=api.management",
+  account: "https://apis.ax/account/faces?face=api.management",
 
   positioning:
     "The manage/operate face of an API estate — the lifecycle counterpart of the build face. Agent-default claim WITHHELD until the §4.6 worthiness bar passes (conformance verdict + live anon sandbox + verified published suite).",
