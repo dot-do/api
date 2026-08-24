@@ -114,5 +114,12 @@ description, examples, `source` label, and a `lookup(value, ctx)` that
 returns data with `ctx.links.href(tool, value)` URLs. Register it in
 `src/tools/index.ts` and the subdomain, landing, JSON descriptor, envelope,
 and cross-links all come from the framework. ~100 lines per tool wrapping a
-data source: `ssl`, `geo`, `email`, `vin`, `barcode`, `mx`, `tls`, `cidr`,
-`tld`, `ua`, `emoji`, `unicode`, `http`, `naics`, `cusip`, `lei`, …
+data source.
+
+**Generation 1 (2026-08-24) ran this loop from 6 to 31 tools** — live free
+sources (`geo`, `zip`, `currency`, `holidays`, `isbn`, `npm`, `github`,
+`ssl`, `mac`, `cve`, `email`, `rss`) plus vendored-standard offline tools
+(`country`, `tz`, `lang`, `units`, `color`, `http`, `mime`, `cron`, `jwt`,
+`ipcalc`, `punycode`, `emoji`, `useragent`). See `GENERATION.md` for the
+loop itself and what it needs to reach thousands. Next candidates: `vin`,
+`barcode`, `tld`, `unicode`, `naics`, `cusip`, `lei`, …
