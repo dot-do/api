@@ -70,7 +70,7 @@ the §9.3 diagnostic (agent-referred human traffic, wired at the seams) or the
 G4 brand attachment triggers the counterpart proposal, filed against the
 register row and named per #3.
 
-## Rail-ledger registration (§9.1 final box)
+## Platform-account registration (§9.1 final box)
 
 **blocked-on-rail-ledger.** Probed `~/projects/ax` branch
 `draft/rail-ledger-v1` (worktree HEAD `1620e9f`, 2026-08-23): no ledger
