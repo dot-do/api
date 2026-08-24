@@ -19,7 +19,18 @@
  * in wrangler.jsonc.
  */
 
-import { createAxpRoutes, envelopeResponse, serveNegotiated } from './axp-faces/index.js'
+import {
+  createAxpRoutes,
+  envelopeResponse,
+  serveNegotiated,
+  negotiate,
+  linkAlternates,
+  CONNEG_VARY,
+  buildPricingDocument,
+} from './axp-faces/index.js'
+import { pricingPageHtml } from './site/pricing-page.js'
+import { renderDashboardPage } from './site/dashboard-template.js'
+import { dashboardConfig } from './site/dashboard-config.js'
 import { manifest } from './manifest.js'
 import { projection } from './projection.js'
 import { actionRecords, verificationReports } from './seed.js'
@@ -90,6 +101,39 @@ export default {
     const url = new URL(request.url)
     const path = url.pathname
     const head = request.method === 'HEAD'
+
+    // ── /pricing, html register only: the designed rate-card page ─────────
+    // The machine faces stay generator-emitted and untouched (/pricing json +
+    // md, POST → typed 405): only the browser-negotiated html face is
+    // intercepted, and the page renders the SAME buildPricingDocument output
+    // the json face serves — one truth, two registers. Conneg law holds:
+    // Link alternates + Vary are sent, HEAD mirrors GET.
+    if ((path === '/pricing' || path === '/pricing.html') && (request.method === 'GET' || head)) {
+      const { face } = negotiate(request, path)
+      if (face === 'html') {
+        emitMeterEvent(env, ctx, request, { operation: 'getPricing', shape: 'anon-sandbox' })
+        const html = pricingPageHtml(buildPricingDocument(manifest), manifest.pricing)
+        return new Response(head ? null : html, {
+          headers: {
+            'content-type': 'text/html; charset=utf-8',
+            link: linkAlternates('/pricing'),
+            vary: CONNEG_VARY,
+          },
+        })
+      }
+    }
+
+    // ── /dashboard: the developer dashboard v1 (human face, demo-labeled) ──
+    // First instance of the abstract-dashboard template (#30 apps.ax) — see
+    // ./site/dashboard-template.js. Not an API operation: html only, not
+    // declared on the contract or card.
+    if (path === '/dashboard') {
+      if (request.method !== 'GET' && !head) return methodNotAllowed(path, 'GET, HEAD')
+      const html = renderDashboardPage(dashboardConfig)
+      return new Response(head ? null : html, {
+        headers: { 'content-type': 'text/html; charset=utf-8' },
+      })
+    }
 
     // ── generated AXP faces first (quartet, collection, offer, family, home)
     const hit = await axpRoutes(request, env)

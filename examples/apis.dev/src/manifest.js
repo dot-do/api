@@ -10,8 +10,13 @@
 import { defineSiteManifest } from './axp-faces/index.js'
 import { apiRecords } from './seed.js'
 import { projection } from './projection.js'
+import { landingHtml } from './site/landing.js'
 
 export const ORIGIN = 'https://apis.dev'
+
+/** The metered ceiling, named once — the pricing document and the landing
+ *  page both read this constant, so the two can never disagree. */
+export const HARD_CEILING = 100
 
 const LLMS_BODY = `# apis.dev
 
@@ -58,34 +63,12 @@ sandbox workspace.
 - Contract: /openapi.json · Pricing: /pricing · Agents: /llms.txt
 - Records: /apis · /actions · /verification-reports
 - Sandbox: POST /workspaces · MCP: POST /mcp · Tests: /verify
+- Human faces: / (landing) · /pricing (rate card page) · /dashboard (demo-labeled shell)
 
 API records are real (provenance stamped). Action records are labeled
 example data. Settlement is a labeled test-mode stub — the 402 boundary is
 served, nothing is charged.`
 
-const HOME_HTML = `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>apis.dev — functions agents buy</title>
-<style>
-  body{font:16px/1.6 system-ui,sans-serif;max-width:44rem;margin:4rem auto;padding:0 1.25rem;color:#111}
-  h1{font-size:1.6rem;margin:0 0 .25rem} p.tag{color:#555;margin-top:0}
-  code{background:#f4f4f4;padding:.1em .35em;border-radius:4px}
-  ul{padding-left:1.2rem} li{margin:.35rem 0}
-  .note{font-size:.85rem;color:#666;border-top:1px solid #eee;margin-top:2rem;padding-top:1rem}
-  @media (prefers-color-scheme:dark){body{background:#111;color:#eee}code{background:#222}p.tag{color:#aaa}.note{color:#999;border-color:#333}}
-</style></head>
-<body>
-<h1>apis.dev</h1>
-<p class="tag">Functions agents buy.</p>
-<p>A keyless registry of machine-face API records over the software &amp; IT services substrate — with the probe reports behind them and an auto-minted sandbox workspace.</p>
-<ul>
-  <li>Machine card: <code>GET /.well-known/agents.json</code></li>
-  <li>Contract: <code>/openapi.json</code> · Pricing: <code>/pricing</code> · Agents: <code>/llms.txt</code></li>
-  <li>Records: <code>/apis</code> · <code>/actions</code> · <code>/verification-reports</code></li>
-  <li>Sandbox: <code>POST /workspaces</code> · MCP: <code>POST /mcp</code> · Tests: <code>/verify</code></li>
-</ul>
-<p class="note">API and probe-report records are real, derived from each origin&rsquo;s own published machine surfaces (provenance stamped on every record). Action records are labeled example data over fictional providers. Settlement is a labeled test-mode stub: the 402 boundary is served, nothing is charged.</p>
-</body></html>`
 
 /** The §5.1 B2A ladder, advertised whole on every 402 OFFER (`alternatives`):
  *  pay / work / claim from one boundary. Unwired rungs say so — stubs are
@@ -133,6 +116,11 @@ export const RATE_ROWS = [
   { operation: 'getOffer', price: 0, unit: 'USD/call' },
 ]
 
+/** The browser face of `/` — the product landing (site/landing.js), rendered
+ *  from the SAME rate rows the pricing document serves. The minimal inline
+ *  page it replaces lives in git history (wave zero, §7.3). */
+const HOME_HTML = landingHtml({ rates: RATE_ROWS, hardCeiling: HARD_CEILING })
+
 export const manifest = defineSiteManifest({
   origin: ORIGIN,
   name: 'apis.dev',
@@ -161,7 +149,7 @@ export const manifest = defineSiteManifest({
 
   pricing: {
     model: 'metered',
-    hardCeiling: 100,
+    hardCeiling: HARD_CEILING,
     unit: 'USD',
     price: 0.0002,
     binding: false,
@@ -290,6 +278,8 @@ export const manifest = defineSiteManifest({
     { name: 'apis.ax', origin: 'https://apis.ax', role: 'the agent-first API catalog (B2A register)' },
     { name: 'api.qa', origin: 'https://api.qa', role: 'independent conformance verifier' },
     { name: 'api.lawyer', origin: 'https://api.lawyer', role: 'AXP reference implementation' },
+    { name: 'apis.directory', origin: 'https://apis.directory', role: 'the register of the family — brands, capabilities, offerings' },
+    { name: 'api.management', origin: 'https://api.management', role: 'the manage/operate door of the same provider abstraction (sibling of apis.dev)' },
   ],
 
   home: { html: HOME_HTML, md: HOME_MD },
