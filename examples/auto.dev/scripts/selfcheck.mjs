@@ -409,7 +409,7 @@ await (async () => {
 // ── 16. Rail ledger — the ledger EXISTS; registration verified COMMITTED ────
 box("16. Face registered in the rail ledger (faces-payable/week denominator) — door A, verified against the COMMITTED registry", () => {
   const proj = JSON.parse(readFileSync(join(DIR, "projection.json"), "utf8"));
-  assert(proj.railLedger === "https://ledger.apis.ax/faces?face=auto.dev", "projection config must record the railLedger address (LEDGER.md §2)");
+  assert(proj.railLedger === "https://apis.ax/account/faces?face=auto.dev", "projection config must record the railLedger address (LEDGER.md §2)");
   let committed;
   try {
     committed = execFileSync("git", ["-C", AX_REPO, "show", `${LEDGER_BRANCH}:packages/rail-ledger/registry/faces.json`], { encoding: "utf8" });

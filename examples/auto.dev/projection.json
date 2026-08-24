@@ -4,7 +4,7 @@
   "brand": "auto.dev",
   "brandStatus": "LIVE-REVENUE — the estate's only live rail ($70-80k MRR [INV §2 via coverage doc]); HARVEST/HOLD posture [SC #1]. The domain, keys, plans, and 2.1M-listing corpus are the production stack's (Drivly, Inc.). This wave-zero face is an adoptable AXP artifact, not a replacement of anything that serves.",
   "domains": ["auto.dev (live, production rail at the Drivly stack; this face is the AXP machine-face instantiation of the row)"],
-  "railLedger": "https://ledger.apis.ax/faces?face=auto.dev",
+  "railLedger": "https://apis.ax/account/faces?face=auto.dev",
   "icp": {
     "companyTypes": ["franchise dealer", "dealer group", "independent repair operator", "automotive software vendor"],
     "jobTypes": ["developer at a dealer-systems or automotive-data vendor", "dealer principal / GM", "service & recon manager", "automotive service technician [O*NET 49-3023 — register: UNVERIFIED code]"]
