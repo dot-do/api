@@ -4,7 +4,7 @@
   "brand": null,
   "brandStatus": "GAP — no api-grammar or category-completing name held (register row, 2026-08-23); placeholder address consulting-research.org.ai until ruled",
   "domains": ["consulting-research.org.ai (placeholder)"],
-  "railLedger": "https://apis.ax/account/faces?face=consulting-research.org.ai",
+  "account": "https://apis.ax/account/faces?face=consulting-research.org.ai",
   "icp": {
     "companyTypes": ["consulting firm", "research lab", "agency of record"],
     "jobTypes": ["management analyst", "researcher", "engagement manager"]

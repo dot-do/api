@@ -73,7 +73,7 @@ node scripts/selfcheck.mjs       # §9.1 checklist, fail-closed, in-process
   stubs in every OFFER body; nothing is ever charged.
 - workers.do serving lane, shared dashboard, unified analytics — extraction
   targets, not wave-zero requirements (§7.2).
-- Rail-ledger registration — registered via LEDGER.md door A — row in
+- Platform-account registration — registered via LEDGER.md door A — row in
   packages/rail-ledger/registry/faces.json @ draft/rail-ledger-v1 (studio #9
   alignment pass 2026-08-23); readout https://apis.ax/account/readouts/faces-payable
   (service built, deploy pending Batch-S). Face is the placeholder host until
