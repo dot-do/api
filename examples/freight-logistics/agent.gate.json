@@ -1,0 +1,54 @@
+{
+  "$type": "GateFlaggedRowAgent",
+  "$comment": "Defined-but-gate-flagged agent per swarm dispatch analysis §5.6 (studio repo, docs/plans/registers/2026-08-23-swarm-dispatch-analysis.md): gated rows sit in their batch workflows as defined-but-gate-flagged agents — the gate condition, not a scheduler, releases them. This file IS the dispatch deliverable for this row in this batch run; the wave-zero build is NOT performed here.",
+  "row": "freight-logistics",
+  "register": "studio docs/plans/registers/2026-08-23-full-economy-property-register.json §freight-logistics (Freight & Logistics, NAICS 484/4885)",
+  "batch": "Batch 8 — live-rail generalization (shared-corpus fact: auto.dev/Vin fan-out engine exhaust; not adjacency preference)",
+  "dRow": "D (sub C) — apex name GAP; source route not class A today",
+  "gate": {
+    "kind": "operator",
+    "ruling": "RULED OPERATOR GATE — operator-gated H2 2027+ per the coverage map; one of only three rows whose START is blocked (dispatch analysis §3 gate table + §4 ruled gates). The derivation fixes WHERE entry lands when the trigger fires, not WHEN (register row source_route).",
+    "blocks": "START — the wave-zero build itself (unlike media-entertainment's Class F gate, which blocks external launch but not build; that sibling built. This gate blocks build.)",
+    "releaseCondition": "The operator gate lifts: a seated operator for the freight lane within the ruled window (H2 2027+). The gate condition releases this agent — never a scheduler, never a batch dispatch.",
+    "notReleasedBy": ["batch dispatch", "calendar date alone", "rail-ledger existence", "name acquisition (#16 lane) — naming and START-gate are independent blockers"]
+  },
+  "gapClosureCheck": {
+    "mode": "not-applicable",
+    "basis": "Nothing serves for this row today — register: depth outside auto is NONE; apex candidates api.freight/api.shipping are UNVERIFIED and unheld; held niche names (apis.taxi, apis.limo) are passenger mobility, a different market; artifact names (ratecons.co, detention.click) are document-grain doors, not the apex property."
+  },
+  "buildAtRelease": {
+    "definition": "substrate.g3.json (authored here, status defined-not-served) + projection.freight-logistics.json (gate-flagged)",
+    "engine": "Re-implementation of the transport fan-out quote/execution engine OUTSIDE the deal-scoped src.do path IS the build (register + dispatch §3). src.do expires 2026-12-17 and is operationally load-bearing — an at-risk operational fact, not a brand; nothing here touches it.",
+    "seed": "FMCSA public carrier registry as the class-public G1-grade seed (ruled route SC #7) — probeStatus: NOT probed; no class-A status is claimed for the lane-rate corpus today (engine exhaust is deal-scoped and auto-scoped).",
+    "facePins": {
+      "axpSpec": "apis-ax-axp@2.6.0 digest a9a1197c439d708b4db54f606f07c9a2d019c7f2989fbcd9b599de2fcc028e0d (api.qa verifies)",
+      "generator": "vendor axp-faces 0.3.0 + axp-ext-rates-g2@0.2.0, digest 903e414d4f1440ddf9028b66d6987a2a3263ec1e84902b9ef4f8cb715a12ccc5, from axp.org.ai COMMITTED HEAD branch draft/axp-extension-rates-g2 @ 523c9ef217d54feefb0b20734a6d2996a6965b79 (recorded 2026-08-23 via git rev-parse; vendoring happens at release, byte-identical, never edited)",
+      "describeConformance": "ABSENT from vendored axp-faces — the release build re-implements the probe ladder in-process and DISCLOSES in checklist box 4; the box is not failed on this absence."
+    },
+    "invariants": [
+      "native four fields (g2, links.verify, rates[], operationIds) — no bridges",
+      "five-surface operationId invariant; real camelCase verbs for collections",
+      "survey-floor vocabulary rules on rates[]",
+      "mounted-rungs-only; MCP authless at the sandbox rung, keyed above",
+      "interfaces.testSuite undeclared (suite still published at /verify)",
+      "agent-default positioning withheld until the §4.6 worthiness bar attests",
+      "presence-when-true everywhere; demo data ALWAYS labeled; fixture law (952, no real names, secret-scan)"
+    ]
+  },
+  "primacy": {
+    "rulingFound": false,
+    "basis": "grep for primacy rulings across the full-economy register (json+md), surface register, and template spec: zero hits (2026-08-23).",
+    "consequence": "Defined under THIS row key (freight-logistics); nothing shared is claimed.",
+    "collisionsRecorded": [
+      "RateConfirmation / typed transport-document grain is adjacent to the trade-customs row's eBL/CoO packet (distinct standards: X12 204/214/210 motor-carrier sets [UNVERIFIED set numbers] vs UN/CEFACT+DCSA) — no shared record claimed",
+      "Load/lane corpus shares a physical data source with the automotive row (fan-out engine exhaust, Batch 8 shared-corpus fact) — a corpus fact, not a shared record type",
+      "api.shipping candidate name could collide with retail-ecommerce fulfillment vocabulary — both candidates remain UNVERIFIED and unclaimed"
+    ]
+  },
+  "railLedger": {
+    "exists": true,
+    "address": "https://apis.ax/account/faces?face=freight-logistics.org.ai",
+    "home": "ax repo, packages/rail-ledger/ @ draft/rail-ledger-v1 (>= 3ec5bb6, verified present 2026-08-23)",
+    "registration": "DEFERRED to gate release — see checklist box 16. Not blocked-on-rail-ledger: the ledger exists and door A is open; the face does not."
+  }
+}
