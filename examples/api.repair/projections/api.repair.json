@@ -26,7 +26,7 @@
     "rateCardRef": "/pricing",
     "note": "metered reads of THE record above free quotas; list reads free; FSM system-of-record writes metered above smaller quotas"
   },
-  "railLedger": "https://ledger.apis.ax/faces?face=api.repair",
+  "railLedger": "https://apis.ax/account/faces?face=api.repair",
   "positioning": "the rail an agent calls to get repair",
   "positioningNote": "agent-default claim WITHHELD until the §4.6 worthiness bar passes (conformance + live anon sandbox + verified published suite with runs on record)",
   "mdx": "custom landing in this worker (spec §7.1: custom site allowed at wave zero; per-brand MDX layer on the shared renderer deferred to extraction)",

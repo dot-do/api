@@ -126,4 +126,4 @@ Face registered in the rail ledger (faces-payable/week denominator) via
 LEDGER.md **door A** — row in `packages/rail-ledger/registry/faces.json` @
 `ax` repo, branch `draft/rail-ledger-v1`. The served projection config
 records the address in its `railLedger` field:
-`https://ledger.apis.ax/faces?face=api.repair`.
+`https://apis.ax/account/faces?face=api.repair`.
