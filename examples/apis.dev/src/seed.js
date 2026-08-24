@@ -14,7 +14,7 @@
  *     the same in-session run, recorded as data.
  *   - Action records: LABELED EXAMPLE DATA (`"example": true`) — a typed
  *     sample of the schema.org Action vocabulary over a fictional provider,
- *     per estate fixture law (no real company names in synthetic records).
+ *     per platform fixture law (no real company names in synthetic records).
  *
  * No record here implies a ranking. Collections are alphabetical by id.
  */
@@ -153,7 +153,7 @@ export const actionRecords = [
     name: 'Search contacts',
     provider: { $type: 'SoftwareApplication', name: 'Example CRM (fictional demo provider)' },
     example: true,
-    note: 'example data — synthetic sandbox sample, labeled per estate fixture law',
+    note: 'example data — synthetic sandbox sample, labeled per platform fixture law',
   },
   {
     $type: 'CreateAction',
@@ -161,7 +161,7 @@ export const actionRecords = [
     name: 'Create a contact',
     provider: { $type: 'SoftwareApplication', name: 'Example CRM (fictional demo provider)' },
     example: true,
-    note: 'example data — synthetic sandbox sample, labeled per estate fixture law',
+    note: 'example data — synthetic sandbox sample, labeled per platform fixture law',
   },
   {
     $type: 'UpdateAction',
@@ -169,7 +169,7 @@ export const actionRecords = [
     name: 'Update an issue',
     provider: { $type: 'SoftwareApplication', name: 'Example Issue Tracker (fictional demo provider)' },
     example: true,
-    note: 'example data — synthetic sandbox sample, labeled per estate fixture law',
+    note: 'example data — synthetic sandbox sample, labeled per platform fixture law',
   },
   {
     $type: 'SendAction',
@@ -177,6 +177,6 @@ export const actionRecords = [
     name: 'Send a transactional message',
     provider: { $type: 'SoftwareApplication', name: 'Example Mailer (fictional demo provider)' },
     example: true,
-    note: 'example data — synthetic sandbox sample, labeled per estate fixture law',
+    note: 'example data — synthetic sandbox sample, labeled per platform fixture law',
   },
 ]

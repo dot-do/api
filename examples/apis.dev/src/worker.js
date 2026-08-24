@@ -191,7 +191,7 @@ export default {
         {
           type: 'OK',
           results: actionRecords,
-          note: 'example data — synthetic sandbox sample over fictional providers, labeled per estate fixture law',
+          note: 'example data — synthetic sandbox sample over fictional providers, labeled per platform fixture law',
         },
         { head },
       )
