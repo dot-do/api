@@ -29,7 +29,7 @@ export const projection = Object.freeze({
 
   /** Rail-ledger address of record (LEDGER.md door A; GAP rule: the
    *  placeholder host is the registry face until the address is ruled). */
-  railLedger: "https://apis.ax/account/faces?face=fn-product-development.org.ai",
+  account: "https://apis.ax/account/faces?face=fn-product-development.org.ai",
   brandGap: {
     status: "GAP",
     note: "No held name carries the product-function meaning (full-economy register 2026-08-23). Acquisition candidate belongs on the #16 list; ply-lead if acquired: headless.[x] form fits rule 4 (system-of-record face leads). apis.dev must NOT be stretched to cover this row.",

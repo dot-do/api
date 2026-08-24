@@ -45,9 +45,9 @@ pnpm test                         # fail-closed digest-pinned conformance + §9.
 (`spec/apis-ax-axp-2.6.0.spec.json`, digest `a9a1197c…`) against the worker in
 memory — the same digest-locked checks the hosted verifier at api.qa runs.
 
-## Rail ledger
+## Platform account
 
-§9.1 final box (face registered in the rail ledger, faces-payable/week
+§9.1 final box (face registered in the platform account, faces-payable/week
 denominator): registered via LEDGER.md door A — row in
 packages/rail-ledger/registry/faces.json @ draft/rail-ledger-v1 (studio #9
 alignment pass 2026-08-23); readout
