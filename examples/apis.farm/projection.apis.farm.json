@@ -4,7 +4,7 @@
   "substrate": "agriculture-food",
   "brand": "apis.farm",
   "domains": ["apis.farm"],
-  "railLedger": "https://ledger.apis.ax/faces?face=apis.farm",
+  "railLedger": "https://apis.ax/account/faces?face=apis.farm",
   "icp": {
     "companyType": "food producers, processors, packers, and distributors (NAICS 311-312) holding FSMA-204 exposure on Food Traceability List items",
     "jobTypes": ["QA / food-safety compliance lead", "supply-chain / ops systems owner"]

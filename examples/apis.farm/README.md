@@ -83,5 +83,5 @@ the ratified digest) and the configs above, including:
 - **Rail-ledger registration (final box): REGISTERED** — registered via
   LEDGER.md door A — row in packages/rail-ledger/registry/faces.json @
   draft/rail-ledger-v1 (studio #9 alignment pass 2026-08-23); readout
-  https://ledger.apis.ax/readouts/faces-payable (service built, deploy
+  https://apis.ax/account/readouts/faces-payable (service built, deploy
   pending Batch-S).
