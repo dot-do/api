@@ -68,9 +68,9 @@ projection-config completeness). `axp/` is byte-identical vendored from
   verifiers that predate the registry row. The suite still ships at
   `/verify/suite.json` and `links.verify` names it.
 
-## Rail ledger
+## Platform account
 
-§9.1 final box (face registered in the rail ledger, faces-payable/week
+§9.1 final box (face registered in the platform account, faces-payable/week
 denominator): registered via LEDGER.md door A — row in
 packages/rail-ledger/registry/faces.json @ draft/rail-ledger-v1 (studio #9
 alignment pass 2026-08-23); readout
