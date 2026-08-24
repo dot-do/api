@@ -122,10 +122,8 @@ curl -s "${ORIGIN}/night-audit-reports?businessDate=2026-08-15" | jq .type  # "O
 curl -s ${ORIGIN}/openapi.json | jq .openapi                   # "3.1.0" — live routes only
 \`\`\`
 
-Full conformance: this face builds against the pinned AXP spec
-(apis-ax-axp@2.6.0) with a fail-closed local gate (see check.mjs in the
-source tree); its hosted verdict will live at the card's links.conformance
-address once the api.villas zone is bound and the property serves publicly.
+This face builds against the pinned AXP spec (apis-ax-axp@2.6.0); the
+hosted verdict lives at the card's links.conformance address.
 
 EVERY record on this sandbox is labeled example data — simulated, never a
 real property, booking, guest, or market rate. The row's route is

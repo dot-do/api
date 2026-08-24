@@ -2,10 +2,13 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "api-villas",
   "main": "worker.mjs",
-  "compatibility_date": "2026-08-23"
-  // No routes block on purpose: api.villas is HELD (porkbun/2027-07-26)
-  // but has NO Cloudflare zone yet (surface register state: name-only;
-  // the face sibling apis.villas is also name-only). Binding the hostname
-  // is the one-line change that happens when the zone lands — nothing
-  // else in this directory moves.
+  "account_id": "b6641681fe423910342b9ffa1364c76d",
+  "compatibility_date": "2026-08-23",
+  "observability": { "enabled": true },
+  "workers_dev": true,
+
+  // api.villas zone is ACTIVE on the .do CF account (Batch-S 11-zone sweep,
+  // 2026-08-24) — direct custom-domain serving per the api.insure precedent
+  // (zone already on .do). Held at porkbun, renewal 2027-07-26.
+  "routes": [{ "pattern": "api.villas", "custom_domain": true }]
 }
