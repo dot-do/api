@@ -93,7 +93,7 @@ edit it by hand.
 - Rail-ledger registration (§9.1 final box): **REGISTERED** — registered via
   LEDGER.md door A — row in packages/rail-ledger/registry/faces.json @
   draft/rail-ledger-v1 (studio #9 alignment pass 2026-08-23); readout
-  https://ledger.apis.ax/readouts/faces-payable (service built, deploy
+  https://apis.ax/account/readouts/faces-payable (service built, deploy
   pending Batch-S). Registered under the placeholder host
   `fn-corporate-affairs.org.ai` (GAP row — no brand held). Previously
   blocked-on-rail-ledger (no faces-payable ledger existed in the ax repo at

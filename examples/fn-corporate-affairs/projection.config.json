@@ -9,7 +9,7 @@
   "brand": null,
   "domains": [],
   "placeholderOrigin": "https://fn-corporate-affairs.org.ai",
-  "railLedger": "https://ledger.apis.ax/faces?face=fn-corporate-affairs.org.ai",
+  "railLedger": "https://apis.ax/account/faces?face=fn-corporate-affairs.org.ai",
   "icp": {
     "companyTypes": ["public companies", "regulated enterprises", "trade associations"],
     "jobTypes": ["communications director", "investor-relations officer", "government-relations lead", "corporate secretary"],
