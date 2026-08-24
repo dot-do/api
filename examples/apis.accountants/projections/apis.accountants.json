@@ -24,7 +24,7 @@
     "rateCardRef": "/pricing",
     "note": "per-outcome on CloseDeliverables (row selector verdict: close grain passes agent-native + outcome-priced) + metered on record reads"
   },
-  "railLedger": "https://apis.ax/account/faces?face=apis.accountants",
+  "account": "https://apis.ax/account/faces?face=apis.accountants",
   "positioning": "the functions an accounting firm's systems call",
   "positioningNote": "agent-default claim WITHHELD until the §4.6 worthiness bar passes (conformance + live anon sandbox + verified published suite with runs on record)",
   "mdx": "custom landing in this worker (spec §7.1: custom site allowed at wave zero; per-brand MDX layer on the shared renderer deferred to extraction)",
