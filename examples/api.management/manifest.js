@@ -7,6 +7,7 @@
 import { defineSiteManifest } from "./vendor/axp-faces/index.js";
 import { buildSeed, SEED_VERSION, API_PRODUCT } from "./substrate.js";
 import { PROJECTION } from "./projection.js";
+import { renderLanding } from "./site/pages.js";
 
 export const ORIGIN = "https://api.management";
 
@@ -46,55 +47,33 @@ and \`statement\` members.
 ## Verification
 
 Claims that can be tests are tests: /verify explains how to run the
-conformance suite against this surface yourself.`;
+conformance suite against this surface yourself.
+
+## Console
+
+${ORIGIN}/console is the management console (browser face, v1): the API
+inventory ledger — seeded with this estate's own 52 built wave-zero rows —
+plus the attested api.qa verdict panels. The console chrome is demo-labeled;
+the register data in it is real and cited.`;
 
 const homeMd = `# api.management
 
-The operate face of an API estate — process spine, KPI/OKR records, and the
-managed-property door, one definition, agent-first.
+Management and monitoring for API estates — the APIs this estate serves and
+the APIs you already run. Conformance is judged by api.qa (the independent
+verifier); this face carries the process spine, KPI/OKR records, and the
+managed-property door — one definition, agent-first.
 
+- Console (browser face): ${ORIGIN}/console — inventory ledger + attested verdict panels
 - Collections: ${ORIGIN}/processes · ${ORIGIN}/kpis · ${ORIGIN}/objectives · ${ORIGIN}/properties
 - Machine faces: ${ORIGIN}/llms.txt · ${ORIGIN}/.well-known/agents.json · ${ORIGIN}/openapi.json · ${ORIGIN}/pricing
 - Verify it yourself: ${ORIGIN}/verify
 - Sandbox data is simulated and labeled (\`"example": true\`) — the product is live, the data is not.
+- Family: api.qa verifies · apis.ax offers · apis.directory registers · apis.dev builds · api.management operates.
 `;
 
-const homeHtml = `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>api.management</title>
-<style>
-  :root { color-scheme: light dark; }
-  body { margin: 0; font: 16px/1.6 ui-sans-serif, system-ui, sans-serif; background: Canvas; color: CanvasText; }
-  main { max-width: 44rem; margin: 0 auto; padding: 4rem 1.5rem; }
-  h1 { font-size: 2rem; letter-spacing: -0.02em; margin: 0 0 .5rem; }
-  .sub { opacity: .75; margin: 0 0 2.5rem; }
-  h2 { font-size: 1rem; text-transform: uppercase; letter-spacing: .08em; opacity: .6; margin: 2.5rem 0 .75rem; }
-  code, pre { font: 13px/1.6 ui-monospace, monospace; }
-  pre { padding: 1rem; border: 1px solid color-mix(in srgb, CanvasText 15%, transparent); border-radius: 8px; overflow-x: auto; }
-  ul { padding-left: 1.2rem; } li { margin: .3rem 0; }
-  .note { font-size: .85rem; opacity: .7; border-left: 3px solid color-mix(in srgb, CanvasText 25%, transparent); padding-left: .75rem; }
-  a { color: inherit; }
-</style></head>
-<body><main>
-  <h1>api.management</h1>
-  <p class="sub">The operate face of an API estate: the process spine, KPI/OKR records, and the managed-property door — one definition, agent-first.</p>
-  <h2>Keyless first value</h2>
-  <pre>curl ${ORIGIN}/processes
-curl ${ORIGIN}/kpis
-curl ${ORIGIN}/properties
-curl ${ORIGIN}/pricing</pre>
-  <h2>Machine faces</h2>
-  <ul>
-    <li><a href="/llms.txt">/llms.txt</a> — the agent front door</li>
-    <li><a href="/.well-known/agents.json">/.well-known/agents.json</a> — capability card + probe manifest</li>
-    <li><a href="/openapi.json">/openapi.json</a> — the OpenAPI 3.1 contract (live endpoints only)</li>
-    <li><a href="/pricing">/pricing</a> — the Pricing Document</li>
-    <li><a href="/verify">/verify</a> — run our tests yourself</li>
-  </ul>
-  <h2>Sandbox</h2>
-  <p class="note">The anonymous sandbox is the live product over simulated data. Every seed record is labeled <code>"example": true</code>; no real company or person appears in any record. Metering runs in test mode — the Pricing Document declares this in its own <code>binding</code> and <code>statement</code> members.</p>
-</main></body></html>
-`;
+// The browser home is the product landing (site/pages.js — family idiom per
+// examples/DASHBOARD-FAMILY.md); agents negotiating markdown get homeMd above.
+const homeHtml = renderLanding();
 
 export const manifest = defineSiteManifest({
   origin: ORIGIN,
@@ -250,6 +229,12 @@ export const manifest = defineSiteManifest({
       role: "the agent-first register and the AXP standard this face is built to",
       llms: "https://apis.ax/llms.txt",
       seams: [{ rel: "standard", description: "this face conforms to apis-ax-axp and is independently verified at api.qa" }],
+    },
+    {
+      name: "api.qa",
+      origin: "https://api.qa",
+      role: "the independent verifier — the conformance engine this console consumes; api.management can read verdicts, never mint them",
+      seams: [{ rel: "verifier", description: "attested Ed25519-signed VerificationReports at api.qa/{domain}; the console's verdict column is those reports" }],
     },
   ],
 

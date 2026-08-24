@@ -16,6 +16,8 @@ import { PROJECTION } from "./projection.js";
 import { API_PRODUCT } from "./substrate.js";
 import { handleMcp } from "./mcp.js";
 import { meterEvent, moneyEvent, trafficEvent } from "./seams.js";
+import { renderDashboardPage } from "./site/dashboard-template.js";
+import { dashboardConfig } from "./site/dashboard-config.js";
 
 const axp = createAxpRoutes(manifest);
 
@@ -167,6 +169,26 @@ export default {
 
     if (ICP_PATHS.has(path)) return respond(await serveNegotiated(request, url, icpFaces));
     if (VERIFY_PATHS.has(path)) return respond(await serveNegotiated(request, url, verifyFaces));
+
+    // The management console (browser face, v1) — the api.management
+    // instance of the abstract dashboard template shared with apis.dev
+    // (examples/DASHBOARD-FAMILY.md). Chrome is demo-labeled in the page;
+    // the inventory ledger is the estate's real register. Deliberately NOT
+    // a declared API operation: a human document like the home page, not a
+    // priced machine op (no operationId, no rate row).
+    if (path === "/console") {
+      return respond(
+        new Response(head ? null : renderDashboardPage(dashboardConfig), {
+          status: 200,
+          headers: { "content-type": "text/html; charset=utf-8" },
+        }),
+      );
+    }
+    // Family alias: apis.dev mounts the template at /dashboard; here the
+    // operative noun is /console (recorded in DASHBOARD-FAMILY.md).
+    if (path === "/dashboard") {
+      return respond(new Response(null, { status: 301, headers: { location: "/console" } }));
+    }
 
     // 4 — typed EMPTY 404: nothing here has been deleted; the route was never written
     return respond(
