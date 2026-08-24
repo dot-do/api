@@ -47,5 +47,5 @@
     "resolution": "Built under THIS row's key (`lodging`) per the watch-list default: the Booking noun here is lodging-scoped (schema.org/LodgingReservation grain, stay/night semantics), claims NOTHING shared, and asserts no cross-row ownership of the Booking/Reservation type. A primacy ruling, when filed, supersedes this note."
   },
   "apexGap": "RECORDED per the register row: 'villas' is a sub-niche of 7211; the category-apex name (api.hotel-class) is unheld. Apex GAP is a register note carried here verbatim — not a build blocker, and this build claims only the sub-niche rail.",
-  "railLedger": "https://apis.ax/account/faces?face=api.villas"
+  "account": "https://apis.ax/account/faces?face=api.villas"
 }

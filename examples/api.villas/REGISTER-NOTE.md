@@ -58,13 +58,13 @@ Per the watch-list default this build:
 - records the collision here and in `projection.api.villas.json` for the
   primacy ruling to supersede.
 
-## Rail-ledger registration (batch watch-list item)
+## Platform-account registration (batch watch-list item)
 
 **REGISTERED (door A).** `~/projects/ax` branch `draft/rail-ledger-v1`
-(≥ 3ec5bb6) holds the committed rail-ledger service and durable face
+(≥ 3ec5bb6) holds the committed platform-account service and durable face
 registry. This build added its one-row registration for `api.villas` to
 `packages/rail-ledger/registry/faces.json` and records
-`"railLedger": "https://apis.ax/account/faces?face=api.villas"` in the
+`"account": "https://apis.ax/account/faces?face=api.villas"` in the
 projection config. §9.1 box 16 discharged — not blockable, not stubbed.
 
 ## [UNVERIFIED] flags carried, none upgraded

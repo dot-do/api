@@ -82,8 +82,8 @@ class and referral source (spec §7.4 — seams only, no billing logic).
 | `seed.mjs` | §5.2 synthetic sandbox seed generator (deterministic; reseed = rerun) |
 | `manifest.mjs` | the ONE site manifest the machine face generates from |
 | `worker.mjs` | the wave-zero worker (generator first, site doors after) |
-| `projection.api.villas.json` | the G4 projection config (brand, ICP+persona, motion, offers, experiment, guardrail, collision + apex-GAP records, rail-ledger address) |
-| `REGISTER-NOTE.md` | facts filed back to the register (apex GAP, source-route probe honesty, Booking/Reservation collision, rail-ledger registration) |
+| `projection.api.villas.json` | the G4 projection config (brand, ICP+persona, motion, offers, experiment, guardrail, collision + apex-GAP records, platform-account address) |
+| `REGISTER-NOTE.md` | facts filed back to the register (apex GAP, source-route probe honesty, Booking/Reservation collision, platform-account registration) |
 | `axp/` | vendored `axp-faces` 0.3.0 (byte-identical, PINS-checked — never edit; `VENDORED.json` records the source commit) |
 | `spec/` | the pinned conformance spec + digest |
 | `check.mjs` | fail-closed local gate (vendor drift, spec pin, in-process conformance — disclosed re-implementation of the probe ladder, fixture law, rate-card coherence, seed-exercises-every-operation, conneg spot-check) |
