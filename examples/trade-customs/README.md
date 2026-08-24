@@ -103,7 +103,7 @@ sibling projection), box 16 BLOCKED (blocked-on-rail-ledger — see below).
   stubs in every OFFER body; nothing is ever charged.
 - workers.do serving lane, shared dashboard, unified analytics — extraction
   targets, not wave-zero requirements (§7.2).
-- Rail-ledger registration — **blocked-on-rail-ledger**: the ledger service +
+- Platform-account registration — **blocked-on-rail-ledger**: the ledger service +
   LEDGER.md do not exist on `~/projects/ax` `draft/rail-ledger-v1`'s committed
   tree (tip `1620e9f`); no address convention to point at. Never stubbed;
   registers when the convention lands and this face has a ruled address.
