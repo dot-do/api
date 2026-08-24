@@ -29,6 +29,7 @@ import {
   buildPricingDocument,
 } from './axp-faces/index.js'
 import { pricingPageHtml } from './site/pricing-page.js'
+import { renderPage } from './site/style.js'
 import { renderDashboardPage } from './site/dashboard-template.js'
 import { dashboardConfig } from './site/dashboard-config.js'
 import { manifest } from './manifest.js'
@@ -225,7 +226,14 @@ export default {
       return serveNegotiated(request, url, {
         json: doc,
         md,
-        html: `<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><title>apis.dev — run our tests</title></head><body><pre>${md.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</pre></body></html>`,
+        // The browser face of /verify wears the site chrome (renderPage) —
+        // the document itself stays the markdown, set as a plate.
+        html: renderPage({
+          title: 'apis.dev — run our tests',
+          description: 'The /verify export: the pinned conformance spec, the probes, and the commands to run the gate yourself.',
+          path: '/verify',
+          body: `<main><div class="wrap"><pre class="verify-pre">${md.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</pre></div></main>`,
+        }),
       }, { cleanPath: '/verify' })
     }
 

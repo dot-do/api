@@ -19,6 +19,8 @@
  * Cards appear nowhere; hairlines carry the structure.
  */
 
+import { menuIcon, closeIcon } from './icons.js'
+
 export const STYLE = /* css */ `
 :root {
   --bg: oklch(0.930 0.004 175);
@@ -39,6 +41,9 @@ export const STYLE = /* css */ `
   --plate-dim: oklch(0.680 0.016 195);
   --plate-rule: oklch(0.280 0.020 220);
   --plate-accent: oklch(0.800 0.130 175);
+  /* Theme-INVARIANT (api.qa views.ts): a scrim derived from the ink token
+     paints a white veil in dark mode. A scrim is always a shadow. */
+  --scrim: oklch(0.16 0.012 210 / 0.58);
   --sans: 'IBM Plex Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, monospace;
   --dur: 120ms;
@@ -68,7 +73,9 @@ export const STYLE = /* css */ `
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
+/* scroll-padding clears the nav (api.qa baseCss); without it in-page anchors
+   land underneath the bar. */
+html { -webkit-text-size-adjust: 100%; scroll-padding-top: 5rem; }
 body {
   background: var(--bg); color: var(--text);
   font-family: var(--sans); font-size: 15px; line-height: 1.6;
@@ -87,15 +94,50 @@ code, .mono { font-family: var(--mono); overflow-wrap: anywhere; }
   background-image: repeating-linear-gradient(-45deg,
     var(--hatch) 0, var(--hatch) 1px, transparent 2px, transparent 8px); }
 
-/* ---------- masthead ---------- */
-.masthead { border-bottom: 1px solid var(--border); background: var(--surface); }
-.masthead .wrap { display: flex; align-items: center; gap: 1.25rem; min-height: 56px; }
-.wordmark { font-family: var(--mono); font-weight: 700; font-size: 1rem; letter-spacing: -0.01em; text-decoration: none; white-space: nowrap; }
-.wordmark .tld { color: var(--muted); font-weight: 400; }
-.wordmark .dot { color: var(--accent); }
-.mast-nav { display: flex; gap: 1.1rem; margin-left: auto; align-items: center; flex-wrap: wrap; }
-.mast-nav a { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none; color: var(--muted); transition: color var(--dur) var(--ease); }
-.mast-nav a:hover, .mast-nav a[aria-current="page"] { color: var(--text); }
+/* ---------- nav — the api.qa chrome, extracted from api.qa src/views.ts
+   (navHtml + the nav block of baseCss) with tokens mapped to this site's
+   names (--paper->--bg, --panel->--surface, --ink->--text, --ink-soft->--muted,
+   --rule->--border, --teal->--accent). Adapted per property: the brand lockup
+   is this wordmark; the theme button (family mechanism) rides in .navcta.
+   Mobile menu is :target-driven — this Worker ships no nav JavaScript. ---------- */
+.pad { max-width: 1140px; margin: 0 auto; padding-inline: clamp(16px, 3.5vw, 40px); }
+.navwrap { position: relative; z-index: 60; }
+.nav { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1.5rem; min-height: 58px; }
+a.brand { display: flex; align-items: center; gap: 0.55rem; font-family: var(--mono); font-weight: 700; font-size: 1rem; letter-spacing: -0.02em; flex: none; text-decoration: none; white-space: nowrap; }
+a.brand .tld { color: var(--muted); font-weight: 400; }
+a.brand .dot { color: var(--accent); }
+.navlinks { display: flex; justify-content: center; gap: 1.6rem; font-family: var(--mono); font-size: 0.78rem; color: var(--muted); }
+.navlinks a { text-decoration: none; transition: color var(--dur) var(--ease); }
+.navlinks a:hover { color: var(--accent); }
+.navlinks a[aria-current="page"] { color: var(--text); }
+.navcta { display: flex; align-items: center; justify-content: flex-end; gap: 0.6rem; }
+/* Bare icon link: no border, no fill. Padding is hit-area only. */
+.iconlink { display: inline-flex; align-items: center; justify-content: center; flex: none; color: var(--muted); padding: 0.4rem; margin: -0.4rem; transition: color var(--dur) var(--ease); }
+.iconlink:hover { color: var(--accent); }
+.iconlink .icon { width: 1.2rem; height: 1.2rem; }
+/* The nav sits ABOVE the scrim, opaque so the fixed scrim cannot paint
+   through the transparent bar (api.qa learned both the hard way). */
+.navwrap > .pad { position: relative; z-index: 2; background: var(--bg); }
+.menu { display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 1; }
+.menu:target { display: block; }
+@media (min-width: 821px) { .menu { display: none !important; } }
+.menu-scrim { position: fixed; inset: 0; background: var(--scrim); }
+.menu-panel { position: relative; background: var(--bg); border-bottom: 1px solid var(--border); }
+.menu-panel a { display: flex; align-items: center; justify-content: space-between; font-family: var(--mono); font-size: 0.9rem; color: var(--text); text-decoration: none; padding: 0.95rem clamp(16px, 3.5vw, 40px); border-top: 1px solid var(--border); }
+.menu-panel a:first-child { border-top: 0; }
+.menu-panel a:hover, .menu-panel a:focus-visible { color: var(--accent); background: var(--surface); }
+/* One control, two states: the hamburger becomes an X in place. */
+.burger { display: none; }
+.burger-close { display: none; }
+@media (max-width: 820px) {
+  .navlinks { display: none; }
+  .nav { grid-template-columns: 1fr auto; }
+  .burger-open { display: inline-flex; }
+  .menu:target ~ .pad .burger-open { display: none; }
+  .menu:target ~ .pad .burger-close { display: inline-flex; }
+}
+@keyframes burger-turn { from { transform: rotate(-90deg); opacity: 0; } to { transform: rotate(0); opacity: 1; } }
+.burger .icon { animation: burger-turn 220ms var(--ease); } /* 220ms = api.qa --dur-base */
 .theme-btn { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--border); padding: 4px 10px; transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease); }
 .theme-btn:hover { color: var(--text); border-color: var(--muted); }
 
@@ -221,17 +263,29 @@ section.band + section.band { border-top: 1px solid var(--border); }
 .closing { max-width: 68ch; padding-block: clamp(1.8rem, 4vw, 2.6rem); border-top: 1px solid var(--border); }
 .closing p { color: var(--muted); font-size: 0.95rem; }
 .closing a { color: var(--text); }
+/* footer — the api.qa chrome (footHtml + the footer block of baseCss),
+   tokens mapped as in the nav. Columns adapted to this property's links;
+   the family disclosure line rides in .fnote. */
 .foot-hatch { border-top: 1px solid var(--border); }
-footer { background: var(--surface); }
-footer .wrap { display: flex; flex-wrap: wrap; gap: 0.8rem 2rem; align-items: baseline; padding-block: 1.3rem; }
-footer p { font-family: var(--mono); font-size: 0.68rem; color: var(--muted); }
-footer nav { display: flex; flex-wrap: wrap; gap: 1.2rem; margin-left: auto; }
-footer nav a { font-family: var(--mono); font-size: 0.68rem; color: var(--muted); text-decoration: none; transition: color var(--dur) var(--ease); }
-footer nav a:hover { color: var(--text); }
-.family-line { border-top: 1px solid var(--border-soft); }
-.family-line p { font-family: var(--mono); font-size: 0.68rem; color: var(--muted); padding-block: 0.9rem; }
-.family-line a { color: var(--text); text-decoration: none; }
-.family-line a:hover { text-decoration: underline; }
+footer { padding-block: 2rem; }
+.fgrid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 1.75rem; }
+@media (max-width: 820px) { .fgrid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 520px) { .fgrid { grid-template-columns: 1fr; } }
+.fgrid > * { min-width: 0; }
+.fcol h4 { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text); margin: 0 0 0.65rem; font-weight: 700; }
+/* Scoped away from .brand (api.qa rule): an unscoped .fcol a selector
+   overrides the brand lockup's display:flex and colour. */
+.fcol a:not(.brand) { display: block; font-size: 0.83rem; color: var(--muted); text-decoration: none; padding: 0.16rem 0; transition: color var(--dur) var(--ease); }
+.fcol a:not(.brand):hover { color: var(--accent); }
+.fcol a.brand { font-size: 1.02rem; color: var(--text); margin-bottom: 0.75rem; }
+.fcol p { font-size: 0.83rem; color: var(--muted); max-width: 38ch; }
+.fcol p a { color: var(--text); }
+.fnote { margin-top: 1.75rem; padding-top: 1rem; border-top: 1px solid var(--border-soft); font-family: var(--mono); font-size: 0.66rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 0.4rem 1.25rem; justify-content: space-between; }
+.fnote a { color: var(--text); text-decoration: none; }
+.fnote a:hover { color: var(--accent); }
+
+/* the /verify browser face: the markdown document, set verbatim */
+.verify-pre { font-family: var(--mono); font-size: 0.78rem; line-height: 1.75; overflow-x: auto; padding-block: 2rem; }
 
 /* ---------- responsive ---------- */
 @media (max-width: 860px) {
@@ -262,17 +316,70 @@ footer nav a:hover { color: var(--text); }
    key as api.management site/style.js (family theme parity). */
 const THEME_SCRIPT = `<script>(function(){try{var t=localStorage.getItem("theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}document.addEventListener("DOMContentLoaded",function(){var b=document.querySelector(".theme-btn");if(!b)return;b.addEventListener("click",function(){var r=document.documentElement,cur=r.getAttribute("data-theme"),dark=cur?cur==="dark":matchMedia("(prefers-color-scheme: dark)").matches,next=dark?"light":"dark";r.setAttribute("data-theme",next);try{localStorage.setItem("theme",next)}catch(e){}})})})();</script>`
 
+/* ── shared page chrome (nav / footer / theme) — the PROPER api.qa chrome
+   (src/views.ts navHtml/footHtml, Bryant directive 2026-08-24), brand lockup
+   and links adapted to this property. Burger icons come from ./icons.js —
+   build-time-inlined Iconify SVG, never unicode glyphs (estate icon rule). ── */
+
+const BRAND = `<a class="brand" href="/">apis<span class="dot">.</span><span class="tld">dev</span></a>`
+
+const NAV_LINKS = [
+  ['/pricing', 'Pricing'],
+  ['/dashboard', 'Dashboard'],
+  ['/verify', 'Verify'],
+  ['/llms.txt', 'llms.txt'],
+]
+
+function navHtml(path) {
+  const link = ([href, label]) => `<a href="${href}"${href === path ? ' aria-current="page"' : ''}>${label}</a>`
+  return `<div class="navwrap">
+  <div class="menu" id="menu">
+    <a class="menu-scrim" href="#" aria-label="Close navigation menu" tabindex="-1"></a>
+    <div class="menu-panel">
+      ${NAV_LINKS.map(link).join('\n      ')}
+    </div>
+  </div>
+  <div class="pad"><nav class="nav">
+    ${BRAND}
+    <div class="navlinks">${NAV_LINKS.map(link).join('')}</div>
+    <div class="navcta">
+      <button class="theme-btn" type="button" aria-label="toggle color theme">theme</button>
+      <a class="iconlink burger burger-open" href="#menu" aria-label="Open navigation menu" aria-expanded="false">${menuIcon()}</a>
+      <a class="iconlink burger burger-close" href="#" aria-label="Close navigation menu" aria-expanded="true">${closeIcon('icon')}</a>
+    </div>
+  </nav></div>
+</div>`
+}
+
+function footHtml() {
+  return `<div class="foot-hatch hatch"></div>
+<div class="pad"><footer>
+  <div class="fgrid">
+    <div class="fcol">
+      ${BRAND}
+      <p>The build-and-monetize door of the <a href="https://apis.do" rel="noopener">apis.do</a> provider abstraction — one definition, five faces, one rate card.</p>
+    </div>
+    <div class="fcol"><h4>Product</h4>
+      <a href="/pricing">Pricing</a><a href="/dashboard">Dashboard</a>
+    </div>
+    <div class="fcol"><h4>For agents</h4>
+      <a href="/llms.txt">llms.txt</a><a href="/.well-known/agents.json">agents.json</a>
+      <a href="/openapi.json">openapi.json</a><a href="/pricing.json">pricing.json</a>
+    </div>
+    <div class="fcol"><h4>Verify</h4>
+      <a href="/verify">/verify &middot; run our tests</a>
+      <a href="https://api.qa/apis.dev" rel="noopener">api.qa/apis.dev</a>
+    </div>
+  </div>
+  <div class="fnote">
+    <span>&copy; 2026 apis.dev</span>
+    <span>One family: <a href="https://api.qa" rel="noopener">api.qa</a> verifies, <a href="https://apis.ax" rel="noopener">apis.ax</a> offers, <a href="https://apis.directory" rel="noopener">apis.directory</a> registers, apis.dev builds and monetizes, api.management operates &mdash; trust rides the published, continuously verified test suites, not institutional separation.</span>
+  </div>
+</footer></div>`
+}
+
 export function renderPage({ title, description, path, body, script = '' }) {
   const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-  const nav = [
-    ['/', 'Home'],
-    ['/pricing', 'Pricing'],
-    ['/dashboard', 'Dashboard'],
-    ['/llms.txt', 'llms.txt'],
-    ['/.well-known/agents.json', 'Agents.json'],
-  ]
-    .map(([href, label]) => `<a href="${href}"${href === path ? ' aria-current="page"' : ''}>${label}</a>`)
-    .join('\n      ')
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -301,33 +408,10 @@ export function renderPage({ title, description, path, body, script = '' }) {
 <style>${STYLE}</style>
 </head>
 <body>
-<header class="masthead">
-  <div class="wrap">
-    <a class="wordmark" href="/">apis<span class="dot">.</span><span class="tld">dev</span></a>
-    <nav class="mast-nav">
-      ${nav}
-      <button class="theme-btn" type="button" aria-label="toggle color theme">theme</button>
-    </nav>
-  </div>
-</header>
+${navHtml(path)}
+<div class="hatch"></div>
 ${body}
-<div class="foot-hatch hatch"></div>
-<footer>
-  <div class="wrap">
-    <p>apis.dev — the build-and-monetize door of the apis.do provider abstraction.</p>
-    <nav>
-      <a href="/openapi.json">openapi.json</a>
-      <a href="/pricing.json">pricing.json</a>
-      <a href="/verify">verify</a>
-      <a href="https://api.qa/apis.dev" rel="noopener">api.qa/apis.dev</a>
-    </nav>
-  </div>
-  <div class="family-line">
-    <div class="wrap">
-      <p>One family: <a href="https://api.qa" rel="noopener">api.qa</a> verifies, <a href="https://apis.ax" rel="noopener">apis.ax</a> offers, <a href="https://apis.directory" rel="noopener">apis.directory</a> registers, apis.dev builds and monetizes, api.management operates. Trust rides the published, continuously verified test suites — not institutional separation.</p>
-    </div>
-  </div>
-</footer>
+${footHtml()}
 ${THEME_SCRIPT}${script ? `<script type="module">${script}</script>` : ''}
 </body>
 </html>`
