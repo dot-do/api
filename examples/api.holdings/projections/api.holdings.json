@@ -4,7 +4,7 @@
   "brand": "api.holdings",
   "domains": ["api.holdings"],
   "served": true,
-  "railLedger": "https://apis.ax/account/faces?face=api.holdings",
+  "account": "https://apis.ax/account/faces?face=api.holdings",
   "icp": {
     "companyTypes": ["holding company", "family office", "PE/venture portfolio operator", "multi-entity founder / startup studio"],
     "jobTypes": ["corporate ops", "controller", "paralegal", "platform engineer"]
