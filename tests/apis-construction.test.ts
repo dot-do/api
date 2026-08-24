@@ -212,7 +212,7 @@ describe('the 402 boundary (payable stub — never fake billing)', () => {
     expect(res.status).toBe(402)
     const body = await res.json()
     expect(body.type).toBe('OFFER')
-    expect(body.stub).toContain('LABELED STUB')
+    expect(body.stub).toContain('cannot take payment')
     expect(body.rate.operation).toBe('orderDrawPackage')
     expect(body.alternatives.length).toBeGreaterThan(0)
   })

@@ -39,7 +39,7 @@ function mcpTools(ws: store.Workspace): McpTool[] {
         .filter((d) => (q.project ? d.projectId === q.project : true))
     }),
     t('getDrawPackage', 'One draw package by id', id, (i) => store.getDrawPackage((i as { id?: string }).id ?? '') ?? { message: 'not found' }),
-    t('orderDrawPackage', 'Order the completed, verified assembly of a draw package — returns the 402 OFFER terms (settlement rail not yet activated; labeled stub, no charge can occur)', id, (i) => {
+    t('orderDrawPackage', 'Order the completed, verified assembly of a draw package — returns the 402 OFFER terms (settlement rail not yet activated; no charge can occur — test-mode)', id, (i) => {
       const d = store.getDrawPackage((i as { id?: string }).id ?? '')
       if (!d) return { message: 'not found' }
       return { type: 'OFFER', drawPackage: d.id, see: 'POST /draw-packages/{id}/order', stub: 'settlement rail not yet activated — no charge can occur' }

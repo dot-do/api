@@ -80,8 +80,8 @@ ephemeral anonymous workspace, disclosed above.
 rate card's per-outcome row and every alternative. ${PRICING_STATEMENT}
 
 No settled interchange standard exists for this document grain — the typed
-records here are estate typing (schema.org fallback per the cascade), and the
-typed-artifact door is recorded as a hypothesis, not an asserted standard.
+records use schema.org types where one exists and schema.org.ai identities
+otherwise; these identities are not an asserted industry standard.
 `
 
 /** The branching collection satisfies Clauses 4 + 7 on one pathname. */
@@ -157,7 +157,7 @@ export function buildManifest() {
       .concat([
         { method: 'GET', path: '/icp.json', operationId: 'getIcp', summary: 'G2 coordinates: ICP (CompanyType × JobTypes), personas, and the System coordinate this substrate serves' },
         { method: 'GET', path: '/verify', operationId: 'getVerify', summary: 'Run our tests — the published public-contract suite for this surface' },
-        { method: 'GET', path: '/checkout', operationId: 'getCheckout', summary: 'The checkout seam — a labeled stub until the settlement rail is activated (no charge can occur)' },
+        { method: 'GET', path: '/checkout', operationId: 'getCheckout', summary: 'Checkout — settlement rail not yet activated; no charge can occur (test-mode)' },
         // /login and /callback are served (labeled demo mode) but deliberately
         // not declared as contract routes: a redirect door is a flow, not a
         // probeable 200-OK endpoint (the card's http entries may be probed).

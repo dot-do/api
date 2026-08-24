@@ -10,12 +10,13 @@
   "observability": {
     "enabled": true,
     "head_sampling_rate": 1
-  }
+  },
 
-  // apis.construction is ZONELESS (name held at porkbun, NO Cloudflare zone —
-  // Batch-S admin item; blocks serving only, never the build). Route
-  // attachment is a deploy decision AFTER zone provisioning:
-  // "routes": [{ "pattern": "apis.construction/*", "zone_name": "apis.construction" }]
+  // Zone provisioned 2026-08 Batch-S sweep: apis.construction ACTIVE — zone
+  // 771c20dba0daacb20da291af7af84472 on the .do account
+  // (b6641681fe423910342b9ffa1364c76d). Zone already on .do → direct custom
+  // domain per the ruled serving pattern.
+  "routes": [{ "pattern": "apis.construction", "custom_domain": true }]
   //
   // AT-RISK admin (administrative, not sequencing): the held sibling
   // api.contractors sits in the netim 2026-09-10 expiry block.

@@ -30,8 +30,8 @@ const CHECKOUT_STUB = {
   $type: 'CheckoutSeam',
   status: 'stub',
   note:
-    'LABELED STUB — the settlement rail is not yet activated (A1 charter); no payment can be taken here and no charge can occur. ' +
-    'The 402 OFFER boundary and this checkout seam are the served product surface; which rail answers is the platform\'s decision, not this property\'s.',
+    'Settlement rail not yet activated — no payment can be taken here and no charge can occur (test-mode). ' +
+    'The 402 OFFER boundary and this checkout seam are the served product surface.',
   pricing: `${ORIGIN}/pricing`,
   statement: PRICING_STATEMENT,
 }
@@ -59,8 +59,7 @@ const VERIFY_DOC = {
     'pay-application arithmetic identity (completedToDate − retainage − previousPayments = currentPaymentDue) and draw-package referential integrity',
   ],
   note:
-    'interfaces.testSuite is deliberately NOT declared on the card yet: declaring arms strict byte-digest verification of a suite document in an api.qa dialect, ' +
-    'and this property has not authored one — omission is full conformance; a wrong declaration is a machine-readable false claim.',
+    'interfaces.testSuite is not declared on the card: no digest-pinned suite document in an api.qa dialect is published yet.',
   conformance: 'https://api.qa/apis.construction',
 }
 
@@ -101,7 +100,7 @@ export function mountRoutes(app: Hono<ApiEnv>, ws: store.Workspace): void {
         rate: perOutcome,
         drawPackage: d.id,
         statement: PRICING_STATEMENT,
-        stub: 'LABELED STUB — settlement rail not yet activated; following checkoutUrl cannot take payment (see /checkout).',
+        stub: 'Settlement rail not yet activated; following checkoutUrl cannot take payment (see /checkout).',
       }),
       { status: 402 },
     )
