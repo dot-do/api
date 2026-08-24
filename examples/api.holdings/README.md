@@ -117,7 +117,7 @@ The checklist's final box — "face registered in the rail ledger
 (faces-payable/week denominator)" — is **REGISTERED**: registered via
 LEDGER.md door A — row in packages/rail-ledger/registry/faces.json @
 draft/rail-ledger-v1 (studio #9 alignment pass 2026-08-23); readout
-https://ledger.apis.ax/readouts/faces-payable (service built, deploy pending
+https://apis.ax/account/readouts/faces-payable (service built, deploy pending
 Batch-S). The box was previously blocked-on-rail-ledger (no rail ledger
 existed in the ax repo at 2026-08-23 build time); it was never satisfied by
 a stubbed or fabricated ledger entry — registration landed when the ledger
