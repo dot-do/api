@@ -64,7 +64,7 @@ Per the watch-list default this build:
 (≥ 3ec5bb6) holds the committed rail-ledger service and durable face
 registry. This build added its one-row registration for `api.villas` to
 `packages/rail-ledger/registry/faces.json` and records
-`"railLedger": "https://ledger.apis.ax/faces?face=api.villas"` in the
+`"railLedger": "https://apis.ax/account/faces?face=api.villas"` in the
 projection config. §9.1 box 16 discharged — not blockable, not stubbed.
 
 ## [UNVERIFIED] flags carried, none upgraded
