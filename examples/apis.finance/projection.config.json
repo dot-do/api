@@ -4,7 +4,7 @@
   "substrate": "banking-payments",
   "brand": "apis.finance",
   "domains": ["apis.finance"],
-  "railLedger": "https://ledger.apis.ax/faces?face=apis.finance",
+  "railLedger": "https://apis.ax/account/faces?face=apis.finance",
   "namingNotes": "Register ruling carried: apis.finance is the held-and-recorded plural (ladder verdict — no category-completing TLD held, finance.do is third-party/aftermarket-only, api.finance singular NOT held: it appears in no [REG] row despite #3/#22 text, and the ax packages/api.finance package is an internal ADR-0020 data home (markets/advisory), not this row's home). Subject-form reading: 'the functions a lending system calls.'",
   "subRails": [
     { "name": "apis.credit", "state": "BRAND-ONLY (pitch record)", "role": "records floor — 'Agents can't grant credit. They can pull the file.' Served here as the CreditFile Noun + POST /credit-files/pulls door until it projects separately." },
