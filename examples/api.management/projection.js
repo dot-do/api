@@ -65,7 +65,7 @@ export const PROJECTION = {
    *  #9 alignment pass 2026-08-23); readout
    *  https://apis.ax/account/readouts/faces-payable (service built, deploy
    *  pending Batch-S). */
-  railLedger: "https://apis.ax/account/faces?face=api.management",
+  account: "https://apis.ax/account/faces?face=api.management",
 
   positioning:
     "The manage/operate face of an API estate — the lifecycle counterpart of the build face. Agent-default claim WITHHELD until the §4.6 worthiness bar passes (conformance verdict + live anon sandbox + verified published suite).",
