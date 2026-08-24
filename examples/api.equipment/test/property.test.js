@@ -190,15 +190,21 @@ describe("the 402 boundary (B2A ladder in one OFFER — test-mode stubs)", () =>
 
 describe("G4 projection + G2 coordinates", () => {
   it("projection config is complete per §2 and motion-lawful (B2A: no OAuth/CC gates); primacy collisions recorded, nothing shared claimed", () => {
-    for (const k of ["substrate", "brand", "railLedger", "icp", "personas", "motion", "offer", "pricing", "positioning", "experiment"]) {
+    for (const k of ["substrate", "brand", "account", "icp", "personas", "motion", "offer", "pricing", "positioning", "experiment"]) {
+      // railLedger accepted as read alias for "account"; remove after sweep
+      if (k === "account") {
+        expect(projection.account ?? projection.railLedger, k).toBeDefined();
+        continue;
+      }
       expect(projection[k], k).toBeDefined();
     }
     expect(projection.motion).toBe("B2A");
     const text = JSON.stringify(projection.offer);
     expect(text).not.toMatch(/oauth|credit card|cc on file/i);
     expect(projection.counterpartBrandGap.recorded).toBe(true);
-    // batch watch list: rail-ledger address recorded in the projection config
-    expect(projection.railLedger).toBe("https://apis.ax/account/faces?face=api.equipment");
+    // batch watch list: platform-account address recorded in the projection config
+    // railLedger accepted as read alias; remove after sweep
+    expect(projection.account ?? projection.railLedger).toBe("https://apis.ax/account/faces?face=api.equipment");
     // primacy: no ruling on record → built under THIS row key, collisions recorded, no shared claims
     expect(projection.primacy.ruling).toBe("none on record");
     expect(projection.primacy.sharedClaims).toBe("none");

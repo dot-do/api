@@ -12,7 +12,7 @@ export const projection = {
   domains: ["api.equipment"],
 
   /** Rail-ledger address of record (LEDGER.md door A — batch watch list). */
-  railLedger: "https://apis.ax/account/faces?face=api.equipment",
+  account: "https://apis.ax/account/faces?face=api.equipment",
 
   /** G2 coordinates (ICP + Persona) — from the register row (horizontal
    *  Function root: present in every company above a size floor), exposed on
