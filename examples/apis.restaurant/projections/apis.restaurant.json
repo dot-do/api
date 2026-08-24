@@ -40,7 +40,7 @@
     "startDate": "2026-08-23",
     "hypothesis": "outcome-priced count reconciliation beats per-call on revenue per substrate call"
   },
-  "railLedger": "https://ledger.apis.ax/faces?face=apis.restaurant",
+  "railLedger": "https://apis.ax/account/faces?face=apis.restaurant",
   "sharedFaces": {
     "state": "collisions-recorded",
     "records": [
