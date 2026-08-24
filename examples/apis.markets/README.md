@@ -77,8 +77,8 @@ holds):
   with rung 1+.
 - **Family registry empty.** The property's sub-audience rails serve nothing
   today; presence-when-true keeps them out.
-- **Rail-ledger registration: REGISTERED.** The §9.1 final box (face
-  registered in the rail ledger, the faces-payable/week denominator) is
+- **Platform-account registration: REGISTERED.** The §9.1 final box (face
+  registered in the platform account, the faces-payable/week denominator) is
   registered via LEDGER.md door A — row in
   packages/rail-ledger/registry/faces.json @ draft/rail-ledger-v1 (studio #9
   alignment pass 2026-08-23); readout
@@ -87,7 +87,7 @@ holds):
 
 ## §9.1 self-verify score
 
-16/16 pass; the 16th (rail-ledger registration) is REGISTERED as above.
+16/16 pass; the 16th (platform-account registration) is REGISTERED as above.
 Every passing box is asserted by `check.mjs` or by this tree directly;
 the 402-OFFER ladder box passes under the ruled mounted-rungs-only placement
 (only the anon sandbox is mounted, only it is advertised). §9.2 (independent
