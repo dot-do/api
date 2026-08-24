@@ -28,10 +28,24 @@ the `/callback` key page — each of which links straight into live JSON views.
 | `phone` | phone number (vanity letters OK) | offline dataset (**DEMO** — labeled) |
 | `asn` | ASN (`13335` or `AS13335`) | RIPEstat as-overview (live) |
 | `entity` | slug (`cloudflare`, `united-states`) | Wikipedia REST (live) — entity stub (**DEMO** — labeled) |
+| `shapes` | `<dataset>/<id>` (`jobs/4266196009`, `classes/Q5`; `?shape=a\|b\|c`) | embedded static data (53 Job records + 20 Wikidata classes, zero request-time fetches) |
 
 `asn` and `entity` are the entity-link layer: `ip → asn → entity → dns →
 whois → dns → ip` is a closed browsable loop. Anything mocked or heuristic
 says so in its `source` field.
+
+`shapes` is the live link-shape comparison for
+[dot-do/data#36](https://github.com/dot-do/data/issues/36) (feeding the
+[#13](https://github.com/dot-do/data/issues/13) per-brand link-contract
+ruling): the SAME entity in three candidate link shapes, switched by
+`?shape=` — (a) typed camelCase edges (`postedBy`, `locatedIn`, `sameAs`,
+`potentialAction`) as the envelope `links` block, (b) label-keyed maps as the
+recovered workers did, (c) = (a) plus a `variations` block of real
+representation alternates (for classes: Wikidata JSON/TTL/HTML). Every
+response carries a `shapes` hop map to the same page in the other shapes; a
+miss is a page too (404 + `suggestions` as the current shape's link map —
+try `shapes.api.ht/jobs/staff-engineer`). The `shapes.api.ht/` root is a
+clickable index explaining all three.
 
 ## The graph
 

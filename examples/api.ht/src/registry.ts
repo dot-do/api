@@ -43,6 +43,8 @@ export interface HypertextTool {
   /** where the data comes from — surfaced verbatim in responses */
   source: string
   lookup: (value: string, ctx: ToolContext) => Promise<ToolResult>
+  /** optional custom HTML face for the tool root; defaults to the generic toolLandingHtml */
+  landingHtml?: (links: LinkContext) => string
 }
 
 export type ToolRegistry = Record<string, HypertextTool>

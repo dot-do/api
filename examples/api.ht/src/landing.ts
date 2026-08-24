@@ -15,9 +15,10 @@ import type { LinkContext } from './links'
 import type { HypertextTool, ToolRegistry } from './registry'
 import type { CallbackResult } from './auth'
 
-const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+export const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
-function page(title: string, body: string): string {
+/** Shared HTML shell — exported so tools with a custom landing keep the property's one design. */
+export function page(title: string, body: string): string {
   return `<!doctype html>
 <html lang="en">
 <head>
