@@ -86,7 +86,7 @@ node scripts/selfcheck.mjs       # §9.1 checklist, fail-closed, in-process
   `mounted:false` stubs in every OFFER body; nothing is ever charged.
 - workers.do serving lane, shared dashboard, unified analytics — extraction
   targets, not wave-zero requirements (§7.2).
-- Rail-ledger registration — **REGISTERED**: registered via LEDGER.md door A —
+- Platform-account registration — **REGISTERED**: registered via LEDGER.md door A —
   row in packages/rail-ledger/registry/faces.json @ draft/rail-ledger-v1
   (studio #9 alignment pass 2026-08-23); readout
   https://apis.ax/account/readouts/faces-payable (service built, deploy pending
@@ -96,4 +96,4 @@ node scripts/selfcheck.mjs       # §9.1 checklist, fail-closed, in-process
   existed in `~/projects/ax` at 2026-08-23 build time); a fake ledger was
   never stubbed — registration landed when the ledger package and its door-A
   registry existed. The projection config records the ledger address in its
-  `railLedger` field.
+  `account` field.
