@@ -130,7 +130,7 @@ list; zero divergence):
 at the pinned digest) plus the projection configs and this record. The final
 box:
 
-- **Rail-ledger registration (final box): REGISTERED** — registered via
+- **Platform-account registration (final box): REGISTERED** — registered via
   LEDGER.md door A — row in packages/rail-ledger/registry/faces.json @
   draft/rail-ledger-v1 (studio #9 alignment pass 2026-08-23); readout
   https://apis.ax/account/readouts/faces-payable (service built, deploy
@@ -138,7 +138,7 @@ box:
   `~/projects/ax` at 2026-08-23 build time); no fake ledger entry was ever
   stubbed — registration landed when the ledger package and its door-A
   registry existed. The served projection config records the ledger address
-  in its `railLedger` field.
+  in its `account` field.
 
 Guardrail (§5.3) note: this projection carries no agent-default claim, so the
 box passes by construction; the apis.ax projection (recorded, not served)
