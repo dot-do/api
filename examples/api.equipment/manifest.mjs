@@ -98,7 +98,7 @@ const homeHtml = `<!doctype html>
 <pre>curl ${ORIGIN}/assets
 curl ${ORIGIN}/pricing</pre>
 <p>Machine faces: <a href="/.well-known/agents.json">agents.json</a> · <a href="/openapi.json">openapi.json</a> · <a href="/pricing">pricing</a> · <a href="/llms.txt">llms.txt</a> · <a href="/verify">verify</a></p>
-<p class="note">Everything served today is a labeled example corpus (every record carries <code>example: true</code>; GS1 demo prefix 952 on every identifier) — the live product surface over simulated data, never a faked demo. Prices are stated intent (<code>binding: false</code>); settlement is not activated.</p>
+<p class="note">Everything served today is a labeled example corpus (every record carries <code>example: true</code>; GS1 demo prefix 952 on every identifier). Prices are stated intent (<code>binding: false</code>); settlement is not activated.</p>
 </body></html>
 `;
 

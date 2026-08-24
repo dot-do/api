@@ -22,8 +22,7 @@ export const RETENTION =
 
 export const EXAMPLE_NOTE =
   "Example data — synthetic sandbox seed over fictional companies (Example Facilities Co., Example Manufacturing GmbH — both synthetic). " +
-  "GS1 demo prefix 952 on every identifier; valid check digits; no real company, person, site, or serial appears. " +
-  "The sandbox is the real product surface over simulated data, never a faked demo.";
+  "GS1 demo prefix 952 on every identifier; valid check digits; no real company, person, site, or serial appears.";
 
 /** GTIN-13 under the GS1 demo prefix 952 with a computed (valid) check digit. */
 export function gtin13(body9) {
