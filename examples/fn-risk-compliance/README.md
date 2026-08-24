@@ -98,12 +98,12 @@ register) — this family's construction-payment-adjacent fronts
 payment-documentation record type is defined, served, or claimed shared here.
 Built under this row's own key.
 
-## Rail ledger
+## Platform account
 
-§9.1 final box (face registered in the rail ledger, faces-payable/week
+§9.1 final box (face registered in the platform account, faces-payable/week
 denominator): registered via LEDGER.md door A — row in
 `packages/rail-ledger/registry/faces.json` @ `draft/rail-ledger-v1` (ax
-repo, commit `9207e9e`, pushed to origin); `railLedger` address recorded in `projection.config.json`
+repo, commit `9207e9e`, pushed to origin); `account` address recorded in `projection.config.json`
 (`https://apis.ax/account/faces?face=fn-risk-compliance.org.ai`). GAP rule:
 the placeholder host `fn-risk-compliance.org.ai` is the registered face
 until a name attaches.

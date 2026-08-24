@@ -299,14 +299,15 @@ const json = async (r) => JSON.parse(await r.text())
     cfg.counterpartBrandGap?.recorded === true &&
     cfg.familyFronts?.held?.length === 28 &&
     cfg.familyFronts?.boundByRegisterRow?.length === 5 &&
-    typeof cfg.railLedger === 'string' &&
-    cfg.railLedger.includes('face=fn-risk-compliance.org.ai') &&
+    // railLedger accepted as read alias; remove after sweep
+    typeof (cfg.account ?? cfg.railLedger) === 'string' &&
+    (cfg.account ?? cfg.railLedger).includes('face=fn-risk-compliance.org.ai') &&
     Array.isArray(cfg.primacyRecord?.collisions) &&
     cfg.primacyRecord.collisions.length >= 1
   check(
     'projection-config',
     okCfg,
-    'family-grain GAP projection: brand null, motion B2A, 4 offer shapes, experiment registered, 28 held fronts (5 bound), counterpart-brand gap + primacy collisions recorded, railLedger address present, claim-free',
+    'family-grain GAP projection: brand null, motion B2A, 4 offer shapes, experiment registered, 28 held fronts (5 bound), counterpart-brand gap + primacy collisions recorded, account address present, claim-free',
   )
 }
 

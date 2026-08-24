@@ -49,7 +49,7 @@ G3-first under the placeholder address `fn-risk-compliance.org.ai` (this
 directory): machine face at the ratified pin (extension rates-g2 native),
 both plies from one definition (the shared check-runner is the headless
 door), statute/register reference records with honest provenance, labeled
-synthetic results, stub rate card, seams, rail-ledger registration. The G4
+synthetic results, stub rate card, seams, platform-account registration. The G4
 brand config is intentionally absent — `projection.config.json` carries
 `brand: null`. Attaching an acquired umbrella name OR any held .dev front is
 a config change, not a rebuild.

@@ -21,7 +21,7 @@
     "boundByRegisterRow": ["davisbacon.dev", "fifra.dev", "neshap.dev", "fflcheck.dev", "edi834.dev"]
   },
   "placeholderOrigin": "https://fn-risk-compliance.org.ai",
-  "railLedger": "https://apis.ax/account/faces?face=fn-risk-compliance.org.ai",
+  "account": "https://apis.ax/account/faces?face=fn-risk-compliance.org.ai",
   "icp": {
     "companyTypes": ["regulated CompanyTypes across the economy — per-statute micro-ICPs (government contractors for davisbacon, FFL dealers for fflcheck, benefits administrators for edi834), enumerable from the CompanyType × regulation join"],
     "jobTypes": ["compliance officer", "operations lead"],
