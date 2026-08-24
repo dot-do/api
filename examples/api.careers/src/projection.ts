@@ -27,7 +27,7 @@ export interface ProjectionConfig {
   motion: Motion
   offer: OfferShape[]
   pricing: { pattern: string; rateCardRef: string }
-  railLedger: string
+  account: string
   positioning: string
   mdx: string | null
   experiment: {
@@ -83,7 +83,7 @@ export const apiCareersProjection: ProjectionConfig = {
   // alignment pass 2026-08-23); readout
   // https://apis.ax/account/readouts/faces-payable (service built, deploy
   // pending Batch-S).
-  railLedger: 'https://apis.ax/account/faces?face=api.careers',
+  account: 'https://apis.ax/account/faces?face=api.careers',
 
   // Claim-free until the §4.6 worthiness bar attests (conformance + live anon
   // sandbox + verified published suite). "Agent default" is earned, never asserted.
