@@ -1,0 +1,68 @@
+{
+  "$comment": "G4 projection config (spec §2) — Projection 1 of the healthcare substrate, SERVED by this example worker on the ROW-KEY placeholder face. The row's primary-name pair is UNRESOLVED (#33 curation item): api.hospital (held, NO zone; ladder-step-2 singular; caveat on record — 'hospital' names 622, not all of 62) vs apis.healthcare (held, zoneless; plural subject-form breadth name). This build claims NEITHER; renaming is a one-line config + registry edit when the register rules.",
+  "substrate": "healthcare",
+  "brand": "healthcare.org.ai (row-key placeholder face — no brand name claimed)",
+  "domains": ["healthcare.org.ai"],
+  "served": true,
+  "nameCandidates": {
+    "state": "UNRESOLVED — #33 curation item; the register decides, this row proposed",
+    "candidates": [
+      { "name": "api.hospital", "basis": "row's proposed primary (ladder step 2; api.[x] held, porkbun/2027-07-25, NO zone); caveat on record: 'hospital' names NAICS 622, not all of 62" },
+      { "name": "apis.healthcare", "basis": "held breadth name (plural, subject-form) if the curated register prefers sector scope over the ladder's singular preference; zoneless" }
+    ],
+    "note": "cross-form pair api.hospital vs apis.{healthcare,doctor,dental,dentist} is one of the undefined pairs flagged in coverage A.6; apis.doctor/dental/dentist are held siblings, not candidates for the row-primary"
+  },
+  "icp": {
+    "companyTypes": ["medical practice / provider group", "hospital / health system", "dental practice", "billing/RCM vendor"],
+    "jobTypes": ["credentialing coordinator", "practice manager", "billing/RCM manager"]
+  },
+  "personas": [
+    { "id": "operator-credentialing-coordinator", "role": "credentialing coordinator keeping the roster, licenses, and payer enrollments current" },
+    { "id": "customer-practice-systems-developer", "role": "developer at a practice-management / RCM systems vendor integrating the credentialing functions" },
+    { "id": "buyer-payer-roster", "role": "payer-side roster-product buyer — the top rung of the row enrichment ladder (recorded; nothing served)" }
+  ],
+  "motion": "B2D",
+  "offer": [
+    { "shape": "anon-sandbox", "gate": "none — keyless", "price": "free" },
+    { "shape": "oauth-free-tier", "gate": "GitHub OAuth (labeled demo mode until OAuth credentials are configured; keys unpersisted, not yet enforced)", "price": "free quota" },
+    { "shape": "self-serve-metered", "gate": "key + card on file; 402 boundary — settlement rail not yet activated (A1 charter); the 402 OFFER + checkout seam is served as a labeled stub", "price": "metered per rate card" },
+    { "shape": "committed-subscription", "gate": "self-serve signup + commitment", "price": "declared in a future rate-card revision; not served today (presence-when-true: no tier row is published until it exists)" }
+  ],
+  "pricing": {
+    "pattern": "402-metered-per-call",
+    "rateCardRef": "/pricing",
+    "note": "metered per-call on eligibility checks + a per-outcome row on submitted enrollment packets (the outcome grain of the credentialing/enrollment door); all record reads free at wave zero"
+  },
+  "positioning": "the credentialing and enrollment functions a provider organization's systems call",
+  "positioningNote": "agent-default claim WITHHELD until the §4.6 worthiness bar passes (conformance + live anon sandbox + verified published suite with runs on record)",
+  "mdx": "custom landing in this worker (spec §7.1: custom site allowed at wave zero; per-brand MDX layer on the shared renderer deferred to extraction)",
+  "experiment": {
+    "pattern": "402-metered-per-call",
+    "motion": "B2D",
+    "shapes": ["anon-sandbox", "oauth-free-tier", "self-serve-metered", "committed-subscription"],
+    "rateCardRef": "/pricing",
+    "startDate": "2026-08-23",
+    "hypothesis": "per-outcome enrollment-packet pricing beats per-call metering on revenue per substrate call for credentialing teams"
+  },
+  "railLedger": "https://ledger.apis.ax/faces?face=healthcare.org.ai",
+  "grainDispute": {
+    "state": "OPEN — recorded, not resolved here (convergence §5 tension 2; resolution needs the shared per-market incumbency probe all five lenses defer to #22)",
+    "contenders": [
+      { "grain": "credentialing", "lens": "SC (watchlist-gated V)", "disposition": "BUILT FIRST — the least-disputed grain; the served headless System (Credentialing⟨healthcare-provider-organizations⟩, SC #12 derived instantiation)" },
+      { "grain": "scheduling/eligibility", "lens": "EO (narrows twice)", "disposition": "served as data-ply record collections + a check inquiry only; no scheduling System instantiated or claimed" },
+      { "grain": "prior-auth/superbill artifacts", "lens": "DC (b)[H]", "disposition": "served as data-ply record collections only; the held artifact doors (priorauth, superbill, soapnotes) are not claimed" }
+    ]
+  },
+  "counselBoundary": {
+    "state": "SURVIVING [COUNSEL] FLAG (founder ruling, issue #9, 2026-08-23 evening: build gate lifted; the flag survives ONLY on publishing person-anchored public-registry records as data)",
+    "rule": "NPPES/PECOS public credentialing registries are class-A sources and MAY be ingested; person-anchored public-registry records are NOT published as a data product on this surface; sandbox exposure only through clearly-labeled synthetic derivatives in the registry record shape",
+    "enforcement": "fixture layer (role labels, DEMO-namespace identifiers, provenance stamp on every Provider record) + stated in README, llms.txt, and the HTML landing; tested in core/tests/healthcare.test.ts",
+    "ingestNote": "NPPES v2.1 public API probed honestly 2026-08-23 (class A confirmed); ZERO probed records ingested into or shipped from this corpus — flipping Provider to `ingested` is gated on counsel sign-off on the publishing boundary, never on the build"
+  },
+  "counterpartBrand": {
+    "state": "GAP-RECORDED",
+    "candidate": null,
+    "gap": "the row's ICP includes non-technical principals (credentialing coordinators, practice managers, billing managers) and the estate holds NO human-vocabulary credentialing/enrollment name in the NAICS 62 cell. The held artifact doors (priorauth, superbill, soapnotes) are artifact-grammar names for the DISPUTED grains, not for credentialing; the gigs.{doctor,dentist,clinic,health,healthcare,hospital,care} doors are labor-supply, a different motion. A counterpart-brand proposal is filed against the register row when the §9.3 signal fires; naming per #3, never API-vocabulary patches on this surface.",
+    "trigger": "the §9.3 diagnostic — agent-referred human traffic arriving on this developer face"
+  }
+}

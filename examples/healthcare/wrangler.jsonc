@@ -1,0 +1,26 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "healthcare-org-ai",
+  // Build first: npx tsx build.ts  (bundles worker.ts → _worker.js,
+  // externalizing the framework's optional oauth.do/rpc.do imports)
+  "main": "_worker.js",
+  "no_bundle": true,
+  "compatibility_date": "2026-01-24",
+
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  }
+
+  // NAME PAIR UNRESOLVED (#33 curation item): api.hospital is held with NO
+  // zone; apis.healthcare is held, zoneless. This worker serves the ROW-KEY
+  // placeholder face healthcare.org.ai and claims neither name. No route is
+  // attached until the register rules the pair and the winning zone exists —
+  // attach at go-live, e.g.:
+  // "routes": [{ "pattern": "healthcare.org.ai/*", "zone_name": "org.ai" }]
+
+  // Optional: set GITHUB_CLIENT_ID (+ secret GITHUB_CLIENT_SECRET) to point
+  // /login at a real GitHub OAuth app. Without it the flow runs in labeled
+  // demo mode (keys random, unpersisted, not enforced).
+  // "vars": { "GITHUB_CLIENT_ID": "" }
+}
