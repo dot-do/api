@@ -29,7 +29,7 @@ export const projection = {
    *  draft/rail-ledger-v1 (studio #9 alignment pass 2026-08-23); readout
    *  https://apis.ax/account/readouts/faces-payable (service built, deploy
    *  pending Batch-S). */
-  railLedger: `https://apis.ax/account/faces?face=${BRAND}`,
+  account: `https://apis.ax/account/faces?face=${BRAND}`,
 
   /** G2 coordinates (exposed on the machine face at /icp.json and as the
    *  card's top-level g2 member — ruled placement). */
