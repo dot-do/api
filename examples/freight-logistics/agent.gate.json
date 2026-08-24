@@ -45,7 +45,7 @@
       "api.shipping candidate name could collide with retail-ecommerce fulfillment vocabulary — both candidates remain UNVERIFIED and unclaimed"
     ]
   },
-  "railLedger": {
+  "account": {
     "exists": true,
     "address": "https://apis.ax/account/faces?face=freight-logistics.org.ai",
     "home": "ax repo, packages/rail-ledger/ @ draft/rail-ledger-v1 (>= 3ec5bb6, verified present 2026-08-23)",
