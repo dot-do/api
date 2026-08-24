@@ -7,6 +7,15 @@
  *
  * Copy follows the taste standard: mechanisms, numbers, no adjectives;
  * inconvenient truths stated in place.
+ *
+ * MARKETING SHELF ruling (founder, 2026-08-24): the shelf shows REAL
+ * PASSING verdicts with their grades; every brand without a passing
+ * verdict — whether unscored, pending, or failing for infrastructure
+ * reasons (e.g. the pinned verification lane not yet having run) — shows
+ * the SAME neutral "awaiting verification" state. No F/failing grades on
+ * marketing shelves, ever; failing verdicts live on api.qa and the
+ * internal ops console (an operator tool, which keeps real statuses),
+ * not brand shelves. No fabricated scores, ever.
  */
 import { renderPage } from "./style.js";
 import { INVENTORY, VERDICTS } from "./inventory.js";
@@ -75,13 +84,13 @@ export function renderLanding() {
   <h2 class="sec-label">Estate brands on this console</h2>
   <div class="shelf">
     <div class="shelf-row"><span class="brand">api.insure</span><span class="role">insurance machine face — first estate property through the full verdict lane</span><span class="verdict"><b>B</b> · 8/10 · attested</span></div>
-    <div class="shelf-row"><span class="brand">auto.dev</span><span class="role">vehicle-data rail — wave-zero face built, unadopted at the live rail</span><span class="verdict"><b>F</b> · 0/10 · attested</span></div>
-    <div class="shelf-row"><span class="brand">apis.vin</span><span class="role">vehicle-data family</span><span class="verdict">unscored — awaiting run</span></div>
-    <div class="shelf-row"><span class="brand">api.lawyer</span><span class="role">legal machine face</span><span class="verdict">unscored — awaiting run</span></div>
-    <div class="shelf-row"><span class="brand">barcoding.dev</span><span class="role">GS1 scheme registry</span><span class="verdict">unscored — awaiting run</span></div>
-    <div class="shelf-row"><span class="brand">patent.click</span><span class="role">patent tooling</span><span class="verdict">unscored — awaiting run</span></div>
+    <div class="shelf-row"><span class="brand">auto.dev</span><span class="role">vehicle data &amp; VIN decode</span><span class="verdict">awaiting verification</span></div>
+    <div class="shelf-row"><span class="brand">apis.vin</span><span class="role">vehicle-data family</span><span class="verdict">awaiting verification</span></div>
+    <div class="shelf-row"><span class="brand">api.lawyer</span><span class="role">legal machine face</span><span class="verdict">awaiting verification</span></div>
+    <div class="shelf-row"><span class="brand">barcoding.dev</span><span class="role">GS1 scheme registry</span><span class="verdict">awaiting verification</span></div>
+    <div class="shelf-row"><span class="brand">patent.click</span><span class="role">patent tooling</span><span class="verdict">awaiting verification</span></div>
   </div>
-  <p class="shelf-cap">Verdicts appear only where an attested api.qa run exists (first run 2026-08-23). Unscored is not a grade — it means no run has been made. Every F is printed, not curated away.</p>
+  <p class="shelf-cap">A grade appears only where an attested api.qa run has passed (first run 2026-08-23). Every other brand — unscored, pending, or awaiting its verification lane — shows the same awaiting-verification state; it is not a grade, and no claim is made for it. Full run-by-run statuses live at api.qa and in the operator console.</p>
 </div></section>
 
 <section class="close-prose"><div class="wrap">
