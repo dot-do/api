@@ -110,11 +110,11 @@ the vendored byte-identical spec at `spec/apis-ax-axp-2.6.0.spec.json`
 (`--expect-digest` equivalent: `expectedDigest` pinned in the test). A gate
 that skips is not a gate: missing every candidate FAILS the suite.
 
-## Rail ledger (§9.1 final box)
+## Platform account (§9.1 final box)
 
-Face registered in the rail ledger (faces-payable/week denominator):
+Face registered in the platform account (faces-payable/week denominator):
 registered via LEDGER.md door A — one row for `travel-tourism.org.ai` in
 `packages/rail-ledger/registry/faces.json` @ ax `draft/rail-ledger-v1`;
 readout https://apis.ax/account/readouts/faces-payable (service built, deploy
 pending Batch-S). The served projection config records the address in its
-`railLedger` field.
+`account` field.
