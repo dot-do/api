@@ -66,7 +66,7 @@ curl localhost:8787/pricing                 # rate card — rates[] per operatio
 curl -X POST localhost:8787/catalogs        # mint an ephemeral catalog (headless ply)
 ```
 
-Self-verify: **15/16 §9.1 boxes** — box 16 (rail-ledger registration) is
+Self-verify: **15/16 §9.1 boxes** — box 16 (platform-account registration) is
 **BLOCKED-ON-RAIL-LEDGER**: `ax` branch `draft/rail-ledger-v1` carries no
 committed LEDGER.md/address convention as of 2026-08-23; registration is
 deferred, not stubbed. Box 4 is the real conformance gate: api.qa's own
