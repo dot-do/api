@@ -65,7 +65,7 @@ check's `operation` ref, the meter tag, and the rate-card key —
   the **primacy collisions recorded** (Event / Ticket / Reservation collide
   by name with other rows' record types; no primacy ruling exists in either
   register, so the types are local to this row key and nothing shared is
-  claimed), and the **rail-ledger registration**. Repo config, not a served
+  claimed), and the **platform-account registration**. Repo config, not a served
   surface.
 
 ## Sandbox seed (§5.2)
@@ -95,13 +95,13 @@ estate members — top-level `rates[]`, top-level `g2`, `links.verify`,
 per-route operationIds — are NATIVE generator inputs; no bridges, no
 hand-patched documents.
 
-## Rail ledger (§9.1 box 16)
+## Platform account (§9.1 box 16)
 
 Registered via **door A** per `ax` repo `packages/rail-ledger/LEDGER.md`
 (branch `draft/rail-ledger-v1`): one row in `registry/faces.json` — face
 `arts-entertainment.org.ai`, `payableBasis: "test-mode"` (the 402 boundary
 is served; settlement rail not activated; test-mode counts as face-payable
-per spec §7.3) — and `"railLedger"` recorded in `projection.json`. The
+per spec §7.3) — and `"account"` recorded in `projection.json`. The
 selfcheck verifies the COMMITTED registry row via `git show`.
 
 ## Verify

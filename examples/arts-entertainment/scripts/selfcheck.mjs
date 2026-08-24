@@ -363,8 +363,10 @@ await (async () => {
 // ── 16. Rail ledger ──────────────────────────────────────────────────────────
 box('16 Face registered in the rail ledger (faces-payable/week denominator) — door A, per LEDGER.md at ax draft/rail-ledger-v1', () => {
   const proj = JSON.parse(readFileSync(join(DIR, 'projection.json'), 'utf8'))
-  assert(proj.railLedger === `https://apis.ax/account/faces?face=${FACE}`, 'projection.railLedger missing or off-convention')
-  let where = 'projection.railLedger recorded (ax repo not present to verify the committed registry row)'
+  // railLedger accepted as read alias; remove after sweep
+  const ledgerAddr = proj.account ?? proj.railLedger
+  assert(ledgerAddr === `https://apis.ax/account/faces?face=${FACE}`, 'projection.account missing or off-convention')
+  let where = 'projection.account recorded (ax repo not present to verify the committed registry row)'
   if (existsSync(AX_REPO)) {
     const committed = execFileSync('git', ['-C', AX_REPO, 'show', `${RAIL_LEDGER_BRANCH}:packages/rail-ledger/registry/faces.json`], { encoding: 'utf8' })
     const reg = JSON.parse(committed)

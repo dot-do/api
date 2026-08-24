@@ -57,5 +57,5 @@
       { "type": "Event", "collidesWith": "generic Event records in several rows", "resolution": "local type under arts-entertainment; schema.org/Event anchor only" }
     ]
   },
-  "railLedger": "https://apis.ax/account/faces?face=arts-entertainment.org.ai"
+  "account": "https://apis.ax/account/faces?face=arts-entertainment.org.ai"
 }
