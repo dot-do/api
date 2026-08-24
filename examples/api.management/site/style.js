@@ -106,8 +106,9 @@ code, .mono { font-family: var(--mono); overflow-wrap: anywhere; }
 /* ---------- sections ---------- */
 .sec { border-top: 1px solid var(--border); padding-block: clamp(1.8rem, 4vw, 2.8rem); }
 .sec.on-surface { background: var(--surface); border-bottom: 1px solid var(--border); }
-.sec-label { font-family: var(--mono); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); display: flex; align-items: center; gap: 0.55rem; }
-.sec-label::before { content: ""; width: 5px; height: 5px; background: var(--accent); flex: none; }
+/* plain mono label, no accent marker — family parity with apis.dev/api.qa
+   section labels, and it keeps the teal inside its role budget */
+.sec-label { font-family: var(--mono); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
 .sec-lead { margin-top: 0.7rem; font-size: 0.95rem; color: var(--muted); max-width: 66ch; }
 
 /* mechanism dl band (bring-your-apis section) */
@@ -135,13 +136,42 @@ code, .mono { font-family: var(--mono); overflow-wrap: anywhere; }
 .st { font-family: var(--mono); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; padding: 2px 7px; border: 1px solid var(--border); color: var(--muted); white-space: nowrap; }
 .st.live { border-color: var(--accent); color: var(--accent); }
 
+/* ---------- rate-card page (family anatomy shared with apis.dev) ---------- */
+.prose { max-width: 72ch; padding-block: clamp(2rem, 5vw, 3rem) 1rem; }
+.prose h1 { font-weight: 700; font-size: clamp(1.7rem, 4.5vw, 2.6rem); letter-spacing: -0.025em; line-height: 1.08; }
+.prose .lede { margin-top: 0.9rem; color: var(--muted); max-width: 62ch; }
+.rates-table { width: 100%; border-collapse: collapse; margin-top: 1.2rem; font-size: 0.88rem; min-width: 560px; }
+.rates-table th { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); text-align: left; border-bottom: 2px solid var(--text); padding: 6px 14px 6px 0; }
+.rates-table th.num, .rates-table td.num { text-align: right; padding-right: 28px; }
+.rates-table td { border-bottom: 1px solid var(--border-soft); padding: 9px 14px 9px 0; }
+.rates-table td:first-child { font-family: var(--mono); font-size: 0.78rem; }
+.rates-table td.num { font-family: var(--mono); font-size: 0.82rem; }
+.rates-table td.note { font-family: var(--mono); font-size: 0.68rem; color: var(--muted); }
+.facts { display: grid; grid-template-columns: 10rem 1fr; row-gap: 0.55rem; column-gap: 1rem; font-size: 0.88rem; margin-top: 1.2rem; }
+.facts dt { font-family: var(--mono); font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); padding-top: 2px; }
+.facts dd .mono, .facts dd.mono { font-size: 0.8rem; }
+.facts dd a { color: var(--accent); text-decoration: none; }
+.facts dd a:hover { text-decoration: underline; }
+.doc-link { color: var(--accent); }
+.ladder { border-top: 2px solid var(--text); margin-top: 1.2rem; }
+.ladder .rung { display: grid; grid-template-columns: 3rem 1fr minmax(110px, auto); gap: 12px; align-items: baseline; padding: 11px 2px; border-bottom: 1px solid var(--border-soft); }
+.ladder .n { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); }
+.ladder .t { font-size: 0.9rem; }
+.ladder .s { font-family: var(--mono); font-size: 0.68rem; color: var(--muted); text-align: right; }
+@media (max-width: 560px) {
+  .ladder .rung { grid-template-columns: 2rem 1fr; }
+  .ladder .s { grid-column: 2; text-align: left; }
+}
+
 /* brand shelf: ruled roster rows, verdicts only where a real api.qa run exists */
 .shelf { margin-top: 1.3rem; border-top: 2px solid var(--text); }
 .shelf-row { display: grid; grid-template-columns: minmax(150px, 1.4fr) minmax(160px, 2fr) 200px; gap: 12px; align-items: baseline; padding: 10px 2px; border-bottom: 1px solid var(--border-soft); }
 .shelf-row .brand { font-family: var(--mono); font-weight: 700; font-size: 0.95rem; }
 .shelf-row .role { font-size: 0.8rem; color: var(--muted); }
 .shelf-row .verdict { font-family: var(--mono); font-size: 0.72rem; text-align: right; color: var(--muted); }
-.shelf-row .verdict b { color: var(--accent); font-weight: 700; }
+/* a grade is a reading, not a commit moment: ink, not teal — an F set in the
+   accent read as success */
+.shelf-row .verdict b { color: var(--text); font-weight: 700; }
 .shelf-cap { margin-top: 0.7rem; font-family: var(--mono); font-size: 0.68rem; color: var(--muted); max-width: 76ch; }
 
 /* closing prose: the ONE paragraph */
@@ -157,8 +187,11 @@ code, .mono { font-family: var(--mono); overflow-wrap: anywhere; }
 .result-count b { color: var(--text); }
 
 .ledger { border-top: 2px solid var(--text); }
-.colhead { display: grid; grid-template-columns: minmax(150px, 1.4fr) minmax(120px, 1.1fr) minmax(230px, 2fr) 74px 84px minmax(120px, 1fr); gap: 12px; align-items: center; padding: 7px 2px; border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
-.row { display: grid; grid-template-columns: minmax(150px, 1.4fr) minmax(120px, 1.1fr) minmax(230px, 2fr) 74px 84px minmax(120px, 1fr); gap: 12px; align-items: center; padding: 9px 2px; border-bottom: 1px solid var(--border-soft); transition: background var(--dur) var(--ease); }
+/* per-panel grids arrive as --ledger-grid (a custom property, never an
+   inline grid-template-columns: inline styles beat the <=980px stacked
+   override and break the mobile layout — that bug shipped once) */
+.colhead { display: grid; grid-template-columns: var(--ledger-grid, minmax(150px, 1.4fr) minmax(120px, 1.1fr) minmax(230px, 2fr) 74px 84px minmax(120px, 1fr)); gap: 12px; align-items: center; padding: 7px 2px; border-bottom: 1px solid var(--border); font-family: var(--mono); font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.row { display: grid; grid-template-columns: var(--ledger-grid, minmax(150px, 1.4fr) minmax(120px, 1.1fr) minmax(230px, 2fr) 74px 84px minmax(120px, 1fr)); gap: 12px; align-items: center; padding: 9px 2px; border-bottom: 1px solid var(--border-soft); transition: background var(--dur) var(--ease); }
 .row:hover { background: var(--accent-wash); }
 .row .face { font-family: var(--mono); font-weight: 700; font-size: 0.85rem; }
 .row .face .gap-tag { font-weight: 400; font-size: 0.64rem; color: var(--muted); }
@@ -168,7 +201,7 @@ code, .mono { font-family: var(--mono); overflow-wrap: anywhere; }
 .row .state { font-family: var(--mono); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 .row .state.live { color: var(--accent); }
 .row .vres { font-family: var(--mono); font-size: 0.7rem; color: var(--muted); text-align: right; }
-.row .vres b { color: var(--accent); font-weight: 700; }
+.row .vres b { color: var(--text); font-weight: 700; }
 .row.hide { display: none; }
 .no-hits { display: none; padding: 2.5rem 0; font-family: var(--mono); font-size: 0.8rem; color: var(--muted); }
 .no-hits.show { display: block; }
@@ -291,6 +324,21 @@ export function renderPage({ title, description, path, body, script = "" }) {
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escChrome(title)}</title>
 <meta name="description" content="${escChrome(description)}">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#e9ecea">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1b2124">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="api.management">
+<meta property="og:title" content="${escChrome(title)}">
+<meta property="og:description" content="${escChrome(description)}">
+<meta property="og:url" content="https://api.management${escChrome(path)}">
+<meta property="og:image" content="https://api.management/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${escChrome(title)}">
+<meta name="twitter:description" content="${escChrome(description)}">
+<meta name="twitter:image" content="https://api.management/og.png">
 ${FONTS_HEAD}
 <style>${STYLE}</style></head>
 <body>${masthead(path)}

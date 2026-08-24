@@ -7,11 +7,20 @@
   "observability": {
     "enabled": true,
     "head_sampling_rate": 1
-  }
+  },
 
-  // NO routes / custom domain on purpose: api.management is estate-CONTROLLED
-  // (CF zone in the Semantics.dev account, Vercel-verified on team
-  // longtailstudio) but the registrar paper is [UNVERIFIED] — confirm control
-  // (log into Sav per the register row's graduated task) before wiring:
-  // "routes": [{ "pattern": "api.management", "custom_domain": true }]
+  // SERVING PATTERN (founder ruling, studio#4/#16, 2026-08-24): api.management
+  // serves via a Cloudflare-for-SaaS custom hostname on the workers.do
+  // enterprise zone (.do account) + a workers.do-zone route
+  // "api.management/*" -> api-management, with the EXISTING api.management
+  // zone (Semantics.dev account, NS kara/ishaan — unchanged) CNAMEing the
+  // apex to workers.do. No custom domain / route here on purpose: the
+  // hostname claim lives on the workers.do zone, not on this worker's config.
+  // (A briefly-attached custom domain on the inert .do api.management zone
+  // was removed 2026-08-24.)
+  "workers_dev": true,
+  // Route lives on the workers.do zone (the CF-for-SaaS fallback zone): SaaS
+  // traffic for api.management is matched there by original hostname — same
+  // mechanism as api.barcoding.dev/* -> barcoding-dev-engine.
+  "routes": [{ "pattern": "api.management/*", "zone_id": "7cdc309f5238b228485fc7e4ff29772b" }]
 }

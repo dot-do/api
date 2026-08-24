@@ -41,7 +41,7 @@ export function renderLanding() {
 
 <section class="sec on-surface machine"><div class="wrap">
   <h2 class="sec-label">How monitoring works</h2>
-  <p class="sec-lead">Conformance is judged by api.qa, the estate's independent verifier — never by this console. A verdict is a pure function of five inputs, none writable by the party being verified.</p>
+  <p class="sec-lead">Conformance is judged by api.qa, never by this console. A verdict is a pure function of five inputs, none writable by the verified party.</p>
   <pre>$ curl -s <a href="https://api.qa/api.insure">https://api.qa/api.insure</a>
 {
   "$type": "VerificationReport",

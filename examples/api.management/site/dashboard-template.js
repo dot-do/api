@@ -52,7 +52,10 @@ function kvEntries(entries) {
 
 function ledgerRows(p) {
   const cols = p.columns; // [{key, label, class}], first col = id-ish
-  const head = `<div class="colhead" style="grid-template-columns:${esc(p.grid)}">${cols
+  // NB: the grid rides a custom property, never an inline
+  // grid-template-columns — an inline declaration would beat the <=980px
+  // stacked-layout override and reintroduce the mobile overflow.
+  const head = `<div class="colhead" style="--ledger-grid:${esc(p.grid)}">${cols
     .map((c) => `<span${c.right ? ' style="text-align:right"' : ""}>${esc(c.label)}</span>`)
     .join("")}</div>`;
   const rows = p.rows
@@ -65,7 +68,7 @@ function ledgerRows(p) {
           return `<span class="${esc(c.class || "")}${c.stateKey && r[c.stateKey] === "live" ? " live" : ""}"${c.right ? ' style="text-align:right"' : ""}>${html}</span>`;
         })
         .join("");
-      return `<div class="row" style="grid-template-columns:${esc(p.grid)}" data-k="${esc(key)}">${cells}</div>`;
+      return `<div class="row" style="--ledger-grid:${esc(p.grid)}" data-k="${esc(key)}">${cells}</div>`;
     })
     .join("\n");
   const filter = p.filter

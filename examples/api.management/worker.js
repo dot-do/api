@@ -10,7 +10,7 @@
  * estate-controlled but its registrar paper is [UNVERIFIED]; the domain is
  * wired only after control is confirmed (the G3 build is not blocked on it).
  */
-import { createAxpRoutes, ok, empty, blocked, envelopeResponse, serveNegotiated } from "./vendor/axp-faces/index.js";
+import { createAxpRoutes, ok, empty, blocked, envelopeResponse, serveNegotiated, negotiate, linkAlternates, CONNEG_VARY, buildPricingDocument } from "./vendor/axp-faces/index.js";
 import { manifest, seed, ORIGIN } from "./manifest.js";
 import { PROJECTION } from "./projection.js";
 import { API_PRODUCT } from "./substrate.js";
@@ -18,6 +18,11 @@ import { handleMcp } from "./mcp.js";
 import { meterEvent, moneyEvent, trafficEvent } from "./seams.js";
 import { renderDashboardPage } from "./site/dashboard-template.js";
 import { dashboardConfig } from "./site/dashboard-config.js";
+import { pricingPageHtml } from "./site/pricing-page.js";
+import { OG_PNG_BASE64 } from "./site/og.js";
+
+/** Decoded once per isolate: the 1200x630 social card served at /og.png. */
+const OG_PNG = Uint8Array.from(atob(OG_PNG_BASE64), (c) => c.charCodeAt(0));
 
 const axp = createAxpRoutes(manifest);
 
@@ -106,7 +111,8 @@ const htmlOfMd = (title, md) =>
   `<!doctype html>\n<html lang="en"><head><meta charset="utf-8"><title>${esc(title)}</title></head>\n<body><pre>${esc(md)}</pre></body></html>\n`;
 
 const icpFaces = { json: icpDoc, md: mdOfJson("api.management — G2 coordinates", icpDoc), html: htmlOfJson("api.management — G2 coordinates", icpDoc) };
-const verifyFaces = { json: verifyDoc, md: verifyMd, html: htmlOfMd("Run our tests — api.management", verifyMd) };
+// Title is brand-first — the family title order (apis.dev: "apis.dev — run our tests").
+const verifyFaces = { json: verifyDoc, md: verifyMd, html: htmlOfMd("api.management — run our tests", verifyMd) };
 
 const ICP_PATHS = new Set(["/icp", "/icp.json", "/icp.md", "/icp.html"]);
 const VERIFY_PATHS = new Set(["/verify", "/verify.json", "/verify.md", "/verify.html"]);
@@ -126,6 +132,33 @@ export default {
       if (response.status === 402) moneyEvent("offer-presented", { path });
       return response;
     };
+
+    // 0 — the /e analytics beacon (the workers.do zone injects an analytics
+    // snippet into HTML responses on this custom hostname; it POSTs here).
+    // Accept and drop — 204, nothing stored — so every pageview does not log
+    // a 405 in the browser console. Not an API operation; not on the card.
+    if (path === "/e" && request.method === "POST") {
+      return new Response(null, { status: 204 });
+    }
+
+    // 0.5 — /pricing, html register only: the designed rate-card page
+    // (site/pricing-page.js — family anatomy shared with apis.dev). The
+    // machine registers (/pricing json + md) stay generator-emitted and
+    // untouched: only the browser-negotiated html face is intercepted, and
+    // the page renders the SAME buildPricingDocument output the json face
+    // serves — one truth, two registers. Conneg law holds: Link alternates
+    // + Vary sent, HEAD mirrors GET.
+    if ((path === "/pricing" || path === "/pricing.html") && (request.method === "GET" || request.method === "HEAD")) {
+      const { face } = negotiate(request, path);
+      if (face === "html") {
+        const html = pricingPageHtml(buildPricingDocument(manifest), manifest.pricing);
+        return respond(
+          new Response(request.method === "HEAD" ? null : html, {
+            headers: { "content-type": "text/html; charset=utf-8", link: linkAlternates("/pricing"), vary: CONNEG_VARY },
+          }),
+        );
+      }
+    }
 
     // 1 — the generated AXP faces (quartet, branching collection, offer, home)
     const hit = await axp(request, env);
@@ -165,6 +198,17 @@ export default {
       const res = nounCollection(noun.records, noun.filters, noun.memberName, url, head);
       if (res.status === 200) meterEvent(noun.operation, { shape: "anon-sandbox" });
       return respond(res);
+    }
+
+    // The social card (family og pattern — scripts/gen-og.mjs renders it
+    // from the site's own dark tokens; base64-inlined, no static assets).
+    if (path === "/og.png") {
+      return respond(
+        new Response(head ? null : OG_PNG, {
+          status: 200,
+          headers: { "content-type": "image/png", "cache-control": "public, max-age=86400" },
+        }),
+      );
     }
 
     if (ICP_PATHS.has(path)) return respond(await serveNegotiated(request, url, icpFaces));
