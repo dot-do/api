@@ -22,7 +22,7 @@ export interface ProjectionConfig {
   substrate: string
   brand: string
   domains: string[]
-  railLedger: string
+  account: string
   icp: { companyTypes: string[]; jobTypes: string[] }
   personas: string[]
   motion: Motion
@@ -46,7 +46,7 @@ export const apiCareersProjection: ProjectionConfig = {
   substrate: 'staffing-talent',
   brand: 'api.careers',
   domains: ['api.careers'],
-  railLedger: 'https://apis.ax/account/faces?face=api.careers',
+  account: 'https://apis.ax/account/faces?face=api.careers',
 
   // G2 coordinates from the register row (both addresses of the one cell).
   icp: {
