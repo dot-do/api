@@ -320,7 +320,7 @@ await (async () => {
 note(
   "Face registered in the rail ledger (faces-payable/week denominator)",
   "REGISTERED",
-  "registered via LEDGER.md door A — row in packages/rail-ledger/registry/faces.json @ draft/rail-ledger-v1 (studio #9 alignment pass 2026-08-23); readout https://ledger.apis.ax/readouts/faces-payable (service built, deploy pending Batch-S). GAP-row placeholder face consulting-research.org.ai is the registered face until the address is ruled.",
+  "registered via LEDGER.md door A — row in packages/rail-ledger/registry/faces.json @ draft/rail-ledger-v1 (studio #9 alignment pass 2026-08-23); readout https://apis.ax/account/readouts/faces-payable (service built, deploy pending Batch-S). GAP-row placeholder face consulting-research.org.ai is the registered face until the address is ruled.",
 );
 
 console.log = realLog;
