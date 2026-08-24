@@ -28,7 +28,7 @@
     "binding": false,
     "note": "no rates[] — a free model declares no metered rows; the 402 door at /offer is a labeled stub, never fake billing"
   },
-  "railLedger": "https://apis.ax/account/faces?face=apis.productions",
+  "account": "https://apis.ax/account/faces?face=apis.productions",
   "positioning": null,
   "positioningNote": "INTERNAL-ONLY (Class F ruling) — no public positioning and no G4 claims are carried; the agent-default claim is not attempted (worthiness bar §4.6 not entered). No ranking is implied anywhere on this surface [CONVICTION].",
   "mdx": null,
