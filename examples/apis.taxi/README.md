@@ -90,7 +90,7 @@ receipt, and traffic **seams** are emitted as structured logs tagged
   municipal livery/TNC registries, GTFS feeds — are marked UNVERIFIED), so
   wave zero serves the §5.2 labeled synthetic seed; no real feed was ingested
   and none is claimed.
-- **Rail ledger**: the faces-payable register (§9.1 final box) has no address
+- **Platform account**: the faces-payable register (§9.1 final box) has no address
   convention yet — `~/projects/ax` `draft/rail-ledger-v1` holds only an
   uncommitted `packages/rail-ledger` skeleton and no LEDGER.md. Recorded as
   blocked-on-rail-ledger, not stubbed.
