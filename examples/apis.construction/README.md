@@ -117,7 +117,7 @@ receipt, and traffic **seams** are emitted as structured logs tagged
 | 13 | Seams emitted with §6.4 tags; traffic events carry identity class + referral | PASS |
 | 14 | Conneg matrix spot-checked; demo data labeled | PASS (tested) |
 | 15 | No ghost surfaces (presence-when-true) | PASS (tested) |
-| 16 | Face registered in the rail ledger | **BLOCKED-ON-RAIL-LEDGER** — the ledger service exists only as uncommitted work in `~/projects/ax` worktree (`packages/rail-ledger`, untracked, no LEDGER.md, no address convention committed on `draft/rail-ledger-v1`); never stubbed |
+| 16 | Face registered in the platform account | **BLOCKED-ON-RAIL-LEDGER** — the ledger service exists only as uncommitted work in `~/projects/ax` worktree (`packages/rail-ledger`, untracked, no LEDGER.md, no address convention committed on `draft/rail-ledger-v1`); never stubbed |
 
 ## Deliberately absent (presence-when-true)
 
