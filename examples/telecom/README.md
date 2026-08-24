@@ -85,7 +85,7 @@ selfverify **SELF-VERIFY PASSED** (zero defects).
 | 13 | Seams emitted with §6.4 tags + identity class + referral | ✅ `seams.js` |
 | 14 | Conneg matrix spot-checked; demo data labeled | ✅ curl→JSON / agent-UA→markdown / browser→HTML / never 406 / HEAD mirrors GET |
 | 15 | No ghost surfaces (presence-when-true) | ✅ every declared door serves; unreachable feeds recorded, not declared |
-| 16 | Face registered in the rail ledger | ⛔ **blocked-on-rail-ledger** — no committed ledger service/LEDGER.md/address convention in the ax repo (`draft/rail-ledger-v1` has only untracked working-tree files as of this build). Recorded, never stubbed. |
+| 16 | Face registered in the platform account | ⛔ **blocked-on-rail-ledger** — no committed ledger service/LEDGER.md/address convention in the ax repo (`draft/rail-ledger-v1` has only untracked working-tree files as of this build). Recorded, never stubbed. |
 
 ## Register defects filed upstream (spec §0 — not improvised here)
 

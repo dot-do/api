@@ -47,7 +47,7 @@
     "headless ply: OSS/BSS pair marked [UNVERIFIED] in the row — not confirmed in the 52-System catalog; needs the headless.ly catalog re-run at NAICS 517 (the row's own cheapest-next-fact). Coordinate carried verbatim with the caveat attached (spec §0: filed upstream, not improvised).",
     "ICP marked [UNVERIFIED] in the row — carried verbatim with the mark."
   ],
-  "railLedger": {
+  "account": {
     "status": "blocked-on-rail-ledger",
     "checkedAt": "2026-08-23",
     "note": "§9.1 final box (face registered in the rail ledger / faces-payable-per-week denominator): the rail-ledger service exists only as UNCOMMITTED working-tree files in the ax repo's rail-ledger worktree (packages/rail-ledger, untracked; no LEDGER.md, no address convention on the committed draft/rail-ledger-v1 branch as of this build). Recorded blocked rather than stubbed, per the standing rule: never stub a fake ledger. Register this face when the ledger's address convention lands."
