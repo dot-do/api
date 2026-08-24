@@ -115,6 +115,6 @@ that skips is not a gate: missing every candidate FAILS the suite.
 Face registered in the rail ledger (faces-payable/week denominator):
 registered via LEDGER.md door A — one row for `travel-tourism.org.ai` in
 `packages/rail-ledger/registry/faces.json` @ ax `draft/rail-ledger-v1`;
-readout https://ledger.apis.ax/readouts/faces-payable (service built, deploy
+readout https://apis.ax/account/readouts/faces-payable (service built, deploy
 pending Batch-S). The served projection config records the address in its
 `railLedger` field.

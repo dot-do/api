@@ -141,7 +141,7 @@ export function buildManifest() {
             {
               id: 'earned-credits',
               title: 'Earned credits (work — rung 1)',
-              url: 'https://ledger.apis.ax/',
+              url: 'https://apis.ax/account/',
               note: 'STUB, disclosed: .ax-ledger credits earned via proof-of-work (#17); the earn route is declared here before the credit rail is live so agents discover the whole ladder from one 402',
             },
             {

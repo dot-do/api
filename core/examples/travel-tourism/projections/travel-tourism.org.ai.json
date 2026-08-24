@@ -26,7 +26,7 @@
     "rateCardRef": "/pricing",
     "note": "per-outcome on confirmBooking (a confirmed booking is the outcome, never the call); metered on record reads; fare/availability rows deliberately absent (row: crowded lane, avoid-class 5)"
   },
-  "railLedger": "https://ledger.apis.ax/faces?face=travel-tourism.org.ai",
+  "railLedger": "https://apis.ax/account/faces?face=travel-tourism.org.ai",
   "positioning": "the booking substrate for the unserved travel sub-verticals — charters, camps, group/specialty travel — where no agent-first booking surface exists (census narrowing, CEN §3.4 #22)",
   "positioningNote": "agent-default claim WITHHELD until the §4.6 worthiness bar passes (conformance + live anon sandbox + verified published suite with runs on record); consumer fare/availability lanes are ruled avoided, not competed for",
   "mdx": "custom landing in this worker (spec §7.1: custom site allowed at wave zero; per-brand MDX layer on the shared renderer deferred to extraction)",
