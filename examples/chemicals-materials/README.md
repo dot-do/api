@@ -101,7 +101,7 @@ node scripts/selfcheck.mjs       # §9.1 checklist — 16 boxes, fail-closed, in
   stubs in every OFFER body; nothing is ever charged.
 - workers.do serving lane, shared dashboard, unified analytics — extraction
   targets, not wave-zero requirements (§7.2).
-- Rail-ledger registration — **blocked-on-rail-ledger**: at build time the
+- Platform-account registration — **blocked-on-rail-ledger**: at build time the
   ledger service + LEDGER.md did not exist at the committed HEAD of
   `~/projects/ax` branch `draft/rail-ledger-v1` (tip = main, `1620e9f`); no
   address convention to point at, and nothing is stubbed.
