@@ -38,6 +38,7 @@ export function encodeValue(value: string): string {
     .replace(/%3A/gi, ':') // IPv6 — ':' is a legal pchar
     .replace(/%2B/gi, '+') // phone numbers — '+' is a legal pchar
     .replace(/%40/gi, '@') // emails, future tools
+    .replace(/%2F/gi, '/') // multi-segment values (shapes: jobs/4266196009) — the router decodes the whole path
 }
 
 export function resolveLinkContext(requestUrl: string, apexZone = 'api.ht'): LinkContext {

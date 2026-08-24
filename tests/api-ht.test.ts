@@ -291,3 +291,107 @@ describe('auth flow (stubbed)', () => {
     expect(body.data.note).toContain('DEMO')
   })
 })
+
+// ---------------------------------------------------------------------------
+// shapes.api.ht — the link-shape comparison (dot-do/data #36, feeds #13)
+// Fully offline: both datasets are embedded, zero request-time fetches.
+// ---------------------------------------------------------------------------
+
+describe('shapes.api.ht (link-shape comparison)', () => {
+  it('keeps multi-segment values readable in links', () => {
+    expect(encodeValue('jobs/4266196009')).toBe('jobs/4266196009')
+  })
+
+  it('(a) renders typed camelCase edges in the envelope link map', async () => {
+    const { res, body } = await getJson('https://shapes.api.ht/jobs/4266196009?shape=a')
+    expect(res.status).toBe(200)
+    expect(body.data.type).toBe('Job')
+    expect(body.data.title).toBe('AI Red Teamer, Cyber')
+    expect(body.links.postedBy).toBe('https://shapes.api.ht/companies/10alabs?shape=a')
+    expect(body.links.locatedIn).toBe('https://shapes.api.ht/locations/washington-dc?shape=a')
+    expect(body.links.sameAs).toContain('greenhouse.io')
+    expect(body.links.potentialAction).toContain('#app')
+    expect(body.data.variations).toBeUndefined()
+  })
+
+  it('(b) renders label-keyed maps with no machine edge types', async () => {
+    const { body } = await getJson('https://shapes.api.ht/jobs/4266196009?shape=b')
+    expect(body.links['10alabs']).toBe('https://shapes.api.ht/companies/10alabs?shape=b')
+    expect(body.links['View on Greenhouse']).toContain('greenhouse.io')
+    expect(body.links['Apply']).toContain('#app')
+    expect(body.links.postedBy).toBeUndefined()
+  })
+
+  it('(c) adds a variations block of real representation alternates', async () => {
+    const job = await getJson('https://shapes.api.ht/jobs/4266196009?shape=c')
+    expect(job.body.links.postedBy).toBeDefined()
+    expect(job.body.data.variations['source-json']).toContain('boards-api.greenhouse.io')
+
+    const cls = await getJson('https://shapes.api.ht/classes/Q5?shape=c')
+    expect(cls.body.data.variations['wikidata-json']).toBe('https://www.wikidata.org/wiki/Special:EntityData/Q5.json')
+    expect(cls.body.data.variations['wikidata-ttl']).toBe('https://www.wikidata.org/wiki/Special:EntityData/Q5.ttl')
+    expect(cls.body.data.variations['wikidata-html']).toBe('https://www.wikidata.org/wiki/Q5')
+  })
+
+  it('defaults to shape a and carries a hop map to the other shapes', async () => {
+    const { body } = await getJson('https://shapes.api.ht/classes/Q5')
+    expect(body.links.memberOf).toBe('https://shapes.api.ht/classes?shape=a')
+    expect(body.data.shapes['b — label-keyed link maps']).toBe('https://shapes.api.ht/classes/Q5?shape=b')
+    expect(body.data.shapes['c — typed edges + variations']).toBe('https://shapes.api.ht/classes/Q5?shape=c')
+  })
+
+  it('renders a miss as a page: 404 + suggestions as the shape link map', async () => {
+    const a = await getJson('https://shapes.api.ht/jobs/staff-engineer?shape=a')
+    expect(a.res.status).toBe(404)
+    expect(a.body.data.miss.code).toBe('NOT_FOUND')
+    expect(Object.keys(a.body.data.suggestions).length).toBeGreaterThan(0)
+    for (const url of Object.values<string>(a.body.data.suggestions)) expect(url).toContain('shapes.api.ht/jobs/')
+
+    const b = await getJson('https://shapes.api.ht/classes/Q42?shape=b')
+    expect(b.res.status).toBe(404)
+    // shape b keys suggestions by label, not by Q-id
+    expect(Object.keys(b.body.data.suggestions).some((k) => /^Q\d+$/.test(k))).toBe(false)
+  })
+
+  it('rejects unknown shapes and unknown datasets navigably', async () => {
+    const bad = await getJson('https://shapes.api.ht/jobs/4266196009?shape=z')
+    expect(bad.res.status).toBe(400)
+    expect(bad.body.error.code).toBe('INVALID_VALUE')
+
+    const ds = await getJson('https://shapes.api.ht/nope/1?shape=a')
+    expect(ds.res.status).toBe(404)
+    expect(ds.body.data.suggestions.jobs).toBe('https://shapes.api.ht/jobs?shape=a')
+  })
+
+  it('serves dataset indexes and Views over jobs', async () => {
+    const jobs = await getJson('https://shapes.api.ht/jobs?shape=a')
+    expect(jobs.body.data.count).toBe(53)
+    expect(jobs.body.data.jobs['4266196009']).toBe('https://shapes.api.ht/jobs/4266196009?shape=a')
+
+    const co = await getJson('https://shapes.api.ht/companies/10alabs?shape=c')
+    expect(co.body.data.type).toBe('View')
+    expect(co.body.links.partOf).toBe('https://shapes.api.ht/jobs?shape=c')
+    expect(co.body.data.variations['board-json']).toContain('boards-api.greenhouse.io')
+
+    const classes = await getJson('https://shapes.api.ht/classes?shape=b')
+    expect(classes.body.data.count).toBe(20)
+    expect(Object.keys(classes.body.data.classes)[0]).toContain('instances')
+  })
+
+  it('works in path mode for local dev', async () => {
+    const { body } = await getJson('http://localhost:8787/shapes/classes/Q5?shape=b')
+    expect(body.links['All classes']).toBe('http://localhost:8787/shapes/classes?shape=b')
+  })
+
+  it('serves a clickable HTML index explaining the three shapes at the tool root', async () => {
+    const res = await app.request('https://shapes.api.ht/', { headers: { accept: 'text/html' } })
+    expect(res.headers.get('content-type')).toContain('text/html')
+    const html = await res.text()
+    expect(html).toContain('?shape=a — typed camelCase edges')
+    expect(html).toContain('?shape=b — label-keyed link maps')
+    expect(html).toContain('?shape=c — typed edges + variations')
+    expect(html).toContain('https://shapes.api.ht/jobs/4266196009?shape=a')
+    expect(html).toContain('jobs/staff-engineer')
+    expect(html).toContain('github.com/dot-do/data/issues/36')
+  })
+})

@@ -68,7 +68,7 @@ export function mountHypertext(app: Hono<ApiEnv>, deps: HypertextDeps = {}): voi
     })
 
   const renderToolRoot = (c: Context<ApiEnv>, links: LinkContext, tool: HypertextTool) => {
-    if (wantsHtml(c)) return c.html(toolLandingHtml(tool, links))
+    if (wantsHtml(c)) return c.html(tool.landingHtml ? tool.landingHtml(links) : toolLandingHtml(tool, links))
     return c.var.respond({
       data: toolDescriptor(tool, links),
       links: { docs: links.apex('/docs'), home: links.apex('/') },

@@ -14,6 +14,7 @@ import { asnTool } from './asn'
 import { whoisTool } from './whois'
 import { phoneTool } from './phone'
 import { entityTool } from './entity'
+import { shapesTool } from './shapes'
 
 export function createTools(): ToolRegistry {
   return {
@@ -23,5 +24,6 @@ export function createTools(): ToolRegistry {
     phone: phoneTool,
     asn: asnTool,
     entity: entityTool,
+    shapes: shapesTool,
   }
 }
