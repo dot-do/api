@@ -138,7 +138,7 @@ export function buildManifest() {
             {
               id: 'earned-credits',
               title: 'Work: earned .ax-ledger credits (rung 1)',
-              url: 'https://ledger.apis.ax/',
+              url: 'https://apis.ax/account/',
               note: 'proof-of-work route (#17): credits earned via tasks and object generations, spent here; machine identity via id.org.ai — never OAuth, never a card',
             },
             {

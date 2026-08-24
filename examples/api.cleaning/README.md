@@ -133,5 +133,5 @@ Face registered in the rail ledger (faces-payable/week denominator) via
 LEDGER.md **door A** — row added to
 `packages/rail-ledger/registry/faces.json` @ ax `draft/rail-ledger-v1`.
 The served projection config records the address in its `railLedger` field:
-`https://ledger.apis.ax/faces?face=api.cleaning` (readout service built,
+`https://apis.ax/account/faces?face=api.cleaning` (readout service built,
 deploy pending Batch-S).
