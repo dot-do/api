@@ -1,5 +1,5 @@
 /**
- * site/inventory.js — the console's dogfood inventory: the estate's own
+ * site/inventory.js — the console's dogfood inventory: the platform's own
  * wave-zero register, 52 built rows of 53 (freight-logistics is the one
  * gated start — operator gate, standing ruling).
  *
@@ -7,7 +7,7 @@
  * https://github.com/StartupsStudio/studio/issues/9 (batch rollups 1–4,
  * the rail-ledger alignment pass, the barcoding.dev re-vendor, the
  * healthcare gate-lift build, and the §9.2 hosted-verdict first run of
- * 2026-08-23). This is data ABOUT the estate, not §5.2 synthetic seed —
+ * 2026-08-23). This is data ABOUT the platform, not §5.2 synthetic seed —
  * the demo label on the console applies to the console chrome, not to
  * these rows. Verdicts appear ONLY where an attested api.qa run exists.
  *

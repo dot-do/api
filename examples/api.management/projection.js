@@ -31,13 +31,13 @@ export const PROJECTION = {
 
   // G2 coordinates (exposed on the card via links.icp → /icp.json)
   icp: {
-    companyTypes: ["API-estate operators", "agent-fleet operators", "portfolio back-offices"],
+    companyTypes: ["API-portfolio operators", "agent-fleet operators", "portfolio back-offices"],
     jobTypes: ["operations lead", "platform operator", "portfolio operator"],
-    internalFirstCustomer: "the estate itself — every minted startup needs the operate face",
+    internalFirstCustomer: "the platform itself — every minted startup needs the operate face",
   },
   personas: [
     { id: "operator", class: "human", role: "ops lead operating a portfolio of deployed properties" },
-    { id: "managing-agent", class: "agent", role: "the autonomous agent that operates an estate on an operator's behalf", identity: "id.org.ai" },
+    { id: "managing-agent", class: "agent", role: "the autonomous agent that operates a portfolio on an operator's behalf", identity: "id.org.ai" },
   ],
 
   // Motion selects onboarding path + permissible shapes (§5.1)
@@ -68,7 +68,7 @@ export const PROJECTION = {
   account: "https://apis.ax/account/faces?face=api.management",
 
   positioning:
-    "The manage/operate face of an API estate — the lifecycle counterpart of the build face. Agent-default claim WITHHELD until the §4.6 worthiness bar passes (conformance verdict + live anon sandbox + verified published suite).",
+    "The manage/operate face of an API portfolio — the lifecycle counterpart of the build face. Agent-default claim WITHHELD until the §4.6 worthiness bar passes (conformance verdict + live anon sandbox + verified published suite).",
 
   differentiation: "one substrate serves both plies: the records an operator reads and the system doors an agent operates are the same collections",
 

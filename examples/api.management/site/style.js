@@ -313,7 +313,7 @@ const FAMILY_LINE = `<div class="family-line"><div class="wrap"><p>Family: <a hr
 
 function footer() {
   return `<div class="foot-hatch hatch"></div><footer>
-  <div class="wrap"><p>api.management — the operate face of an API estate. Sandbox data is labeled <code>"example": true</code>; metering runs in test mode and the <a href="/pricing">Pricing Document</a> says so.</p>
+  <div class="wrap"><p>api.management — the operate face of an API portfolio. Sandbox data is labeled <code>"example": true</code>; metering runs in test mode and the <a href="/pricing">Pricing Document</a> says so.</p>
   <nav><a href="/llms.txt">llms.txt</a><a href="/.well-known/agents.json">agents.json</a><a href="/openapi.json">openapi.json</a><a href="/pricing">pricing</a><a href="/verify">verify</a><a href="/mcp">mcp</a></nav></div>
   ${FAMILY_LINE}
 </footer>`;

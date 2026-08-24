@@ -13,7 +13,7 @@ export const ORIGIN = "https://api.management";
 
 const seed = buildSeed();
 
-const llmsBody = `# api.management — the operate face of an API estate
+const llmsBody = `# api.management — the operate face of an API portfolio
 
 The rail a managing agent calls to operate deployed APIs and systems: the
 APQC-typed process spine, KPI/OKR records, and the managed-property door —
@@ -23,7 +23,7 @@ Keyless first value, right now:
 
 \`\`\`sh
 curl ${ORIGIN}/processes            # the typed process spine (branching collection)
-curl ${ORIGIN}/kpis                 # KPI records of the operated estate
+curl ${ORIGIN}/kpis                 # KPI records of the operated portfolio
 curl ${ORIGIN}/objectives           # OKR records
 curl ${ORIGIN}/properties           # managed properties (the headless operate door)
 curl ${ORIGIN}/pricing              # the Pricing Document
@@ -52,13 +52,13 @@ conformance suite against this surface yourself.
 ## Console
 
 ${ORIGIN}/console is the management console (browser face, v1): the API
-inventory ledger — seeded with this estate's own 52 built wave-zero rows —
+inventory ledger — seeded with the platform's own 52 built wave-zero rows —
 plus the attested api.qa verdict panels. The console chrome is demo-labeled;
 the register data in it is real and cited.`;
 
 const homeMd = `# api.management
 
-Management and monitoring for API estates — the APIs this estate serves and
+Management and monitoring for API portfolios — the APIs this platform serves and
 the APIs you already run. Conformance is judged by api.qa (the independent
 verifier); this face carries the process spine, KPI/OKR records, and the
 managed-property door — one definition, agent-first.
@@ -79,7 +79,7 @@ export const manifest = defineSiteManifest({
   origin: ORIGIN,
   name: "api.management",
   description:
-    "The operate face of an API estate: APQC-typed process spine, KPI/OKR records, and the managed-property system door — one substrate serving both the data ply and the headless ply, agent-first (B2A).",
+    "The operate face of an API portfolio: APQC-typed process spine, KPI/OKR records, and the managed-property system door — one substrate serving both the data ply and the headless ply, agent-first (B2A).",
   version: "0.1.0",
 
   // The one branching collection (Clauses 4 + 7 on one pathname): the typed
@@ -144,7 +144,7 @@ export const manifest = defineSiteManifest({
       method: "GET",
       path: "/kpis",
       operationId: "listKPIs",
-      summary: "KPI records of the operated estate (data ply) — typed OK | EMPTY | BLOCKED, branching on kind/property/id",
+      summary: "KPI records of the operated portfolio (data ply) — typed OK | EMPTY | BLOCKED, branching on kind/property/id",
       params: [
         { name: "kind", description: "filter by KPI kind (availability, p95-latency-ms, metered-calls, …)" },
         { name: "property", description: "filter by operated property domain" },
@@ -155,7 +155,7 @@ export const manifest = defineSiteManifest({
       method: "GET",
       path: "/objectives",
       operationId: "listObjectives",
-      summary: "Objective (OKR) records of the operated estate — typed envelopes, branching on quarter/status/id",
+      summary: "Objective (OKR) records of the operated portfolio — typed envelopes, branching on quarter/status/id",
       params: [
         { name: "quarter", description: "filter by quarter (e.g. 2026-Q3)" },
         { name: "status", description: "filter by status (active | closed)" },

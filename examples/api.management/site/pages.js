@@ -25,7 +25,7 @@ export function renderLanding() {
   const body = `
 <section class="intro"><div class="wrap">
   <h1>Point it at your APIs.</h1>
-  <p class="lede">Monitoring, conformance verdicts, usage metering, rate-card enforcement, and a management console — for the APIs this estate serves and the APIs you already run. An existing estate gets management without a from-scratch rebuild.</p>
+  <p class="lede">Monitoring, conformance verdicts, usage metering, rate-card enforcement, and a management console — for the APIs this platform serves and the APIs you already run. An existing portfolio gets management without a from-scratch rebuild.</p>
   <div class="cta-row"><a class="cta" href="/console">Open the console</a><span class="cta-note">Keyless. Console chrome is demo-labeled; the register in it is real.</span></div>
   <div class="tally">
     <span><b>${INVENTORY.length}</b> APIs under management (our own)</span>
@@ -44,7 +44,7 @@ export function renderLanding() {
     <div><dt>Input</dt><dd>An origin you control — internal or public. <b>llms.txt</b>, <b>agents.json</b>, OpenAPI: whatever it already publishes is the contract.</dd></div>
     <div><dt>Probe</dt><dd>api.qa samples the published surfaces and declared endpoints — read-only, budgeted, seed-recorded, replayable by anyone.</dd></div>
     <div><dt>Verdict</dt><dd>A letter grade and 10-point AX score, Ed25519-attested at <b>api.qa/{domain}</b>. Lying surfaces cap the grade at C.</dd></div>
-    <div><dt>Operate</dt><dd>The console holds the inventory: state, gate, rate card, verdict — one ledger per estate, ours included.</dd></div>
+    <div><dt>Operate</dt><dd>The console holds the inventory: state, gate, rate card, verdict — one ledger per portfolio, ours included.</dd></div>
   </dl>
 </div></section>
 
@@ -83,7 +83,7 @@ export function renderLanding() {
 <section class="sec on-surface"><div class="wrap">
   <h2 class="sec-label">Estate brands on this console</h2>
   <div class="shelf">
-    <div class="shelf-row"><span class="brand">api.insure</span><span class="role">insurance machine face — first estate property through the full verdict lane</span><span class="verdict"><b>B</b> · 8/10 · attested</span></div>
+    <div class="shelf-row"><span class="brand">api.insure</span><span class="role">insurance machine face — first platform property through the full verdict lane</span><span class="verdict"><b>B</b> · 8/10 · attested</span></div>
     <div class="shelf-row"><span class="brand">auto.dev</span><span class="role">vehicle data &amp; VIN decode</span><span class="verdict">awaiting verification</span></div>
     <div class="shelf-row"><span class="brand">apis.vin</span><span class="role">vehicle-data family</span><span class="verdict">awaiting verification</span></div>
     <div class="shelf-row"><span class="brand">api.lawyer</span><span class="role">legal machine face</span><span class="verdict">awaiting verification</span></div>
@@ -97,8 +97,8 @@ export function renderLanding() {
   <p>api.management is the operate face of the apis.do abstraction — apis.dev builds and monetizes, this console manages and monitors. The machine face under this page is the same product the console reads: six operations, one rate card, one pinned conformance spec anyone can run at <a href="/verify">/verify</a>.</p>
 </div></section>`;
   return renderPage({
-    title: "api.management — manage and monitor API estates",
-    description: "Management and monitoring for API estates — yours or ours. Conformance verdicts by api.qa, usage metering, rate-card enforcement, one console.",
+    title: "api.management — manage and monitor API portfolios",
+    description: "Management and monitoring for API portfolios — yours or ours. Conformance verdicts by api.qa, usage metering, rate-card enforcement, one console.",
     path: "/",
     body,
   });

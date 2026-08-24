@@ -5,7 +5,7 @@
  * generic. Rates come from the manifest's own pricing — never retyped.
  *
  * Honesty split, stated in the demo band: the console CHROME is a demo
- * shell; the inventory ledger is the estate's REAL wave-zero register
+ * shell; the inventory ledger is the platform's REAL wave-zero register
  * (branch/commit/gate cited from StartupsStudio/studio#9); the verdict
  * instruments are the four REAL attested api.qa runs; the managed-property
  * and process panels call this origin's live doors over §5.2-labeled
@@ -36,15 +36,15 @@ export const dashboardConfig = {
   pageName: "console",
   path: "/console",
   description:
-    "Management console v1: the estate's API inventory ledger, attested api.qa verdict instruments, live managed-property doors, usage and billing panels.",
+    "Management console v1: the platform's API inventory ledger, attested api.qa verdict instruments, live managed-property doors, usage and billing panels.",
   demoNotice:
-    "Demo-labeled shell. The inventory ledger is the estate's real wave-zero register, cited from the build log; verdicts shown only where an attested api.qa run exists. Managed-property and process panels call this origin's live doors over labeled synthetic seed. Usage and billing are demo-local until the apis.ax account lane is wired.",
-  demoNoticeHtml: `Demo-labeled shell. The inventory ledger is the estate's real wave-zero register, cited from the <a href="${SOURCE}" rel="noopener">build log</a>; verdicts shown only where an attested api.qa run exists. Managed-property and process panels call this origin's live doors over labeled synthetic seed. Usage and billing are demo-local until the apis.ax account lane is wired.`,
+    "Demo-labeled shell. The inventory ledger is the platform's real wave-zero register, cited from the build log; verdicts shown only where an attested api.qa run exists. Managed-property and process panels call this origin's live doors over labeled synthetic seed. Usage and billing are demo-local until the apis.ax account lane is wired.",
+  demoNoticeHtml: `Demo-labeled shell. The inventory ledger is the platform's real wave-zero register, cited from the <a href="${SOURCE}" rel="noopener">build log</a>; verdicts shown only where an attested api.qa run exists. Managed-property and process panels call this origin's live doors over labeled synthetic seed. Usage and billing are demo-local until the apis.ax account lane is wired.`,
   panels: [
     {
       id: "inventory",
       kind: "ledger",
-      title: "API inventory — the estate register, dogfooded",
+      title: "API inventory — the platform register, dogfooded",
       wide: true,
       grid: LEDGER_GRID,
       filter: { placeholder: "filter by face, row, branch, state, grade…" },
@@ -57,7 +57,7 @@ export const dashboardConfig = {
         { key: "verdict", label: "verdict", class: "vres", html: true, right: true },
       ],
       rows: inventoryRows,
-      note: `${INVENTORY.length} of ${REGISTER_TOTAL} category-register rows built and self-verified; ${GATED_ROWS.length} start gated by standing ruling (${GATED_ROWS.join(", ")}). Real branch/commit/gate data — your estate would sit in this same ledger.`,
+      note: `${INVENTORY.length} of ${REGISTER_TOTAL} category-register rows built and self-verified; ${GATED_ROWS.length} start gated by standing ruling (${GATED_ROWS.join(", ")}). Real branch/commit/gate data — your portfolio would sit in this same ledger.`,
     },
     {
       id: "verdicts",

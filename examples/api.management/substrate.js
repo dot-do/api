@@ -62,7 +62,7 @@ export const NOUNS = [
   {
     noun: "ManagedProperty",
     $type: "https://schema.org.ai/ManagedProperty",
-    binding: "native", // system-of-record door: the operator brings the estate; telemetry is first-party exhaust
+    binding: "native", // system-of-record door: the operator brings the portfolio; telemetry is first-party exhaust
     verbs: ["listProperties", "getProperty"],
     collection: "/properties",
   },
@@ -106,7 +106,7 @@ export const METERS = OPERATIONS.map((o) => ({ operation: o.operation, event: "m
  * synthetic.
  * ──────────────────────────────────────────────────────────────────────── */
 
-const DEMO_TENANT = "demo-estate"; // tenant #1 — synthetic, clearly labeled
+const DEMO_TENANT = "demo-portfolio"; // tenant #1 — synthetic, clearly labeled
 
 /** APQC PCF level-1 categories — the public typed spine (coordinates, not tenant data). */
 const PCF_CATEGORIES = [
@@ -125,7 +125,7 @@ const PCF_CATEGORIES = [
   ["13.0", "Develop and Manage Business Capabilities"],
 ];
 
-/** Synthetic operated properties — the demo estate uses this repo's own example hosts. */
+/** Synthetic operated properties — the demo portfolio uses this repo's own example hosts. */
 const DEMO_PROPERTIES = [
   { id: "prop-001", domain: "api.example.com.ai", lifecycle: "live", plies: ["data", "headless"] },
   { id: "prop-002", domain: "directory.example.com.ai", lifecycle: "live", plies: ["data"] },
@@ -155,7 +155,7 @@ export function buildSeed() {
       id: "proc-verify-conformance",
       kind: "process",
       apqc: "13.0",
-      title: "[demo] Verify machine-face conformance across the operated estate",
+      title: "[demo] Verify machine-face conformance across the operated portfolio",
       state: "operating",
       cadence: "continuous",
       ...label,
@@ -164,7 +164,7 @@ export function buildSeed() {
       id: "proc-quarterly-okr",
       kind: "process",
       apqc: "1.0",
-      title: "[demo] Set and review quarterly objectives for the operated estate",
+      title: "[demo] Set and review quarterly objectives for the operated portfolio",
       state: "operating",
       cadence: "quarterly",
       ...label,
@@ -215,7 +215,7 @@ export function buildSeed() {
       id: "okr-2026q3-002",
       quarter: "2026-Q3",
       status: "active",
-      objective: "[demo] Operate the estate at under one page of weekly exceptions",
+      objective: "[demo] Operate the portfolio at under one page of weekly exceptions",
       keyResults: ["[demo] incident count per property per month ≤ 1", "[demo] lifecycle reviews current for 4/4 properties"],
       ...label,
     },
