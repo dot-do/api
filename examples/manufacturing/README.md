@@ -89,7 +89,7 @@ node scripts/selfcheck.mjs       # §9.1 checklist, fail-closed, in-process
 - Rail-ledger registration — **REGISTERED**: registered via LEDGER.md door A —
   row in packages/rail-ledger/registry/faces.json @ draft/rail-ledger-v1
   (studio #9 alignment pass 2026-08-23); readout
-  https://ledger.apis.ax/readouts/faces-payable (service built, deploy pending
+  https://apis.ax/account/readouts/faces-payable (service built, deploy pending
   Batch-S). Registered under the placeholder host `manufacturing.org.ai` (GAP
   row — no ruled market face yet; the registry row moves to the ruled address
   when one attaches). Previously blocked-on-rail-ledger (no ledger address

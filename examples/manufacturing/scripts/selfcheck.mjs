@@ -378,7 +378,7 @@ await (async () => {
 note(
   "Face registered in the rail ledger (faces-payable/week denominator)",
   "REGISTERED",
-  "registered via LEDGER.md door A — row in packages/rail-ledger/registry/faces.json @ draft/rail-ledger-v1 (studio #9 alignment pass 2026-08-23); readout https://ledger.apis.ax/readouts/faces-payable (service built, deploy pending Batch-S). Registered under the placeholder host manufacturing.org.ai; the row moves to the ruled address when one attaches. Previously blocked-on-rail-ledger — per the batch-2 watch list a fake ledger was never stubbed.",
+  "registered via LEDGER.md door A — row in packages/rail-ledger/registry/faces.json @ draft/rail-ledger-v1 (studio #9 alignment pass 2026-08-23); readout https://apis.ax/account/readouts/faces-payable (service built, deploy pending Batch-S). Registered under the placeholder host manufacturing.org.ai; the row moves to the ruled address when one attaches. Previously blocked-on-rail-ledger — per the batch-2 watch list a fake ledger was never stubbed.",
 );
 
 console.log = realLog;
