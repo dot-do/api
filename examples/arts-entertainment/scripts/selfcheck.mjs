@@ -368,7 +368,13 @@ box('16 Face registered in the rail ledger (faces-payable/week denominator) — 
   assert(ledgerAddr === `https://apis.ax/account/faces?face=${FACE}`, 'projection.account missing or off-convention')
   let where = 'projection.account recorded (ax repo not present to verify the committed registry row)'
   if (existsSync(AX_REPO)) {
-    const committed = execFileSync('git', ['-C', AX_REPO, 'show', `${RAIL_LEDGER_BRANCH}:packages/rail-ledger/registry/faces.json`], { encoding: 'utf8' })
+    // packages/account is the current path; packages/rail-ledger accepted as read alias; remove after sweep
+    let committed
+    try {
+      committed = execFileSync('git', ['-C', AX_REPO, 'show', `${RAIL_LEDGER_BRANCH}:packages/account/registry/faces.json`], { encoding: 'utf8' })
+    } catch {
+      committed = execFileSync('git', ['-C', AX_REPO, 'show', `${RAIL_LEDGER_BRANCH}:packages/rail-ledger/registry/faces.json`], { encoding: 'utf8' })
+    }
     const reg = JSON.parse(committed)
     const row = reg.faces.find((f) => f.face === FACE)
     assert(row, `face ${FACE} not in the COMMITTED registry at ${RAIL_LEDGER_BRANCH}`)
