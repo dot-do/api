@@ -127,11 +127,11 @@ and traffic **seams** are emitted as structured logs tagged
 - RPC / CapnWeb / full HATEOAS transports — arrive with the workers.do lane
   (spec §7.2 extraction target); only what serves is declared.
 
-## Rail ledger (§9.1 final box)
+## Platform account (§9.1 final box)
 
-Face registered in the rail ledger (faces-payable/week denominator) via
+Face registered in the platform account (faces-payable/week denominator) via
 LEDGER.md **door A** — row added to
 `packages/rail-ledger/registry/faces.json` @ ax `draft/rail-ledger-v1`.
-The served projection config records the address in its `railLedger` field:
+The served projection config records the address in its `account` field:
 `https://apis.ax/account/faces?face=api.cleaning` (readout service built,
 deploy pending Batch-S).

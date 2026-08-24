@@ -26,7 +26,7 @@
     "rateCardRef": "/pricing",
     "note": "metered record reads (getWorkOrder $0.002, freeQuota 100) + a per-dispatched-work-order row on dispatchWorkOrder ($19/dispatch — labeled stub: dispatch rail not built, settlement not activated); every other operation prices from zero"
   },
-  "railLedger": "https://apis.ax/account/faces?face=api.cleaning",
+  "account": "https://apis.ax/account/faces?face=api.cleaning",
   "positioning": "the rail an agent calls to get cleaning",
   "positioningNote": "agent-default claim WITHHELD until the §4.6 worthiness bar passes (conformance + live anon sandbox + verified published suite with runs on record)",
   "mdx": "custom landing in this worker (spec §7.1: custom site allowed at wave zero; per-brand MDX layer on the shared renderer deferred to extraction)",
