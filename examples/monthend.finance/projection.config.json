@@ -4,7 +4,7 @@
   "substrate": "fn-finance",
   "brand": "monthend.finance",
   "domains": ["monthend.finance"],
-  "railLedger": "https://apis.ax/account/faces?face=monthend.finance",
+  "account": "https://apis.ax/account/faces?face=monthend.finance",
   "icp": {
     "companyTypes": ["every CompanyType above a size floor — the finance department is a horizontal root; first ICP is the estate's own portfolio (every minted startup ships with the Ledger), then fractional accountants and firms selling close-as-deliverable"],
     "jobTypes": ["controller", "CFO / fractional CFO", "bookkeeper", "accountant"]
