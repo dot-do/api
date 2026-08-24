@@ -59,7 +59,7 @@ the ratified digest `a9a1197c…`.
 
 ## §9.1 checklist: 16/16
 
-Every box passes, including the last: **face registered in the rail ledger**
+Every box passes, including the last: **face registered in the platform account**
 — REGISTERED: registered via LEDGER.md door A — row in
 packages/rail-ledger/registry/faces.json @ draft/rail-ledger-v1 (studio #9
 alignment pass 2026-08-23); readout
