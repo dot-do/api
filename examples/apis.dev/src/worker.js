@@ -40,6 +40,10 @@ import { buildSuite, buildVerifyDoc, buildVerifyMd } from './verify.js'
 import { emitMeterEvent } from './seams.js'
 import { OG_PNG_BASE64 } from './site/og.js'
 
+/** The browser-tab mark: dark tile + the wordmark's teal dot (family favicon
+ *  pattern per api.qa; square corners per this family's rule). */
+const FAVICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><rect width="32" height="32" fill="oklch(0.185 0.014 210)"/><rect x="12" y="12" width="8" height="8" fill="oklch(0.760 0.128 178)"/></svg>`
+
 /** Decoded once per isolate: the 1200x630 social card served at /og.png. */
 const OG_PNG = Uint8Array.from(atob(OG_PNG_BASE64), (c) => c.charCodeAt(0))
 
@@ -126,6 +130,18 @@ export default {
           },
         })
       }
+    }
+
+    // ── /favicon.svg: the browser-tab mark (family favicon pattern, per
+    // api.qa: dark tile + the brand mark in teal — here the wordmark's dot,
+    // square corners per the family rule). Served so browser tabs don't
+    // 404 the icon; declared via <link rel="icon"> in site/style.js.
+    // Not an API operation.
+    if (path === '/favicon.svg') {
+      if (request.method !== 'GET' && !head) return methodNotAllowed(path, 'GET, HEAD')
+      return new Response(head ? null : FAVICON_SVG, {
+        headers: { 'content-type': 'image/svg+xml', 'cache-control': 'public, max-age=86400' },
+      })
     }
 
     // ── /og.png: the 1200x630 social card (family og pattern — rendered by
