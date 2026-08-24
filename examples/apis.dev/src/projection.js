@@ -65,7 +65,7 @@ export const projection = {
    *  #9 alignment pass 2026-08-23); readout
    *  https://apis.ax/account/readouts/faces-payable (service built, deploy
    *  pending Batch-S). */
-  railLedger: 'https://apis.ax/account/faces?face=apis.dev',
+  account: 'https://apis.ax/account/faces?face=apis.dev',
 
   /** No "agent default" claim: the §4.6 worthiness bar (hosted verdict +
    *  live anon sandbox + verified published suite) has not been attested. */
