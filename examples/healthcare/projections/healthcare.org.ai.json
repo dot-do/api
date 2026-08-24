@@ -44,7 +44,7 @@
     "startDate": "2026-08-23",
     "hypothesis": "per-outcome enrollment-packet pricing beats per-call metering on revenue per substrate call for credentialing teams"
   },
-  "railLedger": "https://ledger.apis.ax/faces?face=healthcare.org.ai",
+  "railLedger": "https://apis.ax/account/faces?face=healthcare.org.ai",
   "grainDispute": {
     "state": "OPEN — recorded, not resolved here (convergence §5 tension 2; resolution needs the shared per-market incumbency probe all five lenses defer to #22)",
     "contenders": [
