@@ -103,7 +103,7 @@ selfverify **SELF-VERIFY PASSED** (zero defects).
 | 13 | Seams emitted with §6.4 tags + identity class + referral | ✅ `seams.js` |
 | 14 | Conneg matrix spot-checked; demo data labeled | ✅ curl→JSON / agent-UA→markdown / browser→HTML / never 406 / HEAD mirrors GET (the four pinned conneg checks + suite home-face rows) |
 | 15 | No ghost surfaces (presence-when-true) | ✅ every declared door serves; reachable-but-deferred feeds recorded, not declared |
-| 16 | Face registered in the rail ledger | ✅ **door A** — row in `packages/rail-ledger/registry/faces.json` (ax repo, `draft/rail-ledger-v1`); `railLedger: https://apis.ax/account/faces?face=apis.salon` in the projection config |
+| 16 | Face registered in the platform account | ✅ **door A** — row in `packages/rail-ledger/registry/faces.json` (ax repo, `draft/rail-ledger-v1`); `account: https://apis.ax/account/faces?face=apis.salon` in the projection config |
 
 ## Register defects filed upstream (spec §0 — not improvised here)
 
