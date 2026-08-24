@@ -38,8 +38,8 @@
   "positioning": "The registrant's back office — every registry a company must stand in, as one typed, verifiable surface. (The 'agent default' claim is WITHHELD: the §4.6 worthiness bar — hosted conformance verdict + live anon sandbox + continuously verified published suite — has not been attested by api.qa yet.)",
   "mdx": null,
   "mdxNotes": "Custom minimal HTML landing at wave zero (§7.1 prove-then-extract); per-brand MDX layer deferred to the shared-renderer extraction and to the brand attach.",
-  "railLedger": "https://apis.ax/account/faces?face=public-admin.org.ai",
-  "railLedgerNotes": "§9.1 final box (face registered in the rail ledger / faces-payable-per-week denominator): REGISTERED — registered via LEDGER.md door A — row in packages/rail-ledger/registry/faces.json @ draft/rail-ledger-v1 (studio #9 alignment pass 2026-08-23); readout https://apis.ax/account/readouts/faces-payable (service built, deploy pending Batch-S). Registered under the placeholder host public-admin.org.ai; the row moves to the ruled address at brand attach. Previously blocked-on-rail-ledger (checked ~/projects/ax 2026-08-23 — no ledger address existed); recorded blocked rather than stubbed per the batch-2 ruling (never stub a fake ledger) until the ledger package and its door-A registry existed.",
+  "account": "https://apis.ax/account/faces?face=public-admin.org.ai",
+  "accountNotes": "§9.1 final box (face registered in the rail ledger / faces-payable-per-week denominator): REGISTERED — registered via LEDGER.md door A — row in packages/rail-ledger/registry/faces.json @ draft/rail-ledger-v1 (studio #9 alignment pass 2026-08-23); readout https://apis.ax/account/readouts/faces-payable (service built, deploy pending Batch-S). Registered under the placeholder host public-admin.org.ai; the row moves to the ruled address at brand attach. Previously blocked-on-rail-ledger (checked ~/projects/ax 2026-08-23 — no ledger address existed); recorded blocked rather than stubbed per the batch-2 ruling (never stub a fake ledger) until the ledger package and its door-A registry existed.",
   "experiment": {
     "pattern": "per-outcome",
     "motion": "B2A",
