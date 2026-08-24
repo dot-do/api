@@ -58,9 +58,11 @@ node scripts/vendor.mjs <this-dir>/src/axp --check
 
 ## Known gaps (recorded, not patched around)
 
-1. **No Cloudflare zone for api.careers** (name held at porkbun to 2027-07-19,
-   zone-less; provisioning staged-not-applied per the register). This worker
-   cannot deploy to the domain until the zone exists — founder-visible blocker.
+1. ~~No Cloudflare zone for api.careers~~ **Cleared 2026-08-24** (Batch-S
+   sweep): zone `78c5de9b…` ACTIVE on the .do account, NS delegated. Worker
+   `api-careers` deployed with a direct custom domain (zone is on .do, so the
+   direct pattern applies per the serving ruling); parked placeholder AAAA
+   `100::` removed; mail-lockdown TXTs (SPF `-all`, DMARC) untouched.
 2. Generator gaps at axp-faces 0.1.0, to file upstream (never patched locally):
    no top-level `rates[]` in the Pricing Document (rate card rides
    `pricing.offers[0].rates`); no `operationId` passthrough on manifest routes;

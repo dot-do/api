@@ -7,11 +7,14 @@
   "observability": {
     "enabled": true,
     "head_sampling_rate": 1
-  }
+  },
 
-  // No routes/custom_domain yet: api.careers is held (porkbun, 2027-07-19)
-  // but has NO Cloudflare zone — zone provisioning is the graduated task the
-  // register records as at-risk for this row. Until the zone exists this
-  // worker runs locally (`wrangler dev`) and under the vitest in-memory gate.
-  // Deploying to the domain is a founder-visible blocker, not a config flag.
+  // Zone api.careers is ACTIVE on the .do account (Batch-S sweep,
+  // 78c5de9b96675b9ca4b37e52af562a00) — the former founder-visible blocker is
+  // cleared. Per the serving ruling, a zone already on .do gets a DIRECT
+  // custom domain (the workers.do custom-hostname pattern is for zones living
+  // elsewhere). Account id is explicit at deploy time (CLOUDFLARE_ACCOUNT_ID).
+  "routes": [
+    { "pattern": "api.careers", "custom_domain": true }
+  ]
 }
