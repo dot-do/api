@@ -54,12 +54,12 @@ all). The nearest derived convergents named by the row — the chemical
 SDS/hazmat and recall/traceback rails (VC #25/#28) — belong to OTHER rows'
 theses; this build **claims neither** and records the adjacency only.
 
-## Rail-ledger status (batch watch-list item)
+## Platform-account status (batch watch-list item)
 
 **BLOCKED-ON-RAIL-LEDGER.** `~/projects/ax` branch `draft/rail-ledger-v1`
 holds only an uncommitted `packages/rail-ledger` skeleton as of 2026-08-23
 (empty `registry/`, no `LEDGER.md`, no address convention committed).
-§9.1's final box (face registered in the rail ledger) is recorded blocked,
+§9.1's final box (face registered in the platform account) is recorded blocked,
 not stubbed.
 
 ## Open question carried from the row (not ruled anywhere)
