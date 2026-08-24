@@ -63,9 +63,9 @@ export const projection = {
    *  denominator): registered via LEDGER.md door A — row in
    *  packages/rail-ledger/registry/faces.json @ draft/rail-ledger-v1 (studio
    *  #9 alignment pass 2026-08-23); readout
-   *  https://ledger.apis.ax/readouts/faces-payable (service built, deploy
+   *  https://apis.ax/account/readouts/faces-payable (service built, deploy
    *  pending Batch-S). */
-  railLedger: 'https://ledger.apis.ax/faces?face=apis.dev',
+  railLedger: 'https://apis.ax/account/faces?face=apis.dev',
 
   /** No "agent default" claim: the §4.6 worthiness bar (hosted verdict +
    *  live anon sandbox + verified published suite) has not been attested. */
