@@ -76,7 +76,7 @@ Face registered in the rail ledger (faces-payable/week denominator):
 registered via LEDGER.md door A — row in
 `packages/rail-ledger/registry/faces.json` @ `draft/rail-ledger-v1`
 (studio #9 alignment pass 2026-08-23); readout
-https://ledger.apis.ax/readouts/faces-payable (service built, deploy pending
+https://apis.ax/account/readouts/faces-payable (service built, deploy pending
 Batch-S). The GAP row registers under its placeholder host
 (fn-customer-service.example.com.ai — not a brand); the served projection
 config records the address in its `railLedger` field.
