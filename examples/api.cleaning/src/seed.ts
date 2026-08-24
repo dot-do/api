@@ -140,7 +140,7 @@ export const VENDORS: SeedVendor[] = [
   {
     $context: CONTEXT, $type: 'Vendor', id: 'v-oldmill', name: 'Old Mill Pest Solutions Inc (demo)',
     service: 'pest-control', naics: '56171', ein: '00-3000003',
-    onboarding: { w9OnFile: true, coiOnFile: false, coiExpires: '', coiNote: '[demo] COI not yet on file — onboarding-packet gap surfaced honestly', bankingOnFile: true },
+    onboarding: { w9OnFile: true, coiOnFile: false, coiExpires: '', coiNote: '[demo] COI not yet on file — onboarding-packet gap', bankingOnFile: true },
     example: true, label: '[demo] Fictional pest-control vendor',
   },
 ]

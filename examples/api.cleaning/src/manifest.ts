@@ -77,7 +77,7 @@ face (the FSM system's system-of-record door at coordinate
 ⟨building-services⟩, plus the Scheduler rail for recurring booking) are the
 SAME collections, same envelopes, same rate-card rows — binding direction
 differs, the surface does not. Writes (\`createWorkOrder\`, \`createSchedule\`,
-\`logServiceVisit\`) land in an ephemeral anonymous workspace, disclosed above.
+\`logServiceVisit\`) land in an ephemeral anonymous workspace, described above.
 
 ## The B2A ladder
 
@@ -133,7 +133,7 @@ export function buildManifest() {
               id: 'anon-sandbox',
               title: 'Anonymous sandbox (the free floor — rung 0)',
               url: `${ORIGIN}/work-orders`,
-              note: 'keyless, labeled example data; every free quota declared in the rate card; disclosed ephemeral retention',
+              note: 'keyless, labeled example data; every free quota declared in the rate card; ephemeral retention (in-memory, per-isolate)',
             },
             {
               id: 'earned-credits',

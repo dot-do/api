@@ -10,11 +10,10 @@
   "observability": {
     "enabled": true,
     "head_sampling_rate": 1
-  }
+  },
 
-  // api.cleaning is HELD but ZONELESS (porkbun, no CF zone — register state
-  // name-only; Batch-S zone provisioning is the gating action). Zonelessness
-  // blocks SERVING at the domain only, never this build. Route attachment is
-  // a deploy decision — uncomment after the zone exists:
-  // "routes": [{ "pattern": "api.cleaning/*", "zone_name": "api.cleaning" }]
+  // Zone api.cleaning is ACTIVE on the .do CF account (Batch-S sweep closed
+  // the zoneless gap). Zone lives on .do → ruled serving pattern is the
+  // DIRECT custom domain (no workers.do hostname hop needed):
+  "routes": [{ "pattern": "api.cleaning", "custom_domain": true }]
 }

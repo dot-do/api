@@ -58,11 +58,10 @@ const VERIFY_DOC = {
     'AXP conformance at the pinned digest (fail-closed, in-memory dispatch — the same requirement implementations the hosted verifier runs)',
     'rate-card law (axp-ext-rates-g2 §1/§2): every rates[].operation ⊆ declared operationIds; price >= 0; freeQuota, when present, strictly > 0',
     'envelope typing on every data route; the 402 OFFER boundary on the dispatch verb, advertising the full B2A ladder (pay / work / claim)',
-    'seed fixture law: every record labeled example data; synthetic 00-prefix EINs; no real names; the not-yet-built capture rail is disclosed, never claimed',
+    'seed fixture law: every record labeled example data; synthetic 00-prefix EINs; no real names; no live-capture claim',
   ],
   note:
-    'interfaces.testSuite is deliberately NOT declared on the card yet: declaring arms strict byte-digest verification of a suite document in an api.qa dialect, ' +
-    'and this property has not authored one — omission is full conformance; a wrong declaration is a machine-readable false claim.',
+    'interfaces.testSuite is not declared on the card: no digest-pinned suite document in an api.qa dialect is published yet.',
   conformance: 'https://api.qa/api.cleaning',
 }
 
