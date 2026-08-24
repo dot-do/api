@@ -74,6 +74,6 @@ projection-config completeness). `axp/` is byte-identical vendored from
 denominator): registered via LEDGER.md door A — row in
 packages/rail-ledger/registry/faces.json @ draft/rail-ledger-v1 (studio #9
 alignment pass 2026-08-23); readout
-https://ledger.apis.ax/readouts/faces-payable (service built, deploy pending
+https://apis.ax/account/readouts/faces-payable (service built, deploy pending
 Batch-S). GAP rule: the placeholder host `fn-strategy.org.ai` is the
 registered face until a name attaches.

@@ -9,7 +9,7 @@
   "brand": null,
   "domains": [],
   "placeholderOrigin": "https://fn-strategy.org.ai",
-  "railLedger": "https://ledger.apis.ax/faces?face=fn-strategy.org.ai",
+  "railLedger": "https://apis.ax/account/faces?face=fn-strategy.org.ai",
   "icp": {
     "companyTypes": ["all — horizontal Function row"],
     "jobTypes": ["founder", "chief executive", "strategy officer", "chief of staff"],
