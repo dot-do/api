@@ -111,7 +111,7 @@ byte-identity vs git show, probe ladder, MCP door).
   `mounted:false` stubs in every OFFER body; nothing is ever charged.
 - workers.do serving lane, shared dashboard, unified analytics — extraction
   targets (§7.2), not wave-zero requirements.
-- Rail-ledger registration — **blocked-on-rail-ledger**: at build time
+- Platform-account registration — **blocked-on-rail-ledger**: at build time
   (2026-08-23) `packages/rail-ledger` exists only as an *uncommitted*
   working-tree directory in the ax repo's `draft/rail-ledger-v1` worktree
   (`?? packages/rail-ledger/`); no LEDGER.md, no committed address
