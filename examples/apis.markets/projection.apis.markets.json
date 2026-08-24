@@ -4,7 +4,7 @@
   "substrate": "capital-markets",
   "brand": "apis.markets",
   "domains": ["apis.markets"],
-  "railLedger": "https://ledger.apis.ax/faces?face=apis.markets",
+  "railLedger": "https://apis.ax/account/faces?face=apis.markets",
   "subAudienceRails": {
     "names": ["apis.trading", "apis.investments", "apis.broker"],
     "status": "content within this property (property-grain ruling); none serves today, so none is linked anywhere (presence-when-true)"
