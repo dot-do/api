@@ -267,7 +267,7 @@ box(15, 'no ghost surfaces: every non-templated GET in openapi answers as declar
 box(
   16,
   'face registered in the rail ledger (faces-payable/week denominator)',
-  projection.experiment.railLedger === 'https://ledger.apis.ax/faces?face=apis.mortgage',
+  projection.experiment.railLedger === 'https://apis.ax/account/faces?face=apis.mortgage',
   'door A (own act): registry row on ax draft/rail-ledger-v1 @ ef4d688 — {apis.mortgage, mortgage, B2A, 402-metered-per-call, test-mode}; readout recorded in the experiment config',
 )
 
