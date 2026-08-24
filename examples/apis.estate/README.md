@@ -82,8 +82,8 @@ surface. Every served record is labeled example data.
 - **Zone.** apis.estate has no Cloudflare zone (surface register: cf_zone
   "n", state name-only). Deploy reaches workers.dev; zone creation + route
   attachment is a founder-ruled act, recorded in wrangler.jsonc.
-- **Rail-ledger registration: BLOCKED-ON-RAIL-LEDGER.** The §9.1 final box
-  (face registered in the rail ledger, the faces-payable/week denominator) is
+- **Platform-account registration: BLOCKED-ON-RAIL-LEDGER.** The §9.1 final box
+  (face registered in the platform account, the faces-payable/week denominator) is
   recorded blocked: no ledger address convention exists in `~/projects/ax` as
   of 2026-08-23 — `packages/rail-ledger` is uncommitted work-in-progress on
   `draft/rail-ledger-v1` with no LEDGER.md. The box closes by registering
@@ -91,7 +91,7 @@ surface. Every served record is labeled example data.
 
 ## §9.1 self-verify score
 
-**15/16 pass; the 16th (rail-ledger registration) is blocked-on-rail-ledger**
+**15/16 pass; the 16th (platform-account registration) is blocked-on-rail-ledger**
 as above. Every passing box is asserted by `scripts/selfcheck.mjs` (27/27
 mechanical checks, including in-process `gradePinned` green against the full
 ratified `apis-ax-axp@2.6.0` spec at digest `a9a1197c…`) or by this tree
