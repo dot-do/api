@@ -409,19 +409,21 @@ await (async () => {
 // ── 16. Rail ledger — the ledger EXISTS; registration verified COMMITTED ────
 box("16. Face registered in the rail ledger (faces-payable/week denominator) — door A, verified against the COMMITTED registry", () => {
   const proj = JSON.parse(readFileSync(join(DIR, "projection.json"), "utf8"));
-  assert(proj.railLedger === "https://apis.ax/account/faces?face=auto.dev", "projection config must record the railLedger address (LEDGER.md §2)");
+  // railLedger accepted as read alias; remove after sweep
+  const ledgerAddr = proj.account ?? proj.railLedger;
+  assert(ledgerAddr === "https://apis.ax/account/faces?face=auto.dev", "projection config must record the account address (LEDGER.md §2)");
   let committed;
   try {
     committed = execFileSync("git", ["-C", AX_REPO, "show", `${LEDGER_BRANCH}:packages/rail-ledger/registry/faces.json`], { encoding: "utf8" });
   } catch {
-    return "railLedger address recorded in the projection config; ax repo unreachable in this environment for the committed-registry re-check — the registration commit stands (door A, draft/rail-ledger-v1)";
+    return "account address recorded in the projection config; ax repo unreachable in this environment for the committed-registry re-check — the registration commit stands (door A, draft/rail-ledger-v1)";
   }
   const reg = JSON.parse(committed);
   const row = reg.faces.find((f) => f.face === "auto.dev");
   assert(row, "auto.dev row not found in the COMMITTED registry (registry/faces.json on draft/rail-ledger-v1)");
   assert(row.substrate === "automotive" && row.projection === "auto.dev" && row.motion === "B2D", "registered row coordinates mismatch the projection");
   assert(row.payableBasis === "test-mode", "wave-zero rows register test-mode (LEDGER.md §3)");
-  return `registered: face auto.dev on the committed ${LEDGER_BRANCH} registry (substrate automotive, B2D, 402-metered-per-call, test-mode); readout ${proj.railLedger}`;
+  return `registered: face auto.dev on the committed ${LEDGER_BRANCH} registry (substrate automotive, B2D, 402-metered-per-call, test-mode); readout ${ledgerAddr}`;
 });
 
 console.log = realLog;

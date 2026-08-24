@@ -61,7 +61,7 @@ placement.
   phrases the term on this property; the §4.6 bar is what this face exists
   to pass — earned, never asserted), the **named counterpart brand**
   (vin.company — the spec's own §5.1 exemplar, zero-API-vocabulary law
-  carried; NOT a gap), and `railLedger` recorded. Repo config, not a served
+  carried; NOT a gap), and `account` recorded. Repo config, not a served
   surface.
 
 ## Sandbox seed (§5.2) — source route probed honestly
@@ -106,7 +106,7 @@ comparable rate card on this substrate). Box 4 PASSES with disclosure:
 `describeConformance` is absent from vendored axp-faces@0.3.0, so the probe
 ladder is re-implemented in-process at the pinned digest (batch-4 watch
 list); the hosted api.qa verdict remains §9.2's independent act. Box 16 is
-DONE: face `auto.dev` registered in the rail-ledger's committed registry
+DONE: face `auto.dev` registered in the platform-account's committed registry
 (ax repo `draft/rail-ledger-v1`, door A) and the selfcheck re-verifies the
 committed row. 2 supplemental gates green (vendor byte-identity vs git show,
 MCP door).
