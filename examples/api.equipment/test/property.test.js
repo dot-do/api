@@ -198,7 +198,7 @@ describe("G4 projection + G2 coordinates", () => {
     expect(text).not.toMatch(/oauth|credit card|cc on file/i);
     expect(projection.counterpartBrandGap.recorded).toBe(true);
     // batch watch list: rail-ledger address recorded in the projection config
-    expect(projection.railLedger).toBe("https://ledger.apis.ax/faces?face=api.equipment");
+    expect(projection.railLedger).toBe("https://apis.ax/account/faces?face=api.equipment");
     // primacy: no ruling on record → built under THIS row key, collisions recorded, no shared claims
     expect(projection.primacy.ruling).toBe("none on record");
     expect(projection.primacy.sharedClaims).toBe("none");
