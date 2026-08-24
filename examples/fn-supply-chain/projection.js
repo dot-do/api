@@ -92,7 +92,7 @@ export const projection = Object.freeze({
    *  Registered under the row-key placeholder host the substrate serves on
    *  meanwhile (fn-supply-chain.org.ai) — NOT apis.supply, which is the
    *  shared face owned by the wholesale-distribution row's build. */
-  railLedger: "https://ledger.apis.ax/faces?face=fn-supply-chain.org.ai",
+  railLedger: "https://apis.ax/account/faces?face=fn-supply-chain.org.ai",
 
   /** §5.1 B2A2B/C counterpart check — GAP RECORDED (the §9.1 box's honest
    *  branch): the row's ICP includes procurement and ops leaders who are not
