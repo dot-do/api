@@ -45,7 +45,7 @@ export const STYLE = /* css */ `
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: oklch(0.185 0.014 210); --surface: oklch(0.225 0.016 212);
     --text: oklch(0.930 0.010 185); --muted: oklch(0.680 0.016 195);
     --border: oklch(0.320 0.016 212); --border-soft: oklch(0.270 0.014 212);
@@ -54,6 +54,17 @@ export const STYLE = /* css */ `
     --ok: oklch(0.760 0.145 160);
     --hatch: oklch(0.930 0.010 185 / 0.13);
   }
+}
+/* explicit choice beats the OS preference in both directions (family theme
+   mechanism, shared with api.management site/style.js) */
+:root[data-theme="dark"] {
+  --bg: oklch(0.185 0.014 210); --surface: oklch(0.225 0.016 212);
+  --text: oklch(0.930 0.010 185); --muted: oklch(0.680 0.016 195);
+  --border: oklch(0.320 0.016 212); --border-soft: oklch(0.270 0.014 212);
+  --accent: oklch(0.760 0.128 178); --on-accent: oklch(0.185 0.014 210);
+  --accent-wash: color-mix(in srgb, var(--accent) 9%, transparent);
+  --ok: oklch(0.760 0.145 160);
+  --hatch: oklch(0.930 0.010 185 / 0.13);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -85,6 +96,8 @@ code, .mono { font-family: var(--mono); overflow-wrap: anywhere; }
 .mast-nav { display: flex; gap: 1.1rem; margin-left: auto; align-items: center; flex-wrap: wrap; }
 .mast-nav a { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none; color: var(--muted); transition: color var(--dur) var(--ease); }
 .mast-nav a:hover, .mast-nav a[aria-current="page"] { color: var(--text); }
+.theme-btn { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--border); padding: 4px 10px; transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease); }
+.theme-btn:hover { color: var(--text); border-color: var(--muted); }
 
 /* ---------- demo notice band (dashboard) ---------- */
 .demo-band { border-bottom: 1px solid var(--border); background: var(--accent-wash); }
@@ -245,6 +258,10 @@ footer nav a:hover { color: var(--text); }
  * The shared page shell. `path` marks the current nav item; `script` is an
  * optional inline module (dashboard only).
  */
+/* Explicit theme choice, persisted per browser; same mechanism and storage
+   key as api.management site/style.js (family theme parity). */
+const THEME_SCRIPT = `<script>(function(){try{var t=localStorage.getItem("theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}document.addEventListener("DOMContentLoaded",function(){var b=document.querySelector(".theme-btn");if(!b)return;b.addEventListener("click",function(){var r=document.documentElement,cur=r.getAttribute("data-theme"),dark=cur?cur==="dark":matchMedia("(prefers-color-scheme: dark)").matches,next=dark?"light":"dark";r.setAttribute("data-theme",next);try{localStorage.setItem("theme",next)}catch(e){}})})})();</script>`
+
 export function renderPage({ title, description, path, body, script = '' }) {
   const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
   const nav = [
@@ -263,8 +280,21 @@ export function renderPage({ title, description, path, body, script = '' }) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(description)}">
+<meta name="color-scheme" content="light dark">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#e9ecea">
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1b2124">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="apis.dev">
+<meta property="og:title" content="${esc(title)}">
+<meta property="og:description" content="${esc(description)}">
+<meta property="og:url" content="https://apis.dev${esc(path)}">
+<meta property="og:image" content="https://apis.dev/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${esc(title)}">
+<meta name="twitter:description" content="${esc(description)}">
+<meta name="twitter:image" content="https://apis.dev/og.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;700&display=swap">
@@ -276,6 +306,7 @@ export function renderPage({ title, description, path, body, script = '' }) {
     <a class="wordmark" href="/">apis<span class="dot">.</span><span class="tld">dev</span></a>
     <nav class="mast-nav">
       ${nav}
+      <button class="theme-btn" type="button" aria-label="toggle color theme">theme</button>
     </nav>
   </div>
 </header>
@@ -297,7 +328,7 @@ ${body}
     </div>
   </div>
 </footer>
-${script ? `<script type="module">${script}</script>` : ''}
+${THEME_SCRIPT}${script ? `<script type="module">${script}</script>` : ''}
 </body>
 </html>`
 }

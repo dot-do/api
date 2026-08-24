@@ -10,16 +10,18 @@
  * ruled pricing line are five different anatomies).
  *
  * BRAND SHELF ruling (2026-08-24): names shown honestly — a verdict appears
- * ONLY where a real api.qa verdict exists (api.insure B · attested; api.qa's
- * own grade A+). Every other brand shows "unscored" and links to the api.qa
- * page where a run would land. No fabricated scores, ever.
+ * ONLY where a real api.qa verdict exists, and EVERY verdict that exists is
+ * printed (api.insure B, auto.dev F — both attested; api.qa's own grade A+).
+ * Omitting an F would be curation (the api.management shelf states the same
+ * law). Every unrun brand shows "unscored" and links to the api.qa page
+ * where a run would land. No fabricated scores, ever.
  */
 
 import { renderPage } from './style.js'
 
 /** The shelf: top estate brands, with real api.qa verdicts only. */
 const SHELF = [
-  { domain: 'auto.dev', what: 'vehicle data & VIN decode', verdict: null },
+  { domain: 'auto.dev', what: 'vehicle data & VIN decode', verdict: { grade: 'F', note: 'attested' } },
   { domain: 'apis.vin', what: 'vehicle APIs', verdict: null },
   { domain: 'api.lawyer', what: 'legal work as an API', verdict: null },
   { domain: 'api.insure', what: 'insurance as an API', verdict: { grade: 'B', note: 'attested' } },

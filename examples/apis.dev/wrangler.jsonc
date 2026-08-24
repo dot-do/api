@@ -2,17 +2,17 @@
   // apis.dev — wave zero of register row software-it-services
   // Deploy: wrangler deploy (from this directory)
   //
-  // DNS CUTOVER PREREQUISITE (deploy-time act, not done by this build):
-  // the apis.dev zone currently proxies to a legacy Vercel Next.js
-  // multi-tenant deployment (x-matched-path /domains/[domain]) that answers
-  // 500 on every path. Attaching the route below only takes effect once the
-  // zone's DNS records stop pointing at Vercel. Cutover is a founder call.
+  // DNS cutover DONE (founder-cleared, studio#4, 2026-08-24): apis.dev zone
+  // now lives on the .do account (620eaadd23bf6d0fd8741bb1613c1803); Porkbun
+  // NS point at ernest/gina. The legacy Vercel 500 zone (Semantics.dev
+  // account) is dormant. The custom domain below owns the apex record.
   "$schema": "../../node_modules/wrangler/config-schema.json",
   "name": "apis-dev",
   "main": "src/worker.js",
   "compatibility_date": "2026-01-24",
 
-  "routes": [{ "pattern": "apis.dev/*", "zone_name": "apis.dev" }],
+  "workers_dev": true,
+  "routes": [{ "pattern": "apis.dev", "custom_domain": true }],
 
   "vars": {
     "API_NAME": "apis.dev"

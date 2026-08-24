@@ -37,6 +37,10 @@ import { actionRecords, verificationReports } from './seed.js'
 import { handleMcpMessage } from './mcp.js'
 import { buildSuite, buildVerifyDoc, buildVerifyMd } from './verify.js'
 import { emitMeterEvent } from './seams.js'
+import { OG_PNG_BASE64 } from './site/og.js'
+
+/** Decoded once per isolate: the 1200x630 social card served at /og.png. */
+const OG_PNG = Uint8Array.from(atob(OG_PNG_BASE64), (c) => c.charCodeAt(0))
 
 const axpRoutes = createAxpRoutes(manifest)
 
@@ -121,6 +125,17 @@ export default {
           },
         })
       }
+    }
+
+    // ── /og.png: the 1200x630 social card (family og pattern — rendered by
+    // scripts/gen-og.mjs from the site's own dark tokens, base64-inlined
+    // because this Worker serves no static assets; referenced by og:image /
+    // twitter:image in site/style.js). Not an API operation.
+    if (path === '/og.png') {
+      if (request.method !== 'GET' && !head) return methodNotAllowed(path, 'GET, HEAD')
+      return new Response(head ? null : OG_PNG, {
+        headers: { 'content-type': 'image/png', 'cache-control': 'public, max-age=86400' },
+      })
     }
 
     // ── /dashboard: the developer dashboard v1 (human face, demo-labeled) ──
