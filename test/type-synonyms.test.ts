@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { resolveType, TYPE_SYNONYMS, STRIPE_PREFIXES, SOURCE_ROUTES } from '../src/type-synonyms'
+import { resolveType, TYPE_SYNONYMS, STRIPE_PREFIXES, PAYMENTS_RETRIEVE, SOURCE_ROUTES } from '../src/type-synonyms'
 
 describe('Type Synonyms', () => {
   it('resolves short forms to canonical types', () => {
@@ -23,6 +23,15 @@ describe('Type Synonyms', () => {
     expect(STRIPE_PREFIXES.has('pi')).toBe(true)
     expect(STRIPE_PREFIXES.has('sub')).toBe(true)
     expect(STRIPE_PREFIXES.has('contact')).toBe(false)
+  })
+
+  it('maps only Stripe prefixes to PaymentsInternal read methods', () => {
+    for (const prefix of Object.keys(PAYMENTS_RETRIEVE)) {
+      expect(STRIPE_PREFIXES.has(prefix)).toBe(true)
+    }
+    expect(PAYMENTS_RETRIEVE.cus).toBe('getCustomer')
+    expect(PAYMENTS_RETRIEVE.sub).toBe('getSubscription')
+    expect(PAYMENTS_RETRIEVE.pi).toBeUndefined()
   })
 
   it('maps canonical types to source bindings', () => {

@@ -9,7 +9,8 @@ import { buildRegistry, searchServices, getService, getCategory, listCategories 
 import { formatCount } from './clickhouse'
 import { buildNavigator } from './primitives'
 import { resolve } from './aliases'
-import { resolveType, STRIPE_PREFIXES } from './type-synonyms'
+import { resolveType, STRIPE_PREFIXES, PAYMENTS_RETRIEVE } from './type-synonyms'
+import type { PaymentsInternalApi } from './payments-rpc'
 
 // Side-effect: register all 35 nouns in the global noun registry
 import '@headlessly/sdk'
@@ -375,14 +376,24 @@ const app = API({
           }
         }
 
-        // 2b. Stripe-native IDs → route to PAYMENTS
-        if (STRIPE_PREFIXES.has(parsed.type) && c.env.PAYMENTS) {
+        // 2b. Stripe-native IDs → payments.do over the PaymentsInternal RPC
+        // binding (dot-do/payments.do#2). The binding is the authorization
+        // boundary; nothing from the inbound request but the id leaves here.
+        if (STRIPE_PREFIXES.has(parsed.type)) {
+          const method = PAYMENTS_RETRIEVE[parsed.type]
+          // TODO(dot-do/payments.do#2): pi/pm/si/il/txn ids were forwarded to
+          // `/api/:id`, a path payments.do never served (it answered 500).
+          // payments.do exposes no read for them, so they are 404 until it does.
+          if (!method || !c.env.PAYMENTS) return c.notFound()
           try {
-            const url = new URL(c.req.url)
-            url.pathname = `/api/${id}`
-            return c.env.PAYMENTS.fetch(new Request(url.toString(), { method: 'GET', headers: c.req.raw.headers }))
+            const payments = c.env.PAYMENTS as unknown as PaymentsInternalApi
+            return c.json(await payments[method]({ id }))
           } catch (err) {
-            console.error(`[entity] PAYMENTS fetch failed for ${id}:`, err)
+            console.error(`[entity] PAYMENTS ${method} failed for ${id}:`, err)
+            return c.json(
+              { error: { message: err instanceof Error ? err.message : 'payments.do lookup failed', code: 'PAYMENTS_ERROR', status: 502 } },
+              502,
+            )
           }
         }
 
