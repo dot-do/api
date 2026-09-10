@@ -284,25 +284,23 @@ describe('Entity ID Resolution', () => {
     expect(body.api.name).toBe('apis.do')
   })
 
-  it('cus_<id> routes to PAYMENTS (structured error without bindings)', async () => {
-    // cus_ is in STRIPE_PREFIXES, so it tries to fetch PAYMENTS binding.
-    // Without bindings, c.env is undefined → framework catches and returns 500.
+  it('cus_<id> is a Stripe prefix: anonymous callers get 401 before PAYMENTS is touched', async () => {
+    // cus_ is in STRIPE_PREFIXES. Stripe objects carry PII, so the lookup
+    // requires a verified caller (see test/entity-payments.test.ts for the
+    // authenticated path over the PaymentsInternal binding).
     const res = await app.request('https://apis.do/cus_abc')
-    expect(res.status).toBe(500)
+    expect(res.status).toBe(401)
 
     const body = await res.json()
-    expect(body.error).toBeDefined()
-    expect(body.api.name).toBe('apis.do')
+    expect(body.error.code).toBe('AUTH_REQUIRED')
   })
 
-  it('sub_<id> routes to PAYMENTS (Stripe prefix)', async () => {
-    // sub_ is also a Stripe prefix (subscriptions)
+  it('sub_<id> is a Stripe prefix too (subscriptions)', async () => {
     const res = await app.request('https://apis.do/sub_test123')
-    expect(res.status).toBe(500)
+    expect(res.status).toBe(401)
 
     const body = await res.json()
-    expect(body.error).toBeDefined()
-    expect(body.api.name).toBe('apis.do')
+    expect(body.error.code).toBe('AUTH_REQUIRED')
   })
 
   it('contact_<sqid> redirects to database convention', async () => {

@@ -24,6 +24,20 @@ export const STRIPE_PREFIXES = new Set([
 ])
 
 /**
+ * Stripe prefixes payments.do can read by id → the PaymentsInternal RPC
+ * method that does it (src/payments-rpc.ts). Prefixes in STRIPE_PREFIXES
+ * but not here (pi, pm, si, il, txn) have no read operation on payments.do.
+ */
+export const PAYMENTS_RETRIEVE: Record<string, 'getCustomer' | 'getSubscription' | 'getInvoice' | 'getCharge' | 'getProduct' | 'getPrice'> = {
+  cus: 'getCustomer',
+  sub: 'getSubscription',
+  inv: 'getInvoice',
+  ch: 'getCharge',
+  prod: 'getProduct',
+  price: 'getPrice',
+}
+
+/**
  * Maps canonical entity types to their authoritative source binding.
  * Types not listed here use the DATABASE binding (default).
  */

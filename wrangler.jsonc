@@ -32,7 +32,10 @@
     { "binding": "OBJECTS", "service": "objects-do", "entrypoint": "ObjectsService" },
     { "binding": "CODE", "service": "code-headless-ly", "entrypoint": "CodeService" },
     { "binding": "AGENTS", "service": "agents-headless-ly", "entrypoint": "AgentsService" },
-    { "binding": "PAYMENTS", "service": "payments-do" },
+    // payments.do's Workers RPC entrypoint (dot-do/payments.do#2): typed methods, no HTTP, no bearer —
+    // the binding is the authorization boundary. Contract: src/payments-rpc.ts. Deploy payments.do
+    // with the entrypoint before this worker (a missing entrypoint fails the consumer deploy).
+    { "binding": "PAYMENTS", "service": "payments-do", "entrypoint": "PaymentsInternal" },
     { "binding": "GITHUB", "service": "github-do", "entrypoint": "GitHubService" },
     { "binding": "CLOUDFLARE", "service": "cloudflare-do", "entrypoint": "CloudflareService" },
     { "binding": "MCP_SERVER", "service": "mcp" },
