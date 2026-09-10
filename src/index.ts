@@ -380,6 +380,15 @@ const app = API({
         // binding (dot-do/payments.do#2). The binding is the authorization
         // boundary; nothing from the inbound request but the id leaves here.
         if (STRIPE_PREFIXES.has(parsed.type)) {
+          // Stripe objects carry PII and card details, and this route is
+          // optional-auth: only a verified caller may reach the binding.
+          // `verifiedUser` is set by the auth middleware only after AUTH
+          // verified the token or from the tamper-proof cf.actor; `user`
+          // alone is not enough — the context middleware fills it in for
+          // anonymous callers too.
+          if (!c.get('verifiedUser' as never)) {
+            return c.json({ error: { message: 'Authentication required', code: 'AUTH_REQUIRED', status: 401 } }, 401)
+          }
           const method = PAYMENTS_RETRIEVE[parsed.type]
           // TODO(dot-do/payments.do#2): pi/pm/si/il/txn ids were forwarded to
           // `/api/:id`, a path payments.do never served (it answered 500).

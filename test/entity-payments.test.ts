@@ -32,9 +32,47 @@ const callerHeaders = {
   'x-tenant': 'evil',
 }
 
-async function lookup(id: string, payments: ReturnType<typeof fakePayments> | undefined) {
-  return app.request(`https://apis.do/${id}`, { headers: callerHeaders }, { ...env, PAYMENTS: payments })
+/** An AUTH binding that verifies the session token above (the real one is Workers RPC). */
+const verifyingAuth = {
+  verifyToken: async (token: string) =>
+    token === 'user_session_token' ? { valid: true, user: { id: 'user_1', email: 'alice@example.com', authenticated: true } } : { valid: false },
 }
+
+async function lookup(id: string, payments: ReturnType<typeof fakePayments> | undefined, headers: Record<string, string> = callerHeaders) {
+  return app.request(`https://apis.do/${id}`, { headers }, { ...env, AUTH: verifyingAuth, PAYMENTS: payments })
+}
+
+describe('Stripe-native id lookup requires a verified caller', () => {
+  it('answers 401 to an anonymous request and never touches the binding', async () => {
+    const payments = fakePayments()
+
+    const res = await lookup('cus_abc123', payments, { 'Stripe-Account': 'acct_attacker' })
+
+    expect(res.status).toBe(401)
+    expect((await res.json()).error.code).toBe('AUTH_REQUIRED')
+    expect(payments.getCustomer).not.toHaveBeenCalled()
+    expect(payments.fetch).not.toHaveBeenCalled()
+  })
+
+  it('answers 401 to an unverifiable token and never touches the binding', async () => {
+    const payments = fakePayments()
+
+    const res = await lookup('ch_abc123', payments, { Authorization: 'Bearer forged' })
+
+    expect(res.status).toBe(401)
+    expect(payments.getCharge).not.toHaveBeenCalled()
+  })
+
+  it('does not reveal whether an id exists to an anonymous caller', async () => {
+    const payments = fakePayments()
+    payments.getCustomer.mockRejectedValue(new Error('No such customer: cus_missing'))
+
+    const res = await lookup('cus_missing', payments, {})
+
+    expect(res.status).toBe(401)
+    expect(payments.getCustomer).not.toHaveBeenCalled()
+  })
+})
 
 describe('Stripe-native id lookup over PaymentsInternal', () => {
   it('resolves cus_* through getCustomer with only the id', async () => {
